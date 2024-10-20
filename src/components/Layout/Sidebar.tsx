@@ -29,7 +29,6 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
     }
   };
 
-  console.log(isMobile);
   return (
     <>
       {!isMobile ? (

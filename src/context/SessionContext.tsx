@@ -35,7 +35,7 @@ export const SessionProvider = ({
   }, [cookie]);
 
   return (
-    <SessionContext.Provider value={{ isAuthenticated ,loading}}>
+    <SessionContext.Provider value={{ isAuthenticated, loading }}>
       {children}
     </SessionContext.Provider>
   );
