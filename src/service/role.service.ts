@@ -3,9 +3,15 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
-export const fetchRole = async () => {
+export const fetchRole = async ({
+  limit,
+  page,
+}: {
+  limit: number;
+  page: number;
+}) => {
   const response = await axios.get(
-    `${backendURI}/roles?`
+    `${backendURI}/roles?limit=${limit}&page=${page}`
   );
   return response.data;
 };

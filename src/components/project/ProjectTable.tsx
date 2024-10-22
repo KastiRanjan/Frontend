@@ -1,7 +1,6 @@
 import { Table, Button } from "antd"; // Added Button import
 import { useState } from "react";
-import { EditOutlined } from '@ant-design/icons'; // Added EditOutlined import
-// import { usePermission } from "../../hooks/permission/usePermission";
+import { EditOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import { useProject } from "@/hooks/project/useProject";
 
 
@@ -34,7 +33,7 @@ const columns = (showEditModal:any) => [
       <Button
         type="primary"
         icon={<EditOutlined />}
-        onClick={() => showEditModal(record)} // Added click handler
+        onClick={() => showEditModal(record)}
       >
         Edit
       </Button>
