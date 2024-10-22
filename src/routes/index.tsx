@@ -11,6 +11,7 @@ import Worklog from "@/pages/Worklog";
 import TaskTemplate from "@/pages/TaskTemplate";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import SettingLayout from "@/components/Layout/SettingLayout";
+import CreateUser from "@/pages/User/new";
 
 const Router = [
   {
@@ -60,12 +61,14 @@ const Router = [
       {
         path: "/user",
         element: <User />,
-        children: [
-          {
-            path: "new",
-            element: <User />,
-          },
-        ],
+      },
+      {
+        path: "/user/new",
+        element: <CreateUser />,
+      },
+      {
+        path: "/user/edit/:id",
+        element: <>Edit</>,
       },
       {
         path: "/settings",

@@ -1,11 +1,10 @@
-import { Table, Button } from "antd"; // Added Button import
-import { useState } from "react";
 import { EditOutlined } from '@ant-design/icons'; // Added EditOutlined import
+import { Button, Table } from "antd"; // Added Button import
+import { useState } from "react";
 import { usePermission } from "../../hooks/permission/usePermission";
-import { useEditPermission } from "@/hooks/permission/useEditPermission";
 
 // Modified columns definition to be a function
-const columns = (showEditModal) => [
+const columns = (showEditModal:any) => [
   {
     title: "Description",
     dataIndex: "description",

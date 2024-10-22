@@ -62,7 +62,7 @@ const TaskTemplate: React.FC = () => {
 
   return (
     <>
-      <PageTitle title="Task Template" />
+      <PageTitle title="Task Template"  element={<></>}/>
       <Table
         dataSource={data}
         columns={columns}

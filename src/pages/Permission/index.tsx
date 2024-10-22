@@ -13,7 +13,6 @@ const Perimssion = () => {
   const [editPermissionData, setEditPermissionData] =
     useState<PermissionType>();
   const showEditModal = (record: PermissionType) => {
-    console.log("Editing record:", record);
     setShowPermissionForm(true);
     setEditPermissionData(record);
     setIsFormEdit(true);
@@ -24,7 +23,18 @@ const Perimssion = () => {
   };
   return (
     <>
-      <PageTitle title="Permissions" />
+      <PageTitle
+        title="Permissions"
+        element={
+          <Button
+            type="primary"
+            onClick={() => setShowPermissionForm(true)}
+            className="mr-2"
+          >
+            <FormattedMessage {...message.addLabel} />
+          </Button>
+        }
+      />
       {/* <Button
         size="large"
         type="primary"
