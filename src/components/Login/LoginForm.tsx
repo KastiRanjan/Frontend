@@ -2,6 +2,8 @@ import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Form, message } from "antd";
 import { useLogin } from "@/hooks/useLogin";
 import FormInputWrapper from "../FormInputWrapper";
+import Title from "antd/es/typography/Title";
+import Paragraph from "antd/es/typography/Paragraph";
 
 export const LoginForm = () => {
   const [form] = Form.useForm();
@@ -19,46 +21,56 @@ export const LoginForm = () => {
   };
 
   return (
-    <Form
-      layout="vertical"
-      form={form}
-      onFinish={onFinish}
-      className="bg-white shadow p-5"
-    >
-      <FormInputWrapper
-        id="email"
-        name="username"
-        rules={[
-          {
-            required: true,
-            whitespace: true,
-            message: "Invalid user!",
-          },
-        ]}
-        placeholder="Enter your email"
-        icon={<UserOutlined />}
-      />
+    <div>
+      <Title level={3} className="text-center">
+        Login
+      </Title>
+      <Paragraph className="text-center">
+        Enter your credentials to login.
+      </Paragraph>
 
-      <FormInputWrapper
-        id="password"
-        name="password"
-        rules={[
-          {
-            required: true,
-            message: "Please input your password!",
-          },
-        ]}
-        placeholder="Enter your password"
-        icon={<LockOutlined />}
-      />
-      <Form.Item name="remember" valuePropName="checked" noStyle>
-        <Checkbox>Remember me</Checkbox>
-      </Form.Item>
-      <div className="mt-5">
-        <Button type="primary" htmlType="submit">
-          Submit
-        </Button>
-      </div>
-    </Form>
+      {/* Form */}
+      <Form layout="vertical" form={form} onFinish={onFinish} className="">
+        <FormInputWrapper
+          id="email"
+          name="username"
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: "Invalid user!",
+            },
+          ]}
+          placeholder="Enter your email"
+          icon={<UserOutlined />}
+        />
+
+        <FormInputWrapper
+          id="password"
+          name="password"
+          rules={[
+            {
+              required: true,
+              message: "Please input your password!",
+            },
+          ]}
+          placeholder="Enter your password"
+          icon={<LockOutlined />}
+        />
+        <Form.Item
+          name="remember"
+          valuePropName="checked"
+          noStyle
+          initialValue={false}
+        >
+          <Checkbox>Remember me</Checkbox>
+        </Form.Item>
+        <div className="mt-5">
+          <Button size="large" loading={login.isPending} type="primary" htmlType="submit" className="w-full">
+            Submit
+          </Button>
+        </div>
+      </Form>
+    </div>
   );
 };

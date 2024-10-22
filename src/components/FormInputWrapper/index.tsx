@@ -33,7 +33,7 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
     passwordInput = false,
     name,
     id,
-    classname = "",
+    classname = "py-3",
     type,
     value,
     disabled = false,
@@ -65,6 +65,7 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
             value={value || ""}
             max={max}
             name={name}
+            size="large"
             prefix={icon}
             placeholder={placeholder}
             onChange={changeHandler}

@@ -8,7 +8,22 @@ import Router from "./routes";
 const App: React.FC = () => {
   const routes = useRoutes(Router);
   return (
-    <ConfigProvider theme={{ token: { fontFamily: '"Inter", sans-serif' } }}>
+    <ConfigProvider
+      theme={{
+        token: {
+          fontFamily: '"Inter", sans-serif',
+          colorPrimary: "#18181b",
+          colorFillSecondary: "#fafafa",
+        },
+        components: {
+          Menu: {
+            colorItemBgHover: "#ebebeb",
+            colorItemBgSelected: "#ebebeb",
+            
+          },
+        },
+      }}
+    >
       <SessionProvider>{routes}</SessionProvider>
     </ConfigProvider>
   );

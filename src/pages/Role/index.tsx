@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Table, Spin, Alert, Button, Modal, Form, Input, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
+import PageTitle from '@/components/PageTitle';
 
 interface Role {
   createdAt: string;
@@ -138,6 +139,7 @@ const RolesTable: React.FC = () => {
 
   return (
     <div>
+      <PageTitle title="Roles" />
       <Button type="primary" onClick={() => setIsModalVisible(true)}>
         Create Role
       </Button>

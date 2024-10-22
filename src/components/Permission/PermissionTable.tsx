@@ -4,8 +4,8 @@ import { usePermission } from "../../hooks/usePermission";
 
 const columns = [
   {
-    title: "Id",
-    dataIndex: "id",
+    title: "Description",
+    dataIndex: "description",
     key: "name",
   },
   {

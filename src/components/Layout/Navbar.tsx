@@ -1,5 +1,5 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { Button } from "antd";
+import { Breadcrumb, Button } from "antd";
 import { Header } from "antd/es/layout/layout";
 import React from "react";
 
@@ -11,7 +11,7 @@ const Navbar = ({
   setCollapsed: any;
 }) => {
   return (
-    <Header className="border-b bg-[#fff] p-0">
+    <Header className="border-b bg-[#fff] p-0 flex items-center">
       <Button
         type="text"
         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -22,7 +22,9 @@ const Navbar = ({
           height: 64,
         }}
       />
-      <span className="text-sm">{new Date().toLocaleString()}</span>
+      <span>
+        <Breadcrumb items={[{ title: "Home" }, { title: "Dashboard" }]} />
+      </span>
     </Header>
   );
 };

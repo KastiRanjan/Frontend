@@ -1,4 +1,12 @@
-import { DashboardOutlined, UserOutlined, ProjectOutlined, FileDoneOutlined, SolutionOutlined, CalendarOutlined, TeamOutlined } from "@ant-design/icons";
+import {
+  DashboardOutlined,
+  UserOutlined,
+  ProjectOutlined,
+  FileDoneOutlined,
+  SolutionOutlined,
+  CalendarOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import React from "react";
 
 export interface MenuItem {
@@ -11,16 +19,6 @@ export const MenuItems = [
     key: "/",
     label: "Dashboard",
     icon: React.createElement(DashboardOutlined),
-  },
-  {
-    key: "/role",
-    label: "Role",
-    icon: React.createElement(SolutionOutlined),
-  },
-  {
-    key: "/permission",
-    label: "Permission",
-    icon: React.createElement(FileDoneOutlined),
   },
   {
     key: "/user",
@@ -43,4 +41,3 @@ export const MenuItems = [
     icon: React.createElement(TeamOutlined),
   },
 ];
-

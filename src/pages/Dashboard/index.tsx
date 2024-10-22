@@ -13,8 +13,8 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import PageTitle from "@/components/PageTitle";
 
-const { Header, Content } = Layout;
 const { Title } = Typography;
 
 const UserRoleChart: React.FC<{ data: any[] }> = ({ data }) => (
@@ -110,45 +110,44 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Content style={{ padding: "20px" }}>
-        {loading ? (
-          <Spin size="large" />
-        ) : (
-          <>
-            <Row gutter={16} style={{ marginBottom: "20px" }}>
-              <Col span={8}>
-                <Card title="Total Users" bordered>
-                  <Title level={4}>{totalUsers}</Title>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card title="Active Users" bordered>
-                  <Title level={4}>{activeUsers}</Title>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card title="Inactive Users" bordered>
-                  <Title level={4}>{inactiveUsers}</Title>
-                </Card>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Card title="User Role Distribution" bordered>
-                  <UserRoleChart data={roleData} />
-                </Card>
-              </Col>
-              <Col span={12}>
-                <Card title="Project Nature Distribution" bordered>
-                  <ProjectNatureChart data={natureData} />
-                </Card>
-              </Col>
-            </Row>
-          </>
-        )}
-      </Content>
-    </Layout>
+    <>
+      <PageTitle title="Welcome to Artha Task" />
+      {loading ? (
+        <Spin size="large" />
+      ) : (
+        <>
+          <Row gutter={16} style={{ marginBottom: "20px" }}>
+            <Col span={8}>
+              <Card title="Total Users" bordered>
+                <Title level={4}>{totalUsers}</Title>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card title="Active Users" bordered>
+                <Title level={4}>{activeUsers}</Title>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card title="Inactive Users" bordered>
+                <Title level={4}>{inactiveUsers}</Title>
+              </Card>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Card title="User Role Distribution" bordered>
+                <UserRoleChart data={roleData} />
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="Project Nature Distribution" bordered>
+                <ProjectNatureChart data={natureData} />
+              </Card>
+            </Col>
+          </Row>
+        </>
+      )}
+    </>
   );
 };
 

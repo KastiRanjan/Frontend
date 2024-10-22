@@ -39,6 +39,12 @@ const Router = [
       {
         path: "/user",
         element: <User />,
+        children: [
+          {
+            path: "new",
+            element: <User />,
+          },
+        ],
       },
     ],
   },

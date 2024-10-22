@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 
 const { Header, Content } = Layout;
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+const SettingLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -24,4 +24,4 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default DashboardLayout;
+export default SettingLayout;
