@@ -1,6 +1,5 @@
-import { Navigate, Outlet } from "react-router-dom";
-import DashboardLayout from "../components/Layout/DashboardLayout";
 import { useSession } from "@/context/SessionContext";
+import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {
   const { isAuthenticated, loading } = useSession();

@@ -1,4 +1,10 @@
+import DashboardLayout from "@/components/Layout/DashboardLayout";
+import SettingLayout from "@/components/Layout/SettingLayout";
 import TaskGroups from "@/pages/TaskGroup";
+import TaskTemplate from "@/pages/TaskTemplate";
+import CreateTaskTemplate from "@/pages/TaskTemplate/new";
+import CreateUser from "@/pages/User/new";
+import Worklog from "@/pages/Worklog";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import Perimssion from "../pages/Permission";
@@ -7,11 +13,11 @@ import Role from "../pages/Role";
 import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
-import Worklog from "@/pages/Worklog";
-import TaskTemplate from "@/pages/TaskTemplate";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
-import SettingLayout from "@/components/Layout/SettingLayout";
-import CreateUser from "@/pages/User/new";
+import CreateProject from "@/pages/Project/new";
+import EditProject from "@/pages/Project/edit";
+import EditTaskTemplate from "@/pages/TaskTemplate/edit";
+import EditTaskGroup from "@/pages/TaskGroup/edit";
+import CreateTaskGroup from "@/pages/TaskGroup/new";
 
 const Router = [
   {
@@ -43,12 +49,28 @@ const Router = [
         element: <Project />,
       },
       {
+        path: "/project/new",
+        element: <CreateProject />,
+      },
+      {
+        path: "/project/edit/:id",
+        element: <EditProject />,
+      },
+      {
         path: "/task",
         element: <Task />,
       },
       {
-        path: "/taskgroup",
+        path: "/task-group",
         element: <TaskGroups />,
+      },
+      {
+        path: "/task-group/new",
+        element: <CreateTaskGroup />,
+      },
+      {
+        path: "/task-group/edit/:id",
+        element: <EditTaskGroup />,
       },
       {
         path: "/worklog",
@@ -57,6 +79,14 @@ const Router = [
       {
         path: "/tasktemplate",
         element: <TaskTemplate />,
+      },
+      {
+        path: "/task-template/new",
+        element: <CreateTaskTemplate />,
+      },
+      {
+        path: "/task-template/edit/:id",
+        element: <EditTaskTemplate />,
       },
       {
         path: "/user",

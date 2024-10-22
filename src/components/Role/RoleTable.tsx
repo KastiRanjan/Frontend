@@ -22,7 +22,7 @@ const columns = (showEditModal:any) => [
     title: 'Created At',
     dataIndex: 'createdAt',
     key: 'createdAt',
-    render: (text: string) => new Date(text).toLocaleString(),
+  
   },
   {
     title: 'Actions',
@@ -80,7 +80,7 @@ const RoleTable = ({showEditModal}:any) => {
     <Table
       loading={isPending}
       pagination={paginationOptions}
-      dataSource={role}
+      dataSource={role.results}
       columns={columns(showEditModal)} // Pass showEditModal to columns
       onChange={handleTableChange}
     />

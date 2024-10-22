@@ -34,7 +34,7 @@ export const MenuItems: MenuItem[] = [
     icon: React.createElement(TeamOutlined),
   },
   {
-    key: "/taskgroup",
+    key: "/task-group",
     label: "Task Group",
     icon: React.createElement(TeamOutlined),
   },

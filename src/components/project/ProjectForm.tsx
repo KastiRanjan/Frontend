@@ -7,184 +7,157 @@ import { useCreateProject } from "@/hooks/project/useCreateProject";
 import { useUser } from "@/hooks/user/useUser";
 import { UserType } from "@/hooks/user/type";
 import moment from "moment";
-const { Option } = Select;
+import FormSelectWrapper from "../FormSelectWrapper";
 
 interface ProjectFormProps {
-  visible: boolean;
-  onCancel: () => void;
   editProjectData?: Project;
   isformEdit?: boolean;
+  id?: number;
 }
 
-const ProjectForm = ({
-  visible,
-  onCancel,
-  editProjectData,
-  isformEdit,
-}: ProjectFormProps) => {
+const ProjectForm = ({ editProjectData, isformEdit, id }: ProjectFormProps) => {
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
   const { data: users, isPending: isPendingUser } = useUser();
 
   useEffect(() => {
-    if (isformEdit && editProjectData) {
-      // Format starting and ending dates
-      const {
-        startingDate,
-        endingDate,
-        users,
-        ...rest
-      } = editProjectData;
-      const selectedUsers = users.map(user => user.id);
+    if (id && editProjectData) {
+      const { startingDate, endingDate, users, ...rest } = editProjectData;
+      const selectedUsers = users.map((user) => user.id);
 
       form.setFieldsValue({
         ...rest,
-        startingDate: moment(startingDate), // Convert to moment object
-        endingDate: moment(endingDate), // Convert to moment object
+        startingDate: moment(startingDate),
+        endingDate: moment(endingDate),
         users: selectedUsers || [],
       });
     } else {
       form.resetFields();
     }
-  }, [editProjectData, form, isformEdit]);
+  }, [editProjectData, form, id]);
 
   const onFinish = (values: any) => {
-    const { id } = editProjectData || {}; // Destructure id for cleaner code
-    isformEdit ? mutateEdit({ id, payload: values }) : mutate(values);
-    onCancel();
+    id ? mutateEdit({ id, payload: values }) : mutate(values);
   };
-  return (
-    <Modal
-      title="Add New Project"
-      open={visible}
-      onCancel={onCancel}
-      footer={null}
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={{}}
-        onFinish={onFinish}
-      >
-        <Row gutter={16}>
-          <Col>
-            <FormInputWrapper
-              id="Project Name"
-              label="Project Name"
-              name="name"
-              rules={[
-                { required: true, message: "Please input the project name!" },
-              ]}
-            />
 
-            <FormInputWrapper
-              id="Description"
-              label="Description"
-              name="description"
-              rules={[
-                { required: true, message: "Please input the description!" },
-              ]}
-            />
-            <Form.Item
-              label="Status"
-              name="status"
-              rules={[{ required: true, message: "Please select the status!" }]}
-            >
-              <Select placeholder="Select status">
-                <Option value="active">Active</Option>
-                <Option value="suspended">Suspended</Option>
-                <Option value="archived">Archived</Option>
-                <Option value="signed_off">Signed Off</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              label="Nature of Work"
-              name="natureOfWork"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select the nature of work!",
-                },
-              ]}
-            >
-              <Select placeholder="Select nature of work">
-                <Option value="external_audit">External Audit</Option>
-                <Option value="tax_compliance">Tax Compliance</Option>
-                <Option value="accounts_review">Accounts Review</Option>
-                <Option value="legal_services">Legal Services</Option>
-                <Option value="financial_projection">
-                  Financial Projection
-                </Option>
-                <Option value="valuation">Valuation</Option>
-                <Option value="internal_audit">Internal Audit</Option>
-                <Option value="others">Others</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              label="Fiscal Year"
-              name="fiscalYear"
-              rules={[
-                { required: true, message: "Please select the fiscal year!" },
-              ]}
-            >
-              <Select placeholder="Select fiscal year">
-                {[...Array(5).keys()].map((_, index) => {
-                  const year = new Date().getFullYear() + index;
-                  return (
-                    <Option key={year} value={year}>
-                      {year}
-                    </Option>
-                  );
-                })}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col>
-            <Form.Item
-              label="Starting Date"
-              name="startingDate"
-              rules={[
-                { required: true, message: "Please select the starting date!" },
-              ]}
-            >
-              <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
-            </Form.Item>
-            <Form.Item
-              label="Ending Date"
-              name="endingDate"
-              rules={[
-                { required: true, message: "Please select the ending date!" },
-              ]}
-            >
-              <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
-            </Form.Item>
-            <Form.Item label="Assign Users" name="users">
-              <Select mode="multiple" placeholder="Select users">
-                {isPendingUser
-                  ? null
-                  : users?.results?.map((user: UserType) => (
-                      <Option key={user.id} value={user.id}>
-                        {user.name}
-                      </Option>
-                    ))}
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            style={{ width: "100%" }}
-            disabled={isPending || isPendingEdit}
-            loading={isPending || isPendingEdit}
+  return (
+    <Form form={form} layout="vertical" initialValues={{}} onFinish={onFinish}>
+      <Row gutter={16}>
+        <Col span={6}>
+          <FormInputWrapper
+            id="Project Name"
+            label="Project Name"
+            name="name"
+            rules={[
+              { required: true, message: "Please input the project name!" },
+            ]}
+          />
+
+          <FormInputWrapper
+            id="Description"
+            label="Description"
+            name="description"
+            rules={[
+              { required: true, message: "Please input the description!" },
+            ]}
+          />
+          <FormSelectWrapper
+            id="Status"
+            label="Status"
+            name="status"
+            options={[
+              { value: "active", label: "Active" },
+              { value: "suspended", label: "Suspended" },
+              { value: "archived", label: "Archived" },
+              { value: "signed_off", label: "Signed Off" },
+            ]}
+            rules={[{ required: true, message: "Please select the status!" }]}
+          />
+          <FormSelectWrapper
+            id="Nature of Work"
+            label="Nature of Work"
+            name="natureOfWork"
+            options={[
+              { value: "external_audit", label: "External Audit" },
+              { value: "tax_compliance", label: "Tax Compliance" },
+              { value: "accounts_review", label: "Accounts Review" },
+              { value: "legal_services", label: "Legal Services" },
+              { value: "financial_projection", label: "Financial Projection" },
+              { value: "valuation", label: "Valuation" },
+              { value: "internal_audit", label: "Internal Audit" },
+              { value: "others", label: "Others" },
+            ]}
+            rules={[
+              {
+                required: true,
+                message: "Please select the nature of work!",
+              },
+            ]}
+          />
+        </Col>
+        <Col span={6}>
+          <FormSelectWrapper
+            id="Fiscal Year"
+            label="Fiscal Year"
+            name="fiscalYear"
+            options={[...Array(5).keys()].map((_, index) => {
+              const year = new Date().getFullYear() + index;
+              return {
+                value: year,
+                label: year.toString(),
+              };
+            })}
+            rules={[
+              { required: true, message: "Please select the fiscal year!" },
+            ]}
+          />
+          <Form.Item
+            label="Starting Date"
+            name="startingDate"
+            rules={[
+              { required: true, message: "Please select the starting date!" },
+            ]}
           >
-            {isformEdit ? "Update Project" : "Add Project"}
-          </Button>
-        </Form.Item>
-      </Form>
-    </Modal>
+            <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
+          </Form.Item>
+          <Form.Item
+            label="Ending Date"
+            name="endingDate"
+            rules={[
+              { required: true, message: "Please select the ending date!" },
+            ]}
+          >
+            <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
+          </Form.Item>
+          <FormSelectWrapper
+            id="users"
+            name="users"
+            label="Assign Users"
+            placeholder="Select users"
+            options={
+              isPendingUser
+                ? []
+                : users?.results?.map((user: UserType) => ({
+                    value: user.id,
+                    label: user.name,
+                  }))
+            }
+            mode="multiple"
+          />
+        </Col>
+      </Row>
+      <Form.Item>
+        <Button
+          type="primary"
+          htmlType="submit"
+          disabled={isPending || isPendingEdit}
+          loading={isPending || isPendingEdit}
+        >
+          {isformEdit ? "Update Project" : "Add Project"}
+        </Button>
+      </Form.Item>
+    </Form>
   );
 };
 

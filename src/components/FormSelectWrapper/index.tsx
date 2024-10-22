@@ -16,6 +16,7 @@ interface FormSelectWrapperProps {
   value?: string;
   placeholder?: string;
   required?: boolean;
+  mode?: "multiple" | "tags";
 }
 
 const FormSelectWrapper = (props: FormSelectWrapperProps) => {
@@ -34,6 +35,7 @@ const FormSelectWrapper = (props: FormSelectWrapperProps) => {
     value,
     allowClear = false,
     error,
+    mode,
   } = props;
 
   return (
@@ -56,6 +58,7 @@ const FormSelectWrapper = (props: FormSelectWrapperProps) => {
           value={value}
           disabled={disabled}
           allowClear={allowClear}
+          mode={mode}
         />
       </Form.Item>
     </>

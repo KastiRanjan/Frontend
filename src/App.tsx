@@ -17,8 +17,8 @@ const App: React.FC = () => {
         },
         components: {
           Menu: {
-            colorItemBgHover: "#ebebeb",
-            colorItemBgSelected: "#ebebeb",
+            itemHoverBg: "#ebebeb",
+            itemSelectedBg: "#ebebeb",
             
           },
         },

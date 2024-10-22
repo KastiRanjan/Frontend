@@ -1,9 +1,11 @@
 // src/components/TaskTemplate.tsx
 
 import React, { useEffect, useState } from "react";
-import { Table } from "antd";
+import { Button, Table } from "antd";
 import axios from "axios";
 import PageTitle from "@/components/PageTitle";
+import { useNavigate } from "react-router-dom";
+import TaskTemplateTable from "@/components/TaskTemplate/TaskTemplateTable";
 
 interface TaskTemplate {
   id: number;
@@ -14,61 +16,19 @@ interface TaskTemplate {
 }
 
 const TaskTemplate: React.FC = () => {
-  const [data, setData] = useState<TaskTemplate[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:7777/task-template");
-        setData(response.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const columns = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-    },
-    {
-      title: "Created At",
-      dataIndex: "createdAt",
-      key: "createdAt",
-    },
-    {
-      title: "Updated At",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
-    },
-  ];
+  const navigate = useNavigate();
 
   return (
     <>
-      <PageTitle title="Task Template"  element={<></>}/>
-      <Table
-        dataSource={data}
-        columns={columns}
-        loading={loading}
-        rowKey="id"
+      <PageTitle
+        title="Task Template"
+        element={
+          <Button type="primary" onClick={() => navigate("/task-template/new")}>
+            Create
+          </Button>
+        }
       />
+      <TaskTemplateTable />
     </>
   );
 };
