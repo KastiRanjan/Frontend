@@ -1,6 +1,16 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { Table, Spin, Typography, Button, Modal, Form, Input, Select } from 'antd';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import {
+  Table,
+  Spin,
+  Typography,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+} from "antd";
+import PageTitle from "@/components/PageTitle";
 
 interface UserRole {
   id: number;
@@ -26,7 +36,7 @@ const { Option } = Select;
 
 axios.defaults.withCredentials = true;
 
-const UserTable: React.FC = () => {
+const User: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -41,10 +51,10 @@ const UserTable: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:7777/users');
+      const response = await axios.get("http://localhost:7777/users");
       setUsers(response.data.results);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
       setUsers([]);
     } finally {
       setLoading(false);
@@ -53,91 +63,89 @@ const UserTable: React.FC = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await axios.get('http://localhost:7777/roles');
+      const response = await axios.get("http://localhost:7777/roles");
       setRoles(response.data.results);
     } catch (error) {
-      console.error('Error fetching roles:', error);
+      console.error("Error fetching roles:", error);
     }
   };
 
   const handleAddUser = async (values: any) => {
     try {
-      await axios.post('http://localhost:7777/users', {
+      await axios.post("http://localhost:7777/users", {
         name: values.name,
         email: values.email,
         username: values.username,
         status: values.status,
-        roleId: values.roleId,  // Send the selected role ID
+        roleId: values.roleId, // Send the selected role ID
       });
       fetchUsers();
       setModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error('Error adding user:', error);
+      console.error("Error adding user:", error);
     }
   };
 
   const columns = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
     },
     {
-      title: 'Username',
-      dataIndex: 'username',
-      key: 'username',
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
     },
     {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
     },
     {
-      title: 'Created At',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
+      title: "Created At",
+      dataIndex: "createdAt",
+      key: "createdAt",
       render: (text: string) => new Date(text).toLocaleString(),
     },
     {
-      title: 'Updated At',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
+      title: "Updated At",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
       render: (text: string) => new Date(text).toLocaleString(),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
     },
     {
-      title: 'Role',
-      dataIndex: 'role',
-      key: 'role',
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
       render: (role: UserRole) => role.name,
     },
   ];
 
   return (
-    <div style={styles.container}>
-      <Title level={2}>User List</Title>
-      <Button type="primary" onClick={() => setModalVisible(true)} style={styles.addButton}>
-        Add User
-      </Button>
+    <>
+      <PageTitle title="Users" />
+
       {loading ? (
-        <Spin size="large" style={styles.loading} />
+        <Spin size="large" />
       ) : (
         <Table
           dataSource={users}
           columns={columns}
           rowKey="id"
           pagination={false}
-          locale={{ emptyText: 'No users found.' }}
+          locale={{ emptyText: "No users found." }}
         />
       )}
       <Modal
@@ -150,28 +158,35 @@ const UserTable: React.FC = () => {
           <Form.Item
             name="name"
             label="Name"
-            rules={[{ required: true, message: 'Please input the user name!' }]}
+            rules={[{ required: true, message: "Please input the user name!" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="email"
             label="Email"
-            rules={[{ required: true, message: 'Please input the user email!' }, { type: 'email', message: 'Invalid email!' }]}
+            rules={[
+              { required: true, message: "Please input the user email!" },
+              { type: "email", message: "Invalid email!" },
+            ]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="username"
             label="Username"
-            rules={[{ required: true, message: 'Please input the user username!' }]}
+            rules={[
+              { required: true, message: "Please input the user username!" },
+            ]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="status"
             label="Status"
-            rules={[{ required: true, message: 'Please select the user status!' }]}
+            rules={[
+              { required: true, message: "Please select the user status!" },
+            ]}
           >
             <Select placeholder="Select a status">
               <Option value="active">Active</Option>
@@ -182,10 +197,10 @@ const UserTable: React.FC = () => {
           <Form.Item
             name="roleId"
             label="Role"
-            rules={[{ required: true, message: 'Please select a role!' }]}
+            rules={[{ required: true, message: "Please select a role!" }]}
           >
             <Select placeholder="Select a role">
-              {roles.map(role => (
+              {roles.map((role) => (
                 <Option key={role.id} value={role.id}>
                   {role.name}
                 </Option>
@@ -199,22 +214,8 @@ const UserTable: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </>
   );
 };
 
-// Styles defined as a JavaScript object
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    padding: '20px',
-  },
-  loading: {
-    textAlign: 'center',
-    marginTop: '50px',
-  },
-  addButton: {
-    marginBottom: '20px',
-  },
-};
-
-export default UserTable;
+export default User;

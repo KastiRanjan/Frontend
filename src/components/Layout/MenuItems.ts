@@ -1,20 +1,18 @@
 import {
   DashboardOutlined,
-  UserOutlined,
   ProjectOutlined,
-  FileDoneOutlined,
-  SolutionOutlined,
-  CalendarOutlined,
   TeamOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import React from "react";
 
 export interface MenuItem {
   key: string;
   label: string;
+  icon?: React.ReactNode;
 }
 
-export const MenuItems = [
+export const MenuItems: MenuItem[] = [
   {
     key: "/",
     label: "Dashboard",
@@ -38,6 +36,11 @@ export const MenuItems = [
   {
     key: "/taskgroup",
     label: "Task Group",
+    icon: React.createElement(TeamOutlined),
+  },
+  {
+    key: "/settings",
+    label: "Settings",
     icon: React.createElement(TeamOutlined),
   },
 ];

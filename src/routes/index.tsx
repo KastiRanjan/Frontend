@@ -9,6 +9,8 @@ import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import Worklog from "@/pages/Worklog";
 import TaskTemplate from "@/pages/TaskTemplate";
+import DashboardLayout from "@/components/Layout/DashboardLayout";
+import SettingLayout from "@/components/Layout/SettingLayout";
 
 const Router = [
   {
@@ -17,7 +19,11 @@ const Router = [
   },
   {
     path: "/",
-    element: <PrivateRoute />,
+    element: (
+      <DashboardLayout>
+        <PrivateRoute />
+      </DashboardLayout>
+    ),
     children: [
       {
         path: "/",
@@ -60,6 +66,24 @@ const Router = [
             element: <User />,
           },
         ],
+      },
+      {
+        path: "/settings",
+        element: <>setting</>,
+      },
+    ],
+  },
+  {
+    path: "/settings",
+    element: (
+      <SettingLayout>
+        <PrivateRoute />
+      </SettingLayout>
+    ),
+    children: [
+      {
+        path: "",
+        element: <>setting</>,
       },
     ],
   },

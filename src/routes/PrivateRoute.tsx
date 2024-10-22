@@ -8,13 +8,9 @@ const PrivateRoute = () => {
   if (loading) {
     return <></>;
   }
-  
+
   if (isAuthenticated) {
-    return (
-      <DashboardLayout>
-        <Outlet />
-      </DashboardLayout>
-    );
+    return <Outlet />;
   }
   return <Navigate to={"/login"} />;
 };

@@ -1,12 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import { MenuItems } from "./MenuItems";
+import { MenuItem } from "./MenuItems";
 import Sider from "antd/es/layout/Sider";
 import { Drawer, Menu } from "antd";
 import { useEffect, useState } from "react";
 
 const WIDTH = 992;
 
-const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
+const Sidebar = ({
+  collapsed,
+  menuItems,
+}: {
+  collapsed: boolean;
+  menuItems: MenuItem[];
+}) => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -22,7 +28,9 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
 
   const handleChangePage = (e: any) => {
     const selectedKey = e.key;
-    const selectedItem = MenuItems.find((item) => item.key === selectedKey);
+    const selectedItem = menuItems.find(
+      (item: MenuItem) => item.key === selectedKey
+    );
 
     if (selectedItem) {
       navigate(selectedItem.key);
@@ -66,7 +74,7 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
             onClick={handleChangePage}
             theme="light"
             defaultSelectedKeys={["1"]}
-            items={MenuItems}
+            items={menuItems}
             className="border-inline-0 bg-[#fafafa] "
           />
           <div className="absolute bottom-5 right-5">
@@ -85,7 +93,7 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
             theme="light"
             mode="inline"
             defaultSelectedKeys={["1"]}
-            items={MenuItems}
+            items={menuItems}
           />
         </Drawer>
       )}

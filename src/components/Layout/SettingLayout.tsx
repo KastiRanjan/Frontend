@@ -1,16 +1,17 @@
-import { Breadcrumb, Layout } from "antd";
+import { Layout } from "antd";
 import React, { useState } from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import { SettingMenus } from "./SettingMenus";
 
-const { Header, Content } = Layout;
+const { Content } = Layout;
 
 const SettingLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <Layout style={{ height: "100vh" }}>
-      <Sidebar collapsed={collapsed} />
+      <Sidebar collapsed={collapsed} menuItems={SettingMenus} />
       <Layout className="bg-[#fff] h-screen overflow-hidden">
         <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />
         <Content

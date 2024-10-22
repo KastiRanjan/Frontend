@@ -1,20 +1,19 @@
 import {
   DashboardOutlined,
-  UserOutlined,
-  ProjectOutlined,
   FileDoneOutlined,
+  ProjectOutlined,
   SolutionOutlined,
-  CalendarOutlined,
-  TeamOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import React from "react";
 
 export interface MenuItem {
   key: string;
   label: string;
+  icon?: React.ReactNode;
 }
 
-export const SettingMenus = [
+export const SettingMenus: MenuItem[] = [
   {
     key: "/general-settings",
     label: "General Settings",
