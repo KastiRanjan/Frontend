@@ -1,17 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchRole } from "../../service/role.service";
 
-export const useRole = ({
-  page,
-  limit,
-}: {
-  page: number;
-  limit: number;
-}) => {
-  return useRole({
-    queryKey: ["projects", page, limit],
+export const useRole = () => {
+  return useQuery({
+    queryKey: ["roles"],
     queryFn: async () => {
-      return ({ page, limit });
+      return fetchRole();
     },
     // enabled: !!page && !!limit,
   });
