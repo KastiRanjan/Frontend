@@ -1,28 +1,46 @@
 import { Button, Form, Modal, Select } from "antd";
-import { useCreatePermission } from "@/hooks/useCreatePermission";
+import { useCreatePermission } from "@/hooks/permission/useCreatePermission";
 import FormInputWrapper from "@/components/FormInputWrapper";
 import { FormattedMessage } from "react-intl";
 import message from "@/pages/Permission/message";
+import { useEditPermission } from "@/hooks/permission/useEditPermission";
+import { PermissionType } from "@/pages/Permission/types";
+import { useEffect } from "react";
+
+interface PermissionFormProps {
+  visible: boolean;
+  onCancel: () => void;
+  editPermissionData?: PermissionType;
+  isformEdit?: boolean;
+}
 
 export const PermissionForm = ({
   visible,
   onCancel,
-}: {
-  visible: boolean;
-  onCancel: () => void;
-}) => {
+  editPermissionData,
+  isformEdit,
+}: PermissionFormProps) => {
   const { mutate, isPending } = useCreatePermission();
+  const { mutate: mutateEdit, isPending: isPendingEdit } = useEditPermission();
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    isformEdit ? form.setFieldsValue(editPermissionData) : form.resetFields();
+  }, [editPermissionData, form, isformEdit]);
+
   const onFinish = (values: any) => {
-    mutate(values);
+    isformEdit?mutateEdit({id:editPermissionData?.id, payload:values}) : mutate(values);
     onCancel();
   };
+
 
   return (
     <Modal open={visible} onCancel={onCancel} footer={null}>
       <FormattedMessage {...message.dashboardTitle} />
       <Form
+        form={form}
         layout="vertical"
-        initialValues={{ remember: true }}
+        initialValues={{}}
         onFinish={onFinish}
         autoComplete="off"
       >

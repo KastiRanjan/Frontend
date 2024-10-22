@@ -1,6 +1,6 @@
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Form, message } from "antd";
-import { useLogin } from "@/hooks/useLogin";
+import { useLogin } from "@/hooks/auth/useLogin";
 import FormInputWrapper from "../FormInputWrapper";
 import Title from "antd/es/typography/Title";
 import Paragraph from "antd/es/typography/Paragraph";

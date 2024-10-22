@@ -2,29 +2,30 @@ import { Table, Button } from "antd"; // Added Button import
 import { useState } from "react";
 import { EditOutlined } from '@ant-design/icons'; // Added EditOutlined import
 import { usePermission } from "../../hooks/permission/usePermission";
-import { useEditPermission } from "@/hooks/permission/useEditPermission";
+import { useProject } from "@/hooks/project/useProject";
+
 
 // Modified columns definition to be a function
-const columns = (showEditModal) => [
+const columns = (showEditModal:any) => [
+  {
+    title: "Id",
+    dataIndex: "id",
+    key: "id", // Corrected key from "name" to "id"
+  },
+  {
+    title: "Name",
+    dataIndex: "name",
+    key: "name", // Corrected key from "age" to "resource"
+  },
   {
     title: "Description",
     dataIndex: "description",
-    key: "name",
+    key: "descritpion", // Corrected key from "age" to "method"
   },
   {
-    title: "Resource",
-    dataIndex: "resource",
-    key: "resource", // Corrected key from "age" to "resource"
-  },
-  {
-    title: "Method",
-    dataIndex: "method",
-    key: "method", // Corrected key from "age" to "method"
-  },
-  {
-    title: "Path",
-    dataIndex: "path",
-    key: "path", // Corrected key from "age" to "path"
+    title: "Nature Of Project",
+    dataIndex: "natureOfWork",
+    key: "natureOfWork", // Corrected key from "age" to "path"
   },
   {
     title: "Action", // Added Action column for Edit button
@@ -41,13 +42,13 @@ const columns = (showEditModal) => [
   },
 ];
 
-const PermissionTable = ({showEditModal}) => {
+const ProjectTable = ({showEditModal}:any) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: user, isPending } = usePermission({ page, limit });
+  const { data: project, isPending } = useProject({ page, limit });
 
 
-  const handleTableChange = (pagination) => {
+  const handleTableChange = (pagination:any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
   };
@@ -58,23 +59,24 @@ const PermissionTable = ({showEditModal}) => {
   const paginationOptions = {
     current: page,
     pageSize: limit,
-    total: user?.totalItems,
+    total: project?.totalItems,
     showSizeChanger: true,
     showQuickJumper: true,
     pageSizeOptions: [5, 10, 20, 30, 50, 100],
     showTotal: (total, range) =>
       `${range[0]}-${range[1]} of ${total}`,
   };
+  console.log("project", project);
 
   return (
     <Table
       loading={isPending}
       pagination={paginationOptions}
-      dataSource={user?.results}
+      dataSource={project}
       columns={columns(showEditModal)} // Pass showEditModal to columns
       onChange={handleTableChange}
     />
   );
 };
 
-export default PermissionTable;
+export default ProjectTable;

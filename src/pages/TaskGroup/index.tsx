@@ -148,7 +148,6 @@ const TaskGroups: React.FC = () => {
                     style={{ marginTop: '10px' }}
                     onClick={() => showEditModal(group)}
                   >
-                    Edit
                   </Button>
                 </>
               )}

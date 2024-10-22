@@ -31,13 +31,13 @@ export const MenuItems = [
     icon: React.createElement(ProjectOutlined),
   },
   {
-    key: "/task",
-    label: "Task",
-    icon: React.createElement(CalendarOutlined),
+    key: "/tasktemplate",
+    label: "Task Template",
+    icon: React.createElement(TeamOutlined),
   },
   {
-    key: "/worklog",
-    label: "WorkLog",
+    key: "/taskgroup",
+    label: "Task Group",
     icon: React.createElement(TeamOutlined),
   },
 ];

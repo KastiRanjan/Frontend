@@ -5,26 +5,42 @@ import { Button } from "antd";
 import { useState } from "react";
 import { FormattedMessage } from "react-intl";
 import message from "./message";
+import { PermissionType } from "./types";
 
 const Perimssion = () => {
-  const [createPermission, setCreatePermission] = useState(false);
+  const [showPermissionForm, setShowPermissionForm] = useState<boolean>(false);
+  const [isFormEdit, setIsFormEdit] = useState<boolean>(false);
+  const [editPermissionData, setEditPermissionData] =
+    useState<PermissionType>();
+  const showEditModal = (record: PermissionType) => {
+    console.log("Editing record:", record);
+    setShowPermissionForm(true);
+    setEditPermissionData(record);
+    setIsFormEdit(true);
+  };
+  const handleClosePermissionForm = () => {
+    setShowPermissionForm(false);
+    setIsFormEdit(false);
+  };
   return (
     <>
       <PageTitle title="Permissions" />
       {/* <Button
         size="large"
         type="primary"
-        onClick={() => setCreatePermission(true)}
+        onClick={() => setShowPermissionForm(true)}
         className="mr-2"
       >
         <FormattedMessage {...message.addLabel} />
       </Button> */}
 
-      <PerimssionTable />
+      <PerimssionTable showEditModal={showEditModal} />
 
       <PermissionForm
-        visible={createPermission}
-        onCancel={() => setCreatePermission(false)}
+        visible={showPermissionForm}
+        onCancel={handleClosePermissionForm}
+        editPermissionData={editPermissionData}
+        isformEdit={isFormEdit}
       />
     </>
   );
