@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPermission } from "../service/permission.service";
+import { editPermission } from "../../service/permission.service";
 
-export const useCreatePermission = () => {
+export const useEditPermission = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload) => {
-      return createPermission(payload);
+    mutationFn: ({payload,id}:any) => {
+      return editPermission({payload,id});
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["permissions"] });

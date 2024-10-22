@@ -1,3 +1,4 @@
+import TaskGroups from "@/pages/TaskGroup";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import Perimssion from "../pages/Permission";
@@ -6,6 +7,8 @@ import Role from "../pages/Role";
 import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
+import Worklog from "@/pages/Worklog";
+import TaskTemplate from "@/pages/TaskTemplate";
 
 const Router = [
   {
@@ -35,6 +38,18 @@ const Router = [
       {
         path: "/task",
         element: <Task />,
+      },
+      {
+        path: "/taskgroup",
+        element: <TaskGroups />,
+      },
+      {
+        path: "/worklog",
+        element: <Worklog />,
+      },
+      {
+        path: "/tasktemplate",
+        element: <TaskTemplate />,
       },
       {
         path: "/user",

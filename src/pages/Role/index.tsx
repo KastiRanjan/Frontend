@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Table, Spin, Alert, Button, Modal, Form, Input, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 
@@ -17,70 +16,6 @@ const RolesTable: React.FC = () => {
   const [form] = Form.useForm();
   const [editingRole, setEditingRole] = useState<Role | null>(null);
 
-  useEffect(() => {
-    const fetchRoles = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get('http://localhost:7777/roles');
-        setRoles(response.data.results);
-      } catch (err: unknown) {
-        console.error('Error fetching roles:', err);
-        if (axios.isAxiosError(err)) {
-          setError(err.message);
-        } else {
-          setError('An unexpected error occurred');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRoles();
-  }, []);
-
-  const handleCreate = async (values: any) => {
-    try {
-      await axios.post('http://localhost:7777/roles', values);
-      const response = await axios.get('http://localhost:7777/roles');
-      setRoles(response.data.results);
-      setIsModalVisible(false);
-      form.resetFields();
-    } catch (err: unknown) {
-      console.error('Error creating role:', err);
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
-    }
-  };
-
-  const handleEdit = (role: Role) => {
-    setEditingRole(role);
-    form.setFieldsValue(role);
-    setIsModalVisible(true);
-  };
-
-  const handleDelete = async (roleName: string) => {
-    try {
-      await axios.delete(`http://localhost:7777/roles/${roleName}`);
-      const response = await axios.get('http://localhost:7777/roles');
-      setRoles(response.data.results);
-    } catch (err: unknown) {
-      console.error('Error deleting role:', err);
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
-    }
-  };
-
-  const handlePermissionModify = (role: Role) => {
-    // Implement the functionality for modifying permissions
-    console.log('Modify permissions for:', role);
-    // You can create a new modal or page to handle permissions
-  };
 
   const columns = [
     {

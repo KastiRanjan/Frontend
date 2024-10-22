@@ -14,7 +14,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const { Header, Content } = Layout;
+const {Content } = Layout;
 const { Title } = Typography;
 
 const UserRoleChart: React.FC<{ data: any[] }> = ({ data }) => (

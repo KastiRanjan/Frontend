@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchPermissions } from "../service/permission.service";
+import { fetchProjects } from "../../service/project.service";
 
-export const usePermission = ({
+export const useProject = ({
   page,
   limit,
 }: {
@@ -9,9 +9,9 @@ export const usePermission = ({
   limit: number;
 }) => {
   return useQuery({
-    queryKey: ["permissions", page, limit],
+    queryKey: ["projects", page, limit],
     queryFn: async () => {
-      return fetchPermissions({ page, limit });
+      return fetchProjects({ page, limit });
     },
     // enabled: !!page && !!limit,
   });
