@@ -8,10 +8,10 @@ export const useRole = ({
   page: number;
   limit: number;
 }) => {
-  return useRole({
-    queryKey: ["projects", page, limit],
+  return useQuery({
+    queryKey: ["role", page, limit],
     queryFn: async () => {
-      return ({ page, limit });
+      return fetchRole({ page, limit });
     },
     // enabled: !!page && !!limit,
   });

@@ -1,17 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjects } from "../../service/project.service";
 
-export const useProject = ({
-  page,
-  limit,
-}: {
-  page: number;
-  limit: number;
-}) => {
+export const useProject = () => {
   return useQuery({
-    queryKey: ["projects", page, limit],
+    queryKey: ["projects"],
     queryFn: async () => {
-      return fetchProjects({ page, limit });
+      return fetchProjects();
     },
     // enabled: !!page && !!limit,
   });

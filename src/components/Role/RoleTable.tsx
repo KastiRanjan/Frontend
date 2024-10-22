@@ -1,51 +1,59 @@
-import { Table, Button } from "antd"; // Added Button import
+import { Table, Button, Popconfirm } from "antd"; // Added Button import
 import { useState } from "react";
-import { EditOutlined } from '@ant-design/icons'; // Added EditOutlined import
-import { usePermission } from "../../hooks/permission/usePermission";
-import { useProject } from "@/hooks/project/useProject";
+import { DeleteOutlined, EditOutlined, SettingOutlined } from '@ant-design/icons'; // Added EditOutlined import
+// import { usePermission } from "../../hooks/permission/usePermission";
+import { useRole } from "@/hooks/role/useRole";
+import { Role } from "@/pages/Role/type";
 
 
 // Modified columns definition to be a function
 const columns = (showEditModal:any) => [
   {
-    title: "Id",
-    dataIndex: "id",
-    key: "id", // Corrected key from "name" to "id"
+    title: 'Name',
+    dataIndex: 'name',
+    key: 'name',
   },
   {
-    title: "Name",
-    dataIndex: "name",
-    key: "name", // Corrected key from "age" to "resource"
+    title: 'Description',
+    dataIndex: 'description',
+    key: 'description',
   },
   {
-    title: "Description",
-    dataIndex: "description",
-    key: "descritpion", // Corrected key from "age" to "method"
+    title: 'Created At',
+    dataIndex: 'createdAt',
+    key: 'createdAt',
+    render: (text: string) => new Date(text).toLocaleString(),
   },
   {
-    title: "Nature Of Project",
-    dataIndex: "natureOfWork",
-    key: "natureOfWork", // Corrected key from "age" to "path"
-  },
-  {
-    title: "Action", // Added Action column for Edit button
-    key: "action",
-    render: (text, record) => (
-      <Button
-        type="primary"
-        icon={<EditOutlined />}
-        onClick={() => showEditModal(record)} // Added click handler
-      >
-        Edit
-      </Button>
+    title: 'Actions',
+    key: 'actions',
+    render: ( record:Role) => (
+      <span>
+        <Button 
+          icon={<EditOutlined />} 
+          onClick={() => showEditModal(record)} 
+          style={{ marginRight: 8 }} 
+        />
+        <Popconfirm
+          title="Are you sure to delete this role?"
+          onConfirm={() => showEditModal}
+          okText="Yes"
+          cancelText="No"
+        >
+          <Button icon={<DeleteOutlined />} style={{ marginRight: 8 }} />
+        </Popconfirm>
+        <Button 
+          icon={<SettingOutlined />} 
+          onClick={() => showEditModal(record)} 
+        />
+      </span>
     ),
   },
-];
-
-const ProjectTable = ({showEditModal}:any) => {
+]
+const RoleTable = ({showEditModal}:any) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: project, isPending } = useProject({ page, limit });
+  const { data: role, isPending } = useRole( { page, limit });
 
 
   const handleTableChange = (pagination:any) => {
@@ -59,24 +67,24 @@ const ProjectTable = ({showEditModal}:any) => {
   const paginationOptions = {
     current: page,
     pageSize: limit,
-    total: project?.totalItems,
+    total: role?.totalItems,
     showSizeChanger: true,
     showQuickJumper: true,
     pageSizeOptions: [5, 10, 20, 30, 50, 100],
-    showTotal: (total, range) =>
+    showTotal: (total:number, range:number[]) =>
       `${range[0]}-${range[1]} of ${total}`,
   };
-  console.log("project", project);
+  console.log("ROLE", role);
 
   return (
     <Table
       loading={isPending}
       pagination={paginationOptions}
-      dataSource={project}
+      dataSource={role}
       columns={columns(showEditModal)} // Pass showEditModal to columns
       onChange={handleTableChange}
     />
   );
 };
 
-export default ProjectTable;
+export default RoleTable;
