@@ -21,6 +21,7 @@ import CreateTaskGroup from "@/pages/TaskGroup/new";
 import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
 import Client from "@/pages/Client";
+import RolePermision from "@/pages/Role/role-permission";
 
 const Router = [
   {
@@ -98,7 +99,7 @@ const Router = [
       },
       {
         path: "/client",
-        element: <Client/>,
+        element: <Client />,
       },
       {
         path: "/settings",
@@ -121,6 +122,10 @@ const Router = [
       {
         path: "/role/new",
         element: <CreateRole />,
+      },
+      {
+        path: "/role/permission/:id",
+        element:<RolePermision/>,
       },
       {
         path: "/role/edit/:id",

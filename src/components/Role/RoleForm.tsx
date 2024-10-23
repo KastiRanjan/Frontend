@@ -47,7 +47,6 @@ const RoleForm = ({ editRoleData, id }: RoleFormProps) => {
         <Button
           type="primary"
           htmlType="submit"
-          style={{ width: "100%" }}
           disabled={isPending || isPendingEdit}
           loading={isPending || isPendingEdit}
         >

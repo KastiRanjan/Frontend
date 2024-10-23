@@ -24,11 +24,18 @@ const columns = [
     title: "Actions",
     key: "actions",
     render: (_: any, record: any) => (
-      <Link to={`/role/edit/${record.id}`}>
-        <Button type="primary" icon={<EditOutlined />}>
-          Edit
-        </Button>
-      </Link>
+      <>
+        <Link to={`/role/edit/${record.id}`}>
+          <Button type="primary" icon={<EditOutlined />}>
+            Edit
+          </Button>
+        </Link>
+        <Link to={`/role/permission/${record.id}`}>
+          <Button type="primary" icon={<EditOutlined />}>
+      Permission
+          </Button>
+        </Link>
+      </>
     ),
   },
 ];
