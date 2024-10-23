@@ -14,6 +14,12 @@ export const fetchTaskTemplate = async ({
   return response.data;
 };
 
+export const fetchTaskTemplateById = async ({ id }: { id: string }) => {
+  const response = await axios.get(`${backendURI}/task-template/${id}`);
+  return response.data;
+};
+
+
 export const createTaskTemplate = async (payload: any) => {
   const response = await axios.post(`${backendURI}/task-template`, payload);
   return response.data;
@@ -25,7 +31,7 @@ export const editTaskTemplate = async ({
   payload: any;
   id: string;
 }) => {
-  const response = await axios.put(
+  const response = await axios.patch(
     `${backendURI}/task-template/${id}`,
     payload
   );

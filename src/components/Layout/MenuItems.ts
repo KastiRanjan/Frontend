@@ -29,7 +29,7 @@ export const MenuItems: MenuItem[] = [
     icon: React.createElement(ProjectOutlined),
   },
   {
-    key: "/tasktemplate",
+    key: "/task-template",
     label: "Task Template",
     icon: React.createElement(TeamOutlined),
   },
@@ -39,7 +39,12 @@ export const MenuItems: MenuItem[] = [
     icon: React.createElement(TeamOutlined),
   },
   {
-    key: "/settings",
+    key: "/client",
+    label: "Client",
+    icon: React.createElement(UserOutlined),
+  },
+  {
+    key: "/permission",
     label: "Settings",
     icon: React.createElement(TeamOutlined),
   },

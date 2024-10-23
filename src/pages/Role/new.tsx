@@ -1,23 +1,23 @@
 import PageTitle from "@/components/PageTitle";
-import TaskTemplateForm from "@/components/TaskTemplate/TaskTemplatForm";
+import RoleForm from "@/components/Role/RoleForm";
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 
-const CreateTaskTemplate = () => {
+const CreateRole = () => {
   const navigate = useNavigate();
   return (
     <>
       <PageTitle
-        title="Create Task Template"
+        title="Create Task Group"
         element={
           <Button type="primary" onClick={() => navigate(-1)}>
             Close
           </Button>
         }
       />
-      <TaskTemplateForm />
+      <RoleForm />
     </>
   );
 };
 
-export default CreateTaskTemplate;
+export default CreateRole;

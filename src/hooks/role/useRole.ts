@@ -13,6 +13,6 @@ export const useRole = ({
     queryFn: async () => {
       return fetchRole({ page, limit });
     },
-    // enabled: !!page && !!limit,
+    enabled: !!page && !!limit,
   });
 };

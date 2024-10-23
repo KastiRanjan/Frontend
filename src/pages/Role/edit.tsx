@@ -1,27 +1,27 @@
 import PageTitle from "@/components/PageTitle";
-import TaskTemplateForm from "@/components/TaskTemplate/TaskTemplatForm";
-import { useTaskTemplateById } from "@/hooks/taskTemplate/useTaskTemplateById";
+import RoleForm from "@/components/Role/RoleForm";
+import { useRoleById } from "@/hooks/role/useRoleById";
 import { Button } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 
-const EditTaskTemplate = () => {
+const EditRole = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { data } = useTaskTemplateById({ id: id?.toString() });
+  const { data: role } = useRoleById({ id });
   return (
     <>
       <PageTitle
-        title="Edit Task Template"
+        title="Create Task Group"
         element={
           <Button type="primary" onClick={() => navigate(-1)}>
             Close
           </Button>
         }
       />
-      <TaskTemplateForm editTaskTemplateData={data} id={id} />
+      <RoleForm editRoleData={role} id={id} />
     </>
   );
 };
 
-export default EditTaskTemplate;
+export default EditRole;

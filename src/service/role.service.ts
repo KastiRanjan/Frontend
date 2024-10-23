@@ -15,14 +15,22 @@ export const fetchRole = async ({
   );
   return response.data;
 };
+export const fetchRoleById = async ({ id }: { id: string }) => {
+  const response = await axios.get(`${backendURI}/roles/${id}`);
+  return response.data;
+};
 
 export const createRole = async (payload: any) => {
   const response = await axios.post(`${backendURI}/roles`, payload);
   return response.data;
 };
-export const editRole = async ({payload, id}:{payload: any, id: string}) => {
+export const editRole = async ({
+  payload,
+  id,
+}: {
+  payload: any;
+  id: string;
+}) => {
   const response = await axios.put(`${backendURI}/roles/${id}`, payload);
   return response.data;
 };
-
-

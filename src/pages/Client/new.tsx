@@ -1,23 +1,23 @@
+import ClientForm from "@/components/Client/ClientForm";
 import PageTitle from "@/components/PageTitle";
-import TaskTemplateForm from "@/components/TaskTemplate/TaskTemplatForm";
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 
-const CreateTaskTemplate = () => {
+const CreateTaskGroup = () => {
   const navigate = useNavigate();
   return (
     <>
       <PageTitle
-        title="Create Task Template"
+        title="Create New Client"
         element={
           <Button type="primary" onClick={() => navigate(-1)}>
             Close
           </Button>
         }
       />
-      <TaskTemplateForm />
+      <ClientForm />
     </>
   );
 };
 
-export default CreateTaskTemplate;
+export default CreateTaskGroup;

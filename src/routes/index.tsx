@@ -18,6 +18,9 @@ import EditProject from "@/pages/Project/edit";
 import EditTaskTemplate from "@/pages/TaskTemplate/edit";
 import EditTaskGroup from "@/pages/TaskGroup/edit";
 import CreateTaskGroup from "@/pages/TaskGroup/new";
+import CreateRole from "@/pages/Role/new";
+import EditRole from "@/pages/Role/edit";
+import Client from "@/pages/Client";
 
 const Router = [
   {
@@ -36,14 +39,7 @@ const Router = [
         path: "/",
         element: <Dashboard />,
       },
-      {
-        path: "/role",
-        element: <Role />,
-      },
-      {
-        path: "/permission",
-        element: <Perimssion />,
-      },
+
       {
         path: "/project",
         element: <Project />,
@@ -77,7 +73,7 @@ const Router = [
         element: <Worklog />,
       },
       {
-        path: "/tasktemplate",
+        path: "/task-template",
         element: <TaskTemplate />,
       },
       {
@@ -101,13 +97,17 @@ const Router = [
         element: <>Edit</>,
       },
       {
+        path: "/client",
+        element: <Client/>,
+      },
+      {
         path: "/settings",
         element: <>setting</>,
       },
     ],
   },
   {
-    path: "/settings",
+    path: "/",
     element: (
       <SettingLayout>
         <PrivateRoute />
@@ -115,8 +115,20 @@ const Router = [
     ),
     children: [
       {
-        path: "",
-        element: <>setting</>,
+        path: "/role",
+        element: <Role />,
+      },
+      {
+        path: "/role/new",
+        element: <CreateRole />,
+      },
+      {
+        path: "/role/edit/:id",
+        element: <EditRole />,
+      },
+      {
+        path: "/permission",
+        element: <Perimssion />,
       },
     ],
   },

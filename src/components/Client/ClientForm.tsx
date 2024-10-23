@@ -11,10 +11,7 @@ interface TaskTemplateFormProps {
   editTaskGroupData?: any;
   id?: number;
 }
-const TaskTemplateForm = ({
-  editTaskTemplateData,
-  id,
-}: TaskTemplateFormProps) => {
+const ClientForm = ({ editTaskTemplateData, id }: TaskTemplateFormProps) => {
   const [form] = Form.useForm();
 
   const { data: groups, isPending } = useTaskGroup();
@@ -86,4 +83,4 @@ const TaskTemplateForm = ({
   );
 };
 
-export default TaskTemplateForm;
+export default ClientForm;
