@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import PageTitle from '@/components/PageTitle';
-import RoleTable from '@/components/Role/RoleTable';
-import RoleForm from '@/components/Role/RoleForm';
+import PageTitle from "@/components/PageTitle";
+import RoleTable from "@/components/Role/RoleTable";
+import { Button } from "antd";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Role {
   createdAt: string;
@@ -10,33 +11,25 @@ interface Role {
 }
 
 const RolesPage: React.FC = () => {
-  const [showRoleForm, setShowRoleFrom] = useState<boolean>(false);
-  const [isFormEdit, setIsFormEdit] = useState<boolean>(false);
-  const [editRoleData, setEditRoleData] = useState<any>();
-
-  const showEditModal = (record: Role) => {
-    setShowRoleFrom(true);
-    setEditRoleData(record);
-    setIsFormEdit(true);
-  };
-  const handleCloseRoleForm = () => {
-    setShowRoleFrom(false);
-    setIsFormEdit(false);
-  };
+  const navigate = useNavigate();
 
   return (
     <>
-    <PageTitle title="Roles" />
-    <RoleTable showEditModal={showEditModal} />
-    <RoleForm
-      visible={showRoleForm}
-      onCancel={handleCloseRoleForm}
-      editRoleData={editRoleData}
-      isformEdit={isFormEdit}
-    />
-  </>
-    
-
+      <PageTitle
+        title="Roles"
+        element={
+          <Button
+            type="primary"
+            onClick={() => {
+              navigate("/role/new");
+            }}
+          >
+            Create
+          </Button>
+        }
+      />
+      <RoleTable />
+    </>
   );
 };
 

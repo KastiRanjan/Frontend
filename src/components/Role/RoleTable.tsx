@@ -1,68 +1,46 @@
-import { Table, Button, Popconfirm } from "antd"; // Added Button import
+import { Button, Table } from "antd";
 import { useState } from "react";
-import { DeleteOutlined, EditOutlined, SettingOutlined } from '@ant-design/icons'; // Added EditOutlined import
-// import { usePermission } from "../../hooks/permission/usePermission";
 import { useRole } from "@/hooks/role/useRole";
-import { Role } from "@/pages/Role/type";
+import { EditOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 
-
-// Modified columns definition to be a function
-const columns = (showEditModal:any) => [
+const columns = [
   {
-    title: 'Name',
-    dataIndex: 'name',
-    key: 'name',
+    title: "Name",
+    dataIndex: "name",
+    key: "name",
   },
   {
-    title: 'Description',
-    dataIndex: 'description',
-    key: 'description',
+    title: "Description",
+    dataIndex: "description",
+    key: "description",
   },
   {
-    title: 'Created At',
-    dataIndex: 'createdAt',
-    key: 'createdAt',
-  
+    title: "Created At",
+    dataIndex: "createdAt",
+    key: "createdAt",
   },
   {
-    title: 'Actions',
-    key: 'actions',
-    render: ( record:Role) => (
-      <span>
-        <Button 
-          icon={<EditOutlined />} 
-          onClick={() => showEditModal(record)} 
-          style={{ marginRight: 8 }} 
-        />
-        <Popconfirm
-          title="Are you sure to delete this role?"
-          onConfirm={() => showEditModal}
-          okText="Yes"
-          cancelText="No"
-        >
-          <Button icon={<DeleteOutlined />} style={{ marginRight: 8 }} />
-        </Popconfirm>
-        <Button 
-          icon={<SettingOutlined />} 
-          onClick={() => showEditModal(record)} 
-        />
-      </span>
+    title: "Actions",
+    key: "actions",
+    render: (_: any, record: any) => (
+      <Link to={`/role/edit/${record.id}`}>
+        <Button type="primary" icon={<EditOutlined />}>
+          Edit
+        </Button>
+      </Link>
     ),
   },
-]
-const RoleTable = ({showEditModal}:any) => {
+];
+const RoleTable = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: role, isPending } = useRole( { page, limit });
+  const { data: role, isPending } = useRole({ page, limit });
 
-
-  const handleTableChange = (pagination:any) => {
+  const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
   };
-
-  // Function to handle showing the edit modal
-
 
   const paginationOptions = {
     current: page,
@@ -71,17 +49,16 @@ const RoleTable = ({showEditModal}:any) => {
     showSizeChanger: true,
     showQuickJumper: true,
     pageSizeOptions: [5, 10, 20, 30, 50, 100],
-    showTotal: (total:number, range:number[]) =>
+    showTotal: (total: number, range: number[]) =>
       `${range[0]}-${range[1]} of ${total}`,
   };
-  console.log("ROLE", role);
 
   return (
     <Table
       loading={isPending}
       pagination={paginationOptions}
-      dataSource={role.results}
-      columns={columns(showEditModal)} // Pass showEditModal to columns
+      dataSource={role?.results}
+      columns={columns}
       onChange={handleTableChange}
     />
   );

@@ -1,9 +1,8 @@
 import { useTaskTemplate } from "@/hooks/taskTemplate/useTaskTemplate";
-import { Button, Checkbox, Input, Table } from "antd";
+import { EditOutlined } from "@ant-design/icons";
+import { Button, Checkbox, Table } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { EditOutlined } from "@ant-design/icons";
-import { render } from "react-dom";
 
 const columns = [
   {
@@ -51,7 +50,7 @@ const columns = [
   },
 ];
 
-const TaskTemplateTable = () => {
+const ClientTable = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: taskTemplate, isPending } = useTaskTemplate({ page, limit });
@@ -61,27 +60,14 @@ const TaskTemplateTable = () => {
     setLimit(pagination.pageSize);
   };
 
-  // Function to handle showing the edit modal
-
-  //   const paginationOptions = {
-  //     current: page,
-  //     pageSize: limit,
-  //     total: user?.totalItems,
-  //     showSizeChanger: true,
-  //     showQuickJumper: true,
-  //     pageSizeOptions: [5, 10, 20, 30, 50, 100],
-  //     showTotal: (total: number, range: number[]) => `${range[0]}-${range[1]} of ${total}`,
-  //   };
-
   return (
     <Table
       loading={isPending}
-      //   pagination={paginationOptions}
       dataSource={taskTemplate || []}
-      columns={columns} // Pass showEditModal to columns
+      columns={columns}
       onChange={handleTableChange}
     />
   );
 };
 
-export default TaskTemplateTable;
+export default ClientTable;

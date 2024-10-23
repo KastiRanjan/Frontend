@@ -46,7 +46,7 @@ const Sidebar = ({
           collapsed={collapsed}
           width={250}
           theme="light"
-          className="border-r bg-[#fafafa] "
+          className="border-r bg-[#fafafa] h-screen overflow-hidden"
         >
           <div className="h-[32px] bg-[#fff3] m-5 rounded">
             <div className="relative z-20 flex items-center text-lg font-medium ">

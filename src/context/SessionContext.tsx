@@ -28,7 +28,6 @@ export const SessionProvider = ({
       console.log("Session expired");
       setIsAuthenticated(false);
     } else {
-      console.log("Session expired");
       setLoading(false);
       setIsAuthenticated(true);
     }

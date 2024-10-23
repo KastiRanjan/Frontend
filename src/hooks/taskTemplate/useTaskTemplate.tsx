@@ -9,7 +9,7 @@ export const useTaskTemplate = ({
   limit: number;
 }) => {
   return useQuery({
-    queryKey: ["permissions", page, limit],
+    queryKey: ["taskTemplate", page, limit],
     queryFn: async () => {
       return fetchTaskTemplate({ page, limit });
     },

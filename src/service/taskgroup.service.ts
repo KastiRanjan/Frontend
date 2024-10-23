@@ -8,6 +8,12 @@ export const fetchTaskGroup = async () => {
   return response.data;
 };
 
+export const fetchTaskGroupById = async ({ id }: { id: string }) => {
+  const response = await axios.get(`${backendURI}/task-group/${id}`);
+  return response.data;
+};
+
+
 export const createTaskGroup = async (payload: any) => {
   const response = await axios.post(`${backendURI}/task-group`, payload);
   return response.data;
@@ -19,6 +25,6 @@ export const editTaskGroup = async ({
   payload: any;
   id: string;
 }) => {
-  const response = await axios.put(`${backendURI}/task-group/${id}`, payload);
+  const response = await axios.patch(`${backendURI}/task-group/${id}`, payload);
   return response.data;
 };

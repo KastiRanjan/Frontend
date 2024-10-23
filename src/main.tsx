@@ -5,6 +5,7 @@ import { IntlProvider } from "react-intl";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import "./index.css";
+import { SessionProvider } from "./context/SessionContext.tsx";
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
@@ -12,7 +13,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={{}}>
         <BrowserRouter>
-          <App />
+          <SessionProvider>
+            <App />
+          </SessionProvider>
         </BrowserRouter>
       </IntlProvider>
     </QueryClientProvider>
