@@ -1,19 +1,19 @@
 export interface User {
-    id: string;
+    id: number;
     name: string;
     email: string;
     status: string;
   }
   
  export interface Task {
-    id: string;
+    id: number;
     name: string;
     description: string;
     dueDate: string;
   }
   
  export interface Project {
-    id: string;
+    id: number;
     name: string;
     description: string;
     status: "active" | "suspended" | "archived" | "signed_off";
