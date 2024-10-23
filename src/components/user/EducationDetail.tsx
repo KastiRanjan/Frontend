@@ -4,18 +4,18 @@ import FormInputWrapper from "../FormInputWrapper";
 
 const EducationDetail = () => {
   return (
-    <>
+    <Form.Item name="educationDetails" label="Education Details">
       <Title level={5}>Education Details</Title>
       <FormInputWrapper
         id="universityCollege"
         name="universityCollege"
         label="University/College"
-        rules={[
-          {
-            required: true,
-            message: "Please input the university/college name",
-          },
-        ]}
+        // rules={[
+        //   {
+        //     required: true,
+        //     message: "Please input the university/college name",
+        //   },
+        // }
       />
 
       {/* Faculty */}
@@ -23,16 +23,16 @@ const EducationDetail = () => {
         id="faculty"
         name="faculty"
         label="Faculty"
-        rules={[{ required: true, message: "Please input the faculty name" }]}
+        // rules={[{ required: true, message: "Please input the faculty name" }]}
       />
 
       {/* Year of Passing */}
       <Form.Item
         name="yearOfPassing"
         label="Year of Passing"
-        rules={[
-          { required: true, message: "Please input the year of passing" },
-        ]}
+        // rules={[
+        //   { required: true, message: "Please input the year of passing" },
+        // ]}
       >
         <InputNumber min={1900} max={new Date().getFullYear()} />
       </Form.Item>
@@ -41,7 +41,7 @@ const EducationDetail = () => {
       <Form.Item
         name="placeOfIssue"
         label="Place of Issue"
-        rules={[{ required: true, message: "Please input the place of issue" }]}
+        // rules={[{ required: true, message: "Please input the place of issue" }]}
       >
         <Input maxLength={100} />
       </Form.Item>
@@ -63,7 +63,7 @@ const EducationDetail = () => {
           <Button icon={<UploadOutlined />}>Click to Upload</Button>
         </Upload>
       </Form.Item> */}
-    </>
+    </Form.Item>
   );
 };
 export default EducationDetail;

@@ -31,7 +31,7 @@ const columns = () => [
   },
   {
     title: "Status",
-    dataIndex: "status",
+    dataIndex: "status",  
     key: "status",
   },
   {
@@ -41,7 +41,7 @@ const columns = () => [
     render: (role: Role) => role.name,
   },
   {
-    title: "Action", // Added Action column for Edit button
+    title: "Action",
     key: "action",
     render: (text, record) => (
       <Button type="primary" icon={<EditOutlined />}>

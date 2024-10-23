@@ -8,7 +8,7 @@ const BankDetail = () => {
       <Form.Item
         name="bankName"
         label="Bank Name"
-        rules={[{ required: true, message: "Please input the bank name" }]}
+        // rules={[{ required: true, message: "Please input the bank name" }]}
       >
         <Input maxLength={100} />
       </Form.Item>
@@ -17,7 +17,7 @@ const BankDetail = () => {
       <Form.Item
         name="bankBranch"
         label="Bank Branch"
-        rules={[{ required: true, message: "Please input the bank branch" }]}
+        // rules={[{ required: true, message: "Please input the bank branch" }]}
       >
         <Input maxLength={100} />
       </Form.Item>
@@ -26,10 +26,10 @@ const BankDetail = () => {
       <Form.Item
         name="accountNo"
         label="Account Number"
-        rules={[
-          { required: true, message: "Please input the account number" },
-          { max: 20, message: "Account number cannot exceed 20 characters" },
-        ]}
+        // rules={[
+        //   { required: true, message: "Please input the account number" },
+        //   { max: 20, message: "Account number cannot exceed 20 characters" },
+        // ]}
       >
         <Input maxLength={20} />
       </Form.Item>

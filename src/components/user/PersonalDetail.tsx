@@ -1,11 +1,11 @@
-import { Col, Form, Input, InputNumber, Row, Select, Switch } from "antd";
+import { Checkbox, Col, Form,InputNumber, Row,Switch } from "antd";
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 
-const { Option } = Select;
 
 const PersonalDetail = () => {
+  
   return (
     <>
       <Title level={5}>Personal Details</Title>
@@ -30,7 +30,7 @@ const PersonalDetail = () => {
             id="location"
             name="location"
             label="Location"
-            rules={[{ required: true, message: "Please input location" }]}
+            // rules={[{ required: true, message: "Please input location" }]}
           />
         </Col>
         <Col span={8}>
@@ -39,7 +39,7 @@ const PersonalDetail = () => {
             id="bloodGroup"
             name="bloodGroup"
             label="Blood Group"
-            rules={[{ required: true, message: "Please select blood group" }]}
+            // rules={[{ required: true, message: "Please select blood group" }]}
             options={[
               { value: "A+", label: "A+" },
               { value: "A-", label: "A-" },
@@ -58,9 +58,9 @@ const PersonalDetail = () => {
             id="maritalStatus"
             name="maritalStatus"
             label="Marital Status"
-            rules={[
-              { required: true, message: "Please select marital status" },
-            ]}
+            // rules={[
+            //   { required: true, message: "Please select marital status" },
+            // ]}
             options={["single", "married", "divorced", "widowed"].map(
               (status) => ({
                 value: status,
@@ -75,7 +75,7 @@ const PersonalDetail = () => {
             id="gender"
             name="gender"
             label="Gender"
-            rules={[{ required: true, message: "Please select gender" }]}
+            // rules={[{ required: true, message: "Please select gender" }]}
             options={["male", "female"].map((gender) => ({
               value: gender,
               label: gender,
@@ -90,7 +90,7 @@ const PersonalDetail = () => {
             name="taxCalculation"
             label="Tax Calculation"
             rules={[
-              { required: true, message: "Please select tax calculation type" },
+              // { required: true, message: "Please select tax calculation type" },
             ]}
             options={[
               { value: "single_assessee", label: "Single Assessee" },
@@ -104,9 +104,28 @@ const PersonalDetail = () => {
             id="panNo"
             name="panNo"
             label="PAN No"
-            rules={[{ required: true, message: "Please input PAN number" }]}
+            // rules={[{ required: true, message: "Please input PAN number" }]}
           />
         </Col>
+        <Col span={8}>
+          {/* Personal Contact Fields */}
+          <FormInputWrapper
+            id="contactNo"
+            name="contactNo"
+            label="Contact No"
+          />
+        </Col>
+        <Col span={8}>
+          <FormInputWrapper
+            id="personalEmail"
+            name="personalEmail"
+            label="Personal Email"
+            rules={[{ type: "email", message: "Please input valid email" }]}
+          />
+        </Col>  
+        </Row>
+        <Title level={5}>Permanent Address Details</Title>
+        <Row gutter={30}>
         <Col span={8}>
           {/* Permanent Address Fields */}
           <FormInputWrapper
@@ -150,6 +169,11 @@ const PersonalDetail = () => {
             label="Permanent Address Locality"
           />
         </Col>
+        </Row>
+   
+        <Title level={5}>Temporary Address Details</Title>
+        <Checkbox>Same as Permanent Address</Checkbox>
+        <Row gutter={30}>
         <Col span={8}>
           {/* Temporary Address Fields */}
           <FormInputWrapper
@@ -185,7 +209,18 @@ const PersonalDetail = () => {
             name="temporaryAddressWardNo"
             label="Temporary Address Ward No"
           />
+          
         </Col>
+        <Col span={8}>
+          <FormInputWrapper
+            id="temporaryAddressLocality"
+            name="temporaryAddressLocality"
+            label="Temporary Address Locality"
+          />
+        </Col>
+        </Row>
+        <Title level={5}>Guardian Details</Title>
+        <Row gutter={30}>
         <Col span={8}>
           {/* Guardian Fields */}
           <FormInputWrapper
@@ -208,27 +243,12 @@ const PersonalDetail = () => {
             label="Guardian Contact"
           />
         </Col>
-        <Col span={8}>
-          {/* Personal Contact Fields */}
-          <FormInputWrapper
-            id="contactNo"
-            name="contactNo"
-            label="Contact No"
-          />
-        </Col>
+
         <Col span={8}>
           <FormInputWrapper
             id="alternateContactNo"
             name="alternateContactNo"
             label="Alternate Contact No"
-          />
-        </Col>
-        <Col span={8}>
-          <FormInputWrapper
-            id="personalEmail"
-            name="personalEmail"
-            label="Personal Email"
-            rules={[{ type: "email", message: "Please input valid email" }]}
           />
         </Col>
         <Col span={8}>
