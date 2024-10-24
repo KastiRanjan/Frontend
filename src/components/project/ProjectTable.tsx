@@ -9,25 +9,25 @@ const columns = [
   {
     title: "Id",
     dataIndex: "id",
-    key: "id", // Corrected key from "name" to "id"
+    key: "id",
   },
   {
     title: "Name",
     dataIndex: "name",
-    key: "name", // Corrected key from "age" to "resource"
+    key: "name", 
   },
   {
     title: "Description",
     dataIndex: "description",
-    key: "descritpion", // Corrected key from "age" to "method"
+    key: "descritpion",
   },
   {
     title: "Nature Of Project",
     dataIndex: "natureOfWork",
-    key: "natureOfWork", // Corrected key from "age" to "path"
+    key: "natureOfWork",
   },
   {
-    title: "Action", // Added Action column for Edit button
+    title: "Action",
     key: "action",
     render: (_: any, record: any) => (
       <>
@@ -36,9 +36,14 @@ const columns = [
             Edit
           </Button>
         </Link>
-        <Link to={`/project/tasks`}>
+        <Link to={`/project/detail/${record.id}`}>
           <Button type="primary" icon={<EditOutlined />}>
-            Edit
+            Detail
+          </Button>
+        </Link>
+        <Link to={`/project/${record.id}/tasks`}>
+          <Button type="primary" icon={<EditOutlined />}>
+            Tasks
           </Button>
         </Link>
       </>

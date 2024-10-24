@@ -1,7 +1,9 @@
 // src/ProjectDetail.tsx
 import React from 'react';
-import { Card, Col, Row, Typography, Table } from 'antd';
+import { Card, Col, Row, Typography, Table, Button } from 'antd';
 import { Project } from '@/pages/Project/type';
+import PageTitle from '../PageTitle';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -12,6 +14,8 @@ interface ProjectDetailProps {
 
 const ProjectDetailComponent: React.FC<ProjectDetailProps> = ({ project , id}) => {
   const { name, description, startingDate, endingDate, users, tasks } = project;
+  const navigate = useNavigate();
+
 
   const userColumns = [
     { title: 'Username', dataIndex: 'username', key: 'username' },
@@ -28,9 +32,9 @@ const ProjectDetailComponent: React.FC<ProjectDetailProps> = ({ project , id}) =
   ];
 
   return (
+    <>
+    <Title level={2}>{name}</Title>
     <Card style={{ margin: '20px' }}>
-      <Title level={2}>{name}</Title>
-      <Text>{description}</Text>
       <Row style={{ marginTop: '20px' }}>
         <Col span={12}>
           <Text strong>Starting Date:</Text> {new Date(startingDate).toLocaleDateString()}
@@ -41,11 +45,14 @@ const ProjectDetailComponent: React.FC<ProjectDetailProps> = ({ project , id}) =
       </Row>
 
       <Title level={4} style={{ marginTop: '20px' }}>Users</Title>
+
       <Table dataSource={users} columns={userColumns} rowKey="username" />
 
       <Title level={4} style={{ marginTop: '20px' }}>Tasks</Title>
       <Table dataSource={tasks} columns={taskColumns} rowKey="name" />
+      <Button type="primary" style={{ marginTop: '20px' }} onClick={() => navigate(`/project/${id}/tasks`)}>Add Task</Button>
     </Card>
+    </>
   );
 };
 

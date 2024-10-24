@@ -24,6 +24,7 @@ import Client from "@/pages/Client";
 import RolePermision from "@/pages/Role/role-permission";
 import ProjectDetail from "@/pages/Project/detail";
 import ProjectLayout from "@/components/Layout/ProjectLayout";
+import NewTask from "@/pages/Task/new";
 
 const Router = [
   {
@@ -144,7 +145,7 @@ const Router = [
     ],
   },
   {
-    path: "/project",
+    path: "/project/:id",
     element: (
       <ProjectLayout>
         <PrivateRoute />
@@ -154,6 +155,10 @@ const Router = [
       {
         path: "tasks",
         element: <Task />,
+      },
+      {
+        path: "tasks/new",
+        element: <NewTask />,
       },
     ],
   },
