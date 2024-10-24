@@ -19,8 +19,8 @@ export const MenuItems: MenuItem[] = [
     icon: React.createElement(DashboardOutlined),
   },
   {
-    key: "/user",
-    label: "User",
+    key: "/users",
+    label: "Users",
     icon: React.createElement(UserOutlined),
   },
   {

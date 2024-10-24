@@ -10,7 +10,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <Layout style={{ height: "100vh" }}>
+    <Layout hasSider>
       <Sidebar collapsed={collapsed} menuItems={MenuItems} />
       <Layout className="bg-[#fff] h-screen overflow-hidden">
         <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />

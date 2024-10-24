@@ -11,11 +11,10 @@ import FormSelectWrapper from "../FormSelectWrapper";
 
 interface ProjectFormProps {
   editProjectData?: Project;
-  isformEdit?: boolean;
   id?: number;
 }
 
-const ProjectForm = ({ editProjectData, isformEdit, id }: ProjectFormProps) => {
+const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
@@ -154,7 +153,7 @@ const ProjectForm = ({ editProjectData, isformEdit, id }: ProjectFormProps) => {
           disabled={isPending || isPendingEdit}
           loading={isPending || isPendingEdit}
         >
-          {isformEdit ? "Update Project" : "Add Project"}
+          Save
         </Button>
       </Form.Item>
     </Form>

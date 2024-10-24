@@ -5,6 +5,7 @@ import BankDetail from "./BankDetail";
 import UserAuthDetail from "./UserAuthDetail";
 import TrainningDetail from "./TrainningDetail";
 import ContractDetail from "./ContractDetail";
+import { useCreateUser } from "@/hooks/user/userCreateuser";
 
 const UserForm = () => {
   const [formAuth] = Form.useForm();
@@ -13,6 +14,8 @@ const UserForm = () => {
   const [formBank] = Form.useForm();
   const [formTraining] = Form.useForm();
   const [formContract] = Form.useForm();
+
+  const { mutate } = useCreateUser();
 
   const handleFinish = () => {
     const authValues = formAuth.getFieldsValue();
@@ -23,7 +26,7 @@ const UserForm = () => {
     const contractValues = formContract.getFieldsValue();
 
     const allValues = {
-      auth: authValues,
+      ...authValues,
       personal: personalValues,
       education: educationValues,
       bank: bankValues,
@@ -32,6 +35,8 @@ const UserForm = () => {
     };
 
     console.log(allValues);
+
+    mutate(allValues);
   };
 
   return (

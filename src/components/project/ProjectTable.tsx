@@ -30,11 +30,18 @@ const columns = [
     title: "Action", // Added Action column for Edit button
     key: "action",
     render: (_: any, record: any) => (
-      <Link to={`/project/edit/${record.id}`}>
-        <Button type="primary" icon={<EditOutlined />}>
-          Edit
-        </Button>
-      </Link>
+      <>
+        <Link to={`/project/edit/${record.id}`}>
+          <Button type="primary" icon={<EditOutlined />}>
+            Edit
+          </Button>
+        </Link>
+        <Link to={`/project/tasks`}>
+          <Button type="primary" icon={<EditOutlined />}>
+            Edit
+          </Button>
+        </Link>
+      </>
     ),
   },
 ];

@@ -22,6 +22,7 @@ import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
 import Client from "@/pages/Client";
 import RolePermision from "@/pages/Role/role-permission";
+import ProjectLayout from "@/components/Layout/ProjectLayout";
 
 const Router = [
   {
@@ -86,7 +87,7 @@ const Router = [
         element: <EditTaskTemplate />,
       },
       {
-        path: "/user",
+        path: "/users",
         element: <User />,
       },
       {
@@ -125,7 +126,7 @@ const Router = [
       },
       {
         path: "/role/permission/:id",
-        element:<RolePermision/>,
+        element: <RolePermision />,
       },
       {
         path: "/role/edit/:id",
@@ -134,6 +135,20 @@ const Router = [
       {
         path: "/permission",
         element: <Perimssion />,
+      },
+    ],
+  },
+  {
+    path: "/project",
+    element: (
+      <ProjectLayout>
+        <PrivateRoute />
+      </ProjectLayout>
+    ),
+    children: [
+      {
+        path: "tasks",
+        element: <Task />,
       },
     ],
   },

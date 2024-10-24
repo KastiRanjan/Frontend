@@ -1,8 +1,12 @@
-// src/pages/Dashboard/index.tsx
-import React from 'react';
+import PageTitle from "@/components/PageTitle";
+import React from "react";
 
 const Task: React.FC = () => {
-  return <h1>Task</h1>;
+  return (
+    <>
+      <PageTitle title="Task" />
+    </>
+  );
 };
 
 export default Task;

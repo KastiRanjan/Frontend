@@ -1,17 +1,17 @@
 import { Layout } from "antd";
 import React, { useState } from "react";
 import Navbar from "./Navbar";
+import { ProjectMenuItems } from "./ProjectMenus";
 import Sidebar from "./Sidebar";
-import { SettingMenus } from "./SettingMenus";
 
 const { Content } = Layout;
 
-const SettingLayout = ({ children }: { children: React.ReactNode }) => {
+const ProjectLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <Layout hasSider>
-      <Sidebar collapsed={collapsed} menuItems={SettingMenus} />
+      <Sidebar collapsed={collapsed} menuItems={ProjectMenuItems} />
       <Layout className="bg-[#fff] h-screen overflow-hidden">
         <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />
         <Content
@@ -25,4 +25,4 @@ const SettingLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default SettingLayout;
+export default ProjectLayout;
