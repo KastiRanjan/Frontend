@@ -1,4 +1,4 @@
-import { Button, Col, DatePicker, Form, Modal, Row, Select } from "antd";
+import { Button, Col, DatePicker, Form, Row } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 import { Project } from "@/pages/Project/type";
 import { useEffect } from "react";
@@ -11,11 +11,10 @@ import FormSelectWrapper from "../FormSelectWrapper";
 
 interface ProjectFormProps {
   editProjectData?: Project;
-  isformEdit?: boolean;
   id?: number;
 }
 
-const ProjectForm = ({ editProjectData, isformEdit, id }: ProjectFormProps) => {
+const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
@@ -154,7 +153,7 @@ const ProjectForm = ({ editProjectData, isformEdit, id }: ProjectFormProps) => {
           disabled={isPending || isPendingEdit}
           loading={isPending || isPendingEdit}
         >
-          {isformEdit ? "Update Project" : "Add Project"}
+          {id? "Update Project" : "Add Project"}
         </Button>
       </Form.Item>
     </Form>

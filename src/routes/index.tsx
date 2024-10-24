@@ -22,6 +22,7 @@ import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
 import Client from "@/pages/Client";
 import RolePermision from "@/pages/Role/role-permission";
+import ProjectDetail from "@/pages/Project/detail";
 
 const Router = [
   {
@@ -52,6 +53,10 @@ const Router = [
       {
         path: "/project/edit/:id",
         element: <EditProject />,
+      },
+      {
+        path: "/project/detail/:id",
+        element: <ProjectDetail />,
       },
       {
         path: "/task",

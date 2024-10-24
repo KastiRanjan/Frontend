@@ -8,7 +8,9 @@ export const fetchProjects = async () => {
   return response.data;
 };
 export const fetchProject = async ({ id }: { id: string }) => {
+  console.log(id);
   const response = await axios.get(`${backendURI}/projects/${id}`);
+
   return response.data;
 };
 
