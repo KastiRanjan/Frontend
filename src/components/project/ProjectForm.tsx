@@ -153,7 +153,7 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
           disabled={isPending || isPendingEdit}
           loading={isPending || isPendingEdit}
         >
-          {id? "Update Project" : "Add Project"}
+          Save
         </Button>
       </Form.Item>
     </Form>

@@ -66,7 +66,7 @@ const Sidebar = ({
               </div>
               <div className={`${collapsed ? "hidden" : "visible"}`}>
                 <h5>Artha task</h5>
-                <p className="text-xs text-zinc-400">Manage your task</p>
+                <p className="text-xs text-zinc-400 whitespace-nowrap">Manage your task</p>
               </div>
             </div>
           </div>
@@ -77,9 +77,9 @@ const Sidebar = ({
             items={menuItems}
             className="border-inline-0 bg-[#fafafa] "
           />
-          <div className="absolute bottom-5 right-5">
+          {/* <div className="absolute bottom-5 right-5">
             <span className="text-sm">{new Date().toLocaleString()}</span>
-          </div>
+          </div> */}
         </Sider>
       ) : (
         <Drawer

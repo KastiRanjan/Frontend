@@ -1,13 +1,13 @@
 import PageTitle from "@/components/PageTitle";
 import ProjectForm from "@/components/project/ProjectForm";
 import { useProjectById } from "@/hooks/project/useProjectById";
-import { Button } from "antd";
+import { Button, Spin } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 
 const EditProject = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data } = useProjectById({ id: id?.toString() });
+  const { data, isPending } = useProjectById({ id: id?.toString() });
 
   return (
     <>
@@ -19,7 +19,7 @@ const EditProject = () => {
           </Button>
         }
       />
-      <ProjectForm editProjectData={data} id={id} />
+     {isPending ? <Spin /> : <ProjectForm editProjectData={data} id={id} />}
     </>
   );
 };
