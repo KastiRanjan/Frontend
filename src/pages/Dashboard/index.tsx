@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Layout, Typography, Spin, Row, Col, Card } from "antd";
+import { Layout, Typography, Spin, Row, Col, Card, List } from "antd";
 import {
   PieChart,
   Pie,
@@ -110,45 +110,89 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <>
-      <PageTitle title="Welcome to Artha Task" />
-      {loading ? (
-        <Spin size="large" />
-      ) : (
-        <>
-          <Row gutter={16} style={{ marginBottom: "20px" }}>
-            <Col span={8}>
-              <Card title="Total Users" bordered>
-                <Title level={4}>{totalUsers}</Title>
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card title="Active Users" bordered>
-                <Title level={4}>{activeUsers}</Title>
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card title="Inactive Users" bordered>
-                <Title level={4}>{inactiveUsers}</Title>
-              </Card>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Card title="User Role Distribution" bordered>
-                <UserRoleChart data={roleData} />
-              </Card>
-            </Col>
-            <Col span={12}>
-              <Card title="Project Nature Distribution" bordered>
-                <ProjectNatureChart data={natureData} />
-              </Card>
-            </Col>
-          </Row>
-        </>
-      )}
-    </>
+    <Row gutter={16}>
+      <Col span={17}>
+        <PageTitle title="Welcome to Artha Task" />
+        {loading ? (
+          <Spin size="large" />
+        ) : (
+          <>
+            <Row gutter={16} style={{ marginBottom: "20px" }}>
+              <Col span={8}>
+                <Card title="Total Users" bordered>
+                  <Title level={4}>{totalUsers}</Title>
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card title="Active Users" bordered>
+                  <Title level={4}>{activeUsers}</Title>
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card title="Inactive Users" bordered>
+                  <Title level={4}>{inactiveUsers}</Title>
+                </Card>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Card title="User Role Distribution" bordered>
+                  <UserRoleChart data={roleData} />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card title="Project Nature Distribution" bordered>
+                  <ProjectNatureChart data={natureData} />
+                </Card>
+              </Col>
+            </Row>
+          </>
+        )}
+      </Col>
+      <Col span={7}>
+        <PageTitle title="Notifications" />
+        <List
+          itemLayout="horizontal"
+          dataSource={notifications}
+          renderItem={(item) => (
+            <List.Item>
+              <List.Item.Meta
+                title={item.title}
+                description={item.description}
+              />
+            </List.Item>
+          )}
+        />
+      </Col>
+    </Row>
   );
 };
 
 export default Dashboard;
+
+const notifications = [
+  {
+    title: "Project 1",
+    description: "Project 1 has been created",
+  },
+  {
+    title: "Project 2",
+    description: "Project 2 has been created",
+  },
+  {
+    title: "Project 3",
+    description: "Project 3 has been created",
+  },
+  {
+    title: "Project 1",
+    description: "Project 1 has been created",
+  },
+  {
+    title: "Project 2",
+    description: "Project 2 has been created",
+  },
+  {
+    title: "Project 3",
+    description: "Project 3 has been created",
+  },
+];

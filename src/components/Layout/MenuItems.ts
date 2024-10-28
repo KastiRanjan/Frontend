@@ -20,7 +20,7 @@ export const MenuItems: MenuItem[] = [
   },
   {
     key: "/users",
-    label: "Users",
+    label: "Directory",
     icon: React.createElement(UserOutlined),
   },
   {

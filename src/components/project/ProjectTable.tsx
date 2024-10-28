@@ -1,20 +1,19 @@
 import { useProject } from "@/hooks/project/useProject";
+import { Project } from "@/pages/Project/type";
 import { EditOutlined } from "@ant-design/icons";
-import { Button, Table } from "antd"; // Added Button import
+import { Avatar, Button, Table, TableProps } from "antd";
+import _ from "lodash";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-// Modified columns definition to be a function
 const columns = [
-  {
-    title: "Id",
-    dataIndex: "id",
-    key: "id",
-  },
   {
     title: "Name",
     dataIndex: "name",
-    key: "name", 
+    key: "name",
+    render: (_: any, record: any) => (
+      <Link to={`/project/${record.id}/tasks`}>{record.name}</Link>
+    ),
   },
   {
     title: "Description",
@@ -27,6 +26,19 @@ const columns = [
     key: "natureOfWork",
   },
   {
+    title: "Project Lead",
+    dataIndex: "natureOfWork",
+    key: "natureOfWork",
+    render: (_: any, record: any) => (
+      <>
+        <Avatar size={"small"} className="bg-zinc-500">
+          R
+        </Avatar>{" "}
+        &nbsp; Ranjan Kasti
+      </>
+    ),
+  },
+  {
     title: "Action",
     key: "action",
     render: (_: any, record: any) => (
@@ -34,16 +46,6 @@ const columns = [
         <Link to={`/project/edit/${record.id}`}>
           <Button type="primary" icon={<EditOutlined />}>
             Edit
-          </Button>
-        </Link>
-        <Link to={`/project/detail/${record.id}`}>
-          <Button type="primary" icon={<EditOutlined />}>
-            Detail
-          </Button>
-        </Link>
-        <Link to={`/project/${record.id}/tasks`}>
-          <Button type="primary" icon={<EditOutlined />}>
-            Tasks
           </Button>
         </Link>
       </>
@@ -74,13 +76,24 @@ const ProjectTable = () => {
       `${range[0]}-${range[1]} of ${total}`,
   };
 
+  const rowSelection: TableProps<Project>["rowSelection"] = {
+    onChange: (selectedRowKeys: React.Key[], selectedRows: Project[]) => {},
+    getCheckboxProps: (record: Project) => ({
+      name: record.name,
+    }),
+  };
+
   return (
     <Table
       loading={isPending}
       pagination={paginationOptions}
+      rowSelection={rowSelection}
       dataSource={project}
       columns={columns} // Pass showEditModal to columns
       onChange={handleTableChange}
+      size="small"
+      rowKey={"id"}
+      bordered
     />
   );
 };

@@ -25,6 +25,7 @@ import RolePermision from "@/pages/Role/role-permission";
 import ProjectDetail from "@/pages/Project/detail";
 import ProjectLayout from "@/components/Layout/ProjectLayout";
 import NewTask from "@/pages/Task/new";
+import ProjectUsers from "@/pages/Project/users";
 
 const Router = [
   {
@@ -152,6 +153,10 @@ const Router = [
       </ProjectLayout>
     ),
     children: [
+      {
+        path: "users",
+        element: <ProjectUsers />,
+      },
       {
         path: "tasks",
         element: <Task />,

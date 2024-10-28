@@ -1,4 +1,5 @@
 import { useUser } from "@/hooks/user/useUser";
+import { User } from "@/pages/Project/type";
 import { Role } from "@/pages/Role/type";
 import { EditOutlined } from "@ant-design/icons"; // Added EditOutlined import
 import { Button, Table } from "antd"; // Added Button import
@@ -18,20 +19,19 @@ const columns = () => [
     key: "email",
   },
   {
-    title: "Created At",
-    dataIndex: "createdAt",
-    key: "createdAt",
-    render: (text: string) => new Date(text).toLocaleString(),
+    title: "PhoneNumber",
+    dataIndex: "phoneNumber",
+    key: "email",
   },
   {
-    title: "Updated At",
-    dataIndex: "updatedAt",
-    key: "updatedAt",
-    render: (text: string) => new Date(text).toLocaleString(),
+    title: "Deggination",
+    dataIndex: "degination",
+    key: "degination",
   },
+
   {
     title: "Status",
-    dataIndex: "status",  
+    dataIndex: "status",
     key: "status",
   },
   {
@@ -43,10 +43,8 @@ const columns = () => [
   {
     title: "Action",
     key: "action",
-    render: (text, record) => (
-      <Button type="primary" icon={<EditOutlined />}>
-        Edit
-      </Button>
+    render: (_: any, record: User) => (
+      <Button type="primary" icon={<EditOutlined />}></Button>
     ),
   },
 ];
@@ -63,23 +61,25 @@ const UserTable = () => {
 
   // Function to handle showing the edit modal
 
-//   const paginationOptions = {
-//     current: page,
-//     pageSize: limit,
-//     total: user?.totalItems,
-//     showSizeChanger: true,
-//     showQuickJumper: true,
-//     pageSizeOptions: [5, 10, 20, 30, 50, 100],
-//     showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-//   };
+  //   const paginationOptions = {
+  //     current: page,
+  //     pageSize: limit,
+  //     total: user?.totalItems,
+  //     showSizeChanger: true,
+  //     showQuickJumper: true,
+  //     pageSizeOptions: [5, 10, 20, 30, 50, 100],
+  //     showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+  //   };
 
   return (
     <Table
       loading={isPending}
-    //   pagination={paginationOptions}
+      //   pagination={paginationOptions}
       dataSource={user?.results}
       columns={columns()} // Pass showEditModal to columns
       onChange={handleTableChange}
+      size="small"
+      bordered
     />
   );
 };

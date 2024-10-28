@@ -46,11 +46,11 @@ const Sidebar = ({
           collapsed={collapsed}
           width={250}
           theme="light"
-          className="border-r bg-[#fafafa] h-screen overflow-hidden"
+          className="border-r-[3px] h-screen overflow-hidden"
         >
           <div className="h-[32px] bg-[#fff3] m-5 rounded">
             <div className="relative z-20 flex items-center text-lg font-medium ">
-              <div className="bg-zinc-900 rounded py-3 px-3 mr-2">
+              <div className="bg-[#0c66e4] rounded py-3 px-3 mr-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -66,7 +66,9 @@ const Sidebar = ({
               </div>
               <div className={`${collapsed ? "hidden" : "visible"}`}>
                 <h5>Artha task</h5>
-                <p className="text-xs text-zinc-400 whitespace-nowrap">Manage your task</p>
+                <p className="text-xs text-zinc-400 whitespace-nowrap">
+                  Manage your project
+                </p>
               </div>
             </div>
           </div>
@@ -75,7 +77,7 @@ const Sidebar = ({
             theme="light"
             defaultSelectedKeys={["1"]}
             items={menuItems}
-            className="border-inline-0 bg-[#fafafa] "
+            className="border-inline-0"
           />
           {/* <div className="absolute bottom-5 right-5">
             <span className="text-sm">{new Date().toLocaleString()}</span>

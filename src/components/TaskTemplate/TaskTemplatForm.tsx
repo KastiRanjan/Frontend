@@ -8,7 +8,7 @@ import FormSelectWrapper from "../FormSelectWrapper";
 import { useEditTaskTemplate } from "@/hooks/taskTemplate/useEditTaskTemplate";
 
 interface TaskTemplateFormProps {
-  editTaskGroupData?: any;
+  editTaskTemplateData?: any;
   id?: number;
 }
 const TaskTemplateForm = ({
@@ -43,10 +43,7 @@ const TaskTemplateForm = ({
             id="name"
             name="name"
             label="Name"
-            rules={[
-              { required: true, message: "Please input the name" },
-              { max: 100, message: "Name cannot exceed 100 characters" },
-            ]}
+            rules={[{ required: true, message: "Please input the name" }]}
           />
 
           {/* Description (Optional) */}

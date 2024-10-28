@@ -50,7 +50,7 @@ const TaskGroupForm: React.FC = ({
           <Input.TextArea rows={4} />
         </Form.Item>
         <Form.Item>
-          <Button loading={isPending} type="primary" htmlType="submit">
+          <Button loading={isPending || isPendingEdit} type="primary" htmlType="submit">
             Save
           </Button>
         </Form.Item>

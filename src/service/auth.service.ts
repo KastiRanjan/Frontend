@@ -9,7 +9,8 @@ export const login = async (payload: any) => {
 };
 
 export const getProfile = async () => {
-  return await axios.get(`${backendURI}/auth/profile`, {
+  const response = await axios.get(`${backendURI}/auth/profile`, {
     withCredentials: true,
   });
+  return response.data;
 };
