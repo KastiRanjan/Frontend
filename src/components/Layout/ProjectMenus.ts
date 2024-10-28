@@ -1,8 +1,5 @@
 import {
-  DashboardOutlined,
-  ProjectOutlined,
-  TeamOutlined,
-  UserOutlined,
+  DashboardOutlined
 } from "@ant-design/icons";
 import React from "react";
 
@@ -16,6 +13,11 @@ export const ProjectMenuItems: MenuItem[] = [
   {
     key: "/project/tasks",
     label: "Tasks",
+    icon: React.createElement(DashboardOutlined),
+  },
+  {
+    key: "/project/users",
+    label: "Users",
     icon: React.createElement(DashboardOutlined),
   },
   

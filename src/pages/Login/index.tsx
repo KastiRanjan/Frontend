@@ -132,7 +132,7 @@ const LoginPage: React.FC = () => {
             <path
               d="M400 80 L420 100 L450 70"
               stroke="white"
-              stroke-width="8"
+              strokeWidth="8"
               fill="none"
               opacity="0.8"
             />

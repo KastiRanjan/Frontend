@@ -1,8 +1,10 @@
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
-import { Button, Table } from "antd";
+import { Button, Table, TableProps } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { EditOutlined } from "@ant-design/icons";
+import { TaskGroup } from "@/pages/TaskGroup/type";
+import usePagination from "@/hooks/usePagination";
 
 const columns = [
   {
@@ -14,11 +16,6 @@ const columns = [
     title: "Description",
     dataIndex: "description",
     key: "description",
-  },
-  {
-    title: "ID",
-    dataIndex: "id",
-    key: "id",
   },
   {
     title: "Created At",
@@ -34,16 +31,18 @@ const columns = [
     title: "Action",
     key: "action",
     render: (_: any, record: any) => (
-      <Button type="primary" icon={<EditOutlined />}>
-        <Link to={`/task-group/edit/${record.id}`}>Edit</Link>
-      </Button>
+      <Link to={`/task-group/edit/${record.id}`}>
+        <Button type="primary" icon={<EditOutlined />}>
+          Edit
+        </Button>
+      </Link>
     ),
   },
 ];
 
 const TaskGroupTable = () => {
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const { page, limit, setPage, setLimit } = usePagination();
+  const [selectedRow, setSelectedRow] = useState<TaskGroup[]>([]);
   const { data: taskTemplate, isPending } = useTaskGroup();
 
   const handleTableChange = (pagination: any) => {
@@ -51,55 +50,24 @@ const TaskGroupTable = () => {
     setLimit(pagination.pageSize);
   };
 
-  const expandedRowRender = (record: any) => {
-    return (
-      <Table
-        dataSource={record.tasktemplate}
-        columns={[
-          {
-            title: "Template ID",
-            dataIndex: "id",
-            key: "id",
-          },
-          {
-            title: "Template Name",
-            dataIndex: "name",
-            key: "name",
-          },
-          {
-            title: "Template Description",
-            dataIndex: "description",
-            key: "description",
-          },
-
-          {
-            title: "Created At",
-            dataIndex: "createdAt",
-            key: "createdAt",
-          },
-          {
-            title: "Updated At",
-            dataIndex: "updatedAt",
-            key: "updatedAt",
-          },
-        ]}
-        pagination={false}
-        rowKey="id"
-      />
-    );
+  const rowSelection: TableProps<TaskGroup>["rowSelection"] = {
+    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskGroup[]) => {
+      setSelectedRow(selectedRows);
+    },
+    getCheckboxProps: (record: TaskGroup) => ({
+      name: record.name,
+    }),
   };
 
   return (
     <Table
       loading={isPending}
+      //   pagination={paginationOptions}
+      rowSelection={rowSelection}
       dataSource={taskTemplate}
       columns={columns}
       onChange={handleTableChange}
-      expandable={{
-        expandedRowRender,
-        rowExpandable: (record) => record.tasktemplate && record.tasktemplate.length > 0,
-      }}
-      rowKey="id" // Ensure each row has a unique key
+      bordered
     />
   );
 };

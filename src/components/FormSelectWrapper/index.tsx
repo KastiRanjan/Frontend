@@ -1,5 +1,6 @@
 import React from "react";
 import { Form, Select } from "antd";
+import { rest } from "lodash";
 
 interface FormSelectWrapperProps {
   children?: React.ReactNode;
@@ -12,7 +13,7 @@ interface FormSelectWrapperProps {
   name: string;
   id: string;
   classname?: string;
-  changeHandler?: (value: string, option: any) => void;
+  changeHandler?: any;
   value?: string;
   placeholder?: string;
   required?: boolean;
@@ -36,6 +37,7 @@ const FormSelectWrapper = (props: FormSelectWrapperProps) => {
     allowClear = false,
     error,
     mode,
+    ...rest
   } = props;
 
   return (
@@ -59,6 +61,7 @@ const FormSelectWrapper = (props: FormSelectWrapperProps) => {
           disabled={disabled}
           allowClear={allowClear}
           mode={mode}
+          {...rest}
         />
       </Form.Item>
     </>
