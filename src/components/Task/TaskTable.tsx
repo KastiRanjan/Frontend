@@ -3,6 +3,7 @@ import { Table } from "antd";
 
 
 const TaskTable: React.FC = ({data}:any) => {
+  console.log(data)
     const columns = [
         {
           title: 'ID',
@@ -33,7 +34,6 @@ const TaskTable: React.FC = ({data}:any) => {
           title: 'Due Date',
           dataIndex: 'dueDate',
           key: 'dueDate',
-          Cell: ({ value }: { value: string | null }) => (value ? value : 'N/A'),
         },
       ];
     
@@ -43,7 +43,7 @@ const TaskTable: React.FC = ({data}:any) => {
 
             <Table
                 columns={columns}  
-                data={data}
+                dataSource={data}
             /> 
         </>
     )
