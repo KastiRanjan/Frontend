@@ -28,6 +28,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
   const { mutate } = useEditTask();
   const { data: users } = useUser();
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
+  console.log(selectedTask?.assignees);
 
   const showDrawer = (record: TaskType) => {
     setOpen(true);
@@ -161,28 +162,36 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           <Title level={3} style={{ marginBottom: "16px" }}>
             {selectedTask?.name}
           </Title>
-          <Select
-            defaultValue="lucy"
-            style={{ width: 120 }}
-            onChange={handleChange}
+          <Form form={form} onFinish={onFinish}>
+            <Row>
+              <Col span={6}>
+          <strong>Status: </strong>{" "}
+              </Col>
+              <Col span={6}>
+          <FormSelectWrapper
+            id="status"
+            name="status"
+            defaultValue={selectedTask?.status}
             options={[
-              { value: "jack", label: "Jack" },
-              { value: "lucy", label: "Lucy" },
-              { value: "Yiminghe", label: "yiminghe" },
-              { value: "disabled", label: "Disabled", disabled: true },
+              { value: "open", label: "Open" },
+              { value: "in_progress", label: "In Progress" },
+              { value: "done", label: "Done" },
             ]}
+            changeHandler={() => form.submit()}
           />
+          </Col>
+          </Row>
+          </Form>
           <div className="py-3">
             <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
               Description
             </p>
             <Form
               form={form}
-              initialValues={selectedTask?.description}
               onFinish={onFinish}
             >
-              <Form.Item id="asignees" name="description">
-                <TextArea />
+              <Form.Item id="asignees" name="description" >
+                <TextArea defaultValue={selectedTask?.description}/>
               </Form.Item>
               <Button htmlType="submit" type="primary">
                 Save
@@ -194,10 +203,10 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
             <Col span={6}>
               <strong>Assignee: </strong>{" "}
             </Col>
-            <Col>
+            <Col span={6}>
               <Form
                 form={form}
-                initialValues={data?.assignees || []}
+                initialValues={selectedTask?.assignees || []}
                 onFinish={onFinish}
               >
                 <FormSelectWrapper

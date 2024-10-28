@@ -32,9 +32,9 @@ const columns = [
     render: (_: any, record: any) => (
       <>
         <Avatar size={"small"} className="bg-zinc-500">
-          R
+        {record?.projectLead?.name[0]}
         </Avatar>{" "}
-        &nbsp; Ranjan Kasti
+        {record?.projectLead?.name}
       </>
     ),
   },

@@ -1,14 +1,14 @@
 import ClientForm from "@/components/Client/ClientForm";
 import PageTitle from "@/components/PageTitle";
-import { useTaskGroupById } from "@/hooks/taskGroup/useTaskGroupById";
+import { useClientById } from "@/hooks/client/useClientById";
 import { Button } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 
-const EditTaskGroup = () => {
+const EditClient = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { data: taskGroup } = useTaskGroupById({ id });
+  const { data: client } = useClientById({ id: id });
   return (
     <>
       <PageTitle
@@ -20,9 +20,9 @@ const EditTaskGroup = () => {
         }
       />
 
-      <ClientForm editTaskGroupData={taskGroup} id={id} />
+      <ClientForm editClientData={client} id={id} />
     </>
   );
 };
 
-export default EditTaskGroup;
+export default EditClient;

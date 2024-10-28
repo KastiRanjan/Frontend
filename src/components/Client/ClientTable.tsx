@@ -1,4 +1,4 @@
-import { useTaskTemplate } from "@/hooks/taskTemplate/useTaskTemplate";
+import { useClient } from "@/hooks/client/useClient";
 import { EditOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Table } from "antd";
 import { useState } from "react";
@@ -17,31 +17,30 @@ const columns = [
     key: "name",
   },
   {
-    title: "Description",
-    dataIndex: "description",
-    key: "description",
+    title: "Legal Status",
+    dataIndex: "legalStatus",
+    key: "legalStatus",
   },
   {
-    title: "Group",
-    dataIndex: "description",
-    key: "description",
-    render: (_: any, record: any) => <>{record?.group?.name}</>,
+    title: "Nature",
+    dataIndex: "industryNature",
+    key: "industryNature",
   },
   {
-    title: "Created At",
-    dataIndex: "createdAt",
-    key: "createdAt",
+    title: "Business Size",
+    dataIndex: "businessSize",
+    key: "businessSize",
   },
   {
-    title: "Updated At",
-    dataIndex: "updatedAt",
-    key: "updatedAt",
+    title: "Status",
+    dataIndex: "status",
+    key: "status",
   },
   {
     title: "Action", // Added Action column for Edit button
     key: "action",
     render: (_: any, record: any) => (
-      <Link to={`/task-template/edit/${record.id}`}>
+      <Link to={`/client/edit/${record.id}`}>
         <Button type="primary" icon={<EditOutlined />}>
           Edit
         </Button>
@@ -53,7 +52,7 @@ const columns = [
 const ClientTable = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: taskTemplate, isPending } = useTaskTemplate({ page, limit });
+  const { data: client, isPending } = useClient();
 
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
@@ -63,7 +62,7 @@ const ClientTable = () => {
   return (
     <Table
       loading={isPending}
-      dataSource={taskTemplate || []}
+      dataSource={client || []}
       columns={columns}
       onChange={handleTableChange}
     />

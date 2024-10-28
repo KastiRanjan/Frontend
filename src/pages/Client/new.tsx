@@ -3,7 +3,7 @@ import PageTitle from "@/components/PageTitle";
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 
-const CreateTaskGroup = () => {
+const CreateClient = () => {
   const navigate = useNavigate();
   return (
     <>
@@ -20,4 +20,4 @@ const CreateTaskGroup = () => {
   );
 };
 
-export default CreateTaskGroup;
+export default CreateClient;

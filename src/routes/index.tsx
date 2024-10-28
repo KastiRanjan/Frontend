@@ -26,6 +26,8 @@ import ProjectDetail from "@/pages/Project/detail";
 import ProjectLayout from "@/components/Layout/ProjectLayout";
 import NewTask from "@/pages/Task/new";
 import ProjectUsers from "@/pages/Project/users";
+import CreateClient from "@/pages/Client/new";
+import EditClient from "@/pages/Client/edit";
 
 const Router = [
   {
@@ -108,6 +110,14 @@ const Router = [
       {
         path: "/client",
         element: <Client />,
+      },
+      {
+        path: "/client/new",
+        element: <CreateClient />,
+      },
+      {
+        path: "/client/edit/:id",
+        element: <EditClient />,
       },
       {
         path: "/settings",

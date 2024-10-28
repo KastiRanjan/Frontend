@@ -144,6 +144,21 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
             }
             mode="multiple"
           />
+
+          <FormSelectWrapper
+            id= "projectLead"
+            name="projectLead"
+            label="Project Lead"
+            placeholder="Select users"
+            options={
+              isPendingUser
+                ? []
+                : users?.results?.map((user: UserType) => ({
+                    value: user.id,
+                    label: user.name,
+                  }))
+            }
+            />
         </Col>
       </Row>
       <Form.Item>

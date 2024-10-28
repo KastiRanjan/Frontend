@@ -6,6 +6,7 @@ export interface TaskType {
   createdAt: string;
   updatedAt: string;
   name: string;
+  status: string;
   description: string;
   assignees: UserType[];
   dueDate: string | null;
