@@ -1,38 +1,31 @@
 import { Form, Input } from "antd";
 import Title from "antd/es/typography/Title";
+import FormInputWrapper from "../FormInputWrapper";
 
 const BankDetail = () => {
   return (
     <>
       <Title level={5}>Bank Details</Title>
-      <Form.Item
+      <FormInputWrapper
+        id="bankName"
         name="bankName"
         label="Bank Name"
-        // rules={[{ required: true, message: "Please input the bank name" }]}
-      >
-        <Input maxLength={100} />
-      </Form.Item>
+      />
 
       {/* Bank Branch */}
-      <Form.Item
+      <FormInputWrapper
+        id="bankBranch"
         name="bankBranch"
         label="Bank Branch"
-        // rules={[{ required: true, message: "Please input the bank branch" }]}
-      >
-        <Input maxLength={100} />
-      </Form.Item>
+      // rules={[{ required: true, message: "Please input the bank branch" }]}
+      />
 
       {/* Account Number */}
-      <Form.Item
+      <FormInputWrapper
+        id="accountNo"
         name="accountNo"
         label="Account Number"
-        // rules={[
-        //   { required: true, message: "Please input the account number" },
-        //   { max: 20, message: "Account number cannot exceed 20 characters" },
-        // ]}
-      >
-        <Input maxLength={20} />
-      </Form.Item>
+      />
 
       {/* Document File Upload */}
       {/* <Form.Item

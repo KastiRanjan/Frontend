@@ -27,7 +27,7 @@ import ProjectLayout from "@/components/Layout/ProjectLayout";
 import NewTask from "@/pages/Task/new";
 import ProjectUsers from "@/pages/Project/users";
 import CreateClient from "@/pages/Client/new";
-import EditClient from "@/pages/Client/edit";
+import ProtectedRoute from "./ProtectedRoute";
 
 const Router = [
   {
@@ -46,82 +46,69 @@ const Router = [
         path: "/",
         element: <Dashboard />,
       },
-
       {
         path: "/project",
-        element: <Project />,
+        element: <ProtectedRoute component={Project} method="get" resource="project" />
       },
       {
         path: "/project/new",
-        element: <CreateProject />,
+        element: <ProtectedRoute component={CreateProject} method="post" resource="project" />
       },
       {
         path: "/project/edit/:id",
-        element: <EditProject />,
+        element: <ProtectedRoute component={EditProject} method="put" resource="project" />
       },
       {
         path: "/project/detail/:id",
-        element: <ProjectDetail />,
+        element: <ProtectedRoute component={ProjectDetail} method="get" resource="project" />
       },
       {
         path: "/task",
-        element: <Task />,
+        element: <ProtectedRoute component={Task} method="get" resource="task" />
       },
       {
         path: "/task-group",
-        element: <TaskGroups />,
+        element: <ProtectedRoute component={TaskGroups} method="get" resource="task-group" />
       },
       {
         path: "/task-group/new",
-        element: <CreateTaskGroup />,
+        element: <ProtectedRoute component={CreateTaskGroup} method="post" resource="task-group" />
       },
       {
         path: "/task-group/edit/:id",
-        element: <EditTaskGroup />,
+        element: <ProtectedRoute component={EditTaskGroup} method="put" resource="task-group" />
       },
       {
         path: "/worklog",
-        element: <Worklog />,
+        element: < ProtectedRoute component={Worklog} method="get" resource="worklog" />
       },
       {
         path: "/task-template",
-        element: <TaskTemplate />,
+        element: <ProtectedRoute component={TaskTemplate} method="get" resource="task-template" />
       },
       {
         path: "/task-template/new",
-        element: <CreateTaskTemplate />,
+        element: <ProtectedRoute component={CreateTaskTemplate} method="post" resource="task-template" />
       },
       {
         path: "/task-template/edit/:id",
-        element: <EditTaskTemplate />,
+        element: <ProtectedRoute component={EditTaskTemplate} method="put" resource="task-template" />
       },
       {
         path: "/users",
-        element: <User />,
+        element: <ProtectedRoute component={User} method="get" resource="user" />
       },
       {
         path: "/user/new",
-        element: <CreateUser />,
-      },
-      {
-        path: "/user/edit/:id",
-        element: <>Edit</>,
+        element: <ProtectedRoute component={CreateUser} method="post" resource="user" />
       },
       {
         path: "/client",
-        element: <Client />,
+        element: <ProtectedRoute component={Client} method="get" resource="client" />
       },
       {
         path: "/client/new",
-        element: <CreateClient />,
-      },
-      {
-        path: "/client/edit/:id",
-        element: <EditClient />,
-      },
-      {
-        path: "/settings",
-        element: <>setting</>,
+        element: <ProtectedRoute component={CreateClient} method="post" resource="client" />
       },
     ],
   },
@@ -135,23 +122,23 @@ const Router = [
     children: [
       {
         path: "/role",
-        element: <Role />,
+        element: < ProtectedRoute component={Role} method="get" resource="role" />
       },
       {
         path: "/role/new",
-        element: <CreateRole />,
+        element: <ProtectedRoute component={CreateRole} method="post" resource="role" />
       },
       {
         path: "/role/permission/:id",
-        element: <RolePermision />,
+        element: <ProtectedRoute component={RolePermision} method="get" resource="role" />
       },
       {
         path: "/role/edit/:id",
-        element: <EditRole />,
+        element: <ProtectedRoute component={EditRole} method="put" resource="role" />
       },
       {
         path: "/permission",
-        element: <Perimssion />,
+        element: <ProtectedRoute component={Perimssion} method="get" resource="permission" />
       },
     ],
   },
@@ -165,18 +152,21 @@ const Router = [
     children: [
       {
         path: "users",
-        element: <ProjectUsers />,
+        element: <ProtectedRoute component={ProjectUsers} method="get" resource="project" />
       },
       {
         path: "tasks",
-        element: <Task />,
+        element: <ProtectedRoute component={Task} method="get" resource="task" />
       },
       {
         path: "tasks/new",
-        element: <NewTask />,
+        element: <ProtectedRoute component={NewTask} method="post" resource="task" />
       },
     ],
   },
 ];
 
 export default Router;
+
+
+

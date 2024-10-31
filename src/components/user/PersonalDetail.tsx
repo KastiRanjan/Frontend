@@ -1,11 +1,11 @@
-import { Checkbox, Col, Form,InputNumber, Row,Switch } from "antd";
+import { Checkbox, Col, Form, InputNumber, Row, Switch } from "antd";
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 
 
 const PersonalDetail = () => {
-  
+
   return (
     <>
       <Title level={5}>Personal Details</Title>
@@ -30,7 +30,7 @@ const PersonalDetail = () => {
             id="location"
             name="location"
             label="Location"
-            // rules={[{ required: true, message: "Please input location" }]}
+          // rules={[{ required: true, message: "Please input location" }]}
           />
         </Col>
         <Col span={8}>
@@ -58,9 +58,6 @@ const PersonalDetail = () => {
             id="maritalStatus"
             name="maritalStatus"
             label="Marital Status"
-            // rules={[
-            //   { required: true, message: "Please select marital status" },
-            // ]}
             options={["single", "married", "divorced", "widowed"].map(
               (status) => ({
                 value: status,
@@ -75,7 +72,6 @@ const PersonalDetail = () => {
             id="gender"
             name="gender"
             label="Gender"
-            // rules={[{ required: true, message: "Please select gender" }]}
             options={["male", "female"].map((gender) => ({
               value: gender,
               label: gender,
@@ -89,9 +85,6 @@ const PersonalDetail = () => {
             id="taxCalculation"
             name="taxCalculation"
             label="Tax Calculation"
-            rules={[
-              // { required: true, message: "Please select tax calculation type" },
-            ]}
             options={[
               { value: "single_assessee", label: "Single Assessee" },
               { value: "couple_assessees", label: "Couple Assessees" },
@@ -104,7 +97,6 @@ const PersonalDetail = () => {
             id="panNo"
             name="panNo"
             label="PAN No"
-            // rules={[{ required: true, message: "Please input PAN number" }]}
           />
         </Col>
         <Col span={8}>
@@ -122,10 +114,10 @@ const PersonalDetail = () => {
             label="Personal Email"
             rules={[{ type: "email", message: "Please input valid email" }]}
           />
-        </Col>  
-        </Row>
-        <Title level={5}>Permanent Address Details</Title>
-        <Row gutter={30}>
+        </Col>
+      </Row>
+      <Title level={5}>Permanent Address Details</Title>
+      <Row gutter={30}>
         <Col span={8}>
           {/* Permanent Address Fields */}
           <FormInputWrapper
@@ -169,11 +161,11 @@ const PersonalDetail = () => {
             label="Permanent Address Locality"
           />
         </Col>
-        </Row>
-   
-        <Title level={5}>Temporary Address Details</Title>
-        <Checkbox>Same as Permanent Address</Checkbox>
-        <Row gutter={30}>
+      </Row>
+
+      <Title level={5}>Temporary Address Details</Title>
+      <Checkbox>Same as Permanent Address</Checkbox>
+      <Row gutter={30}>
         <Col span={8}>
           {/* Temporary Address Fields */}
           <FormInputWrapper
@@ -209,7 +201,7 @@ const PersonalDetail = () => {
             name="temporaryAddressWardNo"
             label="Temporary Address Ward No"
           />
-          
+
         </Col>
         <Col span={8}>
           <FormInputWrapper
@@ -218,9 +210,9 @@ const PersonalDetail = () => {
             label="Temporary Address Locality"
           />
         </Col>
-        </Row>
-        <Title level={5}>Guardian Details</Title>
-        <Row gutter={30}>
+      </Row>
+      <Title level={5}>Guardian Details</Title>
+      <Row gutter={30}>
         <Col span={8}>
           {/* Guardian Fields */}
           <FormInputWrapper
@@ -287,8 +279,12 @@ const PersonalDetail = () => {
             <Switch />
           </Form.Item>
         </Col>
+      </Row>
+
+      {/* Salary & Allowance Section */}
+      <Title level={5}>Salary & Allowance Section</Title>
+      <Row gutter={30}>
         <Col span={8}>
-          {/* Salary & Allowance Section */}
           <Form.Item name="hourlyCostRate" label="Hourly Cost Rate">
             <InputNumber min={0} step={0.01} />
           </Form.Item>

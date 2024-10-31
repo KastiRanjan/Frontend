@@ -1,13 +1,12 @@
-import { Form, InputNumber, Upload, Button } from "antd";
+import { Form, InputNumber } from "antd";
 import Title from "antd/es/typography/Title";
-import FormInputWrapper from "../FormInputWrapper";
-import { UploadOutlined } from '@ant-design/icons';
 import { useState } from 'react';
+import FormInputWrapper from "../FormInputWrapper";
 
 const TrainingDetail = () => {
   const [fileList, setFileList] = useState([]);
 
-  const handleUploadChange = (info) => {
+  const handleUploadChange = (info: any) => {
     setFileList(info.fileList);
   };
 
@@ -20,7 +19,7 @@ const TrainingDetail = () => {
         id="institute"
         name="institute"
         label="University/College"
-        rules={[{ required: true, message: "Please input the university/college name" }]}
+        rules={[{ message: "Please input the university/college name" }]}
       />
 
       {/* Designation of Course */}
@@ -28,14 +27,14 @@ const TrainingDetail = () => {
         id="designationOfCourse"
         name="designationOfCourse"
         label="Designation of Course"
-        rules={[{ required: true, message: "Please input the designation of the course" }]}
+        rules={[{ message: "Please input the designation of the course" }]}
       />
 
       {/* Year of Passing */}
       <Form.Item
         name="year"
         label="Year of Passing"
-        rules={[{ required: true, message: "Please input the year of passing" }]}
+        rules={[{ message: "Please input the year of passing" }]}
       >
         <InputNumber min={1900} max={new Date().getFullYear()} />
       </Form.Item>

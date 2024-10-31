@@ -1,5 +1,5 @@
 import { useSession } from "@/context/SessionContext";
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { BellOutlined, InfoCircleFilled, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Avatar, Breadcrumb, Button } from "antd";
 import { Header } from "antd/es/layout/layout";
 import React, { useContext } from "react";
@@ -15,7 +15,7 @@ const Navbar = ({
   console.log(profile);
 
   return (
-    <Header className="border-b-[3px] bg-[#fff] p-0 flex items-center justify-between">
+    <Header className="border-b-[2px] bg-[#fff] p-0 flex items-center justify-between">
       <div className="flex items-center">
         <Button
           type="text"
@@ -31,7 +31,10 @@ const Navbar = ({
           <Breadcrumb items={[{ title: "Home" }, { title: "Dashboard" }]} />
         </span>
       </div>
-      <div className="pr-4">
+      <div className="pr-4 flex gap-5">
+        <InfoCircleFilled style={{ fontSize: '24px' }}  />
+        <BellOutlined style={{ fontSize: '24px' }} />
+
         <Avatar
           // loading={isProfilePending}
           style={{ backgroundColor: "#0c66e4" }}

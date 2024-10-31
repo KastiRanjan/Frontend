@@ -10,12 +10,6 @@ const EducationDetail = () => {
         id="universityCollege"
         name="universityCollege"
         label="University/College"
-        // rules={[
-        //   {
-        //     required: true,
-        //     message: "Please input the university/college name",
-        //   },
-        // }
       />
 
       {/* Faculty */}
@@ -23,28 +17,22 @@ const EducationDetail = () => {
         id="faculty"
         name="faculty"
         label="Faculty"
-        // rules={[{ required: true, message: "Please input the faculty name" }]}
       />
 
       {/* Year of Passing */}
       <Form.Item
         name="yearOfPassing"
         label="Year of Passing"
-        // rules={[
-        //   { required: true, message: "Please input the year of passing" },
-        // ]}
       >
         <InputNumber min={1900} max={new Date().getFullYear()} />
       </Form.Item>
 
       {/* Place of Issue */}
-      <Form.Item
+      <FormInputWrapper
+        id="placeOfIssue"
         name="placeOfIssue"
         label="Place of Issue"
-        // rules={[{ required: true, message: "Please input the place of issue" }]}
-      >
-        <Input maxLength={100} />
-      </Form.Item>
+      />
 
       {/* Document File Upload */}
       {/* <Form.Item

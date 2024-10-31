@@ -1,7 +1,12 @@
 import {
+  ClusterOutlined,
   DashboardOutlined,
+  FileOutlined,
+  FolderOutlined,
   ProjectOutlined,
+  SettingOutlined,
   TeamOutlined,
+  UsergroupAddOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import React from "react";
@@ -20,8 +25,8 @@ export const MenuItems: MenuItem[] = [
   },
   {
     key: "/users",
-    label: "Directory",
-    icon: React.createElement(UserOutlined),
+    label: "Users",
+    icon: React.createElement(UsergroupAddOutlined),
   },
   {
     key: "/project",
@@ -31,12 +36,12 @@ export const MenuItems: MenuItem[] = [
   {
     key: "/task-template",
     label: "Task Template",
-    icon: React.createElement(TeamOutlined),
+    icon: React.createElement(FileOutlined),
   },
   {
     key: "/task-group",
     label: "Task Group",
-    icon: React.createElement(TeamOutlined),
+    icon: React.createElement(ClusterOutlined),
   },
   {
     key: "/client",
@@ -46,6 +51,6 @@ export const MenuItems: MenuItem[] = [
   {
     key: "/permission",
     label: "Settings",
-    icon: React.createElement(TeamOutlined),
+    icon: React.createElement(SettingOutlined),
   },
 ];
