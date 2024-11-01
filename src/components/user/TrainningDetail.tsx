@@ -35,7 +35,7 @@ const TrainingDetail = () => {
       <Form.Item
         name="year"
         label="Year of Passing"
-        rules={[{ required: true, message: "Please input the year of passing" }]}
+        // rules={[{ required: true, message: "Please input the year of passing" }]}
       >
         <InputNumber min={1900} max={new Date().getFullYear()} />
       </Form.Item>

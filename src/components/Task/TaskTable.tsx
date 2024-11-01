@@ -21,12 +21,16 @@ import { useMemo, useState } from "react";
 import FormSelectWrapper from "../FormSelectWrapper";
 import TextArea from "antd/es/input/TextArea";
 import { Task } from "@/pages/Project/type";
+import WorklogForm from "../Worklog/WorklogForm";
+import { Link, useParams } from "react-router-dom";
 
 const TaskTable = ({ data }: { data: TaskType[] }) => {
+  const {id} = useParams()
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
   const { data: users } = useUser();
+  const [ openWorklogForm, setOpenWorklogForm ] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
   console.log(selectedTask?.assignees);
 
@@ -34,6 +38,8 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
     setOpen(true);
     setSelectedTask(record);
   };
+
+
 
   const onClose = () => {
     setOpen(false);
@@ -120,6 +126,30 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
             </>
           );
         },
+      },
+      {
+        title: "Action",
+        dataIndex: "action",
+        key: "action",
+        render: (_: any, record: TaskType) => {
+          return (
+            <>
+              <Button
+                type="primary"
+                onClick={() => {setOpenWorklogForm(true) ; setSelectedTask(record)}}
+                  
+              >
+                Add Worklog
+              </Button>
+              <Link to={`/project/${id}/task/${record.id}/worklog`}>
+              <Button type="primary">
+                View Worklog
+              </Button>
+              </Link>
+            </>
+          );
+        },
+
       },
     ],
     []
@@ -249,6 +279,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           </Row>
         </div>
       </Drawer>
+      <WorklogForm openWorklogForm={openWorklogForm} setOpenWorklogForm={setOpenWorklogForm} selectedTask={selectedTask}/>
     </>
   );
 };

@@ -80,7 +80,7 @@ const Router = [
         element: <EditTaskGroup />,
       },
       {
-        path: "/worklog",
+        path: "/project/:id/task/:id/worklog",
         element: <Worklog />,
       },
       {
