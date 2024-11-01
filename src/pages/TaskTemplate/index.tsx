@@ -1,5 +1,4 @@
 import PageTitle from "@/components/PageTitle";
-import MoveTemplateModal from "@/components/TaskTemplate/MoveTemplateModal";
 import TaskTemplateTable from "@/components/TaskTemplate/TaskTemplateTable";
 import { Button } from "antd";
 import React, { useState } from "react";
@@ -30,6 +29,7 @@ const TaskTemplate: React.FC = () => {
     <>
       <PageTitle
         title="Task Template"
+        description="Add, search, and manage your task templates all in one place."
         element={
           <div className="flex gap-4">
             <Button

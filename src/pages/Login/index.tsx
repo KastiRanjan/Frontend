@@ -10,8 +10,8 @@ const LoginPage: React.FC = () => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
+            fill="#fff"
+            stroke="#18181b"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -24,22 +24,7 @@ const LoginPage: React.FC = () => {
         <div className="z-10 my-auto">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200">
             <defs>
-              {/* <linearGradient
-                id="bgGradient"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="100%"
-              >
-                <stop
-                  offset="0%"
-                  style={{ stopColor: "#4a90e2", stopOpacity: 0.2 }}
-                />
-                <stop
-                  offset="100%"
-                  style={{ stopColor: "#81c3fd", stopOpacity: 0.3 }}
-                />
-              </linearGradient> */}
+             
 
               <filter id="glass">
                 <feGaussianBlur
@@ -55,8 +40,6 @@ const LoginPage: React.FC = () => {
                 />
               </filter>
             </defs>
-
-            <rect width="800" height="200" fill="url(#bgGradient)" />
 
             <rect
               x="40"

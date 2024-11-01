@@ -1,9 +1,9 @@
 import { Button, Form } from "antd";
-import PersonalDetail from "./PersonalDetail";
-import EducationDetail from "./EducationDetail";
-import BankDetail from "./BankDetail";
+import PersonalDetail from "./PersonalDetailForm";
+import EducationDetail from "./EducationDetailForm";
+import BankDetail from "./BankDetailForm";
 import UserAuthDetail from "./UserAuthDetail";
-import TrainningDetail from "./TrainningDetail";
+import TrainningDetail from "./TrainningDetailForm";
 import ContractDetail from "./ContractDetail";
 import { useCreateUser } from "@/hooks/user/userCreateuser";
 
@@ -42,32 +42,32 @@ const UserForm = () => {
   return (
     <div>
       <Form layout="vertical" onFinish={handleFinish}>
-        <Form form={formAuth} layout="vertical">
+        <Form form={formAuth} layout="vertical" className="bg-[#eee] p-10 rounded-lg mb-5" scrollToFirstError>
           <UserAuthDetail />
         </Form>
 
-        <Form form={formPersonal} layout="vertical">
+        {/* <Form form={formPersonal} layout="vertical" className="mb-5">
           <PersonalDetail />
         </Form>
 
-        <Form form={formEducation} layout="vertical">
+        <Form form={formEducation} layout="vertical" className="mb-5">
           <EducationDetail />
         </Form>
 
-        <Form form={formBank} layout="vertical">
+        <Form form={formBank} layout="vertical" className="mb-5">
           <BankDetail />
         </Form>
 
-        <Form form={formTraining} layout="vertical">
+        <Form form={formTraining} layout="vertical" className="mb-5">
           <TrainningDetail />
         </Form>
 
-        <Form form={formContract} layout="vertical">
+        <Form form={formContract} layout="vertical" className="mb-3">
           <ContractDetail />
-        </Form>
+        </Form> */}
 
         <Button type="primary" htmlType="submit">
-          Submit
+          Save
         </Button>
       </Form>
     </div>

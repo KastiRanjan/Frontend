@@ -3,7 +3,7 @@ import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 import { UploadOutlined } from '@ant-design/icons';
 
-const ContractDetail = () => {
+const ContractDetailForm = () => {
   return (
     <>
       <Title level={5}>Contract & Other Details</Title>
@@ -35,4 +35,4 @@ const ContractDetail = () => {
   );
 };
 
-export default ContractDetail;
+export default ContractDetailForm;

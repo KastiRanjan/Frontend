@@ -85,7 +85,7 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
             placeholder={placeholder}
             onChange={changeHandler}
             disabled={disabled}
-            allowClear={allowClear}
+         
           />
         )}
       </Form.Item>

@@ -34,6 +34,7 @@ const User: React.FC = () => {
             Add
           </Button>
         }
+        description="Add, search, and manage your users all in one place."
       />
 
       <UserTable />

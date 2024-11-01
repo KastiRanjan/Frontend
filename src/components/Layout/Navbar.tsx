@@ -1,11 +1,14 @@
 import { useSession } from "@/context/SessionContext";
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { Avatar, Breadcrumb, Button } from "antd";
+import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
+import { BellOutlined, InfoCircleFilled, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { Avatar, Badge, Breadcrumb, Button } from "antd";
 import { Header } from "antd/es/layout/layout";
 import React, { useContext } from "react";
 import moment from "moment";
 import { useCreateAttendence } from "@/hooks/attendence/useCreateAttendence";
 import { useGetMyAttendence } from "@/hooks/attendence/useGetMyAttendence";
+import React from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = ({
   collapsed,
@@ -37,9 +40,10 @@ const Navbar = ({
       clockOut: moment().format("HH:mm:ss a"),
       mutateedit(payload)
     };
+  const { data: notification, isPending } = useMyNotifications()
 
   return (
-    <Header className="border-b-[3px] bg-[#fff] p-0 flex items-center justify-between">
+    <Header className="border-b-[2px] bg-[#fff] p-0 flex items-center justify-between">
       <div className="flex items-center">
         <Button
           type="text"
@@ -52,7 +56,7 @@ const Navbar = ({
           }}
         />
         <span>
-          <Breadcrumb items={[{ title: "Home" }, { title: "Dashboard" }]} />
+          <Breadcrumb items={[{ title: <Link to="/">Home</Link> }, { title: "Dashboard" }]} />
         </span>
       </div>
 
@@ -70,6 +74,11 @@ const Navbar = ({
 
 
       <div className="pr-4">
+      <div className="pr-4 flex gap-5 items-center">
+        <InfoCircleFilled style={{ fontSize: '22px' }} />
+        <Badge count={notification?.length}>
+          <BellOutlined style={{ fontSize: '22px' }} />
+        </Badge>
         <Avatar
           // loading={isProfilePending}
           style={{ backgroundColor: "#0c66e4" }}

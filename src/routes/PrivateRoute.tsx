@@ -1,6 +1,4 @@
 import { useSession } from "@/context/SessionContext";
-import { checkPermissionForComponent } from "@/utils/permission";
-import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {

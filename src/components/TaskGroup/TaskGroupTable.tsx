@@ -33,7 +33,6 @@ const columns = [
     render: (_: any, record: any) => (
       <Link to={`/task-group/edit/${record.id}`}>
         <Button type="primary" icon={<EditOutlined />}>
-          Edit
         </Button>
       </Link>
     ),

@@ -7,6 +7,7 @@ type SessionContextType = {
   loading: Boolean;
   profile?: any;
   isProfilePending?: boolean;
+  permissions?: any;
 };
 
 const SessionContext = createContext<SessionContextType>(
@@ -19,15 +20,17 @@ export const SessionProvider = ({
   children: React.ReactNode;
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [cookie] = useCookies(["ExpiresIn"]);
+  const [cookies] = useCookies(["ExpiresIn"],{
+    doNotParse: true,
+  });
   const [loading, setLoading] = useState(true);
   const { data: profile, isPending: isProfilePending } =
     useProfile(isAuthenticated);
 
   useEffect(() => {
     const currentDateTime = new Date().getTime();
-    const expiresInDateTime = cookie?.ExpiresIn
-      ? new Date(cookie.ExpiresIn).getTime()
+    const expiresInDateTime = cookies?.ExpiresIn
+      ? new Date(cookies.ExpiresIn).getTime()
       : 0;
     if (expiresInDateTime < currentDateTime) {
       console.log("Session expired");
@@ -36,11 +39,11 @@ export const SessionProvider = ({
       setLoading(false);
       setIsAuthenticated(true);
     }
-  }, [cookie]);
+  }, [cookies]);
 
   return (
     <SessionContext.Provider
-      value={{ isAuthenticated, loading, profile, isProfilePending }}
+      value={{ isAuthenticated, loading, profile, isProfilePending, permissions: profile?.role?.permission || [] }}
     >
       {children}
     </SessionContext.Provider>

@@ -28,6 +28,16 @@ import NewTask from "@/pages/Task/new";
 import ProjectUsers from "@/pages/Project/users";
 import CreateClient from "@/pages/Client/new";
 import EditClient from "@/pages/Client/edit";
+import ProtectedRoute from "./ProtectedRoute";
+import PersonalDetail from "@/components/user/PersonalDetailForm";
+import UserLayout from "@/components/Layout/UserLayout";
+import PersonalDetails from "@/pages/User/PersonalDetails";
+import EducationDetailForm from "@/components/user/EducationDetailForm";
+import BankDetailForm from "@/components/user/BankDetailForm";
+import TrainingDetailForm from "@/components/user/TrainningDetailForm";
+import EducationalDetails from "@/pages/User/EducationalDetails";
+import BankDetails from "@/pages/User/BankDetails";
+import TrainingDetails from "@/pages/User/TrainingDetails";
 
 const Router = [
   {
@@ -85,7 +95,7 @@ const Router = [
       },
       {
         path: "/task-template",
-        element: <TaskTemplate />,
+        element: <ProtectedRoute method="get" resource="task-template" component={<TaskTemplate />} />
       },
       {
         path: "/task-template/new",
@@ -97,7 +107,7 @@ const Router = [
       },
       {
         path: "/users",
-        element: <User />,
+        element: <ProtectedRoute method="get" resource="user" component={<User />} />,
       },
       {
         path: "/user/new",
@@ -175,6 +185,33 @@ const Router = [
         path: "tasks/new",
         element: <NewTask />,
       },
+    ],
+  },
+  {
+    path: "/user/:id",
+    element: (
+      <UserLayout>
+        <PrivateRoute />
+      </UserLayout>
+    ),
+    children: [
+      {
+        path: "personal-detail",
+        element: <PersonalDetails />,
+      },
+      {
+        path: "educational-detail",
+        element: <EducationalDetails />,
+      },
+      {
+        path: "bank-detail",
+        element: <BankDetails />,
+      },
+      {
+        path: "training-detail",
+        element: <TrainingDetails />,
+      },
+
     ],
   },
 ];

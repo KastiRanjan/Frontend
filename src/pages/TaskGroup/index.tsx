@@ -10,6 +10,7 @@ const TaskGroups: React.FC = () => {
     <>
       <PageTitle
         title="Task Group"
+        description="Add, search, and manage your task groups all in one place."
         element={
           <Button type="primary" onClick={() => navigate("/task-group/new")}>
             Create
