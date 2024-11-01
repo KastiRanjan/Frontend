@@ -1,8 +1,8 @@
-export function checkPermissionForComponent(roles: any, route: any) {
-  if (!roles || !roles.permission) return false;
+export function checkPermissionForComponent(permission: any, route: any) {
+  if (!permission) return false;
     if (route.defaultPermission) return true;
-    console.log(route);
-  return roles.permission.some(
+   
+  return permission.some(
     (role: any) =>
       role.resource === route.resource &&
       role.path === route.path &&

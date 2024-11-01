@@ -1,20 +1,19 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useSession } from "@/context/SessionContext";
 
-const ProtectedRoute = ({ component: Component, method, resource, ...rest }: any) => {
-    console.log('sad')
+const ProtectedRoute = ({ component, method, resource }: any) => {
+
+    const { permissions } = useSession()
+
     // Check if the user has the required permission
-    const hasPermission = false
+    const hasPermission = permissions.some((permission: any) => {
+        if (permission.method === method && permission.resource === resource) {
+            return true;
+        }
+        return false;
+    })
 
+    return <>{hasPermission ? component : <>forbidden</>}</>
 
-
-    return (
-        <Routes>
-            <Route
-                {...rest}
-                element={hasPermission ? <Component /> : <Navigate to="/unauthorized" />}
-            />
-        </Routes>
-    );
 };
 
 export default ProtectedRoute;

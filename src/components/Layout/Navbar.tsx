@@ -1,8 +1,10 @@
 import { useSession } from "@/context/SessionContext";
+import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
 import { BellOutlined, InfoCircleFilled, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { Avatar, Breadcrumb, Button } from "antd";
+import { Avatar, Badge, Breadcrumb, Button } from "antd";
 import { Header } from "antd/es/layout/layout";
-import React, { useContext } from "react";
+import React from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = ({
   collapsed,
@@ -12,7 +14,7 @@ const Navbar = ({
   setCollapsed: any;
 }) => {
   const { profile, isProfilePending } = useSession();
-  console.log(profile);
+  const { data: notification, isPending } = useMyNotifications()
 
   return (
     <Header className="border-b-[2px] bg-[#fff] p-0 flex items-center justify-between">
@@ -28,13 +30,14 @@ const Navbar = ({
           }}
         />
         <span>
-          <Breadcrumb items={[{ title: "Home" }, { title: "Dashboard" }]} />
+          <Breadcrumb items={[{ title: <Link to="/">Home</Link> }, { title: "Dashboard" }]} />
         </span>
       </div>
-      <div className="pr-4 flex gap-5">
-        <InfoCircleFilled style={{ fontSize: '24px' }}  />
-        <BellOutlined style={{ fontSize: '24px' }} />
-
+      <div className="pr-4 flex gap-5 items-center">
+        <InfoCircleFilled style={{ fontSize: '22px' }} />
+        <Badge count={notification?.length}>
+          <BellOutlined style={{ fontSize: '22px' }} />
+        </Badge>
         <Avatar
           // loading={isProfilePending}
           style={{ backgroundColor: "#0c66e4" }}

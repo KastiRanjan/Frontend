@@ -8,8 +8,19 @@ export const useRolePermissionById = ({ id }: { id: string }) => {
     queryFn: async () => {
       const response = await fetchRoleById({ id });
       console.log(response);
-      const ids = _(response?.permissions).map("id").value();
-      return ids;
+      const transformedData = _(response.permission)
+        .groupBy("resource")
+        .map((value, key) => ({
+          key: key,
+          children: value.map((item) => ({
+            key: item.id,
+          })),
+        }))
+        .value();
+
+      return _(transformedData)
+        .flatMap((item) => item.children.map((child) => child.key))
+        .value();
     },
     enabled: !!id,
   });

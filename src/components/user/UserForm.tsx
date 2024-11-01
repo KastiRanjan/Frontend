@@ -1,9 +1,9 @@
 import { Button, Form } from "antd";
-import PersonalDetail from "./PersonalDetail";
-import EducationDetail from "./EducationDetail";
-import BankDetail from "./BankDetail";
+import PersonalDetail from "./PersonalDetailForm";
+import EducationDetail from "./EducationDetailForm";
+import BankDetail from "./BankDetailForm";
 import UserAuthDetail from "./UserAuthDetail";
-import TrainningDetail from "./TrainningDetail";
+import TrainningDetail from "./TrainningDetailForm";
 import ContractDetail from "./ContractDetail";
 import { useCreateUser } from "@/hooks/user/userCreateuser";
 
@@ -46,7 +46,7 @@ const UserForm = () => {
           <UserAuthDetail />
         </Form>
 
-        <Form form={formPersonal} layout="vertical" className="mb-5">
+        {/* <Form form={formPersonal} layout="vertical" className="mb-5">
           <PersonalDetail />
         </Form>
 
@@ -64,10 +64,10 @@ const UserForm = () => {
 
         <Form form={formContract} layout="vertical" className="mb-3">
           <ContractDetail />
-        </Form>
+        </Form> */}
 
         <Button type="primary" htmlType="submit">
-          Submit
+          Save
         </Button>
       </Form>
     </div>

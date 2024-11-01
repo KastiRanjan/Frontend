@@ -16,3 +16,8 @@ export const createUser = async (payload: any) => {
   const response = await axios.post(`${backendURI}/users`, payload);
   return response.data;
 };
+
+export const updateUser = async (id:string,payload: any) => {
+  const response = await axios.patch(`${backendURI}/users/${id}`, payload);
+  return response.data;
+};

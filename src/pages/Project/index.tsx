@@ -12,6 +12,7 @@ const ProjectPage: React.FC = () => {
       {/* Page title  */}
       <PageTitle
         title="Projects"
+        description="Add, search, and manage your projects all in one place."
         element={
           <div className="flex gap-4">
             <Button type="primary" onClick={() => navigate("/project/new")}>

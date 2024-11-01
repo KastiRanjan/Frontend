@@ -14,6 +14,8 @@ import {
   CartesianGrid,
 } from "recharts";
 import PageTitle from "@/components/PageTitle";
+import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
+import { calculateDays } from "@/utils/calculateDays";
 
 const { Title } = Typography;
 
@@ -57,6 +59,9 @@ const Dashboard: React.FC = () => {
   const [activeUsers, setActiveUsers] = useState<number>(0);
   const [inactiveUsers, setInactiveUsers] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const { data: notifications, isPending } = useMyNotifications();
+  console.log(notifications)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,7 +117,7 @@ const Dashboard: React.FC = () => {
   return (
     <Row gutter={16}>
       <Col span={17}>
-        <PageTitle title="Welcome to Artha Task" />
+        <PageTitle title="Welcome to Artha Task" description="Add, search, and manage your permmissions all in one place." />
         {loading ? (
           <Spin size="large" />
         ) : (
@@ -153,12 +158,13 @@ const Dashboard: React.FC = () => {
         <PageTitle title="Notifications" />
         <List
           itemLayout="horizontal"
-          dataSource={notifications}
+          dataSource={notifications || []}
           renderItem={(item) => (
             <List.Item>
               <List.Item.Meta
-                title={item.title}
-                description={item.description}
+                title={item.message}
+                description={calculateDays(item.createdAt)}
+
               />
             </List.Item>
           )}

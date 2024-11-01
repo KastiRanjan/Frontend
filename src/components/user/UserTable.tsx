@@ -3,7 +3,10 @@ import { User } from "@/pages/Project/type";
 import { Role } from "@/pages/Role/type";
 import { EditOutlined } from "@ant-design/icons"; // Added EditOutlined import
 import { Button, Table } from "antd"; // Added Button import
+import _ from "lodash";
 import { useState } from "react";
+import { render } from "react-dom";
+import { Link } from "react-router-dom";
 
 // Modified columns definition to be a function
 const columns = () => [
@@ -11,6 +14,7 @@ const columns = () => [
     title: "Name",
     dataIndex: "name",
     key: "name",
+    render: (_: any, record: User) => <Link to={`/user/${record.id}/personal-detail`}>{record.name}</Link>,
   },
 
   {
@@ -21,12 +25,13 @@ const columns = () => [
   {
     title: "PhoneNumber",
     dataIndex: "phoneNumber",
-    key: "email",
+    key: "phoneNumber",
   },
   {
-    title: "Deggination",
+    title: "Degination",
     dataIndex: "degination",
     key: "degination",
+    render :(_: any, record: User) => record.role.name
   },
 
   {
@@ -59,24 +64,12 @@ const UserTable = () => {
     setLimit(pagination.pageSize);
   };
 
-  // Function to handle showing the edit modal
-
-  //   const paginationOptions = {
-  //     current: page,
-  //     pageSize: limit,
-  //     total: user?.totalItems,
-  //     showSizeChanger: true,
-  //     showQuickJumper: true,
-  //     pageSizeOptions: [5, 10, 20, 30, 50, 100],
-  //     showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-  //   };
 
   return (
     <Table
       loading={isPending}
-      //   pagination={paginationOptions}
       dataSource={user?.results}
-      columns={columns()} // Pass showEditModal to columns
+      columns={columns()}
       onChange={handleTableChange}
       size="small"
       bordered

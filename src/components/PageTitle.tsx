@@ -4,15 +4,17 @@ import Title from "antd/es/typography/Title";
 const PageTitle = ({
   title,
   element,
+  description
 }: {
   title?: string;
   element?: JSX.Element;
+  description?: string
 }) => (
   <div className="mb-4 py-4">
     <Title level={3}>{title}</Title>
-    <Paragraph>
-      Add, search, and manage your permmissions all in one place.{" "}
-    </Paragraph>
+    {description && <Paragraph>
+      {description}
+    </Paragraph>}
     {element}
   </div>
 );
