@@ -2,19 +2,19 @@ import { useUser } from "@/hooks/user/useUser";
 import { User } from "@/pages/Project/type";
 import { Role } from "@/pages/Role/type";
 import { EditOutlined } from "@ant-design/icons"; // Added EditOutlined import
-import { Button, Table } from "antd"; // Added Button import
-import _ from "lodash";
+import { Button, Drawer, Table } from "antd"; // Added Button import
 import { useState } from "react";
-import { render } from "react-dom";
 import { Link } from "react-router-dom";
 
 // Modified columns definition to be a function
-const columns = () => [
+const columns = (showDrawer: any) => [
   {
     title: "Name",
     dataIndex: "name",
     key: "name",
-    render: (_: any, record: User) => <Link to={`/user/${record.id}/personal-detail`}>{record.name}</Link>,
+    render: (_: any, record: User) => (
+      <Link to={`/user/${record.id}/personal-detail`}>{record.name}</Link>
+    ),
   },
 
   {
@@ -31,7 +31,7 @@ const columns = () => [
     title: "Degination",
     dataIndex: "degination",
     key: "degination",
-    render :(_: any, record: User) => record.role.name
+    render: (_: any, record: User) => record.role.name,
   },
 
   {
@@ -49,31 +49,59 @@ const columns = () => [
     title: "Action",
     key: "action",
     render: (_: any, record: User) => (
-      <Button type="primary" icon={<EditOutlined />}></Button>
+      <div>
+        <Button type="primary" icon={<EditOutlined />}></Button>
+        <Button type="primary" icon={<EditOutlined />} onClick={showDrawer}>
+          Vew
+        </Button>
+      </div>
     ),
   },
 ];
 
 const UserTable = () => {
+  const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: user, isPending } = useUser({ page, limit });
+
+  const showDrawer = () => {
+    setOpen(true);
+  };
+
+  const onClose = () => {
+    setOpen(false);
+  };
 
   const handleTableChange = (pagination) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
   };
 
-
   return (
-    <Table
-      loading={isPending}
-      dataSource={user?.results}
-      columns={columns()}
-      onChange={handleTableChange}
-      size="small"
-      bordered
-    />
+    <>
+      <Table
+        loading={isPending}
+        dataSource={user?.results}
+        columns={columns(showDrawer)}
+        onChange={handleTableChange}
+        size="small"
+        bordered
+      />
+
+      <Drawer
+        title="Basic Drawer"
+        placement="right"
+        closable={true}
+        onClose={onClose}
+        open={open}
+        size="large"
+        getContainer={false}
+        width={"100%"}
+      >
+        <p>Some contents...</p>
+      </Drawer>
+    </>
   );
 };
 

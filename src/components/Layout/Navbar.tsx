@@ -1,13 +1,17 @@
 import { useSession } from "@/context/SessionContext";
 import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
-import { BellOutlined, InfoCircleFilled, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import {
+  BellOutlined,
+  InfoCircleFilled,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+} from "@ant-design/icons";
 import { Avatar, Badge, Breadcrumb, Button } from "antd";
 import { Header } from "antd/es/layout/layout";
 import React, { useContext } from "react";
 import moment from "moment";
 import { useCreateAttendence } from "@/hooks/attendence/useCreateAttendence";
 import { useGetMyAttendence } from "@/hooks/attendence/useGetMyAttendence";
-import React from "react";
 import { Link } from "react-router-dom";
 
 const Navbar = ({
@@ -20,7 +24,7 @@ const Navbar = ({
   const { profile, isProfilePending } = useSession();
   console.log(profile);
   const { data, isLoading } = useGetMyAttendence();
-  const{ mutate}= useCreateAttendence();
+  const { mutate } = useCreateAttendence();
 
   console.log(data);
 
@@ -28,19 +32,20 @@ const Navbar = ({
 
   const handleClockIn = () => {
     let payload = {
-      date : moment().format("YYYY-MM-DD"),
-      clockIn :moment().format("HH:mm:ss a"),      
-    }
-    mutate(payload)
-    isClockedIn: true
+      date: moment().format("YYYY-MM-DD"),
+      clockIn: moment().format("HH:mm:ss a"),
+    };
+    mutate(payload);
+    isClockedIn: true;
   };
 
   const handleClockOut = () => {
     let payload = {
       clockOut: moment().format("HH:mm:ss a"),
-      mutateedit(payload)
     };
-  const { data: notification, isPending } = useMyNotifications()
+    // mutateedit(payload)
+  };
+  const { data: notification, isPending } = useMyNotifications();
 
   return (
     <Header className="border-b-[2px] bg-[#fff] p-0 flex items-center justify-between">
@@ -56,28 +61,31 @@ const Navbar = ({
           }}
         />
         <span>
-          <Breadcrumb items={[{ title: <Link to="/">Home</Link> }, { title: "Dashboard" }]} />
+          <Breadcrumb
+            items={[
+              { title: <Link to="/">Home</Link> },
+              { title: "Dashboard" },
+            ]}
+          />
         </span>
       </div>
 
       <div>
-  {isClockedIn ? (
-    <Button type="primary" shape="round" onClick={handleClockOut} >
-      Clock Out
-    </Button>
-  ) : (
-    <Button type="primary" shape="round" onClick={handleClockIn}>
-      Clock In
-    </Button>
-  )}
-</div>
+        {isClockedIn ? (
+          <Button type="primary" shape="round" onClick={handleClockOut}>
+            Clock Out
+          </Button>
+        ) : (
+          <Button type="primary" shape="round" onClick={handleClockIn}>
+            Clock In
+          </Button>
+        )}
+      </div>
 
-
-      <div className="pr-4">
       <div className="pr-4 flex gap-5 items-center">
-        <InfoCircleFilled style={{ fontSize: '22px' }} />
+        <InfoCircleFilled style={{ fontSize: "22px" }} />
         <Badge count={notification?.length}>
-          <BellOutlined style={{ fontSize: '22px' }} />
+          <BellOutlined style={{ fontSize: "22px" }} />
         </Badge>
         <Avatar
           // loading={isProfilePending}
