@@ -51,7 +51,7 @@ const Router = [
     children: [
       {
         path: "/",
-        element: <ProtectedRoute method="get" resource="dashboard" component={<Dashboard />} />
+        element: <ProtectedRoute method="get" resource="user" component={<Dashboard />} />
       
       },
 

@@ -4,14 +4,13 @@ import React from "react";
 const LoginPage: React.FC = () => {
   return (
     <div className="container relative hidden h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-        <div className="absolute inset-0 bg-zinc-900"></div>
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white  dark:border-r lg:flex">
+        <div className="absolute inset-0 bg-[#0c66e4]"></div>
         <div className="relative z-20 flex items-center text-lg font-medium">
           <svg
-            xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="#fff"
-            stroke="#18181b"
+            stroke="#fff"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -24,8 +23,6 @@ const LoginPage: React.FC = () => {
         <div className="z-10 my-auto">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200">
             <defs>
-             
-
               <filter id="glass">
                 <feGaussianBlur
                   in="SourceGraphic"
@@ -40,7 +37,6 @@ const LoginPage: React.FC = () => {
                 />
               </filter>
             </defs>
-
             <rect
               x="40"
               y="40"
@@ -72,14 +68,14 @@ const LoginPage: React.FC = () => {
               filter="url(#glass)"
             />
 
-            <circle cx="110" cy="70" r="15" fill="white" opacity="0.8" />
+            <circle cx="110" cy="70" r="15" fill="red" opacity="0.8" />
             <rect
               x="90"
               y="100"
               width="40"
               height="6"
               rx="3"
-              fill="white"
+              fill="red"
               opacity="0.8"
             />
             <rect
@@ -88,7 +84,7 @@ const LoginPage: React.FC = () => {
               width="50"
               height="6"
               rx="3"
-              fill="white"
+              fill="red"
               opacity="0.6"
             />
 
@@ -98,7 +94,7 @@ const LoginPage: React.FC = () => {
               width="80"
               height="10"
               rx="5"
-              fill="white"
+              fill="yellow"
               opacity="0.8"
             />
             <rect
@@ -107,14 +103,14 @@ const LoginPage: React.FC = () => {
               width="60"
               height="10"
               rx="5"
-              fill="white"
+              fill="yellow"
               opacity="0.6"
             />
-            <circle cx="270" cy="120" r="20" fill="white" opacity="0.7" />
+            <circle cx="270" cy="120" r="20" fill="yellow" opacity="0.7" />
 
             <path
               d="M400 80 L420 100 L450 70"
-              stroke="white"
+              stroke="green"
               strokeWidth="8"
               fill="none"
               opacity="0.8"
@@ -125,7 +121,7 @@ const LoginPage: React.FC = () => {
               width="80"
               height="6"
               rx="3"
-              fill="white"
+              fill="green"
               opacity="0.6"
             />
 
@@ -134,13 +130,17 @@ const LoginPage: React.FC = () => {
             <circle cx="680" cy="140" r="30" fill="white" opacity="0.1" />
           </svg>
         </div>
+        <div className="relative z-20 text-5xl font-bold  text-white text-center" style={{fontFamily: 'cursive'}}>
+          <p className="mx-4">All in one</p>
+          <span className="mx-4">Manage your Organization</span>
+        
+        </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              “This library has saved me countless hours of work and helped me
-              deliver stunning designs to my clients faster than ever before.”
+              “How about "Stay Organized, Stay Productive"? It captures the essence of task management by emphasizing both organization and productivity.”
             </p>
-            <footer className="text-sm">Sofia Davis</footer>
+            <footer className="text-sm"></footer>
           </blockquote>
         </div>
       </div>

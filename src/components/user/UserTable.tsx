@@ -93,6 +93,7 @@ const UserTable = () => {
           },
         })}
         size="small"
+        rowKey={"id"}
         bordered
       />
 

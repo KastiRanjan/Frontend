@@ -8,21 +8,17 @@ import {
   Col,
   Drawer,
   Form,
-  Input,
-  List,
   Row,
-  Select,
   Table,
   TableProps,
-  Tooltip,
+  Tooltip
 } from "antd";
+import TextArea from "antd/es/input/TextArea";
 import Title from "antd/es/typography/Title";
 import { useMemo, useState } from "react";
 import FormSelectWrapper from "../FormSelectWrapper";
-import TextArea from "antd/es/input/TextArea";
-import { Task } from "@/pages/Project/type";
+import { useParams } from "react-router-dom";
 import WorklogForm from "../Worklog/WorklogForm";
-import { Link, useParams } from "react-router-dom";
 
 const TaskTable = ({ data }: { data: TaskType[] }) => {
   const { id } = useParams();
@@ -126,27 +122,14 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         },
       },
       {
-        title: "Action",
-        dataIndex: "action",
-        key: "action",
-        render: (_: any, record: TaskType) => {
-          return (
-            <>
-              <Button
-                type="primary"
-                onClick={() => {
-                  setOpenWorklogForm(true);
-                  setSelectedTask(record);
-                }}
-              >
-                Add Worklog
-              </Button>
-              <Link to={`/project/${id}/task/${record.id}/worklog`}>
-                <Button type="primary">View Worklog</Button>
-              </Link>
-            </>
-          );
-        },
+        title: "Due date",
+        dataIndex: "dueDate",
+        key: "dueDate",
+      },
+      {
+        title: "Priority",
+        dataIndex: "priority",
+        key: "priority",
       },
     ],
     []

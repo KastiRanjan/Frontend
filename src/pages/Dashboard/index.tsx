@@ -33,7 +33,7 @@ const UserRoleChart: React.FC<{ data: any[] }> = ({ data }) => (
       {data.map((index) => (
         <Cell
           key={`cell-${index}`}
-          fill={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
+          fill={'red'}
         />
       ))}
     </Pie>

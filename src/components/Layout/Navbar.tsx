@@ -22,12 +22,8 @@ const Navbar = ({
   setCollapsed: any;
 }) => {
   const { profile, isProfilePending } = useSession();
-  console.log(profile);
   const { data, isLoading } = useGetMyAttendence();
   const { mutate } = useCreateAttendence();
-
-  console.log(data);
-
   const isClockedIn = data?.length > 0 ? true : false;
 
   const handleClockIn = () => {
