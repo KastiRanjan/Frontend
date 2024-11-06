@@ -4,7 +4,7 @@ axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
 export const fetchAttendences = async () => {
-  const response = await axios.get(`${backendURI}/attendence?`);
+  const response = await axios.get(`${backendURI}/attendence`);
   return response.data;
 };
 export const fetchAttendenceById = async ({ id }: { id: string }) => {
@@ -23,7 +23,7 @@ export const createAttendence = async (payload: any) => {
   return response.data;
 };
 export const updateAttendence = async ({ id, payload }: any) => {
-  const response = await axios.patch(`${backendURI}/attendence/${id}`, payload);
+  const response = await axios.patch(`${backendURI}/attendence`, payload);
   return response.data;
 };
 

@@ -1,11 +1,17 @@
 import { useSession } from "@/context/SessionContext";
 import { useLogout } from "@/hooks/auth/useLogout";
 import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
-import { BellOutlined, InfoCircleFilled, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import {
+  BellOutlined,
+  InfoCircleFilled,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+} from "@ant-design/icons";
 import { Avatar, Badge, Breadcrumb, Button, Dropdown } from "antd";
 import { Header } from "antd/es/layout/layout";
-import React from "react";
 import { Link } from "react-router-dom";
+import Clock from "../Clock/Clock";
+import React from "react";
 
 const Navbar = ({
   collapsed,
@@ -41,7 +47,7 @@ const Navbar = ({
         </span>
       </div>
 
-    
+      <Clock />
 
       <div className="pr-4 flex gap-5 items-center">
         <InfoCircleFilled style={{ fontSize: "22px" }} />
