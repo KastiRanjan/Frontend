@@ -63,9 +63,18 @@ const UserTable = () => {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: user, isPending } = useUser();
+  const [selectedRow, setSelectedRow] = useState<React.Key[]>([]);
+  const { data: user, isPending } = useUser({ page, limit });
 
-  const handleTableChange = (pagination: any) => {
+  const showDrawer = () => {
+    setOpen(true);
+  };
+
+  const onClose = () => {
+    setOpen(false);
+  };
+
+  const handleTableChange = (pagination) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
   };
