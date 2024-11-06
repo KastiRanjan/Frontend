@@ -41,17 +41,7 @@ const Navbar = ({
         </span>
       </div>
 
-      <div>
-        {isClockedIn ? (
-          <Button type="primary" shape="round" onClick={handleClockOut}>
-            Clock Out
-          </Button>
-        ) : (
-          <Button type="primary" shape="round" onClick={handleClockIn}>
-            Clock In
-          </Button>
-        )}
-      </div>
+    
 
       <div className="pr-4 flex gap-5 items-center">
         <InfoCircleFilled style={{ fontSize: "22px" }} />

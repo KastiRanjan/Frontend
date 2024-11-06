@@ -28,6 +28,7 @@ import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
+import NewWorklog from "@/pages/Worklog/new";
 
 const Router = [
   {
@@ -44,7 +45,7 @@ const Router = [
     children: [
       {
         path: "/",
-        element:<ProtectedRoute method="get" resource="user" component={<Dashboard />} />,
+        element: <ProtectedRoute method="get" resource="user" component={<Dashboard />} />,
       },
 
       {
@@ -61,7 +62,7 @@ const Router = [
       },
       {
         path: "/projects/edit/:id",
-        element:<ProtectedRoute method="patch" resource="project"s component={<EditProject />} />
+        element: <ProtectedRoute method="patch" resource="project" s component={<EditProject />} />
       },
       {
         path: "/project/detail/:id",
