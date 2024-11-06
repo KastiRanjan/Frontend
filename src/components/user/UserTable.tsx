@@ -63,8 +63,8 @@ const UserTable = () => {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [selectedRow, setSelectedRow] = useState<React.Key[]>([]);
-  const { data: user, isPending } = useUser({ page, limit });
+  const [selectedRow, setSelectedRow] = useState<any>([]);
+  const { data: user, isPending } = useUser();
 
   const showDrawer = () => {
     setOpen(true);
@@ -74,11 +74,10 @@ const UserTable = () => {
     setOpen(false);
   };
 
-  const handleTableChange = (pagination) => {
+  const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
   };
-  console.log(selectedRow);
 
   return (
     <>
@@ -87,7 +86,7 @@ const UserTable = () => {
         dataSource={user?.results}
         columns={columns(showDrawer)}
         onChange={handleTableChange}
-        onRow={(record) => ({
+        onRow={(record: any) => ({
           onClick: () => {
             setSelectedRow(record);
           },

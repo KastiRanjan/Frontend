@@ -140,7 +140,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         render: (_: any, record: any) => {
           return (
             <>
-             {record?.dueDate? <span>{new Date(record.dueDate).toLocaleDateString()}</span>:'---'}
+              {record?.dueDate ? <span>{new Date(record.dueDate).toLocaleDateString()}</span> : '---'}
             </>
           );
         }
@@ -163,7 +163,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
   };
 
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
-    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {},
+    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => { },
     getCheckboxProps: (record: TaskType) => ({
       name: record.name,
     }),
@@ -184,7 +184,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         open={open}
         size="large"
         placement="right"
-        // getContainer={false}
+      // getContainer={false}
       >
         <div style={{ padding: "16px" }}>
           <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>
@@ -275,11 +275,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           </Row>
         </div>
       </Drawer>
-      <WorklogForm
-        openWorklogForm={openWorklogForm}
-        setOpenWorklogForm={setOpenWorklogForm}
-        selectedTask={selectedTask}
-      />
+      <WorklogForm />
     </>
   );
 };
