@@ -15,7 +15,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <Layout className="bg-[#fff] h-screen overflow-hidden">
         <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />
         <Content
-          className="px-6"
+          className="px-6 relative"
           style={{ height: "calc(100vh - 64px)", overflow: "auto" }}
         >
           {children}

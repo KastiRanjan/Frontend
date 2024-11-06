@@ -25,12 +25,12 @@ import WorklogForm from "../Worklog/WorklogForm";
 import { Link, useParams } from "react-router-dom";
 
 const TaskTable = ({ data }: { data: TaskType[] }) => {
-  const {id} = useParams()
+  const { id } = useParams();
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
   const { data: users } = useUser();
-  const [ openWorklogForm, setOpenWorklogForm ] = useState(false);
+  const [openWorklogForm, setOpenWorklogForm] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
   console.log(selectedTask?.assignees);
 
@@ -38,8 +38,6 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
     setOpen(true);
     setSelectedTask(record);
   };
-
-
 
   const onClose = () => {
     setOpen(false);
@@ -136,20 +134,19 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
             <>
               <Button
                 type="primary"
-                onClick={() => {setOpenWorklogForm(true) ; setSelectedTask(record)}}
-                  
+                onClick={() => {
+                  setOpenWorklogForm(true);
+                  setSelectedTask(record);
+                }}
               >
                 Add Worklog
               </Button>
               <Link to={`/project/${id}/task/${record.id}/worklog`}>
-              <Button type="primary">
-                View Worklog
-              </Button>
+                <Button type="primary">View Worklog</Button>
               </Link>
             </>
           );
         },
-
       },
     ],
     []
@@ -185,7 +182,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         open={open}
         size="large"
         placement="right"
-        getContainer={false}
+        // getContainer={false}
       >
         <div style={{ padding: "16px" }}>
           <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>
@@ -195,33 +192,30 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           <Form form={form} onFinish={onFinish}>
             <Row>
               <Col span={6}>
-          <strong>Status: </strong>{" "}
+                <strong>Status: </strong>{" "}
               </Col>
               <Col span={6}>
-          <FormSelectWrapper
-            id="status"
-            name="status"
-            defaultValue={selectedTask?.status}
-            options={[
-              { value: "open", label: "Open" },
-              { value: "in_progress", label: "In Progress" },
-              { value: "done", label: "Done" },
-            ]}
-            changeHandler={() => form.submit()}
-          />
-          </Col>
-          </Row>
+                <FormSelectWrapper
+                  id="status"
+                  name="status"
+                  defaultValue={selectedTask?.status}
+                  options={[
+                    { value: "open", label: "Open" },
+                    { value: "in_progress", label: "In Progress" },
+                    { value: "done", label: "Done" },
+                  ]}
+                  changeHandler={() => form.submit()}
+                />
+              </Col>
+            </Row>
           </Form>
           <div className="py-3">
             <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
               Description
             </p>
-            <Form
-              form={form}
-              onFinish={onFinish}
-            >
-              <Form.Item id="asignees" name="description" >
-                <TextArea defaultValue={selectedTask?.description}/>
+            <Form form={form} onFinish={onFinish}>
+              <Form.Item id="asignees" name="description">
+                <TextArea defaultValue={selectedTask?.description} />
               </Form.Item>
               <Button htmlType="submit" type="primary">
                 Save
@@ -279,7 +273,11 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           </Row>
         </div>
       </Drawer>
-      <WorklogForm openWorklogForm={openWorklogForm} setOpenWorklogForm={setOpenWorklogForm} selectedTask={selectedTask}/>
+      <WorklogForm
+        openWorklogForm={openWorklogForm}
+        setOpenWorklogForm={setOpenWorklogForm}
+        selectedTask={selectedTask}
+      />
     </>
   );
 };
