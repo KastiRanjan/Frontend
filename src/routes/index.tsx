@@ -1,9 +1,29 @@
 import DashboardLayout from "@/components/Layout/DashboardLayout";
+import ProjectLayout from "@/components/Layout/ProjectLayout";
 import SettingLayout from "@/components/Layout/SettingLayout";
+import UserLayout from "@/components/Layout/UserLayout";
+import Client from "@/pages/Client";
+import EditClient from "@/pages/Client/edit";
+import CreateClient from "@/pages/Client/new";
+import ProjectDetail from "@/pages/Project/detail";
+import EditProject from "@/pages/Project/edit";
+import CreateProject from "@/pages/Project/new";
+import ProjectUsers from "@/pages/Project/users";
+import EditRole from "@/pages/Role/edit";
+import CreateRole from "@/pages/Role/new";
+import RolePermision from "@/pages/Role/role-permission";
+import NewTask from "@/pages/Task/new";
 import TaskGroups from "@/pages/TaskGroup";
+import EditTaskGroup from "@/pages/TaskGroup/edit";
+import CreateTaskGroup from "@/pages/TaskGroup/new";
 import TaskTemplate from "@/pages/TaskTemplate";
+import EditTaskTemplate from "@/pages/TaskTemplate/edit";
 import CreateTaskTemplate from "@/pages/TaskTemplate/new";
+import BankDetails from "@/pages/User/BankDetails";
+import EducationalDetails from "@/pages/User/EducationalDetails";
 import CreateUser from "@/pages/User/new";
+import PersonalDetails from "@/pages/User/PersonalDetails";
+import TrainingDetails from "@/pages/User/TrainingDetails";
 import Worklog from "@/pages/Worklog";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
@@ -13,31 +33,8 @@ import Role from "../pages/Role";
 import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
-import CreateProject from "@/pages/Project/new";
-import EditProject from "@/pages/Project/edit";
-import EditTaskTemplate from "@/pages/TaskTemplate/edit";
-import EditTaskGroup from "@/pages/TaskGroup/edit";
-import CreateTaskGroup from "@/pages/TaskGroup/new";
-import CreateRole from "@/pages/Role/new";
-import EditRole from "@/pages/Role/edit";
-import Client from "@/pages/Client";
-import RolePermision from "@/pages/Role/role-permission";
-import ProjectDetail from "@/pages/Project/detail";
-import ProjectLayout from "@/components/Layout/ProjectLayout";
-import NewTask from "@/pages/Task/new";
-import ProjectUsers from "@/pages/Project/users";
-import CreateClient from "@/pages/Client/new";
-import EditClient from "@/pages/Client/edit";
 import ProtectedRoute from "./ProtectedRoute";
-import PersonalDetail from "@/components/user/PersonalDetailForm";
-import UserLayout from "@/components/Layout/UserLayout";
-import PersonalDetails from "@/pages/User/PersonalDetails";
-import EducationDetailForm from "@/components/user/EducationDetailForm";
-import BankDetailForm from "@/components/user/BankDetailForm";
-import TrainingDetailForm from "@/components/user/TrainningDetailForm";
-import EducationalDetails from "@/pages/User/EducationalDetails";
-import BankDetails from "@/pages/User/BankDetails";
-import TrainingDetails from "@/pages/User/TrainingDetails";
+import NewWorklog from "@/pages/Worklog/new";
 
 const Router = [
   {
@@ -185,6 +182,14 @@ const Router = [
       {
         path: "tasks/new",
         element: <NewTask />,
+      },
+      {
+        path: "worklogs",
+        element: <Worklog />,
+      },
+      {
+        path: "worklogs/new",
+        element: <NewWorklog />,
       },
     ],
   },

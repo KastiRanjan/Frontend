@@ -63,6 +63,7 @@ const UserTable = () => {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [selectedRow, setSelectedRow] = useState<React.Key[]>([]);
   const { data: user, isPending } = useUser({ page, limit });
 
   const showDrawer = () => {
@@ -77,6 +78,7 @@ const UserTable = () => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
   };
+  console.log(selectedRow);
 
   return (
     <>
@@ -85,6 +87,11 @@ const UserTable = () => {
         dataSource={user?.results}
         columns={columns(showDrawer)}
         onChange={handleTableChange}
+        onRow={(record) => ({
+          onClick: () => {
+            setSelectedRow(record);
+          },
+        })}
         size="small"
         bordered
       />
@@ -99,7 +106,14 @@ const UserTable = () => {
         getContainer={false}
         width={"100%"}
       >
-        <p>Some contents...</p>
+        <p>Bank Detail</p>
+        <ul>
+          <li>Bank Name: {selectedRow?.bank_detail?.bankName}</li>
+          <li>Bank Branch: {selectedRow?.bank_detail?.bankBranch}</li>
+          <li>Bank Account: {selectedRow?.bank_detail?.accountNo}</li>
+          <li>Bank Account: {selectedRow?.bank_detail?.accountNo}</li>
+          <img width={200} height={200} src={`http://localhost:7777/document/${selectedRow?.bank_detail?.documentFile}`} alt="" />
+        </ul>
       </Drawer>
     </>
   );

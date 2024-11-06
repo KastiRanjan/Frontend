@@ -3,15 +3,17 @@ import React, { useState } from "react";
 import Navbar from "./Navbar";
 import { ProjectMenuItems } from "./ProjectMenus";
 import Sidebar from "./Sidebar";
+import { useParams } from "react-router-dom";
 
 const { Content } = Layout;
 
 const ProjectLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const { id } = useParams();
 
   return (
     <Layout hasSider>
-      <Sidebar collapsed={collapsed} menuItems={ProjectMenuItems} />
+      <Sidebar collapsed={collapsed} menuItems={ProjectMenuItems(id)} />
       <Layout className="bg-[#fff] h-screen overflow-hidden">
         <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />
         <Content

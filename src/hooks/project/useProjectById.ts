@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchProject } from "../../service/project.service";
 
-export const useProjectById = ({ id }: { id: string }) => {
+export const useProjectById = ({ id }: { id: string | undefined }) => {
   return useQuery({
 
     queryKey: ["project", id],

@@ -9,15 +9,20 @@ export interface MenuItem {
   icon?: React.ReactNode;
 }
 
-export const ProjectMenuItems: MenuItem[] = [
+export const ProjectMenuItems=(id:string) => [
   {
-    key: "/project/tasks",
+    key: `/project/${id}/tasks`,
     label: "Tasks",
     icon: React.createElement(DashboardOutlined),
   },
   {
-    key: "/project/users",
+    key: `/project/${id}/users`,
     label: "Users",
+    icon: React.createElement(DashboardOutlined),
+  },
+  {
+    key: `/project/${id}/worklogs`,
+    label: "Worklog",
     icon: React.createElement(DashboardOutlined),
   },
   

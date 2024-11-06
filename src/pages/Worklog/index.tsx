@@ -1,14 +1,32 @@
-import WorklogTable from '@/components/Worklog/WorklogTable';
-import { useWorklogById } from '@/hooks/worklog/useWorklogById';
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import PageTitle from "@/components/PageTitle";
+import WorklogTable from "@/components/Worklog/WorklogTable";
+import { useWorklogById } from "@/hooks/worklog/useWorklogById";
+import { Button } from "antd";
+import React from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 const Worklog: React.FC = () => {
   const { id } = useParams();
-  const { isLoading, isError, data, error } = useWorklogById({ id: id?.toString() });
+  const navigate = useNavigate();
+  const { isLoading, isError, data, error } = useWorklogById({
+    id: id?.toString(),
+  });
+  console.log(data);
   return (
     <>
-    <WorklogTable data={data}/>
+      <PageTitle
+        title="Worklog"
+        description="This is the worklog page"
+        element={
+          <Button
+            type="primary"
+            onClick={() => navigate(`/project/${id}/worklogs/new`)}
+          >
+            Add
+          </Button>
+        }
+      />
+      <WorklogTable data={data} />
     </>
   );
 };
