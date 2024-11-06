@@ -1,12 +1,12 @@
-import { fetchAttendence } from "@/service/attendence.service";
+import { fetchAttendences } from "@/service/attendence.service";
 import { useQuery } from "@tanstack/react-query";
 
 export const useAttendence = () => {
   return useQuery({
-    queryKey: ["attendence"],
+    queryKey: ["attendence-list"],
     queryFn: async () => {
-      return fetchAttendence();
+      return fetchAttendences();
     },
-    enabled: !!id,
+    // enabled: !!id,
   });
 };

@@ -35,6 +35,7 @@ import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
 import NewWorklog from "@/pages/Worklog/new";
+import Attendence from "@/pages/Attendence";
 
 const Router = [
   {
@@ -51,7 +52,7 @@ const Router = [
     children: [
       {
         path: "/",
-        element: <ProtectedRoute method="get" resource="dashboard" component={<Dashboard />} />
+        element:<Dashboard />
       
       },
 
@@ -126,6 +127,10 @@ const Router = [
       {
         path: "/client/edit/:id",
         element: <EditClient />,
+      },
+      {
+        path: "attendence",
+        element: <Attendence />,
       },
       {
         path: "/settings",

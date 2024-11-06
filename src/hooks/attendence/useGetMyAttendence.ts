@@ -7,6 +7,5 @@ export const useGetMyAttendence = () => {
     queryFn: async () => {
       return getMyAttendence();
     },
-    // enabled: !!page && !!limit,
   });
 };

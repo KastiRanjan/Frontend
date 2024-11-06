@@ -49,6 +49,11 @@ export const MenuItems: MenuItem[] = [
     icon: React.createElement(UserOutlined),
   },
   {
+    key: "/attendence",
+    label: "Attendence",
+    icon: React.createElement(TeamOutlined),
+  },
+  {
     key: "/permission",
     label: "Settings",
     icon: React.createElement(SettingOutlined),
