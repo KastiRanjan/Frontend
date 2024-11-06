@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Layout, Typography, Spin, Row, Col, Card, List } from "antd";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  CartesianGrid,
-} from "recharts";
 import PageTitle from "@/components/PageTitle";
 import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
 import { calculateDays } from "@/utils/calculateDays";
+import { Card, Col, List, Row, Spin, Typography } from "antd";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const { Title } = Typography;
 
@@ -61,7 +61,6 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const { data: notifications, isPending } = useMyNotifications();
-  console.log(notifications)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -159,7 +158,7 @@ const Dashboard: React.FC = () => {
         <List
           itemLayout="horizontal"
           dataSource={notifications || []}
-          renderItem={(item) => (
+          renderItem={(item: any) => (
             <List.Item>
               <List.Item.Meta
                 title={item.message}
@@ -175,30 +174,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-const notifications = [
-  {
-    title: "Project 1",
-    description: "Project 1 has been created",
-  },
-  {
-    title: "Project 2",
-    description: "Project 2 has been created",
-  },
-  {
-    title: "Project 3",
-    description: "Project 3 has been created",
-  },
-  {
-    title: "Project 1",
-    description: "Project 1 has been created",
-  },
-  {
-    title: "Project 2",
-    description: "Project 2 has been created",
-  },
-  {
-    title: "Project 3",
-    description: "Project 3 has been created",
-  },
-];

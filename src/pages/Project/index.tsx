@@ -1,11 +1,15 @@
 import PageTitle from "@/components/PageTitle";
 import ProjectTable from "@/components/project/ProjectTable";
-import { Button } from "antd";
+import { useSession } from "@/context/SessionContext";
+import { checkPermissionForComponent } from "@/utils/permission";
+import { Button, Tabs } from "antd";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const ProjectPage: React.FC = () => {
   const navigate = useNavigate();
+  const { permissions } = useSession();
+
 
   return (
     <>
@@ -14,16 +18,34 @@ const ProjectPage: React.FC = () => {
         title="Projects"
         description="Add, search, and manage your projects all in one place."
         element={
-          <div className="flex gap-4">
-            <Button type="primary" onClick={() => navigate("/project/new")}>
-              Add
-            </Button>
-          </div>
+          <>
+            {checkPermissionForComponent(permissions, "project") && <div className="flex gap-4">
+              <Button type="primary" onClick={() => navigate("/project/new")}>
+                Create Project
+              </Button>
+            </div>}
+          </>
         }
       />
 
       {/* Project table  */}
-      <ProjectTable />
+      <Tabs defaultActiveKey="1" items={[
+        {
+          label: `Active`,
+          key: "1",
+          children: <ProjectTable />,
+        },
+        {
+          label: `Suspended`,
+          key: "2",
+          children: <></>,
+        },
+        {
+          label: `Signed Off`,
+          key: "3",
+          children: <></>,
+        },
+      ]} />
     </>
   );
 };

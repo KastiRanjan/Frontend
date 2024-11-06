@@ -66,6 +66,7 @@ const TaskGroupTable = () => {
       dataSource={taskTemplate}
       columns={columns}
       onChange={handleTableChange}
+      rowKey={"id"}
       bordered
     />
   );

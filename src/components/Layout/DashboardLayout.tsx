@@ -11,7 +11,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <Layout hasSider>
-      <Sidebar collapsed={collapsed} menuItems={MenuItems} />
+      <Sidebar collapsed={collapsed} menuItems={MenuItems()} />
       <Layout className="bg-[#fff] h-screen overflow-hidden">
         <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />
         <Content

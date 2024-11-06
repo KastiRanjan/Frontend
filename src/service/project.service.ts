@@ -4,7 +4,7 @@ axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
 export const fetchProjects = async () => {
-  const response = await axios.get(`${backendURI}/projects?`);
+  const response = await axios.get(`${backendURI}/projects?status=active`);
   return response.data;
 };
 export const fetchProject = async ({ id }: { id: string | undefined }) => {

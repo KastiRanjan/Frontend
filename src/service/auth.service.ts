@@ -14,3 +14,11 @@ export const getProfile = async () => {
   });
   return response.data;
 };
+
+
+export const logout = async () => {
+  const response = await axios.post(`${backendURI}/logout`, {
+    withCredentials: true,
+  });
+  return response.data;
+};

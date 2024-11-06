@@ -5,3 +5,7 @@
 .ant-menu-light.ant-menu-root.ant-menu-vertical{
     border-inline-end: 0 !important;
 }
+
+.ant-table-thead .ant-table-cell {
+    font-weight: 500 !important;
+}

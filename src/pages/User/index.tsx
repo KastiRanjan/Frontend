@@ -1,6 +1,6 @@
 import PageTitle from "@/components/PageTitle";
 import UserTable from "@/components/user/UserTable";
-import { Button } from "antd";
+import { Button, Tabs } from "antd";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -31,13 +31,27 @@ const User: React.FC = () => {
         title="Users"
         element={
           <Button type="primary" onClick={() => navigate("/user/new")}>
-            Add
+            Create User
           </Button>
         }
         description="Add, search, and manage your users all in one place."
       />
-
-      <UserTable />
+      <Tabs
+        defaultActiveKey="1"
+        items={[
+          {
+            label: "Active",
+            key: "1",
+            children: <UserTable />,
+          },
+          {
+            label: "Blocked",
+            key: "2",
+            children: <></>,
+          },
+        ]}
+        
+      />
     </>
   );
 };

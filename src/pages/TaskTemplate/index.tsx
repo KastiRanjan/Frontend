@@ -39,7 +39,7 @@ const TaskTemplate: React.FC = () => {
               Create
             </Button>
             {isRowSelected && (
-              <div>
+              <div className="flex gap-3">
                 <Button type="primary" onClick={showModal}>
                   Add to Project
                 </Button>

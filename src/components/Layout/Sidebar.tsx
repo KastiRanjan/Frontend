@@ -78,10 +78,8 @@ const Sidebar = ({
             defaultSelectedKeys={["1"]}
             items={menuItems}
             className="border-inline-0"
+            mode="inline"
           />
-          {/* <div className="absolute bottom-5 right-5">
-            <span className="text-sm">{new Date().toLocaleString()}</span>
-          </div> */}
         </Sider>
       ) : (
         <Drawer

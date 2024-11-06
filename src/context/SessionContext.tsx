@@ -20,7 +20,7 @@ export const SessionProvider = ({
   children: React.ReactNode;
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [cookies] = useCookies(["ExpiresIn"],{
+  const [cookies] = useCookies(["ExpiresIn"], {
     doNotParse: true,
   });
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,6 @@ export const SessionProvider = ({
       ? new Date(cookies.ExpiresIn).getTime()
       : 0;
     if (expiresInDateTime < currentDateTime) {
-      console.log("Session expired");
       setIsAuthenticated(false);
     } else {
       setLoading(false);

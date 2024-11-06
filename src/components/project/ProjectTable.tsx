@@ -1,24 +1,38 @@
 import { useProject } from "@/hooks/project/useProject";
 import { Project } from "@/pages/Project/type";
 import { EditOutlined } from "@ant-design/icons";
-import { Avatar, Button, Table, TableProps } from "antd";
-import _ from "lodash";
+import { Avatar, Badge, Button, Table, TableProps } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const columns = [
   {
-    title: "Name",
+
+    title: "Date ",
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (_: any, record: any) => <>{new Date(record?.createdAt).toLocaleDateString() || record?.createdAt}</>,
+  },
+
+  {
+    title: "Project Name",
     dataIndex: "name",
     key: "name",
     render: (_: any, record: any) => (
-      <Link to={`/project/${record.id}/tasks`}>{record.name}</Link>
+      <Link to={`/project/${record.id}/tasks`} className="text-blue-600">{record.name}</Link>
     ),
+  },
+  {
+    title: "Project Client",
+    dataIndex: "client",
+    key: "client",
   },
   {
     title: "Description",
     dataIndex: "description",
     key: "descritpion",
+    width: 300,
+    ellipsis: true,
   },
   {
     title: "Nature Of Project",
@@ -32,20 +46,32 @@ const columns = [
     render: (_: any, record: any) => (
       <>
         <Avatar size={"small"} className="bg-zinc-500">
-        {record?.projectLead?.name[0]}
+          {record?.projectLead?.name[0]}
         </Avatar>{" "}
         {record?.projectLead?.name}
       </>
     ),
   },
   {
+    title: "Start Date",
+    dataIndex: "startingDate",
+    key: "startDate",
+  },
+  {
+    title: "End Date",
+    dataIndex: "endingDate",
+    key: "startDate",
+  },
+  {
     title: "Action",
     key: "action",
+    fixed: 'right',
+    width: 50,
     render: (_: any, record: any) => (
       <>
         <Link to={`/project/edit/${record.id}`}>
           <Button type="primary" icon={<EditOutlined />}>
-            Edit
+
           </Button>
         </Link>
       </>
@@ -77,7 +103,7 @@ const ProjectTable = () => {
   };
 
   const rowSelection: TableProps<Project>["rowSelection"] = {
-    onChange: (selectedRowKeys: React.Key[], selectedRows: Project[]) => {},
+    onChange: (selectedRowKeys: React.Key[], selectedRows: Project[]) => { },
     getCheckboxProps: (record: Project) => ({
       name: record.name,
     }),
@@ -89,11 +115,12 @@ const ProjectTable = () => {
       pagination={paginationOptions}
       rowSelection={rowSelection}
       dataSource={project}
-      columns={columns} // Pass showEditModal to columns
+      columns={columns}
       onChange={handleTableChange}
       size="small"
       rowKey={"id"}
       bordered
+      scroll={{ x: 'max-content' }}
     />
   );
 };

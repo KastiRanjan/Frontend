@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MoveTemplateModal from "./MoveTemplateModal";
 
-const columns = () => [
+const column= [
   {
     title: "Name",
     dataIndex: "name",
@@ -28,6 +28,8 @@ const columns = () => [
   {
     title: "Action",
     key: "action",
+    width: 50,
+    fixed: 'right',
     render: (_: any, record: any) => (
       <Link to={`/task-template/edit/${record.id}`}>
         <Button type="primary" icon={<EditOutlined />}></Button>
@@ -67,8 +69,8 @@ const TaskTemplateTable = ({
       <Table
         loading={isPending}
         rowSelection={rowSelection}
+        columns={column}
         dataSource={taskTemplate || []}
-        columns={columns()}
         rowKey="id"
         size="small"
         bordered

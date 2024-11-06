@@ -1,17 +1,10 @@
 import { useSession } from "@/context/SessionContext";
+import { useLogout } from "@/hooks/auth/useLogout";
 import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
-import {
-  BellOutlined,
-  InfoCircleFilled,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-} from "@ant-design/icons";
-import { Avatar, Badge, Breadcrumb, Button } from "antd";
+import { BellOutlined, InfoCircleFilled, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { Avatar, Badge, Breadcrumb, Button, Dropdown } from "antd";
 import { Header } from "antd/es/layout/layout";
-import React, { useContext } from "react";
-import moment from "moment";
-import { useCreateAttendence } from "@/hooks/attendence/useCreateAttendence";
-import { useGetMyAttendence } from "@/hooks/attendence/useGetMyAttendence";
+import React from "react";
 import { Link } from "react-router-dom";
 
 const Navbar = ({
@@ -22,25 +15,8 @@ const Navbar = ({
   setCollapsed: any;
 }) => {
   const { profile, isProfilePending } = useSession();
-  const { data, isLoading } = useGetMyAttendence();
-  const { mutate } = useCreateAttendence();
-  const isClockedIn = data?.length > 0 ? true : false;
-
-  const handleClockIn = () => {
-    let payload = {
-      date: moment().format("YYYY-MM-DD"),
-      clockIn: moment().format("HH:mm:ss a"),
-    };
-    mutate(payload);
-    isClockedIn: true;
-  };
-
-  const handleClockOut = () => {
-    let payload = {
-      clockOut: moment().format("HH:mm:ss a"),
-    };
-  };
-  const { data: notification, isPending } = useMyNotifications();
+  const { data: notification, isPending } = useMyNotifications()
+  const { mutate: logout } = useLogout();
 
   return (
     <Header className="border-b-[2px] bg-[#fff] p-0 flex items-center justify-between">
@@ -82,12 +58,32 @@ const Navbar = ({
         <Badge count={notification?.length}>
           <BellOutlined style={{ fontSize: "22px" }} />
         </Badge>
-        <Avatar
-          // loading={isProfilePending}
-          style={{ backgroundColor: "#0c66e4" }}
-        >
-          {profile?.name[0]}
-        </Avatar>
+        <Dropdown placement="bottomLeft" menu={{
+          items: [
+            { label: profile?.name, key: "name" },
+            { label: <Link to="/profile">Profile</Link>, key: "profile" },
+            { label: <Link to="/reset-password">Reset Password</Link>, key: "reset-password" },
+            {
+              label: (
+                <span
+                  onClick={() => {
+                    logout()
+                  }}
+                >
+                  Logout
+                </span>
+              ),
+              key: "logout",
+            },
+          ]
+        }}>
+          <Avatar
+            // loading={isProfilePending}
+            style={{ backgroundColor: "#0c66e4" }}
+          >
+            {profile?.name[0]}
+          </Avatar>
+        </Dropdown>
       </div>
     </Header>
   );

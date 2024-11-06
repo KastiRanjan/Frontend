@@ -1,12 +1,11 @@
-import { fetchProjectTasks } from "@/service/task.service";
+import { fetchTasks } from "@/service/task.service";
 import { useQuery } from "@tanstack/react-query";
 
-export const useProjectTask = ({ id }: { id: string | undefined }) => {
+export const useTask = () => {
   return useQuery({
-    queryKey: ["project_task"],
+    queryKey: ["tasks"],
     queryFn: async () => {
-      return fetchProjectTasks({ id });
+      return fetchTasks();
     },
-    enabled: !!id,
   });
 };

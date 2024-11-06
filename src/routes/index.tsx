@@ -1,6 +1,5 @@
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import ProjectLayout from "@/components/Layout/ProjectLayout";
-import SettingLayout from "@/components/Layout/SettingLayout";
 import UserLayout from "@/components/Layout/UserLayout";
 import Client from "@/pages/Client";
 import EditClient from "@/pages/Client/edit";
@@ -9,9 +8,6 @@ import ProjectDetail from "@/pages/Project/detail";
 import EditProject from "@/pages/Project/edit";
 import CreateProject from "@/pages/Project/new";
 import ProjectUsers from "@/pages/Project/users";
-import EditRole from "@/pages/Role/edit";
-import CreateRole from "@/pages/Role/new";
-import RolePermision from "@/pages/Role/role-permission";
 import NewTask from "@/pages/Task/new";
 import TaskGroups from "@/pages/TaskGroup";
 import EditTaskGroup from "@/pages/TaskGroup/edit";
@@ -27,14 +23,11 @@ import TrainingDetails from "@/pages/User/TrainingDetails";
 import Worklog from "@/pages/Worklog";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
-import Perimssion from "../pages/Permission";
 import Project from "../pages/Project";
-import Role from "../pages/Role";
 import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
-import NewWorklog from "@/pages/Worklog/new";
 
 const Router = [
   {
@@ -51,21 +44,24 @@ const Router = [
     children: [
       {
         path: "/",
-        element: <ProtectedRoute method="get" resource="user" component={<Dashboard />} />
-      
+        element:<ProtectedRoute method="get" resource="user" component={<Dashboard />} />,
       },
 
       {
-        path: "/project",
-        element: <Project />,
+        path: "/projects",
+        element: <ProtectedRoute method="get" resource="projects" component={<Project />} />,
       },
       {
-        path: "/project/new",
-        element: <CreateProject />,
+        path: "/tasks",
+        element: <ProtectedRoute method="get" resource="projects" component={<Task />} />,
       },
       {
-        path: "/project/edit/:id",
-        element: <EditProject />,
+        path: "/projects/new",
+        element: <ProtectedRoute method="post" resource="projects" component={<CreateProject />} />,
+      },
+      {
+        path: "/projects/edit/:id",
+        element:<ProtectedRoute method="patch" resource="project"s component={<EditProject />} />
       },
       {
         path: "/project/detail/:id",
@@ -77,7 +73,7 @@ const Router = [
       },
       {
         path: "/task-group",
-        element: <TaskGroups />,
+        element: <ProtectedRoute method="get" resource="task-group" component={<TaskGroups />} />,
       },
       {
         path: "/task-group/new",
@@ -97,11 +93,11 @@ const Router = [
       },
       {
         path: "/task-template/new",
-        element: <CreateTaskTemplate />,
+        element: <ProtectedRoute method="post" resource="task-template" component={<CreateTaskTemplate />} />,
       },
       {
         path: "/task-template/edit/:id",
-        element: <EditTaskTemplate />,
+        element: <ProtectedRoute method="patch" resource="task-template" component={<EditTaskTemplate />} />,
       },
       {
         path: "/users",
@@ -109,7 +105,7 @@ const Router = [
       },
       {
         path: "/user/new",
-        element: <CreateUser />,
+        element: <ProtectedRoute method="post" resource="user" component={<CreateUser />} />
       },
       {
         path: "/user/edit/:id",
@@ -133,36 +129,36 @@ const Router = [
       },
     ],
   },
-  {
-    path: "/",
-    element: (
-      <SettingLayout>
-        <PrivateRoute />
-      </SettingLayout>
-    ),
-    children: [
-      {
-        path: "/role",
-        element: <Role />,
-      },
-      {
-        path: "/role/new",
-        element: <CreateRole />,
-      },
-      {
-        path: "/role/permission/:id",
-        element: <RolePermision />,
-      },
-      {
-        path: "/role/edit/:id",
-        element: <EditRole />,
-      },
-      {
-        path: "/permission",
-        element: <Perimssion />,
-      },
-    ],
-  },
+  // {
+  //   path: "/",
+  //   element: (
+  //     <SettingLayout>
+  //       <PrivateRoute />
+  //     </SettingLayout>
+  //   ),
+  //   children: [
+  //     {
+  //       path: "/role",
+  //       element: <Role />,
+  //     },
+  //     {
+  //       path: "/role/new",
+  //       element: <CreateRole />,
+  //     },
+  //     {
+  //       path: "/role/permission/:id",
+  //       element: <RolePermision />,
+  //     },
+  //     {
+  //       path: "/role/edit/:id",
+  //       element: <EditRole />,
+  //     },
+  //     {
+  //       path: "/permission",
+  //       element: <Perimssion />,
+  //     },
+  //   ],
+  // },
   {
     path: "/project/:id",
     element: (

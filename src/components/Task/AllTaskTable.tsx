@@ -4,7 +4,6 @@ import { useUser } from "@/hooks/user/useUser";
 import { TaskType } from "@/pages/Task/type";
 import {
   Avatar,
-  Badge,
   Button,
   Col,
   Drawer,
@@ -17,17 +16,13 @@ import {
 import TextArea from "antd/es/input/TextArea";
 import Title from "antd/es/typography/Title";
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
 import FormSelectWrapper from "../FormSelectWrapper";
-import WorklogForm from "../Worklog/WorklogForm";
 
-const TaskTable = ({ data }: { data: TaskType[] }) => {
-  const { id } = useParams();
+const AllTaskTable = ({ data }: { data: TaskType[] }) => {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
   const { data: users } = useUser();
-  const [openWorklogForm, setOpenWorklogForm] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
   console.log(selectedTask?.assignees);
 
@@ -69,6 +64,15 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           </>
         ),
       },
+
+      {
+        title: "Project",
+        dataIndex: "project",
+        key: "project",
+        render: (_: any, record: TaskType) => {
+          return record.project?.name;
+        },
+      },
       {
         title: "Group",
         dataIndex: "group",
@@ -81,18 +85,6 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         title: "Status",
         dataIndex: "status",
         key: "status",
-        width: 100,
-        render: (_: any, record: any) => {
-          return (
-            <>
-              <Badge
-                count={record.status}
-                color="#52c41a"
-                style={{ cursor: "pointer" }}
-              />
-            </>
-          );
-        }
       },
       {
         title: "Asignee",
@@ -137,13 +129,6 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         title: "Due date",
         dataIndex: "dueDate",
         key: "dueDate",
-        render: (_: any, record: any) => {
-          return (
-            <>
-             {record?.dueDate? <span>{new Date(record.dueDate).toLocaleDateString()}</span>:'---'}
-            </>
-          );
-        }
       },
       {
         title: "Priority",
@@ -184,7 +169,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         open={open}
         size="large"
         placement="right"
-        // getContainer={false}
+        getContainer={false}
       >
         <div style={{ padding: "16px" }}>
           <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>
@@ -194,30 +179,33 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           <Form form={form} onFinish={onFinish}>
             <Row>
               <Col span={6}>
-                <strong>Status: </strong>{" "}
+          <strong>Status: </strong>{" "}
               </Col>
               <Col span={6}>
-                <FormSelectWrapper
-                  id="status"
-                  name="status"
-                  defaultValue={selectedTask?.status}
-                  options={[
-                    { value: "open", label: "Open" },
-                    { value: "in_progress", label: "In Progress" },
-                    { value: "done", label: "Done" },
-                  ]}
-                  changeHandler={() => form.submit()}
-                />
-              </Col>
-            </Row>
+          <FormSelectWrapper
+            id="status"
+            name="status"
+            defaultValue={selectedTask?.status}
+            options={[
+              { value: "open", label: "Open" },
+              { value: "in_progress", label: "In Progress" },
+              { value: "done", label: "Done" },
+            ]}
+            changeHandler={() => form.submit()}
+          />
+          </Col>
+          </Row>
           </Form>
           <div className="py-3">
             <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
               Description
             </p>
-            <Form form={form} onFinish={onFinish}>
-              <Form.Item id="asignees" name="description">
-                <TextArea defaultValue={selectedTask?.description} />
+            <Form
+              form={form}
+              onFinish={onFinish}
+            >
+              <Form.Item id="asignees" name="description" >
+                <TextArea defaultValue={selectedTask?.description}/>
               </Form.Item>
               <Button htmlType="submit" type="primary">
                 Save
@@ -275,13 +263,8 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           </Row>
         </div>
       </Drawer>
-      <WorklogForm
-        openWorklogForm={openWorklogForm}
-        setOpenWorklogForm={setOpenWorklogForm}
-        selectedTask={selectedTask}
-      />
     </>
   );
 };
 
-export default TaskTable;
+export default AllTaskTable;

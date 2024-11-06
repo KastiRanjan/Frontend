@@ -1,4 +1,4 @@
-import { Button, Col, DatePicker, Form, Row } from "antd";
+import { Button, Col, DatePicker, Divider, Form, Row } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 import { Project } from "@/pages/Project/type";
 import { useEffect } from "react";
@@ -42,7 +42,8 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
 
   return (
     <Form form={form} layout="vertical" initialValues={{}} onFinish={onFinish}>
-      <Row gutter={16}>
+      <Row gutter={36}>
+        <Divider  />
         <Col span={6}>
           <FormInputWrapper
             id="Project Name"
@@ -129,6 +130,8 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
           >
             <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
           </Form.Item>
+          </Col>
+          <Col span={6}>
           <FormSelectWrapper
             id="users"
             name="users"
