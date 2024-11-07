@@ -34,7 +34,7 @@ const TaskForm = ({ users, tasks }: any) => {
         name="parentTaskId"
         label="Parent"
         options={
-          tasks?.map((task) => ({
+          tasks?.map((task: any) => ({
             value: task.id,
             label: task.name,
           })) || []
@@ -55,7 +55,7 @@ const TaskForm = ({ users, tasks }: any) => {
         label="Assignee"
         mode="multiple"
         options={
-          users?.map((user) => ({
+          users?.map((user: any) => ({
             value: user.id,
             label: user.name,
           })) || []

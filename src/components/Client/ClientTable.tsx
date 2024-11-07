@@ -9,7 +9,7 @@ const columns = [
     title: "",
     dataIndex: "id",
     key: "id",
-    render: (id: number) => <Checkbox type="checkbox" />,
+    render: () => <Checkbox type="checkbox" />,
   },
   {
     title: "Name",
@@ -53,6 +53,7 @@ const ClientTable = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: client, isPending } = useClient();
+  console.log(page, limit);
 
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);

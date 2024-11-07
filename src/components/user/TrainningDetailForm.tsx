@@ -1,13 +1,12 @@
 import { Button, Form, InputNumber } from "antd";
-import { useState } from 'react';
 import FormInputWrapper from "../FormInputWrapper";
 
 const TrainingDetailForm = () => {
-  const [fileList, setFileList] = useState([]);
+  // const [fileList, setFileList] = useState([]);
 
-  const handleUploadChange = (info: any) => {
-    setFileList(info.fileList);
-  };
+  // const handleUploadChange = (info: any) => {
+  //   setFileList(info.fileList);
+  // };
 
   return (
     <>

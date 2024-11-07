@@ -19,8 +19,8 @@ const ProjectPage: React.FC = () => {
         description="Add, search, and manage your projects all in one place."
         element={
           <>
-            {checkPermissionForComponent(permissions, "project") && <div className="flex gap-4">
-              <Button type="primary" onClick={() => navigate("/project/new")}>
+            {checkPermissionForComponent(permissions, "projects",'post', "/projects") && <div className="flex gap-4">
+              <Button type="primary" onClick={() => navigate("/projects/new")}>
                 Create Project
               </Button>
             </div>}

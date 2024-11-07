@@ -7,7 +7,7 @@ export const useEditPermission = () => {
     mutationFn: ({payload,id}:any) => {
       return editPermission({payload,id});
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["permissions"] });
     },
   });

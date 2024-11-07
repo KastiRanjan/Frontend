@@ -11,7 +11,7 @@ export const LoginForm = () => {
 
   const onFinish = (values: any) => {
     login.mutate(values, {
-      onSuccess: (data) => {
+      onSuccess: () => {
         message.success("Login successful!");
       },
       onError: (error: any) => {

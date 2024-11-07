@@ -3,18 +3,12 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
-export const fetchTaskTemplate = async ({
-  limit,
-  page,
-}: {
-  limit: number;
-  page: number;
-}) => {
+export const fetchTaskTemplate = async () => {
   const response = await axios.get(`${backendURI}/task-template`);
   return response.data;
 };
 
-export const fetchTaskTemplateById = async ({ id }: { id: string }) => {
+export const fetchTaskTemplateById = async ({ id }: { id: string | undefined }) => {
   const response = await axios.get(`${backendURI}/task-template/${id}`);
   return response.data;
 };

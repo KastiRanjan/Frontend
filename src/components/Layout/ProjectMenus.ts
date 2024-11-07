@@ -9,7 +9,7 @@ export interface MenuItem {
   icon?: React.ReactNode;
 }
 
-export const ProjectMenuItems=(id:string) => [
+export const ProjectMenuItems = (id: string | undefined) => [
   {
     key: "/project/details",
     label: "Details",
@@ -31,14 +31,9 @@ export const ProjectMenuItems=(id:string) => [
     icon: React.createElement(DashboardOutlined),
   },
   {
-    key: "/project/worklogs",
-    label: "Worklogs",
-    icon: React.createElement(DashboardOutlined),
-  },
-  {
     key: `/project/${id}/worklogs`,
     label: "Worklog",
     icon: React.createElement(DashboardOutlined),
   },
-  
+
 ];

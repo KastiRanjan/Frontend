@@ -4,7 +4,7 @@ axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
 export const fetchWorklogs = async () => {
-  const response = await axios.get(`${backendURI}/worklogs?`);
+  const response = await axios.get(`${backendURI}/worklogs`);
   return response.data;
 };
 export const fetchWorklog = async ({ id }: { id: string }) => {
@@ -13,7 +13,7 @@ export const fetchWorklog = async ({ id }: { id: string }) => {
   return response.data;
 };
 
-export const fetchWorklogById = async ({ id }: { id: string }) => {
+export const fetchWorklogById = async ({ id }: { id: string | undefined }) => {
   const response = await axios.get(`${backendURI}/worklogs/task/${id}`);
 
   return response.data;

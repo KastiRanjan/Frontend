@@ -9,7 +9,7 @@ export const useCreateProject = () => {
     mutationFn: (payload) => {
       return createProject(payload);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       navigate("/project");
     },

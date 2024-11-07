@@ -1,6 +1,5 @@
 import { updateUser } from "@/service/user.service";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 
 export const useUpdateUser = () => {
 
@@ -8,7 +7,7 @@ export const useUpdateUser = () => {
         mutationFn: ({ id, payload }: any) => {
             return updateUser(id, payload);
         },
-        onSuccess: (response) => {
+        onSuccess: () => {
 
         },
     });

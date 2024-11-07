@@ -1,7 +1,5 @@
-import { Form, Input, InputNumber, Upload, Button } from "antd";
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
-import { UploadOutlined } from '@ant-design/icons';
 
 const ContractDetailForm = () => {
   return (

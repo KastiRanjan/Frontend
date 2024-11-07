@@ -11,7 +11,7 @@ const PageTitle = ({
   description?: string
 }) => (
   <div className="mb-4 py-4">
-    <Title level={3}>{title}</Title>
+    <Title level={4}>{title}</Title>
     {description && <Paragraph>
       {description}
     </Paragraph>}

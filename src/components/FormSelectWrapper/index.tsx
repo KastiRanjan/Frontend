@@ -1,6 +1,5 @@
-import React from "react";
 import { Form, Select } from "antd";
-import { rest } from "lodash";
+import React from "react";
 
 interface FormSelectWrapperProps {
   children?: React.ReactNode;
@@ -10,7 +9,7 @@ interface FormSelectWrapperProps {
   allowClear?: boolean;
   disabled?: boolean;
   label?: string;
-  name: string;
+  name?: string;
   id: string;
   classname?: string;
   changeHandler?: any;

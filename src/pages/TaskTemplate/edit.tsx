@@ -8,7 +8,7 @@ const EditTaskTemplate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { data } = useTaskTemplateById({ id: id?.toString() });
+  const { data } = useTaskTemplateById({ id});
   return (
     <>
       <PageTitle

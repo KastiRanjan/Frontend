@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchWorklogById } from "../../service/worklog.service";
 
-export const useWorklogById = ({ id }: { id: string }) => {
+export const useWorklogById = ({ id }: { id: string | undefined }) => {
   return useQuery({
 
     queryKey: ["worklog", id],

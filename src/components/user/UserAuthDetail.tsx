@@ -8,7 +8,7 @@ import Paragraph from "antd/es/typography/Paragraph";
 
 
 const UserAuthDetail = () => {
-  const { data: roles, isPending } = useRole({ page: 1, limit: 100 });
+  const { data: roles } = useRole({ page: 1, limit: 100 });
   return (
     <>
       <div>

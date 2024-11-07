@@ -17,17 +17,13 @@ import {
 import TextArea from "antd/es/input/TextArea";
 import Title from "antd/es/typography/Title";
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
 import FormSelectWrapper from "../FormSelectWrapper";
-import WorklogForm from "../Worklog/WorklogForm";
 
 const TaskTable = ({ data }: { data: TaskType[] }) => {
-  const { id } = useParams();
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
   const { data: users } = useUser();
-  const [openWorklogForm, setOpenWorklogForm] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
   console.log(selectedTask?.assignees);
 
@@ -153,9 +149,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
     ],
     []
   );
-  const handleChange = (value: string) => {
-    console.log(`selected ${value}`);
-  };
+
 
   const onFinish = (values: any) => {
     console.log("Success:", values);
@@ -163,7 +157,8 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
   };
 
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
-    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => { },
+    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => { console.log(_selectedRowKeys, selectedRows);
+    },
     getCheckboxProps: (record: TaskType) => ({
       name: record.name,
     }),
@@ -275,7 +270,6 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
           </Row>
         </div>
       </Drawer>
-      <WorklogForm />
     </>
   );
 };

@@ -20,8 +20,8 @@ const Navbar = ({
   collapsed: boolean;
   setCollapsed: any;
 }) => {
-  const { profile, isProfilePending } = useSession();
-  const { data: notification, isPending } = useMyNotifications()
+  const { profile } = useSession();
+  const { data: notification } = useMyNotifications()
   const { mutate: logout } = useLogout();
 
   return (

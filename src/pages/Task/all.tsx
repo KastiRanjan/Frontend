@@ -1,15 +1,13 @@
 import PageTitle from "@/components/PageTitle";
 import AllTaskTable from "@/components/Task/AllTaskTable";
-import TaskTable from "@/components/Task/TaskTable";
-import { useTask } from "@/hooks/task/useTask";
-import { AntDesignOutlined, UserOutlined } from "@ant-design/icons";
-import { Avatar, Button, Spin, Tooltip } from "antd";
-import React from "react";
+import { useProjectTask } from "@/hooks/task/useProjectTask";
+import { Button, Spin } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 
-const AllTask: React.FC = () => {
+const AllTask = () => {
     const navigate = useNavigate();
-    const { data, isPending } = useTask();
+    const { pid } = useParams();
+    const { data, isPending } = useProjectTask({ id: pid });
 
     if (isPending) return <Spin />;
 
@@ -22,7 +20,7 @@ const AllTask: React.FC = () => {
                     <div className="flex gap-4">
                         <Button
                             type="primary"
-                            onClick={() => navigate(`/project/${id}/tasks/new`)}
+                            onClick={() => navigate(`/project/${pid}/tasks/new`)}
                         >
                             Add
                         </Button>

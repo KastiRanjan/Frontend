@@ -21,7 +21,7 @@ export const PermissionForm = ({
   isformEdit,
 }: PermissionFormProps) => {
   const { mutate, isPending } = useCreatePermission();
-  const { mutate: mutateEdit, isPending: isPendingEdit } = useEditPermission();
+  const { mutate: mutateEdit } = useEditPermission();
   const [form] = Form.useForm();
 
   useEffect(() => {

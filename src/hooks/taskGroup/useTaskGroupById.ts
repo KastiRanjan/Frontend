@@ -1,7 +1,7 @@
 import { fetchTaskGroupById } from "@/service/taskgroup.service";
 import { useQuery } from "@tanstack/react-query";
 
-export const useTaskGroupById = ({ id }: { id: string }) => {
+export const useTaskGroupById = ({ id }: { id: string | undefined }) => {
   return useQuery({
     queryKey: ["taskGroup", id],
     queryFn: async () => {

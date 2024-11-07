@@ -1,21 +1,19 @@
 import { useModifiedPermission } from "@/hooks/permission/useMoodifiedPermission";
 import { useRolePermissionById } from "@/hooks/permission/useRolePermissionById";
-import { useCreateRole } from "@/hooks/role/useCreateRole";
 import { Role } from "@/pages/Role/type";
 import { Form, Tree, TreeProps } from "antd";
 import { useEffect, useState } from "react";
 
 interface RoleFormProps {
   editRoleData?: Role;
-  id?: number;
+  id?: string;
 }
 
 const RolePermissionForm = ({ editRoleData, id }: RoleFormProps) => {
   const [form] = Form.useForm();
-  const { mutate, isPending } = useCreateRole();
   const { data: rolePermissions } = useRolePermissionById({ id });
   const [checkedKeys, setCheckedKeys] = useState<React.Key[]>(["b319e9ca-783b-4d90-bb1d-8140ec57209c"]);
-  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+  // const [, setSelectedKeys] = useState<React.Key[]>([]);
 
   useEffect(() => {
     if (id && editRoleData) {
@@ -37,7 +35,7 @@ const RolePermissionForm = ({ editRoleData, id }: RoleFormProps) => {
       limit: 100,
     });
 
-  const onFinish = (values: any) => { };
+  const onFinish = () => { };
 
 
   const onCheck: TreeProps['onCheck'] = (checkedKeysValue) => {
@@ -45,10 +43,10 @@ const RolePermissionForm = ({ editRoleData, id }: RoleFormProps) => {
     setCheckedKeys(checkedKeysValue as React.Key[]);
   };
 
-  const onSelect: TreeProps['onSelect'] = (selectedKeysValue, info) => {
-    console.log('onSelect', info);
-    setSelectedKeys(selectedKeysValue);
-  };
+  // const onSelect: TreeProps['onSelect'] = (selectedKeysValue, info) => {
+  //   console.log('onSelect', info);
+  //   setSelectedKeys(selectedKeysValue);
+  // };
 
   return (
     <Form form={form} layout="vertical" initialValues={{}} onFinish={onFinish}>

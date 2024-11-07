@@ -42,9 +42,7 @@ const columns = [
   },
 ];
 
-const WorklogTable = ({data}:{data:any}) => {
-  console.log(data)
-    
+const WorklogTable = ({data}:{data:any}) => {    
 
   return (
     <Table

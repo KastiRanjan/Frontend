@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePermission } from "../../hooks/permission/usePermission";
 
 // Modified columns definition to be a function
-const columns = (showEditModal:any) => [
+const columns = (showEditModal: any) => [
   {
     title: "Description",
     dataIndex: "description",
@@ -28,7 +28,7 @@ const columns = (showEditModal:any) => [
   {
     title: "Action", // Added Action column for Edit button
     key: "action",
-    render: (text, record) => (
+    render: (_: any, record: any) => (
       <Button
         type="primary"
         icon={<EditOutlined />}
@@ -40,13 +40,13 @@ const columns = (showEditModal:any) => [
   },
 ];
 
-const PermissionTable = ({showEditModal}) => {
+const PermissionTable = ({ showEditModal }: { showEditModal: any }) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: user, isPending } = usePermission({ page, limit });
 
 
-  const handleTableChange = (pagination) => {
+  const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
   };
@@ -61,7 +61,7 @@ const PermissionTable = ({showEditModal}) => {
     showSizeChanger: true,
     showQuickJumper: true,
     pageSizeOptions: [5, 10, 20, 30, 50, 100],
-    showTotal: (total, range) =>
+    showTotal: (total: number, range: number[]) =>
       `${range[0]}-${range[1]} of ${total}`,
   };
 

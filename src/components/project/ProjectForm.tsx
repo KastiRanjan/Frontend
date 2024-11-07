@@ -1,4 +1,4 @@
-import { Button, Col, DatePicker, Divider, Form, Row } from "antd";
+import { Button, Col, DatePicker, Divider, Form, Row, Select } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 import { Project } from "@/pages/Project/type";
 import { useEffect } from "react";
@@ -11,7 +11,7 @@ import FormSelectWrapper from "../FormSelectWrapper";
 
 interface ProjectFormProps {
   editProjectData?: Project;
-  id?: number;
+  id?: string;
 }
 
 const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
@@ -43,7 +43,7 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
   return (
     <Form form={form} layout="vertical" initialValues={{}} onFinish={onFinish}>
       <Row gutter={36}>
-        <Divider  />
+        <Divider />
         <Col span={6}>
           <FormInputWrapper
             id="Project Name"
@@ -97,21 +97,24 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
           />
         </Col>
         <Col span={6}>
-          <FormSelectWrapper
-            id="Fiscal Year"
+          <Form.Item
             label="Fiscal Year"
             name="fiscalYear"
-            options={[...Array(5).keys()].map((_, index) => {
-              const year = new Date().getFullYear() + index;
-              return {
-                value: year,
-                label: year.toString(),
-              };
-            })}
             rules={[
               { required: true, message: "Please select the fiscal year!" },
             ]}
-          />
+          >
+            <Select
+              className="py-3 w-full"
+              options={[...Array(5).keys()].map((_, index) => {
+                const year = new Date().getFullYear() + index;
+                return {
+                  value: year,
+                  label: year.toString(),
+                };
+              })}
+            />
+          </Form.Item>
           <Form.Item
             label="Starting Date"
             name="startingDate"
@@ -130,8 +133,8 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
           >
             <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
           </Form.Item>
-          </Col>
-          <Col span={6}>
+        </Col>
+        <Col span={6}>
           <FormSelectWrapper
             id="users"
             name="users"
@@ -141,15 +144,15 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
               isPendingUser
                 ? []
                 : users?.results?.map((user: UserType) => ({
-                    value: user.id,
-                    label: user.name,
-                  }))
+                  value: user.id,
+                  label: user.name,
+                }))
             }
             mode="multiple"
           />
 
           <FormSelectWrapper
-            id= "projectLead"
+            id="projectLead"
             name="projectLead"
             label="Project Lead"
             placeholder="Select users"
@@ -157,11 +160,11 @@ const ProjectForm = ({ editProjectData, id }: ProjectFormProps) => {
               isPendingUser
                 ? []
                 : users?.results?.map((user: UserType) => ({
-                    value: user.id,
-                    label: user.name,
-                  }))
+                  value: user.id,
+                  label: user.name,
+                }))
             }
-            />
+          />
         </Col>
       </Row>
       <Form.Item>

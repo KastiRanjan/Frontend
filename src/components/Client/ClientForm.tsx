@@ -1,21 +1,18 @@
-import { Button, Col, DatePicker, Form, Input, Row } from "antd";
+import { useCreateClient } from "@/hooks/client/useCreateClient";
+import { useEditClient } from "@/hooks/client/useEditClient";
+import { Button, Col, DatePicker, Form, Row } from "antd";
+import moment from "moment"; // Import moment
 import { useEffect } from "react";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
-import { useCreateClient } from "@/hooks/client/useCreateClient";
-import { useEditClient } from "@/hooks/client/useEditClient";
-import { useClient } from "@/hooks/client/useClient";
-import moment from "moment"; // Import moment
 
 
 interface ClientFormProps {
   editClientData?: any;
-  id?: number;
+  id?: string;
 }
 const ClientForm = ({ editClientData, id }: ClientFormProps) => {
   const [form] = Form.useForm();
-
-  const { data: groups, isPending } = useClient();
   const { mutate } = useCreateClient();
   const { mutate: mutateEdit } = useEditClient();
 

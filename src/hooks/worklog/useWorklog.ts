@@ -4,7 +4,7 @@ import { fetchWorklogs } from "../../service/worklog.service";
 
 export const useWorklog = () => {
   return useQuery({
-    queryKey: ["worklog"],
+    queryKey: ["worklog-all"],
     queryFn: async () => {
       return fetchWorklogs();
     },

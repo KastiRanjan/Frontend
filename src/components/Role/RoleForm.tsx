@@ -7,7 +7,7 @@ import FormInputWrapper from "../FormInputWrapper";
 
 interface RoleFormProps {
   editRoleData?: Role;
-  id?: number;
+  id?: string;
 }
 
 const RoleForm = ({ editRoleData, id }: RoleFormProps) => {

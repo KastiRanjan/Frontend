@@ -48,7 +48,7 @@ const columns = (showDrawer: any) => [
   {
     title: "Action",
     key: "action",
-    render: (_: any, record: User) => (
+    render: () => (
       <div>
         <Button type="primary" icon={<EditOutlined />}></Button>
         <Button type="primary" icon={<EditOutlined />} onClick={showDrawer}>
@@ -61,8 +61,6 @@ const columns = (showDrawer: any) => [
 
 const UserTable = () => {
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
   const [selectedRow, setSelectedRow] = useState<any>([]);
   const { data: user, isPending } = useUser();
 
@@ -74,9 +72,9 @@ const UserTable = () => {
     setOpen(false);
   };
 
-  const handleTableChange = (pagination: any) => {
-    setPage(pagination.current);
-    setLimit(pagination.pageSize);
+  const handleTableChange = () => {
+    // setPage(pagination.current);
+    // setLimit(pagination.pageSize);
   };
 
   return (

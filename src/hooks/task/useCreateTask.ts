@@ -9,7 +9,7 @@ export const useCreateTask = () => {
     mutationFn: (payload) => {
       return createTask(payload);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_task"] });
       navigate(-1);
     },

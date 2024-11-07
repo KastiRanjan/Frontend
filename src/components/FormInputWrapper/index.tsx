@@ -11,7 +11,7 @@ interface FormInputWrapperProps {
   disabled?: boolean;
   passwordInput?: boolean;
   label?: string;
-  name: string;
+  name?: string;
   id: string;
   classname?: string;
   changeHandler?: (event: React.ChangeEvent<HTMLInputElement>) => void;

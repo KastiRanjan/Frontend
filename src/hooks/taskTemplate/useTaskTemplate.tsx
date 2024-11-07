@@ -11,7 +11,7 @@ export const useTaskTemplate = ({
   return useQuery({
     queryKey: ["taskTemplate", page, limit],
     queryFn: async () => {
-      return fetchTaskTemplate({ page, limit });
+      return fetchTaskTemplate();
     },
     // enabled: !!page && !!limit,
   });

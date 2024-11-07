@@ -1,11 +1,13 @@
+import { useSession } from "@/context/SessionContext";
 import { useProject } from "@/hooks/project/useProject";
 import { Project } from "@/pages/Project/type";
+import { checkPermissionForComponent } from "@/utils/permission";
 import { EditOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Table, TableProps } from "antd";
+import { Avatar, Button, Table, TableProps } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-const columns = [
+const columns = (permissions: any): TableProps<Project>["columns"] => [
   {
 
     title: "Date ",
@@ -66,6 +68,7 @@ const columns = [
     title: "Action",
     key: "action",
     fixed: 'right',
+    hidden: checkPermissionForComponent(permissions, "projects", 'patch', "/projects/:id") ? false : true,
     width: 50,
     render: (_: any, record: any) => (
       <>
@@ -83,6 +86,7 @@ const ProjectTable = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: project, isPending } = useProject();
+  const { permissions } = useSession();
 
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
@@ -103,7 +107,8 @@ const ProjectTable = () => {
   };
 
   const rowSelection: TableProps<Project>["rowSelection"] = {
-    onChange: (selectedRowKeys: React.Key[], selectedRows: Project[]) => { },
+    onChange: (selectedRowKeys: React.Key[], selectedRows: Project[]) => { console.log(selectedRowKeys, selectedRows);
+     },
     getCheckboxProps: (record: Project) => ({
       name: record.name,
     }),
@@ -115,9 +120,8 @@ const ProjectTable = () => {
       pagination={paginationOptions}
       rowSelection={rowSelection}
       dataSource={project}
-      columns={columns}
+      columns={columns(permissions)}
       onChange={handleTableChange}
-      size="small"
       rowKey={"id"}
       bordered
       scroll={{ x: 'max-content' }}

@@ -9,7 +9,7 @@ export const useCreateTaskGroup = () => {
     mutationFn: (payload) => {
       return createTaskGroup(payload);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskGroup"] });
       navigate("/task-group");
     },

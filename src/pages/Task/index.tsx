@@ -4,7 +4,6 @@ import { useSession } from "@/context/SessionContext";
 import { useProjectById } from "@/hooks/project/useProjectById";
 import { useProjectTask } from "@/hooks/task/useProjectTask";
 import { checkPermissionForComponent } from "@/utils/permission";
-import { AntDesignOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button, Spin, Tooltip } from "antd";
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -17,7 +16,6 @@ const Task: React.FC = () => {
   const { data: project } = useProjectById({ id })
 
   if (isPending) return <Spin />
-  console.log(project)
 
   return (
     <div>
@@ -26,7 +24,7 @@ const Task: React.FC = () => {
         description="Add, search, and manage your tasks all in one place."
         element={
           <div className="flex gap-4">
-            {checkPermissionForComponent(permissions, "project") && <Button
+            {checkPermissionForComponent(permissions,  "tasks", "post", "/tasks") && <Button
               type="primary"
               onClick={() => navigate(`/project/${id}/tasks/new`)}
             >

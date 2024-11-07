@@ -15,7 +15,7 @@ export const fetchRole = async ({
   );
   return response.data;
 };
-export const fetchRoleById = async ({ id }: { id: string }) => {
+export const fetchRoleById = async ({ id }: { id: string | undefined }) => {
   const response = await axios.get(`${backendURI}/roles/${id}`);
   return response.data;
 };

@@ -1,15 +1,15 @@
-import { Button, Form, Input } from "antd";
-import FormInputWrapper from "../FormInputWrapper";
 import { useCreateTaskGroup } from "@/hooks/taskGroup/useCreateTaskGroup";
-import { TaskGroup } from "@/pages/TaskGroup/type";
-import { useEffect } from "react";
 import { useEditTaskGroup } from "@/hooks/taskGroup/useEditTaskGroup";
+import { Button, Form, Input } from "antd";
+import { useEffect } from "react";
+import FormInputWrapper from "../FormInputWrapper";
+import { TaskGroup } from "@/pages/TaskGroup/type";
 interface TaskGroupFormProps {
   editTaskGroupData?: TaskGroup;
-  id?: number;
+  id?: string | undefined;
 }
 
-const TaskGroupForm: React.FC = ({
+const TaskGroupForm = ({
   editTaskGroupData,
   id,
 }: TaskGroupFormProps) => {

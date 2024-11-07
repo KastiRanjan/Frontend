@@ -7,7 +7,8 @@ export const useCreateWorklog = () => {
     mutationFn: (payload) => {
       return createWorklog(payload);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["worklog-all"] });
       queryClient.invalidateQueries({ queryKey: ["worklogs"] });
     },
   });

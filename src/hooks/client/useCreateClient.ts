@@ -9,7 +9,7 @@ export const useCreateClient = () => {
     mutationFn: (payload) => {
       return createClient(payload);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       navigate("/client");
     },

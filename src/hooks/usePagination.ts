@@ -10,8 +10,8 @@ interface PaginationState {
 const usePagination = create<PaginationState>((set) => ({
   page: 1,
   limit: 10,
-  setPage: (page) => set((state) => ({ page })),
-  setLimit: (limit) => set((state) => ({ limit })),
+  setPage: (page) => set(() => ({ page })),
+  setLimit: (limit) => set(() => ({ limit })),
 }));
 
 export default usePagination;

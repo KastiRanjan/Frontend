@@ -30,6 +30,8 @@ import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
 import NewWorklog from "@/pages/Worklog/new";
 import Attendence from "@/pages/Attendence";
+import AllWorklogs from "@/pages/Worklog/AllWorklogs";
+import TaskDetails from "@/pages/Task/task-details";
 
 const Router = [
   {
@@ -130,6 +132,14 @@ const Router = [
         element: <Attendence />,
       },
       {
+        path: "worklogs-all",
+        element: <AllWorklogs />,
+      },
+      {
+        path: "worklogs/new",
+        element: <NewWorklog />,
+      },
+      {
         path: "/settings",
         element: <>setting</>,
       },
@@ -180,6 +190,10 @@ const Router = [
       {
         path: "tasks",
         element: <Task />,
+      },
+      {
+        path: "tasks/:tid",
+        element: <TaskDetails />,
       },
       {
         path: "tasks/new",

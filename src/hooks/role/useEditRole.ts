@@ -7,7 +7,7 @@ export const useEditRole = () => {
     mutationFn: ({payload,id}:any) => {
       return editRole({payload,id});
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
     },
   });

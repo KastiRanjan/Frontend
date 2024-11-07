@@ -61,6 +61,12 @@ export const MenuItems = (): MenuItem[] => {
       resource: "client",
       icon: React.createElement(UserOutlined),
     },
+    {
+      key: "/worklogs-all",
+      label: "Worklogs",
+      resource: "worklogs",
+      icon: React.createElement(UserOutlined),
+    },
   ]
 
   const filteredItems = _.filter(items, item =>

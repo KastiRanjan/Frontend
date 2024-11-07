@@ -7,7 +7,7 @@ export const useUpdateAttendence = () => {
     mutationFn: ({payload,id}:any) => {
       return updateAttendence({payload,id});
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["attendence"] });
     },
   });

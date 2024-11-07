@@ -8,7 +8,7 @@ export const fetchTaskGroup = async () => {
   return response.data;
 };
 
-export const fetchTaskGroupById = async ({ id }: { id: string }) => {
+export const fetchTaskGroupById = async ({ id }: { id: string | undefined }) => {
   const response = await axios.get(`${backendURI}/task-group/${id}`);
   return response.data;
 };

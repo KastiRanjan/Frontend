@@ -9,7 +9,7 @@ import { useEditTaskTemplate } from "@/hooks/taskTemplate/useEditTaskTemplate";
 
 interface TaskTemplateFormProps {
   editTaskTemplateData?: any;
-  id?: number;
+  id?: string;
 }
 const TaskTemplateForm = ({
   editTaskTemplateData,
@@ -17,7 +17,7 @@ const TaskTemplateForm = ({
 }: TaskTemplateFormProps) => {
   const [form] = Form.useForm();
 
-  const { data: groups, isPending } = useTaskGroup();
+  const { data: groups } = useTaskGroup();
   const { mutate } = useCreateTaskTemplate();
   const { mutate: mutateEdit } = useEditTaskTemplate();
 

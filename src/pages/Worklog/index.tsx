@@ -8,10 +8,7 @@ import { useNavigate, useParams } from "react-router-dom";
 const Worklog: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isLoading, isError, data, error } = useWorklogById({
-    id: id?.toString(),
-  });
-  console.log(data);
+  const { data } = useWorklogById({ id });
   return (
     <>
       <PageTitle

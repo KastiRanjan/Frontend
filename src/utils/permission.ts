@@ -1,11 +1,10 @@
-export function checkPermissionForComponent(permission: any, route: any) {
-  if (!permission) return false;
-    if (route.defaultPermission) return true;
-   
+export function checkPermissionForComponent(permission: any,resource: any, method: any, path: any) {
+  console.log(permission,resource, method, path)
+  if (!permission) return false;   
   return permission.some(
     (role: any) =>
-      role.resource === route.resource &&
-      role.path === route.path &&
-      role.method === route.method
+      role.resource === resource &&
+      role.path === path &&
+      role.method === method
   );
 }

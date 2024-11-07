@@ -13,7 +13,7 @@ const EducationDetailForm = () => {
     headers: {
       authorization: "authorization-text",
     },
-    beforeUpload(file) {
+    beforeUpload() {
       // Prevent auto-upload by returning false
       return false;
     },

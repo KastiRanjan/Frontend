@@ -1,31 +1,47 @@
-import { useProjectById } from "@/hooks/project/useProjectById";
-import { useProjectTask } from "@/hooks/task/useTask";
+import { useProject } from "@/hooks/project/useProject";
 import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
 import { TaskTemplateType } from "@/pages/TaskTemplate/type";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd";
-import { useParams } from "react-router-dom";
+import { Button, Col, Form, Row, Select, TimePicker } from "antd";
+import TextArea from "antd/es/input/TextArea";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const WorklogForm = () => {
-  const { id } = useParams();
-  const { data: task } = useProjectTask();
-  const { data: project } = useProjectById({ id });
+const OWorklogForm = () => {
+  const [tasks, setTasks] = useState<{ [fieldName: string]: TaskTemplateType[] }>({});
+  const { data: projects } = useProject();
   const { mutate: createWorklog } = useCreateWorklog();
+  const navigate = useNavigate();
 
+  // Handle the form submission
   const handleFinish = (values: any) => {
     console.log(values.timeEntries);
-    // Implement the worklog submission logic here.
-    createWorklog(values.timeEntries);
+    createWorklog(values.timeEntries, {
+      onSuccess: () => {
+        navigate("/worklogs-all");
+      },
+    });
+  };
+
+  // Handle project change for a specific form entry
+  const handleProjectChange = (projectId: string, fieldName: any) => {
+    const selectedProject = projects?.find((project: any) => project.id === projectId);
+    if (selectedProject) {
+      setTasks((prevTasks) => ({
+        ...prevTasks,
+        [fieldName]: selectedProject.tasks || [],
+      }));
+    }
   };
 
   return (
     <>
       <Form onFinish={handleFinish} layout="vertical">
         <Row gutter={16} className="mb-2">
-          <Col span={4}>Task</Col>
-          <Col span={4}>Approver</Col>
+          <Col span={3}>Project</Col>
+          <Col span={5}>Task</Col>
           <Col span={7}>Description</Col>
-          <Col span={4}>StartTime</Col>
+          <Col span={3}>StartTime</Col>
           <Col span={3}>EndTime</Col>
         </Row>
 
@@ -34,54 +50,42 @@ const WorklogForm = () => {
             <>
               {fields.map((field) => (
                 <Row gutter={16} key={field.key}>
-                  <Col span={4} >
+                  {/* Project Dropdown */}
+                  <Col span={3}>
+                    <Form.Item
+                      name={[field.name, "projectId"]}
+                      rules={[{ required: true, message: "Please select a project!" }]}
+                    >
+                      <Select
+                        className="h-[48px]"
+                        onChange={(projectId) => handleProjectChange(projectId, field.name )}
+                        options={projects?.map((p: TaskTemplateType) => ({
+                          label: p.name,
+                          value: p.id,
+                        }))}
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  {/* Task Dropdown */}
+                  <Col span={5}>
                     <Form.Item
                       name={[field.name, "taskId"]}
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select the task!",
-                        },
-                      ]}
+                      rules={[{ required: true, message: "Please select a task!" }]}
                     >
                       <Select
-                        showSearch
-                        placeholder="Select task"
-                        optionFilterProp="label"
-                        filterOption={(input, option: any) =>
-                          (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-                        }
-                        options={task?.map((task: TaskTemplateType) => ({
-                          label: task.name,
-                          value: task.id,
+                        className="h-[48px]"
+                        options={tasks[field.name]?.map((t: TaskTemplateType) => ({
+                          label: t.name,
+                          value: t.id,
                         }))}
+                        disabled={!tasks[field.name]?.length} // Disable task dropdown if no tasks available
                       />
                     </Form.Item>
                   </Col>
-                  <Col span={4}>
-                    <Form.Item
-                      name={[field.name, "userId"]}
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select the user!",
-                        },
-                      ]}
-                    >
-                      <Select
-                        showSearch
-                        placeholder="Select user"
-                        optionFilterProp="label"
-                        filterOption={(input, option: any) =>
-                          (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-                        }
-                        options={project?.users?.map((user: any) => ({
-                          label: user.name,
-                          value: user.id,
-                        }))}
-                      />
-                    </Form.Item>
-                  </Col>
+
+
+                  {/* Description Field */}
                   <Col span={7}>
                     <Form.Item
                       name={[field.name, "description"]}
@@ -92,10 +96,15 @@ const WorklogForm = () => {
                         },
                       ]}
                     >
-                      <Input placeholder="Enter worklog description" />
+                      <TextArea
+                        placeholder="Worklog description"
+                        className="ant-input"
+                      />
                     </Form.Item>
                   </Col>
-                  <Col span={4}>
+
+                  {/* Start Time Field */}
+                  <Col span={3}>
                     <Form.Item
                       name={[field.name, "startTime"]}
                       rules={[
@@ -105,9 +114,11 @@ const WorklogForm = () => {
                         },
                       ]}
                     >
-                      <DatePicker showTime  className="py-3"/>
+                      <TimePicker className="py-3" />
                     </Form.Item>
                   </Col>
+
+                  {/* End Time Field */}
                   <Col span={3}>
                     <Form.Item
                       name={[field.name, "endTime"]}
@@ -118,9 +129,11 @@ const WorklogForm = () => {
                         },
                       ]}
                     >
-                      <DatePicker showTime  className="py-3"/>
+                      <TimePicker className="py-3" />
                     </Form.Item>
                   </Col>
+
+                  {/* Remove Field */}
                   <Col span={1}>
                     <MinusCircleOutlined onClick={() => remove(field.name)} />
                   </Col>
@@ -147,4 +160,4 @@ const WorklogForm = () => {
   );
 };
 
-export default WorklogForm;
+export default OWorklogForm;

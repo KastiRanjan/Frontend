@@ -7,7 +7,7 @@ export const fetchClients = async () => {
   return response.data;
 };
 
-export const fetchClientById = async ({ id }: { id: string }) => {
+export const fetchClientById = async ({ id }: { id: string | undefined }) => {
   const response = await axios.get(`${backendURI}/client/${id}`);
   return response.data;
 };

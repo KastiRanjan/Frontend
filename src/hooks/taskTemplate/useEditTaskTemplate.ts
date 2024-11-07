@@ -9,7 +9,7 @@ export const useEditTaskTemplate = () => {
     mutationFn: ({ payload, id }: any) => {
       return editTaskTemplate({ payload, id });
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskTemplate"] });
 
       navigate("/task-template");

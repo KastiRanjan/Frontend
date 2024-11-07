@@ -2,7 +2,7 @@ import { fetchRoleById } from "@/service/role.service";
 import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 
-export const useRolePermissionById = ({ id }: { id: string }) => {
+export const useRolePermissionById = ({ id }: { id: string | undefined }) => {
   return useQuery({
     queryKey: ["role", id],
     queryFn: async () => {

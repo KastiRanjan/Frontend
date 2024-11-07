@@ -4,7 +4,7 @@ import Sider from "antd/es/layout/Sider";
 import { Drawer, Menu } from "antd";
 import { useEffect, useState } from "react";
 
-const WIDTH = 992;
+// const WIDTH = 992;
 
 const Sidebar = ({
   collapsed,
@@ -22,8 +22,8 @@ const Sidebar = ({
         ? setIsMobile(true)
         : setIsMobile(false);
     };
-    const rect = document.body.getBoundingClientRect();
-    const needCollapse = rect.width < WIDTH;
+    // const rect = document.body.getBoundingClientRect();
+    // const needCollapse = rect.width < WIDTH;
   }, []);
 
   const handleChangePage = (e: any) => {

@@ -69,7 +69,7 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
         title: "Project",
         dataIndex: "project",
         key: "project",
-        render: (_: any, record: TaskType) => {
+        render: (_: any, record: any) => {
           return record.project?.name;
         },
       },
@@ -138,9 +138,9 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
     ],
     []
   );
-  const handleChange = (value: string) => {
-    console.log(`selected ${value}`);
-  };
+  // const handleChange = (value: string) => {
+  //   console.log(`selected ${value}`);
+  // };
 
   const onFinish = (values: any) => {
     console.log("Success:", values);
@@ -148,7 +148,8 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
   };
 
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
-    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {},
+    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {console.log(_selectedRowKeys, selectedRows);
+    },
     getCheckboxProps: (record: TaskType) => ({
       name: record.name,
     }),

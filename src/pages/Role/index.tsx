@@ -1,16 +1,10 @@
 import PageTitle from "@/components/PageTitle";
 import RoleTable from "@/components/Role/RoleTable";
 import { Button } from "antd";
-import React from "react";
 import { useNavigate } from "react-router-dom";
 
-interface Role {
-  createdAt: string;
-  name: string;
-  description: string;
-}
 
-const RolesPage: React.FC = () => {
+const RolesPage = () => {
   const navigate = useNavigate();
 
   return (

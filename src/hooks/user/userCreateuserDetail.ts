@@ -9,7 +9,7 @@ export const useCreateUserDetail = () => {
     mutationFn: ({ id, payload, query }: any) => {
       return createUserDetail({ id, payload, query });
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       navigate("/users");
     },

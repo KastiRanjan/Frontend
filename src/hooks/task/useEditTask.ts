@@ -8,7 +8,7 @@ export const useEditTask = () => {
     mutationFn: ({ payload, id }: any) => {
       return updateTask({ payload, id });
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_task"] });
     },
   });

@@ -43,6 +43,7 @@ const TaskGroupTable = () => {
   const { page, limit, setPage, setLimit } = usePagination();
   const [selectedRow, setSelectedRow] = useState<TaskGroup[]>([]);
   const { data: taskTemplate, isPending } = useTaskGroup();
+  console.log(page, limit, selectedRow);
 
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);

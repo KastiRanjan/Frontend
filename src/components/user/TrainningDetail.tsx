@@ -1,15 +1,13 @@
-import { Form, InputNumber, Upload, Button } from "antd";
+import { Form, InputNumber } from "antd";
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
-import { UploadOutlined } from '@ant-design/icons';
-import { useState } from 'react';
 
 const TrainingDetail = () => {
-  const [fileList, setFileList] = useState([]);
+  // const [fileList, setFileList] = useState([]);
 
-  const handleUploadChange = (info) => {
-    setFileList(info.fileList);
-  };
+  // const handleUploadChange = (info) => {
+  //   setFileList(info.fileList);
+  // };
 
   return (
     <>

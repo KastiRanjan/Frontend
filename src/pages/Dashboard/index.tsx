@@ -60,7 +60,7 @@ const Dashboard: React.FC = () => {
   const [inactiveUsers, setInactiveUsers] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { data: notifications, isPending } = useMyNotifications();
+  const { data: notifications } = useMyNotifications();
 
   useEffect(() => {
     const fetchData = async () => {

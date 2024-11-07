@@ -5,15 +5,16 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 
 const Clock = () => {
-  const { data, isLoading } = useGetMyAttendence();
+  const { data } = useGetMyAttendence();
   const { mutate } = useCreateAttendence();
   const isClockedIn = data?.length > 0 ? true : false;
   const [timer, setTimer] = useState(0);
+  console.log(timer)
 
   // State to manage location
   const [location, setLocation] = useState<{
-    latitude: string;
-    longitude: string;
+    latitude: number;
+    longitude: number;
   } | null>(null);
 
   // Get the user's location when they clock in or clock out

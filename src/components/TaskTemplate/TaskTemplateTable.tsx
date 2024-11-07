@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MoveTemplateModal from "./MoveTemplateModal";
 
-const column= [
+const column: TableProps<TaskTemplate>["columns"] = [
   {
     title: "Name",
     dataIndex: "name",
@@ -49,7 +49,7 @@ const TaskTemplateTable = ({
   isModalOpen,
   setIsRowSelected,
 }: TaskTemplateTableProps) => {
-  const { page, limit, setPage, setLimit } = usePagination();
+  const { page, limit } = usePagination();
   const [selectedRow, setSelectedRow] = useState<TaskTemplate[]>([]);
 
   const { data: taskTemplate, isPending } = useTaskTemplate({ page, limit });

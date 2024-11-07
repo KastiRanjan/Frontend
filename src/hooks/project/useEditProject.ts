@@ -9,7 +9,7 @@ export const useEditProject = () => {
     mutationFn: ({ payload, id }: any) => {
       return editProject({ payload, id });
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       navigate("/project");
     },

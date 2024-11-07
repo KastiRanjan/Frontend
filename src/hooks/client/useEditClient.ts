@@ -9,7 +9,7 @@ export const useEditClient = () => {
     mutationFn: ({ payload, id }: any) => {
       return editClient({ payload, id });
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       navigate("/client");
     },

@@ -1,8 +1,6 @@
 // src/ProjectDetail.tsx
-import React from 'react';
-import { Card, Col, Row, Typography, Table, Button } from 'antd';
 import { Project } from '@/pages/Project/type';
-import PageTitle from '../PageTitle';
+import { Button, Card, Col, Row, Table, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
@@ -10,10 +8,11 @@ const { Title, Text } = Typography;
 
 interface ProjectDetailProps {
   project: Project;
+  id?: string
 }
 
-const ProjectDetailComponent: React.FC<ProjectDetailProps> = ({ project , id}) => {
-  const { name, description, startingDate, endingDate, users, tasks } = project;
+const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
+  const { name, startingDate, endingDate, users, tasks } = project;
   const navigate = useNavigate();
 
 
@@ -33,25 +32,25 @@ const ProjectDetailComponent: React.FC<ProjectDetailProps> = ({ project , id}) =
 
   return (
     <>
-    <Title level={2}>{name}</Title>
-    <Card style={{ margin: '20px' }}>
-      <Row style={{ marginTop: '20px' }}>
-        <Col span={12}>
-          <Text strong>Starting Date:</Text> {new Date(startingDate).toLocaleDateString()}
-        </Col>
-        <Col span={12}>
-          <Text strong>Ending Date:</Text> {new Date(endingDate).toLocaleDateString()}
-        </Col>
-      </Row>
+      <Title level={2}>{name}</Title>
+      <Card style={{ margin: '20px' }}>
+        <Row style={{ marginTop: '20px' }}>
+          <Col span={12}>
+            <Text strong>Starting Date:</Text> {new Date(startingDate).toLocaleDateString()}
+          </Col>
+          <Col span={12}>
+            <Text strong>Ending Date:</Text> {new Date(endingDate).toLocaleDateString()}
+          </Col>
+        </Row>
 
-      <Title level={4} style={{ marginTop: '20px' }}>Users</Title>
+        <Title level={4} style={{ marginTop: '20px' }}>Users</Title>
 
-      <Table dataSource={users} columns={userColumns} rowKey="username" />
+        <Table dataSource={users} columns={userColumns} rowKey="username" />
 
-      <Title level={4} style={{ marginTop: '20px' }}>Tasks</Title>
-      <Table dataSource={tasks} columns={taskColumns} rowKey="name" />
-      <Button type="primary" style={{ marginTop: '20px' }} onClick={() => navigate(`/project/${id}/tasks`)}>Add Task</Button>
-    </Card>
+        <Title level={4} style={{ marginTop: '20px' }}>Tasks</Title>
+        <Table dataSource={tasks} columns={taskColumns} rowKey="name" />
+        <Button type="primary" style={{ marginTop: '20px' }} onClick={() => navigate(`/project/${id}/tasks`)}>Add Task</Button>
+      </Card>
     </>
   );
 };
