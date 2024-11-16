@@ -19,7 +19,6 @@ const TaskDetails = () => {
     const onFinish = (values: any) => {
         console.log(values)
     }
-
     return (
         <div style={{ padding: "16px" }}>
             <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>

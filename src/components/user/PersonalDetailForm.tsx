@@ -4,11 +4,13 @@ import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 
 
-const PersonalDetailForm = () => {
+const PersonalDetailForm = ({ initialValues }: any) => {
+  const [form] = Form.useForm();
+
 
   return (
     <>
-      <Form layout="vertical">
+      <Form form={form} layout="vertical" initialValues={initialValues}>
         <Row gutter={30}>
           <Col span={8}>
             <FormSelectWrapper

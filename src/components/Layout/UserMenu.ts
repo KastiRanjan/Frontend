@@ -15,30 +15,62 @@ export interface MenuItem {
 export const UserMenu = (id: string | undefined) => {
   return [
     {
-      key: `/user/${id}/personal-detail`,
+      key: `/profile/${id}/personal-detail`,
       label: "Personal Details",
       icon: React.createElement(DashboardOutlined),
     },
     {
-      key: `/user/${id}/educational-detail`,
+      key: `/profile/${id}/educational-detail`,
       label: "Educational Details",
       icon: React.createElement(UsergroupAddOutlined),
     },
     {
-      key: `/user/${id}/bank-detail`,
+      key: `/profile/${id}/bank-detail`,
       label: "Bank Details",
       icon: React.createElement(ProjectOutlined),
     },
     {
-      key: `/user/${id}/training-detail`,
+      key: `/profile/${id}/training-detail`,
       label: "Trainning Details",
       icon: React.createElement(FileOutlined),
     },
     {
-      key: `/user/${id}/contract-detail`,
+      key: `/profile/${id}/contract-detail`,
       label: "Contract Details",
       icon: React.createElement(FileOutlined),
     },
 
   ]
 };
+
+
+// export const UserMenu = (id: string | undefined) => {
+//   return [
+//     {
+//       key: `/user/${id}/personal-detail`,
+//       label: "Personal Details",
+//       icon: React.createElement(DashboardOutlined),
+//     },
+//     {
+//       key: `/user/${id}/educational-detail`,
+//       label: "Educational Details",
+//       icon: React.createElement(UsergroupAddOutlined),
+//     },
+//     {
+//       key: `/user/${id}/bank-detail`,
+//       label: "Bank Details",
+//       icon: React.createElement(ProjectOutlined),
+//     },
+//     {
+//       key: `/user/${id}/training-detail`,
+//       label: "Trainning Details",
+//       icon: React.createElement(FileOutlined),
+//     },
+//     {
+//       key: `/user/${id}/contract-detail`,
+//       label: "Contract Details",
+//       icon: React.createElement(FileOutlined),
+//     },
+
+//   ]
+// };

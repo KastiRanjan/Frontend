@@ -11,7 +11,7 @@ export const useCreateTaskGroup = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskGroup"] });
-      navigate("/task-group");
+      navigate("/task-template");
     },
   });
 };

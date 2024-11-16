@@ -1,8 +1,9 @@
 export const antTheme = {
   token: {
-    fontFamily: '"Inter", sans-serif',
-    colorPrimary: "#0C66E4",
-    colorFillSecondary: "#fafafa",
+    // fontFamily: '"Inter", sans-serif',
+    colorPrimary: "#1890ff",
+    // colorFillSecondary: "#fafafa",
+    // colorTextBase: 'rgba(0, 0, 0, 0.65)'
   },
   components: {
     Menu: {

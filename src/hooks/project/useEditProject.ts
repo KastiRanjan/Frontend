@@ -11,7 +11,7 @@ export const useEditProject = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      navigate("/project");
+      navigate("/projects");
     },
   });
 };

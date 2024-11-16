@@ -32,8 +32,7 @@ const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
 
   return (
     <>
-      <Title level={2}>{name}</Title>
-      <Card style={{ margin: '20px' }}>
+      <Card>
         <Row style={{ marginTop: '20px' }}>
           <Col span={12}>
             <Text strong>Starting Date:</Text> {new Date(startingDate).toLocaleDateString()}

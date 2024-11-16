@@ -1,13 +1,12 @@
 import AttendenceTable from "@/components/Attendence/AttendenceTable";
+import PageTitle from "@/components/PageTitle";
 
 
 const Attendence = () => {
     return (
         <>
-        <div>
-            <h1>Attendence</h1>
-        </div>
-        <AttendenceTable />
+            <PageTitle title="Attendence" description="View your attendence " />
+            <AttendenceTable />
         </>
     );
 };

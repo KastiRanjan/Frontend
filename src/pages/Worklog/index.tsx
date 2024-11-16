@@ -1,7 +1,7 @@
 import PageTitle from "@/components/PageTitle";
 import WorklogTable from "@/components/Worklog/WorklogTable";
 import { useWorklogById } from "@/hooks/worklog/useWorklogById";
-import { Button } from "antd";
+import { Button, Card } from "antd";
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -23,7 +23,9 @@ const Worklog: React.FC = () => {
           </Button>
         }
       />
-      <WorklogTable data={data} />
+      <Card>
+        <WorklogTable data={data} />
+      </Card>
     </>
   );
 };

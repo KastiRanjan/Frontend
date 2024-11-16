@@ -1,8 +1,10 @@
 export interface TaskGroup {
-  id: number;
-  name: string;
-  description: string;
-  tasktemplate: TaskTemplate[];
+  id: string;
+  name?: string;
+  description?: string;
+  tasktemplate?: TaskTemplate[];
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface TaskTemplate {

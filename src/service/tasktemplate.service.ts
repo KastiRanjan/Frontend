@@ -31,3 +31,9 @@ export const editTaskTemplate = async ({
   );
   return response.data;
 };
+
+
+export const deleteTaskTemplate = async ({ id }: { id: string }) => {
+  const response = await axios.delete(`${backendURI}/task-template/${id}`);
+  return response.data;
+};

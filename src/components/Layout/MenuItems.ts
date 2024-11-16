@@ -1,6 +1,5 @@
 import { useSession } from "@/context/SessionContext";
 import {
-  ClusterOutlined,
   DashboardOutlined,
   FileOutlined,
   ProjectOutlined,
@@ -23,7 +22,7 @@ export const MenuItems = (): MenuItem[] => {
       key: "/",
       label: "Dashboard",
       resource: "user",
-      icon: React.createElement(DashboardOutlined),
+      icon: React.createElement(DashboardOutlined)
     },
     {
       key: "/users",
@@ -37,23 +36,17 @@ export const MenuItems = (): MenuItem[] => {
       resource: "projects",
       icon: React.createElement(ProjectOutlined),
     },
-    {
-      key: "/tasks",
-      label: "Quick Tasks",
-      resource: "tasks",
-      icon: React.createElement(UsergroupAddOutlined),
-    },
+    // {
+    //   key: "/tasks",
+    //   label: "Quick Tasks",
+    //   resource: "tasks",
+    //   icon: React.createElement(UsergroupAddOutlined),
+    // },
     {
       key: "/task-template",
       label: "Task Template",
       resource: "task-template",
       icon: React.createElement(FileOutlined),
-    },
-    {
-      key: "/task-group",
-      label: "Task Group",
-      resource: "task-group",
-      icon: React.createElement(ClusterOutlined),
     },
     {
       key: "/client",
@@ -65,6 +58,12 @@ export const MenuItems = (): MenuItem[] => {
       key: "/worklogs-all",
       label: "Worklogs",
       resource: "worklogs",
+      icon: React.createElement(UserOutlined),
+    },
+    {
+      key: "/attendance",
+      label: "Attendance",
+      resource: "attendance",
       icon: React.createElement(UserOutlined),
     },
   ]

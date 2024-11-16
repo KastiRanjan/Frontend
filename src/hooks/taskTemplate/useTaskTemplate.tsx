@@ -1,18 +1,13 @@
 import { fetchTaskTemplate } from "@/service/tasktemplate.service";
 import { useQuery } from "@tanstack/react-query";
 
-export const useTaskTemplate = ({
-  page,
-  limit,
-}: {
-  page: number;
-  limit: number;
-}) => {
+export const useTaskTemplate = () => {
   return useQuery({
-    queryKey: ["taskTemplate", page, limit],
+    queryKey: ["taskTemplate"],
     queryFn: async () => {
-      return fetchTaskTemplate();
+      const templates = await fetchTaskTemplate();
+      const filteredTemplate = templates?.filter((template: any) => !template.parentTask)
+      return filteredTemplate
     },
-    // enabled: !!page && !!limit,
   });
 };

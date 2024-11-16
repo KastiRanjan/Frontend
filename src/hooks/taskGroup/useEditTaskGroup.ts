@@ -11,8 +11,7 @@ export const useEditTaskGroup = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskGroup"] });
-
-      navigate("/task-group");
+      navigate("/task-template");
     },
   });
 };

@@ -7,12 +7,11 @@ export const useAddTaskProject = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: (payload) => {
-      console.log(payload);
       return addTaskProject(payload);
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      navigate(`/project/${response.project}/tasks`);
+      // navigate(`/project/${response.project}/tasks`);
     },
   });
 };

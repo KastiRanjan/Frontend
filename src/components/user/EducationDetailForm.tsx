@@ -4,7 +4,7 @@ import { UploadOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import { useCreateUserDetail } from "@/hooks/user/userCreateuserDetail";
 
-const EducationDetailForm = () => {
+const EducationDetailForm = ( { initialValues }: any) => {
   const [form] = Form.useForm();
   const { mutate } = useCreateUserDetail();
   const { id } = useParams();
@@ -46,7 +46,7 @@ const EducationDetailForm = () => {
     mutate({ id, payload: formData, query: "education" });
   };
   return (
-    <Form layout="vertical" onFinish={onFinish} form={form}>
+    <Form layout="vertical" initialValues={initialValues} onFinish={onFinish} form={form}>
       <FormInputWrapper
         id="universityCollege"
         name="universityCollege"

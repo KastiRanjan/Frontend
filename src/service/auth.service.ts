@@ -9,6 +9,7 @@ export const login = async (payload: any) => {
 };
 
 export const getProfile = async () => {
+  console.log('sahkjsa')
   const response = await axios.get(`${backendURI}/auth/profile`, {
     withCredentials: true,
   });
@@ -20,5 +21,13 @@ export const logout = async () => {
   const response = await axios.post(`${backendURI}/logout`, {
     withCredentials: true,
   });
+  return response.data;
+};
+
+export const resetPassword = async (resetPasswordDto: { token: string; password: string }) => {
+  const response = await axios.put(`${backendURI}/auth/reset-password`, resetPasswordDto, {
+    withCredentials: true,
+  });
+
   return response.data;
 };

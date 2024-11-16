@@ -1,7 +1,8 @@
 import { Button, Form, InputNumber } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 
-const TrainingDetailForm = () => {
+const TrainingDetailForm = ({ initialValues }: { initialValues: any }) => {
+  const [form] = Form.useForm();
   // const [fileList, setFileList] = useState([]);
 
   // const handleUploadChange = (info: any) => {
@@ -10,7 +11,7 @@ const TrainingDetailForm = () => {
 
   return (
     <>
-      <Form layout="vertical">
+      <Form form={form} layout="vertical" initialValues={initialValues}>
         {/* University/College */}
         <FormInputWrapper
           id="institute"

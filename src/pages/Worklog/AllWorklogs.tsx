@@ -1,31 +1,34 @@
 import PageTitle from "@/components/PageTitle";
 import AllWorklogTable from "@/components/Worklog/AllWorklogTable";
-import { useWorklog } from "@/hooks/worklog/useWorklog";
-import { Button, Tabs } from "antd";
+import { Button, Card, Tabs } from "antd";
 import { useNavigate } from "react-router-dom";
 
 
 const AllWorklogs = () => {
-    const { isPending, data } = useWorklog();
     const navigate = useNavigate();
     return (
         <>
-            <PageTitle title="All Worklogs" element={<Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>} />
+            <PageTitle title="All Worklogs" />
             <Tabs defaultActiveKey="1" items={[
                 {
                     label: `Pending`,
                     key: "1",
-                    children: <AllWorklogTable data={data}  isPending={isPending} />,
+                    children: <AllWorklogTable status="open" />,
                 },
                 {
                     label: `Approved`,
                     key: "2",
-                    children: <></>,
+                    children: <AllWorklogTable status="approved" />,
                 },
                 {
                     label: `Rejected`,
                     key: "3",
-                    children: <></>,
+                    children: <AllWorklogTable status="rejected" />,
+                },
+                {
+                    label: `Requested`,
+                    key: "4",
+                    children: <AllWorklogTable status="requested" />,
                 },
             ]} />
 

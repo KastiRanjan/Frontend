@@ -30,6 +30,7 @@ export interface Project {
   fiscalYear: number;
   startingDate: string;
   endingDate: string;
-  users: User[];
-  tasks: Task[];
+  projectLead?: User;
+  users?: User[];
+  tasks?: Task[];
 }

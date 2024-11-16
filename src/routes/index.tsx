@@ -11,10 +11,8 @@ import ProjectUsers from "@/pages/Project/users";
 import NewTask from "@/pages/Task/new";
 import TaskGroups from "@/pages/TaskGroup";
 import EditTaskGroup from "@/pages/TaskGroup/edit";
-import CreateTaskGroup from "@/pages/TaskGroup/new";
 import TaskTemplate from "@/pages/TaskTemplate";
 import EditTaskTemplate from "@/pages/TaskTemplate/edit";
-import CreateTaskTemplate from "@/pages/TaskTemplate/new";
 import BankDetails from "@/pages/User/BankDetails";
 import EducationalDetails from "@/pages/User/EducationalDetails";
 import CreateUser from "@/pages/User/new";
@@ -32,11 +30,19 @@ import NewWorklog from "@/pages/Worklog/new";
 import Attendence from "@/pages/Attendence";
 import AllWorklogs from "@/pages/Worklog/AllWorklogs";
 import TaskDetails from "@/pages/Task/task-details";
+import UserDetails from "@/pages/User/details";
+import AccountDetails from "@/pages/User/AccountDetails";
+import ResetPasswordForm from "@/pages/ResetPassword";
+import Profile from "@/pages/Profile";
 
 const Router = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/reset/:token",
+    element: <ResetPasswordForm />,
   },
   {
     path: "/",
@@ -64,8 +70,8 @@ const Router = [
         element: <ProtectedRoute method="post" resource="projects" component={<CreateProject />} />,
       },
       {
-        path: "/projects/edit/:id",
-        element: <ProtectedRoute method="patch" resource="project" s component={<EditProject />} />
+        path: "/project/edit/:id",
+        element: <ProtectedRoute method="patch" resource="projects" component={<EditProject />} />
       },
       {
         path: "/project/detail/:id",
@@ -76,13 +82,10 @@ const Router = [
         element: <Task />,
       },
       {
-        path: "/task-group",
+        path: "/task-template",
         element: <ProtectedRoute method="get" resource="task-group" component={<TaskGroups />} />,
       },
-      {
-        path: "/task-group/new",
-        element: <CreateTaskGroup />,
-      },
+
       {
         path: "/task-group/edit/:id",
         element: <EditTaskGroup />,
@@ -92,13 +95,11 @@ const Router = [
         element: <Worklog />,
       },
       {
-        path: "/task-template",
+        path: "/task-template/:id",
         element: <ProtectedRoute method="get" resource="task-template" component={<TaskTemplate />} />
       },
-      {
-        path: "/task-template/new",
-        element: <ProtectedRoute method="post" resource="task-template" component={<CreateTaskTemplate />} />,
-      },
+
+
       {
         path: "/task-template/edit/:id",
         element: <ProtectedRoute method="patch" resource="task-template" component={<EditTaskTemplate />} />,
@@ -110,6 +111,10 @@ const Router = [
       {
         path: "/user/new",
         element: <ProtectedRoute method="post" resource="user" component={<CreateUser />} />
+      },
+      {
+        path: "/user/:id",
+        element: <UserDetails />,
       },
       {
         path: "/user/edit/:id",
@@ -128,7 +133,7 @@ const Router = [
         element: <EditClient />,
       },
       {
-        path: "attendence",
+        path: "/attendance",
         element: <Attendence />,
       },
       {
@@ -143,97 +148,58 @@ const Router = [
         path: "/settings",
         element: <>setting</>,
       },
-    ],
-  },
-  // {
-  //   path: "/",
-  //   element: (
-  //     <SettingLayout>
-  //       <PrivateRoute />
-  //     </SettingLayout>
-  //   ),
-  //   children: [
-  //     {
-  //       path: "/role",
-  //       element: <Role />,
-  //     },
-  //     {
-  //       path: "/role/new",
-  //       element: <CreateRole />,
-  //     },
-  //     {
-  //       path: "/role/permission/:id",
-  //       element: <RolePermision />,
-  //     },
-  //     {
-  //       path: "/role/edit/:id",
-  //       element: <EditRole />,
-  //     },
-  //     {
-  //       path: "/permission",
-  //       element: <Perimssion />,
-  //     },
-  //   ],
-  // },
-  {
-    path: "/project/:id",
-    element: (
-      <ProjectLayout>
-        <PrivateRoute />
-      </ProjectLayout>
-    ),
-    children: [
       {
-        path: "users",
+        path: "/projects/:id",
+        element: <ProjectDetail />,
+      },
+      {
+        path: "/projects/:id/users",
         element: <ProjectUsers />,
       },
       {
-        path: "tasks",
+        path: "/projects/:id/tasks",
         element: <Task />,
       },
       {
-        path: "tasks/:tid",
+        path: "/projects/:pid/tasks/:tid",
         element: <TaskDetails />,
       },
       {
-        path: "tasks/new",
+        path: "/projects/:id/tasks/new",
         element: <NewTask />,
       },
       {
-        path: "worklogs",
+        path: "/projects/:id/worklogs",
         element: <Worklog />,
       },
       {
-        path: "worklogs/new",
+        path: "/projects/:id/worklogs/new",
         element: <NewWorklog />,
       },
-    ],
-  },
-  {
-    path: "/user/:id",
-    element: (
-      <UserLayout>
-        <PrivateRoute />
-      </UserLayout>
-    ),
-    children: [
       {
-        path: "personal-detail",
+        path: "/profile/:id",
+        element: <Profile />,
+      },
+      {
+        path: "/account-detail/:id",
+        element: <AccountDetails />,
+      },
+      {
+        path: "/personal-detail:id",
         element: <PersonalDetails />,
       },
       {
-        path: "educational-detail",
+        path: "/educational-detail/:id",
         element: <EducationalDetails />,
       },
       {
-        path: "bank-detail",
+        path: "/bank-detai/:id",
         element: <BankDetails />,
       },
       {
-        path: "training-detail",
+        path: "/training-detail:id",
         element: <TrainingDetails />,
       },
-
     ],
   },
 ];

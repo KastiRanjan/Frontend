@@ -1,39 +1,31 @@
 import { useCreateTaskGroup } from "@/hooks/taskGroup/useCreateTaskGroup";
 import { useEditTaskGroup } from "@/hooks/taskGroup/useEditTaskGroup";
-import { Button, Form, Input } from "antd";
-import { useEffect } from "react";
-import FormInputWrapper from "../FormInputWrapper";
 import { TaskGroup } from "@/pages/TaskGroup/type";
+import { Button, Form, Input } from "antd";
+import FormInputWrapper from "../FormInputWrapper";
 interface TaskGroupFormProps {
   editTaskGroupData?: TaskGroup;
   id?: string | undefined;
+  handleCancel: () => void;
 }
 
 const TaskGroupForm = ({
+  handleCancel,
   editTaskGroupData,
-  id,
 }: TaskGroupFormProps) => {
   const [form] = Form.useForm();
 
   const { mutate, isPending } = useCreateTaskGroup();
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditTaskGroup();
 
-  useEffect(() => {
-    if (id && editTaskGroupData) {
-      form.setFieldsValue({
-        ...editTaskGroupData,
-      });
-    } else {
-      form.resetFields();
-    }
-  }, [editTaskGroupData, form, id]);
 
   const handleFinish = (values: any) => {
-    id ? mutateEdit({ id, payload: values }) : mutate(values);
+    editTaskGroupData?.id ? mutateEdit({ id: editTaskGroupData?.id, payload: values }, { onSuccess: () => handleCancel() }) 
+    : mutate(values, { onSuccess: () => handleCancel() });
   };
   return (
     <>
-      <Form form={form} layout="vertical" onFinish={handleFinish}>
+      <Form form={form} layout="vertical" initialValues={editTaskGroupData || {}} onFinish={handleFinish}>
         <FormInputWrapper
           id="Task Group Name"
           label="Task Group Name"

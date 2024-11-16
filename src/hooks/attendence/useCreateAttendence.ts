@@ -6,7 +6,6 @@ export const useCreateAttendence = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload:any) => {
-      console.log(payload);
       return createAttendence(payload);
     },
     onSuccess: (response) => {

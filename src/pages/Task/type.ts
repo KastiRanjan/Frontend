@@ -1,5 +1,6 @@
 import { UserType } from "@/hooks/user/type";
 import { TaskGroup } from "../TaskGroup/type";
+import { Project } from "../Project/type";
 
 export interface TaskType {
   id: number;
@@ -12,4 +13,5 @@ export interface TaskType {
   dueDate: string | null;
   group: TaskGroup | null;
   subTasks: TaskType[] | [];
+  project?: Project;
 }

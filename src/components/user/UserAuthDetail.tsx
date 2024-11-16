@@ -24,6 +24,13 @@ const UserAuthDetail = () => {
             required
             rules={[{ required: true, message: "Please input the name!" }]}
           />
+           <FormInputWrapper
+            id="name"
+            name="username"
+            label="Name"
+            required
+            rules={[{ required: true, message: "Please input the name!" }]}
+          />
 
           <FormInputWrapper
             id="email"
@@ -52,7 +59,7 @@ const UserAuthDetail = () => {
 
           <FormSelectWrapper
             id="role"
-            name="role"
+            name="roleId"
             label="Role"
             required
             rules={[{ required: true, message: "Please select the role!" }]}

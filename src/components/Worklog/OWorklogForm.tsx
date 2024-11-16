@@ -2,14 +2,14 @@ import { useProject } from "@/hooks/project/useProject";
 import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
 import { TaskTemplateType } from "@/pages/TaskTemplate/type";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Col, Form, Row, Select, TimePicker } from "antd";
+import { Button, Checkbox, Col, Form, Row, Select, TimePicker } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const OWorklogForm = () => {
   const [tasks, setTasks] = useState<{ [fieldName: string]: TaskTemplateType[] }>({});
-  const { data: projects } = useProject();
+  const { data: projects } = useProject({status: "active"});
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
 
@@ -58,7 +58,7 @@ const OWorklogForm = () => {
                     >
                       <Select
                         className="h-[48px]"
-                        onChange={(projectId) => handleProjectChange(projectId, field.name )}
+                        onChange={(projectId) => handleProjectChange(projectId, field.name)}
                         options={projects?.map((p: TaskTemplateType) => ({
                           label: p.name,
                           value: p.id,
@@ -79,7 +79,7 @@ const OWorklogForm = () => {
                           label: t.name,
                           value: t.id,
                         }))}
-                        disabled={!tasks[field.name]?.length} // Disable task dropdown if no tasks available
+                        disabled={!tasks[field.name]?.length}
                       />
                     </Form.Item>
                   </Col>
@@ -151,6 +151,13 @@ const OWorklogForm = () => {
             </>
           )}
         </Form.List>
+        <Row>
+          <Col span={8}>
+            <Form.Item name="approvalRequest" valuePropName="checked">
+              <Checkbox>Send Request for Approval?</Checkbox>
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Button type="primary" htmlType="submit">
           Submit

@@ -2,12 +2,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchWorklogs } from "../../service/worklog.service";
 
-export const useWorklog = () => {
+export const useWorklog = (status: string) => {
   return useQuery({
-    queryKey: ["worklog-all"],
+    queryKey: ["worklog-all", status],
     queryFn: async () => {
-      return fetchWorklogs();
+      return fetchWorklogs(status);
     },
-    // enabled: !!page && !!limit,
+    enabled: !!status,
   });
 };

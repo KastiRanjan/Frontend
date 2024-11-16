@@ -1,9 +1,12 @@
 
-import { Table } from "antd";
+import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
+import { useWorklog } from "@/hooks/worklog/useWorklog";
+import { Button, Card, Table } from "antd";
 import moment from "moment";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import TableToolbar from "../Table/TableToolbar";
 
-const columns = [
+const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
   {
     title: "Date",
     dataIndex: "date",
@@ -31,11 +34,6 @@ const columns = [
     }
   },
   {
-    title: "Status",
-    dataIndex: "status",
-    key: "descritpion",
-  },
-  {
     title: "Review Date",
     dataIndex: "status",
     key: "descritpion",
@@ -61,22 +59,50 @@ const columns = [
     title: "Approved by",
     dataIndex: "userId",
     key: "userId",
+    hidden: status === "open" || status === "rejected",
     render: (_: any, record: any) => {
       return (record?.user?.name);
     }
   },
+  {
+    title: "Action",
+    dataIndex: "o",
+    key: "s",
+    hidden: status !== "open" && status !== "rejected",
+    render: (_: any, record: any) => {
+      return <Button type="primary" title="Your request will be sent to the  project manager"
+        onClick={() => editWorklog({ id: record?.id, status: "requested" })}
+      >Send Request</Button>
+    }
+  },
+  {
+    title: "Action",
+    dataIndex: "o",
+    key: "s",
+    hidden: status !== "requested",
+    render: (_: any, record: any) => {
+      return <Button type="primary" title="Your request will be sent to the  project manager" onClick={() => editWorklog({ id: record?.id, status: "approved" })}>Approve</Button>
+    }
+  },
 ];
 
-const AllWorklogTable = ({ data, isPending }: any) => {
+const AllWorklogTable = ({ status }: { status: string }) => {
+  const navigate = useNavigate();
+  const { data: worklogs, isPending } = useWorklog(status);
+  const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
 
   return (
-    <Table
-      loading={isPending}
-      dataSource={data}
-      columns={columns}
-      rowKey={"id"}
-      bordered
-    />
+    <Card>
+      <TableToolbar>
+      <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>      </TableToolbar>
+      <Table
+        loading={isPending}
+        dataSource={worklogs || []}
+        columns={columns(status, editWorklog, isEditPending)}
+        rowKey="id"
+        bordered
+      />
+    </Card>
   );
 };
 

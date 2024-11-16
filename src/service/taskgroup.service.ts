@@ -28,3 +28,9 @@ export const editTaskGroup = async ({
   const response = await axios.patch(`${backendURI}/task-group/${id}`, payload);
   return response.data;
 };
+
+
+export const deleteTaskGroup = async ({ id }: { id: string }) => {
+  const response = await axios.delete(`${backendURI}/task-group/${id}`);
+  return response.data;
+};

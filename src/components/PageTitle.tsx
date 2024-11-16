@@ -1,3 +1,4 @@
+import { Breadcrumb } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Title from "antd/es/typography/Title";
 
@@ -10,11 +11,15 @@ const PageTitle = ({
   element?: JSX.Element;
   description?: string
 }) => (
-  <div className="mb-4 py-4">
+  <div className="py-4">
+    <Breadcrumb style={{ margin: "5px 0" }}>
+      <Breadcrumb.Item>Home</Breadcrumb.Item>
+      <Breadcrumb.Item>Projects</Breadcrumb.Item>
+    </Breadcrumb>
     <Title level={4}>{title}</Title>
-    {description && <Paragraph>
+    {/* {description && <Paragraph>
       {description}
-    </Paragraph>}
+    </Paragraph>} */}
     {element}
   </div>
 );

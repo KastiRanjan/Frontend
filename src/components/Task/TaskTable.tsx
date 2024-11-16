@@ -6,44 +6,39 @@ import {
   Avatar,
   Badge,
   Button,
-  Col,
-  Drawer,
+  Card,
   Form,
-  Row,
   Table,
   TableProps,
   Tooltip
 } from "antd";
-import TextArea from "antd/es/input/TextArea";
-import Title from "antd/es/typography/Title";
 import { useMemo, useState } from "react";
-import FormSelectWrapper from "../FormSelectWrapper";
+import { Link } from "react-router-dom";
+import { EditOutlined } from "@ant-design/icons";
+import TableToolbar from "../Table/TableToolbar";
 
-const TaskTable = ({ data }: { data: TaskType[] }) => {
+const TaskTable = ({ data, showModal,project }: { data: TaskType[], showModal: any, project: any }) => {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
   const { data: users } = useUser();
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
-  console.log(selectedTask?.assignees);
 
-  const showDrawer = (record: TaskType) => {
-    setOpen(true);
-    setSelectedTask(record);
-  };
 
-  const onClose = () => {
-    setOpen(false);
-  };
   const columns = useMemo(
     () => [
+      {
+        title: "ID",
+        dataIndex: "tcode",
+        key: "id",
+      },
       {
         title: "Name",
         dataIndex: "name",
         key: "name",
         render: (_: any, record: TaskType) => (
-          <>
-            <span onClick={() => showDrawer(record)}>{record.name}</span>{" "}
+          <div className="flex items-center justify-between gap-2">
+            <Link to={`/project/${record?.project?.id}/tasks/${record?.id}`} className="text-blue-600">{record?.name}</Link>
             {record?.subTasks?.length > 0 && (
               <span>
                 <svg
@@ -62,7 +57,7 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
                 </svg>
               </span>
             )}
-          </>
+          </div>
         ),
       },
       {
@@ -117,13 +112,6 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
                       </Avatar>
                     </Tooltip>
                   ))}
-                {/* <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
-                <Avatar style={{ backgroundColor: "#f56a00" }}>K</Avatar>
-
-                <Avatar
-                  style={{ backgroundColor: "#1677ff" }}
-                  icon={<AntDesignOutlined />}
-                /> */}
               </Avatar.Group>
             </>
           );
@@ -146,6 +134,16 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
         dataIndex: "priority",
         key: "priority",
       },
+      {
+        title: "Action",
+        key: "action",
+        width: 50,
+        render: (_: any, record: any) => (
+          <>
+            <Button type="primary" onClick={() => showModal(record)} icon={<EditOutlined />}></Button>
+          </>
+        )
+      }
     ],
     []
   );
@@ -157,120 +155,59 @@ const TaskTable = ({ data }: { data: TaskType[] }) => {
   };
 
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
-    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => { console.log(_selectedRowKeys, selectedRows);
+    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
+      console.log(_selectedRowKeys, selectedRows);
     },
     getCheckboxProps: (record: TaskType) => ({
       name: record.name,
     }),
   };
+
   return (
-    <>
+    <Card>
+      <TableToolbar>
+        <Button
+          type="primary"
+          onClick={() => showModal()}
+        >
+          Add New Task
+        </Button>  <div className="flex gap-4">
+
+
+          <Avatar.Group
+            max={{
+              count: 4,
+              style: {
+                color: "#f56a00",
+                backgroundColor: "#fde3cf",
+                cursor: "pointer",
+              },
+              popover: { trigger: "click" },
+            }}
+          >
+            {project?.users?.map((user: any) => (
+              <Tooltip title={user.username} placement="top">
+                <Avatar style={{ backgroundColor: "#87d068" }}>
+                  {user.username.split("")[0]}
+                </Avatar>
+              </Tooltip>
+            ))}
+          </Avatar.Group>
+          <Tooltip title={project?.projectLead?.username} placement="top">
+            <Avatar style={{ backgroundColor: "#87d068" }}>
+              {project?.projectLead?.username.split("")[0]}
+            </Avatar>
+          </Tooltip>
+        </div>    </TableToolbar>
       <Table
         columns={columns}
         dataSource={data}
         rowSelection={rowSelection}
-        size="small"
         rowKey={"id"}
+        size="small"
         bordered
       />
-
-      <Drawer
-        onClose={onClose}
-        open={open}
-        size="large"
-        placement="right"
-      // getContainer={false}
-      >
-        <div style={{ padding: "16px" }}>
-          <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>
-          <Title level={3} style={{ marginBottom: "16px" }}>
-            {selectedTask?.name}
-          </Title>
-          <Form form={form} onFinish={onFinish}>
-            <Row>
-              <Col span={6}>
-                <strong>Status: </strong>{" "}
-              </Col>
-              <Col span={6}>
-                <FormSelectWrapper
-                  id="status"
-                  name="status"
-                  defaultValue={selectedTask?.status}
-                  options={[
-                    { value: "open", label: "Open" },
-                    { value: "in_progress", label: "In Progress" },
-                    { value: "done", label: "Done" },
-                  ]}
-                  changeHandler={() => form.submit()}
-                />
-              </Col>
-            </Row>
-          </Form>
-          <div className="py-3">
-            <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
-              Description
-            </p>
-            <Form form={form} onFinish={onFinish}>
-              <Form.Item id="asignees" name="description">
-                <TextArea defaultValue={selectedTask?.description} />
-              </Form.Item>
-              <Button htmlType="submit" type="primary">
-                Save
-              </Button>
-            </Form>
-          </div>
-          <p style={{ fontWeight: "bold", marginBottom: "8px" }}>Detail</p>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Assignee: </strong>{" "}
-            </Col>
-            <Col span={6}>
-              <Form
-                form={form}
-                initialValues={selectedTask?.assignees || []}
-                onFinish={onFinish}
-              >
-                <FormSelectWrapper
-                  id="asignees"
-                  name="assineeId"
-                  mode="multiple"
-                  classname="h-[38px]"
-                  options={users?.results.map((user: UserType) => ({
-                    label: user.username,
-                    value: user.id,
-                  }))}
-                  changeHandler={() => form.submit()}
-                />
-              </Form>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Reporter:</strong>
-            </Col>
-            <Col>
-              <ul>
-                <li>Ranjan</li>
-              </ul>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Due Date:</strong>
-            </Col>
-            <Col>{selectedTask?.dueDate}</Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Project:</strong>
-            </Col>
-            <Col>
-              <strong>Project:</strong>
-            </Col>
-          </Row>
-        </div>
-      </Drawer>
-    </>
+    </Card>
   );
 };
 

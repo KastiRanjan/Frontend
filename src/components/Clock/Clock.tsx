@@ -9,7 +9,6 @@ const Clock = () => {
   const { mutate } = useCreateAttendence();
   const isClockedIn = data?.length > 0 ? true : false;
   const [timer, setTimer] = useState(0);
-  console.log(timer)
 
   // State to manage location
   const [location, setLocation] = useState<{
@@ -95,12 +94,6 @@ const Clock = () => {
             Clock In {moment().format("hh:mm:ss a")}
           </Button>
         )}
-      </div>
-      <div>
-        Location:{" "}
-        {location
-          ? `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`
-          : "Fetching location..."}
       </div>
     </>
   );

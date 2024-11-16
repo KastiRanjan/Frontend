@@ -1,8 +1,9 @@
 import { useSession } from "@/context/SessionContext";
+import { Spin } from "antd";
 
 const ProtectedRoute = ({ component, method, resource }: any) => {
 
-    const { permissions } = useSession()
+    const { permissions, isProfilePending } = useSession()
 
     // Check if the user has the required permission
     const hasPermission = permissions.some((permission: any) => {
@@ -11,6 +12,9 @@ const ProtectedRoute = ({ component, method, resource }: any) => {
         }
         return false;
     })
+    if (isProfilePending) {
+        return <div className="flex justify-center py-24"><Spin size="large" /></div> 
+    }
 
     return <>{hasPermission ? component : <>forbidden</>}</>
 

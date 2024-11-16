@@ -3,16 +3,18 @@ import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { useCreateTask } from "@/hooks/task/useCreateTask";
 import { useParams } from "react-router-dom";
+import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
 
-const TaskForm = ({ users, tasks }: any) => {
+const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
   const { mutate, isPending } = useCreateTask();
+  const {data:group}= useTaskGroup();
   const { id } = useParams();
   const onFinish = (values: any) => {
     values.projectId = id;
-    mutate(values);
+    mutate(values, { onSuccess: () => handleCancel() });
   };
   return (
-    <Form layout="vertical" onFinish={onFinish}>
+    <Form layout="vertical" initialValues={editTaskData || {}} onFinish={onFinish}>
       <FormInputWrapper
         id="name"
         label="Name"
@@ -29,6 +31,17 @@ const TaskForm = ({ users, tasks }: any) => {
         ]}
       />
 
+      <FormSelectWrapper
+        id="groupId"
+        name="groupId"
+        label="Group"
+        options={
+          group?.map((group: any) => ({
+            value: group.id,
+            label: group.name,
+          })) || []
+        }
+      />
       <FormSelectWrapper
         id="parentTaskId"
         name="parentTaskId"

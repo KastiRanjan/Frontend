@@ -1,24 +1,39 @@
 import PageTitle from "@/components/PageTitle";
-import TaskGroupTable from "@/components/TaskGroup/TaskGroupTable";
-import { Button } from "antd";
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import TaskGroupForm from "@/components/TaskGroup/TaskGroupForm";
+import TaskGroupList from "@/components/TaskGroup/TaskGroupList";
+import { Modal } from "antd";
+import React, { useCallback } from "react";
+import { TaskGroup } from "./type";
+
 
 const TaskGroups: React.FC = () => {
-  const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
+  const [editTaskGroupData, setEditTaskGroupData] = React.useState<TaskGroup | undefined>(undefined);
+
+  const showModal = useCallback((taskGroup?: TaskGroup) => {
+    setEditTaskGroupData(taskGroup);
+    setOpen(true);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    setEditTaskGroupData(undefined);
+    setOpen(false);
+  }, []);
+
   return (
     <>
       <PageTitle
-        title="Task Group"
+        title="Task Template"
         description="Add, search, and manage your task groups all in one place."
-        element={
-          <Button type="primary" onClick={() => navigate("/task-group/new")}>
-            Create
-          </Button>
-        }
       />
 
-      <TaskGroupTable />
+      <TaskGroupList showModal={showModal} />
+
+      {open && (
+        <Modal title="Add Task Template" footer={null} open={open} onCancel={handleCancel}>
+          <TaskGroupForm editTaskGroupData={editTaskGroupData} handleCancel={handleCancel} />
+        </Modal>
+      )}
     </>
   );
 };

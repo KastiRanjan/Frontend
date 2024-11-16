@@ -1,10 +1,10 @@
 import { useProject } from "@/hooks/project/useProject";
 import { useAddTaskProject } from "@/hooks/task/useAddTaskProject";
 import { Project } from "@/pages/Project/type";
-import { Button, Form, List, Modal, Radio } from "antd";
+import { Button, Form, List, message, Modal, Radio } from "antd";
 
 const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow }: any) => {
-  const { data: project, isPending } = useProject();
+  const { data: project, isPending } = useProject({status: "active"});
 
   const { mutate } = useAddTaskProject();
   const handleFinish = async (values: any) => {
@@ -12,7 +12,7 @@ const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow }: any) => {
       ...values,
       tasks: selectedRow,
     };
-    await mutate(payload);
+    await mutate(payload, { onSuccess: () =>{ handleCancel(), message.success("Task added successfully")} });
   };
 
   return (

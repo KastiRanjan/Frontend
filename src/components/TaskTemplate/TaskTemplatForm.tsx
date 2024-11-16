@@ -1,44 +1,43 @@
-import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
+import { useTaskGroupById } from "@/hooks/taskGroup/useTaskGroupById";
 import { useCreateTaskTemplate } from "@/hooks/taskTemplate/useCreateTaskTemplate";
-import { TaskGroup } from "@/pages/TaskGroup/type";
+import { useEditTaskTemplate } from "@/hooks/taskTemplate/useEditTaskTemplate";
+import TaskTemplate from "@/pages/TaskTemplate";
 import { Button, Col, Form, Input, Row } from "antd";
-import { useEffect } from "react";
+import { useParams } from "react-router-dom";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
-import { useEditTaskTemplate } from "@/hooks/taskTemplate/useEditTaskTemplate";
 
 interface TaskTemplateFormProps {
   editTaskTemplateData?: any;
-  id?: string;
+  handleCancel: () => void;
 }
 const TaskTemplateForm = ({
   editTaskTemplateData,
-  id,
+  handleCancel
 }: TaskTemplateFormProps) => {
   const [form] = Form.useForm();
+  const { id: gid } = useParams()
+  const { data: taskgroup } = useTaskGroupById({ id: gid })
 
-  const { data: groups } = useTaskGroup();
   const { mutate } = useCreateTaskTemplate();
   const { mutate: mutateEdit } = useEditTaskTemplate();
 
-  useEffect(() => {
-    if (id && editTaskTemplateData) {
-      form.setFieldsValue({
-        ...editTaskTemplateData,
-      });
-    } else {
-      form.resetFields();
-    }
-  }, [editTaskTemplateData, form, id]);
 
   const handleFinish = (values: any) => {
-    id ? mutateEdit({ id, payload: values }) : mutate(values);
+    const payload = {
+      ...values,
+      groupId: gid
+    }
+    editTaskTemplateData?.id ?
+      mutateEdit({ id: editTaskTemplateData?.id, payload: payload },
+        { onSuccess: () => handleCancel() }) :
+      mutate(payload, { onSuccess: () => handleCancel() });
   };
 
   return (
-    <Form form={form} onFinish={handleFinish} layout="vertical">
+    <Form form={form} onFinish={handleFinish} initialValues={editTaskTemplateData} layout="vertical">
       <Row gutter={16}>
-        <Col span={10}>
+        <Col span={24}>
           <FormInputWrapper
             id="name"
             name="name"
@@ -57,16 +56,28 @@ const TaskTemplateForm = ({
             <Input.TextArea />
           </Form.Item>
 
-          {/* Group ID */}
+
           <FormSelectWrapper
-            id="groupId"
-            name="groupId"
-            label="Task group"
+            id="taskType"
+            name="taskType"
+            label="Epic"
             rules={[{ required: true, message: "Please select the group ID" }]}
             options={
-              groups?.map((group: TaskGroup) => ({
-                value: group.id,
-                label: group.name,
+              [{ value: 'story', label: 'Story' }, { value: 'task', label: 'Task' }]?.map((group) => ({
+                value: group.value,
+                label: group.label,
+              })) || []
+            }
+          />
+
+          <FormSelectWrapper
+            id="parentId"
+            name="parentTaskId"
+            label="Parent Task"
+            options={
+              taskgroup?.tasktemplate?.filter((task: TaskTemplate) => task.taskType == 'story')?.map((template: TaskTemplate) => ({
+                value: template.id,
+                label: template.name,
               })) || []
             }
           />
