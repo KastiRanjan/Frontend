@@ -1,9 +1,9 @@
 // src/ProjectDetail.tsx
-import { Project } from "@/pages/Project/type";
+import { ProjectType } from "@/types/project";
 import { Table } from "antd";
 
 interface ProjectDetailProps {
-  project: Project;
+  project: ProjectType;
   id?: number;
 }
 

@@ -46,13 +46,13 @@ const Sidebar = ({
           collapsed={collapsed}
           width={250}
           theme="light"
-          className="bg-transparent"
+          className="bg-white"
           >
           <Menu
             onClick={handleChangePage}
             defaultSelectedKeys={["1"]}
             items={menuItems}
-            className="h-full bg-transparent"
+            className="h-full bg-white"
             mode="inline"
           />
         </Sider>

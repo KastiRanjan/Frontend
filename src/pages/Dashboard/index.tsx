@@ -6,7 +6,7 @@ import Analytic from "./Analytic";
 const Dashboard: React.FC = () => {
 
   return (
-    <Row gutter={16} className="py-8">
+    <Row gutter={16}>
       <Col span={17}>
         <Suspense fallback={<Spin size="large" />}>
           <Analytic />

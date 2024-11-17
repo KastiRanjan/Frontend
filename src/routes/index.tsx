@@ -34,6 +34,8 @@ import UserDetails from "@/pages/User/details";
 import AccountDetails from "@/pages/User/AccountDetails";
 import ResetPasswordForm from "@/pages/ResetPassword";
 import Profile from "@/pages/Profile";
+import Setting from "@/pages/Setting";
+import Request from "@/pages/Request";
 
 const Router = [
   {
@@ -82,6 +84,10 @@ const Router = [
         element: <Task />,
       },
       {
+        path: "/requests",
+        element: <Request />,
+      },
+      {
         path: "/task-template",
         element: <ProtectedRoute method="get" resource="task-group" component={<TaskGroups />} />,
       },
@@ -98,7 +104,6 @@ const Router = [
         path: "/task-template/:id",
         element: <ProtectedRoute method="get" resource="task-template" component={<TaskTemplate />} />
       },
-
 
       {
         path: "/task-template/edit/:id",
@@ -143,10 +148,6 @@ const Router = [
       {
         path: "worklogs/new",
         element: <NewWorklog />,
-      },
-      {
-        path: "/settings",
-        element: <>setting</>,
       },
       {
         path: "/projects/:id",
@@ -199,6 +200,10 @@ const Router = [
       {
         path: "/training-detail:id",
         element: <TrainingDetails />,
+      },
+      {
+        path: "/settings",
+        element: <Setting />,
       },
     ],
   },

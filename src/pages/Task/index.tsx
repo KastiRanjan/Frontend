@@ -6,11 +6,10 @@ import { useProjectById } from "@/hooks/project/useProjectById";
 import { useAddTaskProject } from "@/hooks/task/useAddTaskProject";
 import { useProjectTask } from "@/hooks/task/useProjectTask";
 import { useTaskTemplate } from "@/hooks/taskTemplate/useTaskTemplate";
-import { checkPermissionForComponent } from "@/utils/permission";
-import { Avatar, Button, Card, Checkbox, Form, List, Modal, Spin, Tooltip } from "antd";
+import { TaskType } from "@/types/task";
+import { Button, Checkbox, Form, List, Modal, Spin } from "antd";
 import React, { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Task as TaskType } from "../Project/type";
 
 const Task = () => {
   const navigate = useNavigate();

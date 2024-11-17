@@ -9,20 +9,21 @@ const Notification = () => {
 
     const { mutateAsync: updateNotifications } = useNotificationRead();
 
-    return <List
-        itemLayout="horizontal"
-        dataSource={notifications || []}
-        renderItem={(item: any) => (
-            <List.Item onClick={() => { updateNotifications({ id: item.id, }, { onSuccess: () => { window.open(item.link, '_self') } }) }}>
-                <List.Item.Meta
-                    title={item.message}
-                    description={<div>
-                        {calculateDays(item.createdAt)} <br />
-                    </div>}
-                />
-            </List.Item>
-        )}
-    />
+    return (
+        <List
+            itemLayout="horizontal"
+            dataSource={notifications || []}
+            renderItem={(item: any) => (
+                <List.Item onClick={() => { updateNotifications({ id: item.id, }, { onSuccess: () => { window.open(item.link, '_self') } }) }}>
+                    <List.Item.Meta
+                        title={item.message}
+                        description={<div>
+                            {calculateDays(item.createdAt)} <br />
+                        </div>}
+                    />
+                </List.Item>
+            )}
+        />)
 };
 
 export default Notification;

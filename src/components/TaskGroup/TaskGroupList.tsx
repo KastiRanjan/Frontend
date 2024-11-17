@@ -1,14 +1,14 @@
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
 import { useDeleteTaskGroup } from "@/hooks/taskGroup/useTaskGroupDelete";
-import { TaskGroup } from "@/pages/TaskGroup/type";
 import { DeleteOutlined, EditOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Avatar, Button, Card, Checkbox, Col, Input, Modal, Row, Space } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MoveTemplateModal from "../TaskTemplate/MoveTemplateModal";
+import { TaskGroupType } from "@/types/taskGroup";
 
 interface TaskGroupListProps {
-  showModal: (group?: TaskGroup) => void;
+  showModal: (group?: TaskGroupType) => void;
 }
 
 
@@ -42,15 +42,8 @@ const TaskGroupList = ({ showModal }: TaskGroupListProps) => {
   return (
     <>
       {contextHolder}
-      <div className="text-center">
-        <Space.Compact className="max-w-[522px] w-full">
-          <Input placeholder="Search" size="large" />
-          <Button type="primary" size="large">Submit</Button>
-        </Space.Compact>
-      </div>
 
       {checkedRows.length > 0 && <Button type="primary" onClick={() => setIsModalOpen(true)} >Add To</Button>}
-      <br /> <br />
       <Row gutter={[16, 16]}>
         <Col span={6}>
           <Card
@@ -62,7 +55,7 @@ const TaskGroupList = ({ showModal }: TaskGroupListProps) => {
             <PlusCircleOutlined key='plus' /> Add Template
           </Card>
         </Col>
-        {taskGroup?.map((group: TaskGroup) => (
+        {taskGroup?.map((group: TaskGroupType) => (
           <Col span={6} key={group.id}>
             <Card
               loading={isPending}

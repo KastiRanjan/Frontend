@@ -66,11 +66,17 @@ export const MenuItems = (): MenuItem[] => {
       resource: "attendance",
       icon: React.createElement(UserOutlined),
     },
+    {
+      key: "/attendance",
+      label: "Reports",
+      resource: "reports",
+      icon: React.createElement(UserOutlined),
+    },
   ]
 
-  const filteredItems = _.filter(items, item =>
-    _.some(permissions, { resource: item.resource })
-  );
+  // const filteredItems = _.filter(items, item =>
+  //   _.some(permissions, { resource: item.resource })
+  // );
 
-  return filteredItems
+  return items
 };

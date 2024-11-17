@@ -1,8 +1,9 @@
 import { useClient } from "@/hooks/client/useClient";
 import { EditOutlined } from "@ant-design/icons";
-import { Button, Checkbox, Table } from "antd";
+import { Button, Card, Checkbox, Table } from "antd";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import TableToolbar from "../Table/TableToolbar";
 
 const columns = [
   {
@@ -50,10 +51,10 @@ const columns = [
 ];
 
 const ClientTable = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: client, isPending } = useClient();
-  console.log(page, limit);
 
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
@@ -61,12 +62,19 @@ const ClientTable = () => {
   };
 
   return (
-    <Table
-      loading={isPending}
-      dataSource={client || []}
-      columns={columns}
-      onChange={handleTableChange}
-    />
+    <Card>
+      <TableToolbar>
+        <Button type="primary" onClick={() => navigate("/client/new")}>
+          Create
+        </Button>
+      </TableToolbar>
+      <Table
+        loading={isPending}
+        dataSource={client || []}
+        columns={columns}
+        onChange={handleTableChange}
+      />
+    </Card>
   );
 };
 

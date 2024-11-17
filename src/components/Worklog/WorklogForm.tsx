@@ -1,7 +1,7 @@
 import { useProjectById } from "@/hooks/project/useProjectById";
 import { useProjectTask } from "@/hooks/task/useTask";
 import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
-import { TaskTemplateType } from "@/pages/TaskTemplate/type";
+import { TaskTemplateType } from "@/types/taskTemplate";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd";
 import { useParams } from "react-router-dom";

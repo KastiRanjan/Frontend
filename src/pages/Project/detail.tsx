@@ -1,7 +1,5 @@
-import PageTitle from "@/components/PageTitle";
 import { useProjectById } from "@/hooks/project/useProjectById";
-import { useNavigate, useParams } from "react-router-dom";
-// import { Button } from "antd";
+import { useParams } from "react-router-dom";
 import ProjectDetailComponent from "@/components/project/ProjectDetail";
 
 
@@ -14,9 +12,6 @@ const ProjectDetail = () => {
 
   return (
     <>
-      <PageTitle
-        title={data?.name} />
-
       <ProjectDetailComponent project={data} id={id} />
     </>
   );

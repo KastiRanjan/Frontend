@@ -1,22 +1,23 @@
-import Title from "antd/es/typography/Title";
+import { Role } from "@/pages/Role/type";
 import { Col, Row } from "antd";
+import Paragraph from "antd/es/typography/Paragraph";
+import { useRole } from "../../hooks/role/useRole";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
-import { useRole } from "../../hooks/role/useRole";
-import { Role } from "@/pages/Role/type";
-import Paragraph from "antd/es/typography/Paragraph";
+import { UserType } from "@/types/user";
 
 
-const UserAuthDetail = () => {
+const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
   const { data: roles } = useRole({ page: 1, limit: 100 });
+
   return (
     <>
       <div>
-        <Title level={5}>Account Details</Title>
         <Paragraph>These field are use for authentication and all the field  are required.</Paragraph>
+
       </div>
       <Row gutter={10}>
-        <Col span={8}>
+        <Col span={12}>
           <FormInputWrapper
             id="name"
             name="name"
@@ -24,15 +25,19 @@ const UserAuthDetail = () => {
             required
             rules={[{ required: true, message: "Please input the name!" }]}
           />
-           <FormInputWrapper
-            id="name"
+        </Col>
+        <Col span={12}>
+          <FormInputWrapper
+            id="username"
             name="username"
-            label="Name"
+            label="Username"
             required
             rules={[{ required: true, message: "Please input the name!" }]}
           />
-
+        </Col>
+        <Col span={12}>
           <FormInputWrapper
+            disabled={!!initialValues?.email}
             id="email"
             name="email"
             label="Email"
@@ -43,7 +48,7 @@ const UserAuthDetail = () => {
             ]}
           />
         </Col>
-        <Col span={6}>
+        <Col span={12}>
           <FormSelectWrapper
             id="status"
             name="status"
@@ -56,12 +61,15 @@ const UserAuthDetail = () => {
               { value: "suspended", label: "Suspended" },
             ]}
           />
+        </Col>
 
+        <Col span={12}>
           <FormSelectWrapper
             id="role"
             name="roleId"
             label="Role"
             required
+            
             rules={[{ required: true, message: "Please select the role!" }]}
             options={
               roles?.results?.map((role: Role) => ({
@@ -72,6 +80,7 @@ const UserAuthDetail = () => {
           />
         </Col>
       </Row>
+      <Paragraph>Note:An email will be sent to the user to verify their account.</Paragraph>
     </>
   );
 };

@@ -1,10 +1,10 @@
 import { useCreateTaskGroup } from "@/hooks/taskGroup/useCreateTaskGroup";
 import { useEditTaskGroup } from "@/hooks/taskGroup/useEditTaskGroup";
-import { TaskGroup } from "@/pages/TaskGroup/type";
 import { Button, Form, Input } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
+import { TaskGroupType } from "@/types/taskGroup";
 interface TaskGroupFormProps {
-  editTaskGroupData?: TaskGroup;
+  editTaskGroupData?: TaskGroupType;
   id?: string | undefined;
   handleCancel: () => void;
 }

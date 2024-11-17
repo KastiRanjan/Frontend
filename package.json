@@ -23,6 +23,7 @@
     "react-error-boundary": "^4.1.2",
     "react-helmet": "^6.1.0",
     "react-intl": "^6.8.0",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^6.27.0",
     "recharts": "^2.13.0",
     "tailwind": "^4.0.0",

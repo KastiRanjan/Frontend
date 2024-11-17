@@ -22,7 +22,7 @@ const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
     dataIndex: "project",
     key: "project",
     render: (_: any, record: any) => {
-      return <Link to={`/project/${record?.task?.project?.id}/tasks`} className="text-blue-600">{record?.task?.project?.name}</Link>
+      return <Link to={`/projects/${record?.task?.project?.id}`} className="text-blue-600">{record?.task?.project?.name}</Link>
     }
   },
   {
@@ -30,7 +30,7 @@ const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
     dataIndex: "Task",
     key: "task",
     render: (_: any, record: any) => {
-      return <Link to={`/project/${record?.task?.project?.id}/tasks/${record?.task?.id}`} className="text-blue-600">{record?.task?.name}</Link>
+      return <Link to={`/projects/${record?.task?.project?.id}/tasks/${record?.task?.id}`} className="text-blue-600">{record?.task?.name}</Link>
     }
   },
   {
@@ -48,7 +48,7 @@ const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
   },
 
   {
-    title: "Logged by",
+    title: "Requestor",
     dataIndex: "userId",
     key: "userId",
     render: (_: any, record: any) => {
@@ -94,7 +94,8 @@ const AllWorklogTable = ({ status }: { status: string }) => {
   return (
     <Card>
       <TableToolbar>
-      <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>      </TableToolbar>
+        <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>
+      </TableToolbar>
       <Table
         loading={isPending}
         dataSource={worklogs || []}

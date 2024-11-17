@@ -1,40 +1,26 @@
 import PageTitle from "@/components/PageTitle";
+import UserForm from "@/components/user/UserForm";
 import UserTable from "@/components/user/UserTable";
-import { Button, Tabs } from "antd";
-import React from "react";
-import { useNavigate } from "react-router-dom";
-
-interface UserRole {
-  id: number;
-  name: string;
-  description: string;
-}
-
-interface User {
-  id: number;
-  createdAt: string;
-  updatedAt: string;
-  username: string;
-  email: string;
-  name: string;
-  avatar: string | null;
-  status: string;
-  isTwoFAEnabled: boolean;
-  role: UserRole;
-}
+import { Modal, Tabs } from "antd";
+import React, { useCallback } from "react";
 
 const User: React.FC = () => {
-  const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
+  const [editUserData, setEditUserData] = React.useState<any | undefined>(undefined);
+
+  const showModal = useCallback((task?: any) => {
+    setEditUserData(task);
+    setOpen(true);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    setEditUserData(undefined);
+    setOpen(false);
+  }, []);
   return (
     <>
       <PageTitle
         title="Users"
-        element={
-          <Button type="primary" onClick={() => navigate("/user/new")}>
-            Create User
-          </Button>
-        }
-        description="Add, search, and manage your users all in one place."
       />
       <Tabs
         defaultActiveKey="1"
@@ -42,16 +28,22 @@ const User: React.FC = () => {
           {
             label: "Active",
             key: "1",
-            children: <UserTable />,
+            children: <UserTable status="active"  showModal={showModal}/>,
           },
           {
             label: "Blocked",
             key: "2",
-            children: <></>,
+            children: <UserTable status="blocked" showModal={showModal}/>,
           },
         ]}
-        
+
       />
+
+      {open && (
+        <Modal title="Add User" footer={null} open={open} onCancel={handleCancel}>
+          <UserForm initialValues={editUserData} handleCancel={handleCancel} />
+        </Modal>
+      )}
     </>
   );
 };

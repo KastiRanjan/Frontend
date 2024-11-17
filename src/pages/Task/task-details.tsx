@@ -1,97 +1,76 @@
-import FormSelectWrapper from "@/components/FormSelectWrapper"
-import { useProjectTaskDetail } from "@/hooks/task/useProjectTaskDetail"
-import { UserType } from "@/hooks/user/type"
-import { useUser } from "@/hooks/user/useUser"
-import { Button, Col, Form, Row, Select } from "antd"
-import TextArea from "antd/es/input/TextArea"
-import Title from "antd/es/typography/Title"
-import { useParams } from "react-router-dom"
+import { useProjectTaskDetail } from "@/hooks/task/useProjectTaskDetail";
+import { Card, Col, Divider, Form, Row, Tabs, Typography } from "antd";
+import { useParams } from "react-router-dom";
+import Worklog from "../Worklog";
 
-
+const { Title, Text } = Typography;
 
 const TaskDetails = () => {
-    const { id, tid } = useParams()
+    const { pid, tid } = useParams()
     const [form] = Form.useForm()
-    const { data: users } = useUser();
-    const { data: selectedTask } = useProjectTaskDetail({ pid: id, tid })
-    console.log(selectedTask)
+    const { data: task, isPending } = useProjectTaskDetail({ pid, tid })
 
     const onFinish = (values: any) => {
         console.log(values)
     }
     return (
-        <div style={{ padding: "16px" }}>
-            <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>
-            <Title level={3} style={{ marginBottom: "16px" }}>
-                {selectedTask?.name}
-            </Title>
-            <Form form={form} onFinish={onFinish}>
-                <Row>
-                    <Col span={4}>
-                        <strong>Status: </strong>{" "}
-                        <Form.Item name="status" initialValue={selectedTask?.status}>
-                            <Select onChange={() => form.submit()} value={selectedTask?.status}>
-                                <Select.Option value="open">Open</Select.Option>
-                                <Select.Option value="in_progress">In Progress</Select.Option>
-                                <Select.Option value="done">Done</Select.Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                </Row>
-            </Form>
-            <div className="py-3">
-                <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
-                    Description
-                </p>
-                <Form form={form} onFinish={onFinish}>
-                    <Form.Item id="asignees" name="description">
-                        <TextArea defaultValue={selectedTask?.description} rows={6} />
-                    </Form.Item>
-                    <Button htmlType="submit" type="primary">
-                        Save
-                    </Button>
-                </Form>
-            </div>
-            <p style={{ fontWeight: "bold", marginBottom: "8px" }}>Detail</p>
-            <Row gutter={16}>
-                <Col span={6}>
-                    <strong>Assignee: </strong>
-                    <Form
-                        form={form}
-                        initialValues={selectedTask?.assignees || []}
-                        onFinish={onFinish}
-                    >
-                        <FormSelectWrapper
-                            id="asignees"
-                            name="assineeId"
-                            mode="multiple"
-                            classname="h-[38px]"
-                            options={users?.results.map((user: UserType) => ({
-                                label: user.username,
-                                value: user.id,
-                            }))}
-                            changeHandler={() => form.submit()}
-                        />
-                    </Form>
-                </Col>
-            </Row>
-            <Row gutter={16} className="mb-4">
-                <Col span={2}>
-                    <strong>Reporter:</strong>
-                </Col>
-                <Col>
-                    <ul>
-                        <li>Ranjan</li>
-                    </ul>
-                </Col>
-            </Row>
-            <Row gutter={16} className="mb-4">
-                <Col span={2}>
-                    <strong>Due Date:</strong>
-                </Col>
-                <Col>{selectedTask?.dueDate}</Col>
-            </Row>
-        </div>
+        <Row gutter={8}>
+            <Col span={16}>
+                <Card title={task?.name} >
+                    <Tabs defaultActiveKey="1" items={[
+                        {
+                            label: 'Task Details', key: '1',
+                            children: <>sahbj</>
+                        },
+                        {
+                            label: 'Sub Tasks', key: '2',
+                        },
+                        {
+                            label: 'Worklogs', key: '3',
+                            children: <Worklog />
+                        },
+                        {
+                            label: 'History', key: '4',
+                        },
+                    ]}
+                    />
+                </Card>
+            </Col>
+            <Col span={8}>
+                <Card>
+                    <Row gutter={16} className='py-1'>
+                        <Col flex="100px"><Text>Task Id</Text></Col>
+                        <Col><Text>{task?.tcode}</Text></Col>
+                    </Row>
+                    <Row gutter={16} className='py-1'>
+                        <Col flex="100px"><Text>Status</Text></Col>
+                        <Col><Text >{task?.status}</Text></Col>
+                    </Row>
+                    <Row gutter={16} className='py-1'>
+                        <Col flex="100px"><Text>Priority</Text></Col>
+                        <Col><Text >{task?.priority}</Text></Col>
+                    </Row>
+                    <Row gutter={16} className='py-1'>
+                        <Col flex="100px"><Text>Task Group</Text></Col>
+                        <Col><Text >{task?.group?.name}</Text></Col>
+                    </Row>
+                    <Row gutter={16} className='py-1'>
+                        <Col flex="100px"><Text>Task Type</Text></Col>
+                        <Col><Text >{task?.taskType}</Text></Col>
+                    </Row>
+                    <Row gutter={16} className='py-1'>
+                        <Col flex="100px"><Text>Due Date</Text></Col>
+                        <Col><Text >{''}</Text></Col>
+                    </Row>
+                    <Divider />
+                    <Row gutter={16} className='py-1'>
+                        <Col span={24}><Text>Associated Project</Text></Col>
+                        <Col><Text >{task?.project?.name}</Text></Col>
+                    </Row>
+
+                </Card>
+            </Col>
+        </Row>
     )
 }
 

@@ -1,6 +1,5 @@
-import PageTitle from "@/components/PageTitle";
 import { useUserDetails } from "@/hooks/user/useUserDetails";
-import { List } from "antd";
+import { Card, List } from "antd";
 import Title from "antd/es/typography/Title";
 import { useParams } from "react-router-dom";
 
@@ -9,9 +8,7 @@ const UserDetails = () => {
     const { data: user } = useUserDetails(id);
     return (
         <>
-            <PageTitle title="User Details" />
-
-            <div>
+            <Card>
                 <Title level={4}>Profile</Title>
                 <List
                     dataSource={[
@@ -103,7 +100,7 @@ const UserDetails = () => {
                         </List.Item>
                     )}
                 />
-            </div>
+            </Card>
         </>
     );
 };

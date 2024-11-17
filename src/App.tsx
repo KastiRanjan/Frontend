@@ -5,6 +5,8 @@ import { useNavigate, useRoutes } from "react-router-dom";
 import Router from "./routes";
 import { useSession } from "./context/SessionContext";
 import { antTheme } from "./theme";
+import 'react-quill/dist/quill.snow.css';
+
 
 const App: React.FC = () => {
   const routes = useRoutes(Router);

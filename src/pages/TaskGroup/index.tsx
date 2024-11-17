@@ -24,7 +24,6 @@ const TaskGroups: React.FC = () => {
     <>
       <PageTitle
         title="Task Template"
-        description="Add, search, and manage your task groups all in one place."
       />
 
       <TaskGroupList showModal={showModal} />

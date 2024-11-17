@@ -1,14 +1,15 @@
-import { Task } from "@/pages/Project/type";
-import { TaskTemplate } from "@/pages/TaskGroup/type";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Badge, Button, Card, Modal, Space, Table, TableProps } from "antd";
-import { useState } from "react";
-import MoveTemplateModal from "./MoveTemplateModal";
-import { useDeleteTaskTemplate } from "@/hooks/taskTemplate/useTaskTemplateDelete";
-import _ from "lodash";
-import TableToolbar from "../Table/TableToolbar";
 
-const column = (showModal: any, handleDelete: any): TableProps<TaskTemplate>["columns"] => [
+import { useDeleteTaskTemplate } from "@/hooks/taskTemplate/useTaskTemplateDelete";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { Badge, Button, Card, Modal, Table, TableProps } from "antd";
+import _ from "lodash";
+import { useState } from "react";
+import TableToolbar from "../Table/TableToolbar";
+import MoveTemplateModal from "./MoveTemplateModal";
+import { TaskTemplateType } from "@/types/taskTemplate";
+import { TaskType } from "@/types/task";
+
+const column = ({ showModal, handleDelete }: any): TableProps<TaskTemplateType>["columns"] => [
   {
     title: "Name",
     dataIndex: "name",
@@ -52,7 +53,7 @@ interface TaskTemplateTableProps {
   setIsRowSelected: (value: boolean) => void;
   taskList?: any
   isPending?: boolean;
-  showModal?: (task?: Task) => void
+  showModal?: (task?: TaskType) => void
 }
 
 const TaskTemplateTable = ({
@@ -64,21 +65,20 @@ const TaskTemplateTable = ({
   showModal
 }: TaskTemplateTableProps) => {
   const [modal, contextHolder] = Modal.useModal();
-  const [selectedRow, setSelectedRow] = useState<TaskTemplate[]>([]);
+  const [selectedRow, setSelectedRow] = useState<TaskTemplateType[]>([]);
   const { mutate: mutateDelete } = useDeleteTaskTemplate()
 
 
-  const expandedData = _.map(taskList, (task) => {
+  const expandedData: any = _.map(taskList, (task) => {
     const nestedTasks = _.map(task.subTasks || [], (subTask) => {
       return _.omit({ ...subTask, key: subTask.id, parentTask: subTask.parentTask, children: subTask.subTasks }, 'subTasks'); // Rename and omit the old 'subTask' key
     });
     return _.omit({ ...task, key: task.id, parentTask: task.parentTask, children: nestedTasks }, 'subTasks'); // Rename and omit the old 'subTask' key
   });
 
-  console.log(expandedData);
 
 
-  const rowSelection: TableProps<TaskTemplate>["rowSelection"] = {
+  const rowSelection: TableProps<TaskTemplateType>["rowSelection"] = {
     // onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskTemplate[]) => {
     //   console.log('_selectedRowKeys', selectedRows);
     //   setSelectedRow(selectedRows);
@@ -126,7 +126,7 @@ const TaskTemplateTable = ({
         <Table
           loading={isPending}
           rowSelection={{ ...rowSelection, checkStrictly: false }}
-          columns={column(showModal, handleDelete)}
+          columns={column({ showModal, handleDelete })}
           dataSource={expandedData || []}
           size="small"
           bordered

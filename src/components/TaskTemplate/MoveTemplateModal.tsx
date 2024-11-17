@@ -1,10 +1,10 @@
 import { useProject } from "@/hooks/project/useProject";
 import { useAddTaskProject } from "@/hooks/task/useAddTaskProject";
-import { Project } from "@/pages/Project/type";
+import { ProjectType } from "@/types/project";
 import { Button, Form, List, message, Modal, Radio } from "antd";
 
 const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow }: any) => {
-  const { data: project, isPending } = useProject({status: "active"});
+  const { data: project, isPending } = useProject({ status: "active" });
 
   const { mutate } = useAddTaskProject();
   const handleFinish = async (values: any) => {
@@ -12,7 +12,7 @@ const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow }: any) => {
       ...values,
       tasks: selectedRow,
     };
-    await mutate(payload, { onSuccess: () =>{ handleCancel(), message.success("Task added successfully")} });
+    await mutate(payload, { onSuccess: () => { handleCancel(), message.success("Task added successfully") } });
   };
 
   return (
@@ -28,7 +28,7 @@ const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow }: any) => {
             <List
               loading={isPending}
               dataSource={project}
-              renderItem={(item: Project) => (
+              renderItem={(item: ProjectType) => (
                 <List.Item>
                   <Radio value={item.id}>{item.name}</Radio>
                 </List.Item>

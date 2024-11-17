@@ -53,7 +53,7 @@ const ProjectNatureChart: React.FC<{ data: any[] }> = ({ data }) => (
 
 const Analytic = () => {
 
-    const { data: users } = useUser()
+    const { data: users } = useUser({ status: "active", limit: 100, page: 1, keywords: "" })
     const { data: projects } = useProject({ status: "active" })
 
     return (<>

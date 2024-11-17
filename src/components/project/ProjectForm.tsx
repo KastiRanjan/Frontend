@@ -2,14 +2,15 @@ import { useCreateProject } from "@/hooks/project/useCreateProject";
 import { useEditProject } from "@/hooks/project/useEditProject";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
-import { Project } from "@/pages/Project/type";
 import { Button, Col, DatePicker, Divider, Form, Row, Select } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import moment from "moment";
+import { ProjectType } from "@/types/project";
+import TextArea from "antd/es/input/TextArea";
 
 interface ProjectFormProps {
-  editProjectData?: Project;
+  editProjectData?: ProjectType;
   handleCancel: () => void;
 }
 
@@ -18,7 +19,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
-  const { data: users, isPending: isPendingUser } = useUser();
+  const { data: users, isPending: isPendingUser } = useUser({ status: 'active', limit: 1000, page: 1, keywords: '' });
 
   const onFinish = (values: any) => {
     editProjectData?.id ? mutateEdit({ id: editProjectData.id, payload: values }, { onSuccess: () => handleCancel() }
@@ -34,7 +35,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         users: editProjectData?.users?.map((user: any) => user.id),
         projectLead: editProjectData?.projectLead?.id
       }} onFinish={onFinish}>
-      <Row gutter={36}>
+      <Row gutter={18}>
         <Divider />
         <Col span={24}>
           <FormInputWrapper
@@ -87,7 +88,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           <FormSelectWrapper
             id="users"
             name="users"
-            label="Assign Users"
+            label="Invite Users"
             placeholder="Select users"
             options={
               isPendingUser
@@ -125,16 +126,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             ]}
           />
         </Col>
-        <Col span={12}>
-          <FormInputWrapper
-            id="Description"
-            label="Description"
-            name="description"
-            rules={[
-              { required: true, message: "Please input the description!" },
-            ]}
-          />
-        </Col>
+     
         <Col span={12}>
           <Form.Item
             label="Starting Date"
@@ -172,7 +164,18 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           />
         </Col>
 
-
+        <Col span={24}>
+          <Form.Item
+            id="Description"
+            label="Description"
+            name="description"
+            rules={[
+              { required: true, message: "Please input the description!" },
+            ]}
+          >
+            <TextArea rows={4} />
+          </Form.Item>
+        </Col>
       </Row>
       <Form.Item>
         <Button

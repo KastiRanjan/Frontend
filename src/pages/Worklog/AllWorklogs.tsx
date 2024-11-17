@@ -1,11 +1,9 @@
 import PageTitle from "@/components/PageTitle";
 import AllWorklogTable from "@/components/Worklog/AllWorklogTable";
-import { Button, Card, Tabs } from "antd";
-import { useNavigate } from "react-router-dom";
+import { Tabs } from "antd";
 
 
 const AllWorklogs = () => {
-    const navigate = useNavigate();
     return (
         <>
             <PageTitle title="All Worklogs" />

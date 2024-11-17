@@ -1,14 +1,15 @@
 import { useSession } from "@/context/SessionContext";
 import { useProject } from "@/hooks/project/useProject";
-import { Project } from "@/pages/Project/type";
+import { ProjectType } from "@/types/project";
 import { checkPermissionForComponent } from "@/utils/permission";
-import { EditOutlined } from "@ant-design/icons";
-import { Avatar, Button, Card, Table, TableProps } from "antd";
+import { DownloadOutlined, EditOutlined } from "@ant-design/icons";
+import { Avatar, Button, Card, Space, Table, TableProps, Tooltip } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import SearchBarWithPopover from "../SearchBarPopover";
 import TableToolbar from "../Table/TableToolbar";
 
-const columns = (permissions: any, showModal: any): TableProps<Project>["columns"] => [
+const columns = (permissions: any, showModal: any): TableProps<ProjectType>["columns"] => [
   {
 
     title: "Date ",
@@ -22,20 +23,13 @@ const columns = (permissions: any, showModal: any): TableProps<Project>["columns
     dataIndex: "name",
     key: "name",
     render: (_: any, record: any) => (
-      <Link to={`/projects/${record.id}/tasks`} className="text-blue-600">{record.name}</Link>
+      <Link to={`/projects/${record.id}`} className="text-blue-600">{record.name}</Link>
     ),
   },
   {
     title: "Project Client",
     dataIndex: "client",
     key: "client",
-  },
-  {
-    title: "Description",
-    dataIndex: "description",
-    key: "descritpion",
-    width: 300,
-    ellipsis: true,
   },
   {
     title: "Nature Of Project",
@@ -48,17 +42,12 @@ const columns = (permissions: any, showModal: any): TableProps<Project>["columns
     key: "natureOfWork",
     render: (_: any, record: any) => (
       <>
-        <Avatar size={"small"} className="bg-zinc-500">
+        <Avatar size={"small"} className="bg-zinc-500" src={` ${import.meta.env.VITE_BACKEND_URI}/document/${record?.projectLead?.avatar}`}>
           {record?.projectLead?.name[0]}
         </Avatar>{" "}
         {record?.projectLead?.name}
       </>
     ),
-  },
-  {
-    title: "Start Date",
-    dataIndex: "startingDate",
-    key: "startDate",
   },
   {
     title: "End Date",
@@ -88,6 +77,8 @@ const ProjectTable = ({ showModal, status }: any) => {
   const { data: project, isPending } = useProject({ status });
   const { permissions } = useSession();
 
+  console.log(project);
+
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
@@ -106,11 +97,11 @@ const ProjectTable = ({ showModal, status }: any) => {
       `${range[0]}-${range[1]} of ${total}`,
   };
 
-  const rowSelection: TableProps<Project>["rowSelection"] = {
-    onChange: (selectedRowKeys: React.Key[], selectedRows: Project[]) => {
+  const rowSelection: TableProps<ProjectType>["rowSelection"] = {
+    onChange: (selectedRowKeys: React.Key[], selectedRows: ProjectType[]) => {
       console.log(selectedRowKeys, selectedRows);
     },
-    getCheckboxProps: (record: Project) => ({
+    getCheckboxProps: (record: ProjectType) => ({
       name: record.name,
     }),
   };
@@ -118,9 +109,22 @@ const ProjectTable = ({ showModal, status }: any) => {
   return (
     <Card>
       <TableToolbar>
-        <Button type="primary" onClick={() => showModal()}>
-          Create Project
-        </Button>
+        <div className="flex w-full justify-between">
+          <SearchBarWithPopover />
+          <Space size={10}>
+            <Button>
+              Delete
+            </Button>
+            <Tooltip title="Download">
+              <Button>
+                <DownloadOutlined />
+              </Button>
+            </Tooltip>
+            <Button type="primary" onClick={() => showModal()}>
+              Create Project
+            </Button>
+          </Space>
+        </div>
       </TableToolbar>
       <Table
         loading={isPending}
@@ -130,6 +134,7 @@ const ProjectTable = ({ showModal, status }: any) => {
         columns={columns(permissions, showModal)}
         onChange={handleTableChange}
         rowKey={"id"}
+        size="small"
         bordered
         scroll={{ x: 'max-content' }}
       />

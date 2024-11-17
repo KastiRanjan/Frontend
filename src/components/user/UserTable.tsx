@@ -1,18 +1,19 @@
 import { useUser } from "@/hooks/user/useUser";
-import { User } from "@/pages/Project/type";
 import { Role } from "@/pages/Role/type";
 import { EditOutlined } from "@ant-design/icons"; // Added EditOutlined import
-import { Button, Drawer, Table, TableProps } from "antd"; // Added Button import
+import { Button, Card, Table, TableProps } from "antd"; // Added Button import
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import TableToolbar from "../Table/TableToolbar";
+import { UserType } from "@/types/user";
 
 // Modified columns definition to be a function
-const columns: TableProps<User>["columns"] = [
+const columns = (showModal: any): TableProps<UserType>["columns"] => [
   {
     title: "Name",
     dataIndex: "name",
     key: "name",
-    render: (_: any, record: User) => (
+    render: (_: any, record: UserType) => (
       <Link to={`/user/${record.id}/`} className="text-blue-600">{record.name}</Link>
     ),
   },
@@ -31,7 +32,7 @@ const columns: TableProps<User>["columns"] = [
     title: "Degination",
     dataIndex: "degination",
     key: "degination",
-    render: (_: any, record: User) => record.role.name,
+    render: (_: any, record: UserType) => record?.role?.name,
   },
 
   {
@@ -49,35 +50,57 @@ const columns: TableProps<User>["columns"] = [
     title: "Action",
     key: "action",
     width: 50,
-    render: (_: any, record: User) => (
+    render: (_: any, record: UserType) => (
       <div>
-        <Link to={`/user/${record.id}/account-detail`}><Button type="primary" icon={<EditOutlined />}></Button></Link>
-
+        <Button type="primary" icon={<EditOutlined />} onClick={() => showModal(record)}></Button>
       </div>
     ),
   },
 ];
 
-const UserTable = () => {
-  const { data: user, isPending } = useUser();
+const UserTable = ({ status, showModal }: { status: string, showModal: any }) => {
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const { data: user, isPending } = useUser({ status, limit, page, keywords: "" });
 
-  const handleTableChange = () => {
-    // setPage(pagination.current);
-    // setLimit(pagination.pageSize);
+  const handleTableChange = (pagination: any) => {
+    setPage(pagination.current);
+    setLimit(pagination.pageSize);
+  };
+
+  const rowSelection: TableProps<UserType>["rowSelection"] = {
+    onChange: (selectedRowKeys: React.Key[], selectedRows: UserType[]) => {
+      console.log(selectedRowKeys, selectedRows);
+    },
+    getCheckboxProps: (record: UserType) => ({
+      name: record.name,
+    }),
   };
 
   return (
-    <>
+    <Card>
+      <TableToolbar>
+        <Button type="primary" onClick={() => showModal()}>
+          Create User
+        </Button>
+      </TableToolbar>
       <Table
         loading={isPending}
         dataSource={user?.results}
-        columns={columns}
+        columns={columns(showModal)}
+        rowSelection={rowSelection}
         onChange={handleTableChange}
+        pagination={{
+          current: page,
+          pageSize: limit,
+          total: user?.totalItems || 0,
+        }}
         size="small"
         rowKey={"id"}
         bordered
       />
-    </>
+    </Card>
   );
 };
 
