@@ -6,7 +6,7 @@ import { Tabs } from "antd";
 const AllWorklogs = () => {
     return (
         <>
-            <PageTitle title="All Worklogs" />
+            {/* <PageTitle title="All Worklogs" /> */}
             <Tabs defaultActiveKey="1" items={[
                 {
                     label: `Pending`,

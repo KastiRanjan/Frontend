@@ -23,7 +23,6 @@ export const fetchTask = async ({ id }: { id: string | undefined }) => {
   return response.data;
 };
 export const addTaskProject = async (payload: any) => {
-  console.log(payload);
   const response = await axios.post(`${backendURI}/tasks/add-bulk`, payload);
 
   return response.data;

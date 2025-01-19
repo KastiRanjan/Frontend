@@ -55,9 +55,10 @@ const Analytic = () => {
 
     const { data: users } = useUser({ status: "active", limit: 100, page: 1, keywords: "" })
     const { data: projects } = useProject({ status: "active" })
+    console.log(projects)
 
     return (<>
-        <Row gutter={16} style={{ marginBottom: "20px" }}>
+        <Row gutter={8} style={{ marginBottom: "8px" }}>
             <Col span={8}>
                 <Card title="Total Users" bordered>
                     <Title level={4}>{users?.totalItems}</Title>
@@ -79,7 +80,7 @@ const Analytic = () => {
                 </Card>
             </Col>
         </Row>
-        <Row gutter={16}>
+        <Row gutter={8}>
             <Col span={12}>
                 <Card title="User Role Distribution" bordered>
                     <UserRoleChart data={[

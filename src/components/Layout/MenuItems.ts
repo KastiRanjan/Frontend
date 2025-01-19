@@ -6,6 +6,7 @@ import {
   UsergroupAddOutlined,
   UserOutlined
 } from "@ant-design/icons";
+import { MenuProps } from "antd";
 import _ from "lodash";
 import React from "react";
 
@@ -15,14 +16,14 @@ export interface MenuItem {
   icon?: React.ReactNode;
 }
 
-export const MenuItems = (): MenuItem[] => {
+export const MenuItems = (): MenuProps[] => {
   const { permissions } = useSession()
   const items = [
     {
       key: "/",
-      label: "Dashboard",
+      label: "Home",
       resource: "user",
-      icon: React.createElement(DashboardOutlined)
+      icon: React.createElement(DashboardOutlined),
     },
     {
       key: "/users",
@@ -49,6 +50,12 @@ export const MenuItems = (): MenuItem[] => {
       icon: React.createElement(FileOutlined),
     },
     {
+      key: "/tasks",
+      label: "Tasks",
+      resource: "tasks",
+      icon: React.createElement(FileOutlined),
+    },
+    {
       key: "/client",
       label: "Client",
       resource: "client",
@@ -67,7 +74,7 @@ export const MenuItems = (): MenuItem[] => {
       icon: React.createElement(UserOutlined),
     },
     {
-      key: "/attendance",
+      key: "/reports",
       label: "Reports",
       resource: "reports",
       icon: React.createElement(UserOutlined),

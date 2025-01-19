@@ -22,9 +22,9 @@ const TaskGroups: React.FC = () => {
 
   return (
     <>
-      <PageTitle
+      {/* <PageTitle
         title="Task Template"
-      />
+      /> */}
 
       <TaskGroupList showModal={showModal} />
 

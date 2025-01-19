@@ -42,10 +42,10 @@ const TaskTemplate: React.FC = () => {
 
   return (
     <>
-      <PageTitle
+      {/* <PageTitle
         title={taskGroup?.name}
         description="Add, search, and manage your task templates all in one place."
-      />
+      /> */}
 
       {open && (
         <Modal title="Add Task Template" footer={null} open={open} onCancel={handleCancel}>

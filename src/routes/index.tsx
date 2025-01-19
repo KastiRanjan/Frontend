@@ -1,24 +1,33 @@
 import DashboardLayout from "@/components/Layout/DashboardLayout";
-import ProjectLayout from "@/components/Layout/ProjectLayout";
-import UserLayout from "@/components/Layout/UserLayout";
+import Attendence from "@/pages/Attendence";
 import Client from "@/pages/Client";
 import EditClient from "@/pages/Client/edit";
 import CreateClient from "@/pages/Client/new";
+import Profile from "@/pages/Profile";
 import ProjectDetail from "@/pages/Project/detail";
 import EditProject from "@/pages/Project/edit";
 import CreateProject from "@/pages/Project/new";
 import ProjectUsers from "@/pages/Project/users";
+import Request from "@/pages/Request";
+import ResetPasswordForm from "@/pages/ResetPassword";
+import Setting from "@/pages/Setting";
+import AllTask from "@/pages/Task/all";
 import NewTask from "@/pages/Task/new";
+import TaskDetails from "@/pages/Task/task-details";
 import TaskGroups from "@/pages/TaskGroup";
 import EditTaskGroup from "@/pages/TaskGroup/edit";
 import TaskTemplate from "@/pages/TaskTemplate";
 import EditTaskTemplate from "@/pages/TaskTemplate/edit";
+import AccountDetails from "@/pages/User/AccountDetails";
 import BankDetails from "@/pages/User/BankDetails";
+import UserDetails from "@/pages/User/details";
 import EducationalDetails from "@/pages/User/EducationalDetails";
 import CreateUser from "@/pages/User/new";
 import PersonalDetails from "@/pages/User/PersonalDetails";
 import TrainingDetails from "@/pages/User/TrainingDetails";
 import Worklog from "@/pages/Worklog";
+import AllWorklogs from "@/pages/Worklog/AllWorklogs";
+import NewWorklog from "@/pages/Worklog/new";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import Project from "../pages/Project";
@@ -26,16 +35,6 @@ import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
-import NewWorklog from "@/pages/Worklog/new";
-import Attendence from "@/pages/Attendence";
-import AllWorklogs from "@/pages/Worklog/AllWorklogs";
-import TaskDetails from "@/pages/Task/task-details";
-import UserDetails from "@/pages/User/details";
-import AccountDetails from "@/pages/User/AccountDetails";
-import ResetPasswordForm from "@/pages/ResetPassword";
-import Profile from "@/pages/Profile";
-import Setting from "@/pages/Setting";
-import Request from "@/pages/Request";
 
 const Router = [
   {
@@ -56,24 +55,44 @@ const Router = [
     children: [
       {
         path: "/",
-        element: <ProtectedRoute method="get" resource="user" component={<Dashboard />} />,
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="user"
+            component={<Dashboard />}
+          />
+        ),
       },
 
       {
         path: "/projects",
-        element: <ProtectedRoute method="get" resource="projects" component={<Project />} />,
-      },
-      {
-        path: "/tasks",
-        element: <ProtectedRoute method="get" resource="projects" component={<Task />} />,
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="projects"
+            component={<Project />}
+          />
+        ),
       },
       {
         path: "/projects/new",
-        element: <ProtectedRoute method="post" resource="projects" component={<CreateProject />} />,
+        element: (
+          <ProtectedRoute
+            method="post"
+            resource="projects"
+            component={<CreateProject />}
+          />
+        ),
       },
       {
         path: "/project/edit/:id",
-        element: <ProtectedRoute method="patch" resource="projects" component={<EditProject />} />
+        element: (
+          <ProtectedRoute
+            method="patch"
+            resource="projects"
+            component={<EditProject />}
+          />
+        ),
       },
       {
         path: "/project/detail/:id",
@@ -84,12 +103,22 @@ const Router = [
         element: <Task />,
       },
       {
+        path: "/tasks",
+        element: <AllTask />,
+      },
+      {
         path: "/requests",
         element: <Request />,
       },
       {
         path: "/task-template",
-        element: <ProtectedRoute method="get" resource="task-group" component={<TaskGroups />} />,
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="task-group"
+            component={<TaskGroups />}
+          />
+        ),
       },
 
       {
@@ -102,20 +131,40 @@ const Router = [
       },
       {
         path: "/task-template/:id",
-        element: <ProtectedRoute method="get" resource="task-template" component={<TaskTemplate />} />
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="task-template"
+            component={<TaskTemplate />}
+          />
+        ),
       },
 
       {
         path: "/task-template/edit/:id",
-        element: <ProtectedRoute method="patch" resource="task-template" component={<EditTaskTemplate />} />,
+        element: (
+          <ProtectedRoute
+            method="patch"
+            resource="task-template"
+            component={<EditTaskTemplate />}
+          />
+        ),
       },
       {
         path: "/users",
-        element: <ProtectedRoute method="get" resource="user" component={<User />} />,
+        element: (
+          <ProtectedRoute method="get" resource="user" component={<User />} />
+        ),
       },
       {
         path: "/user/new",
-        element: <ProtectedRoute method="post" resource="user" component={<CreateUser />} />
+        element: (
+          <ProtectedRoute
+            method="post"
+            resource="user"
+            component={<CreateUser />}
+          />
+        ),
       },
       {
         path: "/user/:id",

@@ -1,7 +1,6 @@
 import { useEditTask } from "@/hooks/task/useEditTask";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
-import { TaskType } from "@/pages/Task/type";
 import {
   Avatar,
   Button,
@@ -9,6 +8,8 @@ import {
   Drawer,
   Form,
   Row,
+  Select,
+  Space,
   Table,
   TableProps,
   Tooltip
@@ -17,14 +18,14 @@ import TextArea from "antd/es/input/TextArea";
 import Title from "antd/es/typography/Title";
 import { useMemo, useState } from "react";
 import FormSelectWrapper from "../FormSelectWrapper";
+import { TaskType } from "@/types/task";
 
 const AllTaskTable = ({ data }: { data: TaskType[] }) => {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
-  const { data: users } = useUser();
+  // const { data: users } = useUser();
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
-  console.log(selectedTask?.assignees);
 
   const showDrawer = (record: TaskType) => {
     setOpen(true);
@@ -74,14 +75,6 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
         },
       },
       {
-        title: "Group",
-        dataIndex: "group",
-        key: "group",
-        render: (_: any, record: TaskType) => {
-          return record.group?.name;
-        },
-      },
-      {
         title: "Status",
         dataIndex: "status",
         key: "status",
@@ -91,7 +84,6 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
         dataIndex: "asignees",
         key: "asignees",
         render: (_: any, record: TaskType) => {
-          console.log(record);
           return (
             <>
               <Avatar.Group
@@ -105,21 +97,15 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
                   popover: { trigger: "click" },
                 }}
               >
-                {record.assignees.length > 0 &&
+                {/* {record.assignees.length > 0 &&
                   record.assignees?.map((user: UserType) => (
                     <Tooltip title={user.username} placement="top">
                       <Avatar style={{ backgroundColor: "#87d068" }}>
                         {user.username.split("")[0]}
                       </Avatar>
                     </Tooltip>
-                  ))}
-                {/* <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
-                <Avatar style={{ backgroundColor: "#f56a00" }}>K</Avatar>
+                  ))} */}
 
-                <Avatar
-                  style={{ backgroundColor: "#1677ff" }}
-                  icon={<AntDesignOutlined />}
-                /> */}
               </Avatar.Group>
             </>
           );
@@ -143,12 +129,12 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
   // };
 
   const onFinish = (values: any) => {
-    console.log("Success:", values);
     mutate({ id: selectedTask.id, payload: values });
   };
 
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
-    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {console.log(_selectedRowKeys, selectedRows);
+    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
+      console.log(_selectedRowKeys, selectedRows);
     },
     getCheckboxProps: (record: TaskType) => ({
       name: record.name,
@@ -170,33 +156,64 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
         open={open}
         size="large"
         placement="right"
-        getContainer={false}
+        styles={{
+          body: {
+            paddingBottom: 80,
+          },
+        }}
+        extra={
+          <Space>
+            <Button onClick={onClose}>delete</Button>
+            <Form form={form} onFinish={onFinish}>
+              <Form.Item
+                name="status"
+                className="m-0"
+                style={{ background: "#f5f5f5" }}
+              >
+                <Select
+                  defaultValue={selectedTask?.status}
+                  onChange={() => form.submit()}
+                  dropdownRender={(menu) => (
+                    <div>
+                      {menu}
+                      <div style={{ padding: 8 }}>
+                        <span
+                          style={{
+                            background:
+                              selectedTask?.status === "open"
+                                ? "#87d068"
+                                : selectedTask?.status === "in_progress"
+                                  ? "#108ee9"
+                                  : "#f50",
+                            padding: "4px 8px",
+                            borderRadius: "2px",
+                            color: "white",
+                          }}
+                        >
+                          {selectedTask?.status?.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  style={{ backgroundColor: "#f5f5f5" }}
+                >
+                  <Select.Option value="open">Open</Select.Option>
+                  <Select.Option value="in_progress">In Progress</Select.Option>
+                  <Select.Option value="done">Done</Select.Option>
+                </Select>
+              </Form.Item>
+            </Form>
+          </Space>
+        }
+
       >
         <div style={{ padding: "16px" }}>
+
           <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>
-          <Title level={3} style={{ marginBottom: "16px" }}>
-            {selectedTask?.name}
-          </Title>
-          <Form form={form} onFinish={onFinish}>
-            <Row>
-              <Col span={6}>
-          <strong>Status: </strong>{" "}
-              </Col>
-              <Col span={6}>
-          <FormSelectWrapper
-            id="status"
-            name="status"
-            defaultValue={selectedTask?.status}
-            options={[
-              { value: "open", label: "Open" },
-              { value: "in_progress", label: "In Progress" },
-              { value: "done", label: "Done" },
-            ]}
-            changeHandler={() => form.submit()}
-          />
-          </Col>
-          </Row>
-          </Form>
+          <Title level={3}>{selectedTask?.name}</Title>
+
+
+
           <div className="py-3">
             <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
               Description
@@ -206,7 +223,7 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
               onFinish={onFinish}
             >
               <Form.Item id="asignees" name="description" >
-                <TextArea defaultValue={selectedTask?.description}/>
+                <TextArea defaultValue={selectedTask?.description} />
               </Form.Item>
               <Button htmlType="submit" type="primary">
                 Save
@@ -219,7 +236,7 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
               <strong>Assignee: </strong>{" "}
             </Col>
             <Col span={6}>
-              <Form
+              {/* <Form
                 form={form}
                 initialValues={selectedTask?.assignees || []}
                 onFinish={onFinish}
@@ -235,7 +252,7 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
                   }))}
                   changeHandler={() => form.submit()}
                 />
-              </Form>
+              </Form> */}
             </Col>
           </Row>
           <Row gutter={16}>

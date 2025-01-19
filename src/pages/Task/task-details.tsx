@@ -11,7 +11,6 @@ const TaskDetails = () => {
     const { data: task, isPending } = useProjectTaskDetail({ pid, tid })
 
     const onFinish = (values: any) => {
-        console.log(values)
     }
     return (
         <Row gutter={8}>

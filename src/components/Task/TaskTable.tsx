@@ -174,7 +174,7 @@ const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: 
         </Button>  <div className="flex gap-4">
 
 
-          <Avatar.Group
+          {/* <Avatar.Group
             max={{
               count: 4,
               style: {
@@ -197,8 +197,9 @@ const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: 
             <Avatar style={{ backgroundColor: "#87d068" }}>
               {project?.projectLead?.username.split("")[0]}
             </Avatar>
-          </Tooltip>
-        </div>    </TableToolbar>
+          </Tooltip> */}
+        </div>
+      </TableToolbar>
       <Table
         columns={columns}
         dataSource={data}

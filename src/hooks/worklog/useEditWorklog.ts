@@ -5,7 +5,6 @@ export const useEditWorklog = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ status, id }: any) => {
-            console.log(status, id);
             return editWorklog({ status, id });
         },
         onSuccess: () => {

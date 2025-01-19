@@ -9,7 +9,6 @@ export const login = async (payload: any) => {
 };
 
 export const getProfile = async () => {
-  console.log('sahkjsa')
   const response = await axios.get(`${backendURI}/auth/profile`, {
     withCredentials: true,
   });

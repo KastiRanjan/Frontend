@@ -3,29 +3,35 @@ import { useLogout } from "@/hooks/auth/useLogout";
 import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
 import {
   BellOutlined,
-  BookOutlined,
   DownOutlined,
   FileDoneOutlined,
-  InfoCircleFilled,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
-import { Avatar, Badge, Breadcrumb, Button, Drawer, Dropdown, Input, Popover, Select, Space } from "antd";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Drawer,
+  Dropdown,
+  Popover,
+  Select,
+  Space,
+} from "antd";
 import { Header } from "antd/es/layout/layout";
+import Title from "antd/es/typography/Title";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Clock from "../Clock/Clock";
 import Notification from "../Notification/Notification";
 import SearchBarWithPopover from "../SearchBarPopover";
-import Title from "antd/es/typography/Title";
 
 const Navbar = ({
   collapsed,
   setCollapsed,
 }: {
   collapsed: boolean;
-  setCollapsed: any;
+  setCollapsed: (collapsed: boolean) => void;
 }) => {
   const { profile } = useSession();
   const navigate = useNavigate();
@@ -38,7 +44,7 @@ const Navbar = ({
   const onClose = () => {
     setOpen(false);
   };
-  const { data: notification } = useMyNotifications()
+  const { data: notification } = useMyNotifications();
   const { mutate: logout } = useLogout();
   // const location = useGeoLocation()
 
@@ -85,11 +91,26 @@ const Navbar = ({
       {/* <Clock /> */}
       {/* <Title level={5}> {location?.country}</Title> */}
       <div className="pr-4 flex gap-4 items-center">
-        <FileDoneOutlined style={{ fontSize: "20px" }} className="cursor-pointer" onClick={() => { navigate('/settings') }} />
-        <Badge count={notification?.length > 9 ? '9+' : notification?.length} onClick={showDrawer}>
+        <FileDoneOutlined
+          style={{ fontSize: "20px" }}
+          className="cursor-pointer"
+          onClick={() => {
+            navigate("/settings");
+          }}
+        />
+        <Badge
+          count={notification?.length > 9 ? "9+" : notification?.length}
+          onClick={showDrawer}
+        >
           <BellOutlined style={{ fontSize: "20px" }} />
         </Badge>
-        <SettingOutlined style={{ fontSize: "20px" }} className="cursor-pointer" onClick={() => { navigate('/settings') }} />
+        <SettingOutlined
+          style={{ fontSize: "20px" }}
+          className="cursor-pointer"
+          onClick={() => {
+            navigate("/settings");
+          }}
+        />
 
         <Drawer
           placement="right"
@@ -97,34 +118,47 @@ const Navbar = ({
           onClose={onClose}
           open={open}
           width={350}
-
         >
           <Title level={4}>Notifications</Title>
           <Notification />
         </Drawer>
-        <Dropdown placement="bottomLeft" menu={{
-          items: [
-            { label: <div className="py-2 border-b">{profile?.email}</div>, key: "name" },
-            { label: <Link to={`/profile/${profile?.id}`}>Profile</Link>, key: "profile" },
-            { label: <Link to="/reset-password">Reset Password</Link>, key: "reset-password" },
-            {
-              label: (
-                <span
-                  onClick={() => {
-                    logout()
-                  }}
-                >
-                  Logout
-                </span>
-              ),
-              key: "logout",
-            },
-          ]
-        }}>
+        <Dropdown
+          placement="bottomLeft"
+          menu={{
+            items: [
+              {
+                label: <div className="py-2 border-b">{profile?.email}</div>,
+                key: "name",
+              },
+              {
+                label: <Link to={`/profile/${profile?.id}`}>Profile</Link>,
+                key: "profile",
+              },
+              {
+                label: <Link to="/reset-password">Reset Password</Link>,
+                key: "reset-password",
+              },
+              {
+                label: (
+                  <span
+                    onClick={() => {
+                      logout();
+                    }}
+                  >
+                    Logout
+                  </span>
+                ),
+                key: "logout",
+              },
+            ],
+          }}
+        >
           <div>
             <Avatar
               // loading={isProfilePending}
-              src={`${import.meta.env.VITE_BACKEND_URI}/document/${profile?.avatar}`}
+              src={`${import.meta.env.VITE_BACKEND_URI}/document/${
+                profile?.avatar
+              }`}
               style={{ backgroundColor: "#0c66e4" }}
             >
               {profile?.name[0]}
@@ -138,14 +172,13 @@ const Navbar = ({
 
 export default React.memo(Navbar);
 
-
 const { Option } = Select;
 const selectAfter = (
   <>
     <Popover
       content={
         <>
-          <Space direction="vertical" style={{ display: 'flex' }}>
+          <Space direction="vertical" style={{ display: "flex" }}>
             <Select defaultValue=".com" style={{ width: "100%" }}>
               <Option value=".com">.com</Option>
               <Option value=".jp">.jp</Option>
@@ -163,7 +196,9 @@ const selectAfter = (
       }
       trigger="click"
     >
-      <a>Click me <DownOutlined /></a>
+      <a>
+        Click me <DownOutlined />
+      </a>
     </Popover>
   </>
 );

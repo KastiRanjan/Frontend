@@ -44,7 +44,7 @@ const TaskGroupList = ({ showModal }: TaskGroupListProps) => {
       {contextHolder}
 
       {checkedRows.length > 0 && <Button type="primary" onClick={() => setIsModalOpen(true)} >Add To</Button>}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[8, 8]}>
         <Col span={6}>
           <Card
             className="h-full flex justify-center items-center cursor-pointer"

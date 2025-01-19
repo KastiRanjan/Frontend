@@ -77,8 +77,6 @@ const ProjectTable = ({ showModal, status }: any) => {
   const { data: project, isPending } = useProject({ status });
   const { permissions } = useSession();
 
-  console.log(project);
-
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
@@ -130,12 +128,13 @@ const ProjectTable = ({ showModal, status }: any) => {
         loading={isPending}
         pagination={paginationOptions}
         rowSelection={rowSelection}
+        showSorterTooltip={true}
         dataSource={project}
         columns={columns(permissions, showModal)}
         onChange={handleTableChange}
         rowKey={"id"}
-        size="small"
-        bordered
+        size="middle"
+        // bordered
         scroll={{ x: 'max-content' }}
       />
     </Card>

@@ -39,7 +39,6 @@ const RolePermissionForm = ({ editRoleData, id }: RoleFormProps) => {
 
 
   const onCheck: TreeProps['onCheck'] = (checkedKeysValue) => {
-    console.log('onCheck', checkedKeysValue);
     setCheckedKeys(checkedKeysValue as React.Key[]);
   };
 

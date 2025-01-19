@@ -8,7 +8,6 @@ import { useProjectById } from "@/hooks/project/useProjectById";
 const NewTask: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  console.log(id);
   const { data, isPending } = useProjectById({ id: id?.toString() });
   if (isPending) return <div>Loading...</div>;
 

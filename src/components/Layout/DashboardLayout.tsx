@@ -22,7 +22,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             style={{ position: 'absolute', bottom: '0px', left: '0px', width: '331px' }} /></div>
         <Sidebar collapsed={collapsed} menuItems={MenuItems()} />
         <Content
-          className="p-4 relative"
+          className="p-2 relative"
           style={{ height: "calc(100vh - 64px)", overflow: "auto" }}
         >
           {children}

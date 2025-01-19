@@ -8,5 +8,10 @@ export interface TaskType {
     dueDate?: string;
     project?:ProjectType
     subTasks:TaskType[]
-    group: TaskGroupType
+    group: TaskGroupType;
+    assignees?: string[];
+    status?: "open" | "in_progress" | "done";
+    priority?: "critical" | "high" | "medium" | "low";
+    tcode?: string;
+    taskType?: "story" | "task";
   }

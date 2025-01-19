@@ -61,7 +61,6 @@ const RequestTaskTable = () => {
         dataIndex: "asignees",
         key: "asignees",
         render: (_: any, record: TaskType) => {
-          console.log(record);
           return (
             <>
               <Avatar.Group
@@ -121,7 +120,6 @@ const RequestTaskTable = () => {
 
 
   const onFinish = (values: any) => {
-    console.log("Success:", values);
     mutate({ id: selectedTask.id, payload: values });
   };
 

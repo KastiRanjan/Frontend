@@ -28,10 +28,10 @@ const ProjectPage: React.FC = () => {
   return (
     <>
       {/* Page title  */}
-      <PageTitle
+      {/* <PageTitle
         title="Projects"
         description="Add, search, and manage your projects all in one place."
-      />
+      /> */}
 
       {/* Project table  */}
    

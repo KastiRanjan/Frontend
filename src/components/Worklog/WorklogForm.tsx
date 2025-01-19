@@ -1,5 +1,5 @@
 import { useProjectById } from "@/hooks/project/useProjectById";
-import { useProjectTask } from "@/hooks/task/useTask";
+import {  useTasks } from "@/hooks/task/useTask";
 import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
@@ -8,7 +8,7 @@ import { useParams } from "react-router-dom";
 
 const WorklogForm = () => {
   const { id } = useParams();
-  const { data: task } = useProjectTask();
+  const { data: task } = useTasks();
   const { data: project } = useProjectById({ id });
   const { mutate: createWorklog } = useCreateWorklog();
 

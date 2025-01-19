@@ -3,8 +3,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 
 type SessionContextType = {
-  isAuthenticated: Boolean;
-  loading: Boolean;
+  isAuthenticated: boolean;
+  loading: boolean;
   profile?: any;
   isProfilePending?: boolean;
   permissions?: any;

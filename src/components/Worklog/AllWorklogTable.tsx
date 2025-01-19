@@ -43,7 +43,14 @@ const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
     dataIndex: "startTime",
     key: "startTime",
     render: (_: any, record: any) => {
-      return moment(record?.startTime).format("hh:mm A") + " - " + moment(record?.endTime).format("hh:mm A");
+
+      return <>
+      <div>
+      {moment(record?.startTime).format("hh:mm A") + " - " + moment(record?.endTime).format("hh:mm A")}
+      </div>
+      
+        {` (${moment.duration(moment(record?.endTime).diff(moment(record?.startTime))).asMinutes()} minutes)`}
+      </>
     }
   },
 

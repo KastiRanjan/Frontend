@@ -1,7 +1,7 @@
 import { useUser } from "@/hooks/user/useUser";
 import { Role } from "@/pages/Role/type";
 import { EditOutlined } from "@ant-design/icons"; // Added EditOutlined import
-import { Button, Card, Table, TableProps } from "antd"; // Added Button import
+import { Avatar, Button, Card, Table, TableProps } from "antd"; // Added Button import
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
@@ -14,9 +14,13 @@ const columns = (showModal: any): TableProps<UserType>["columns"] => [
     dataIndex: "name",
     key: "name",
     render: (_: any, record: UserType) => (
-      <Link to={`/user/${record.id}/`} className="text-blue-600">{record.name}</Link>
+      <>
+        <Avatar size={25} style={{ backgroundColor: `#${(Math.floor(Math.random() * 128) + 128).toString(16).padStart(2, '0')}${(Math.floor(Math.random() * 128) + 128).toString(16).padStart(2, '0')}${(Math.floor(Math.random() * 128) + 128).toString(16).padStart(2, '0')}` }}>{record?.name?.charAt(0)}</Avatar> &nbsp; &nbsp;
+        <Link to={`/user/${record.id}/`} className="text-blue-600">{record.name}</Link>
+      </>
     ),
   },
+
 
   {
     title: "Email",
@@ -98,7 +102,7 @@ const UserTable = ({ status, showModal }: { status: string, showModal: any }) =>
         }}
         size="small"
         rowKey={"id"}
-        bordered
+      // bordered
       />
     </Card>
   );

@@ -64,12 +64,10 @@ const TaskImport = ({ isModalOpen, handleOk, handleCancel }: any) => {
   const { mutate } = useAddTaskProject();
   const { id } = useParams()
   const handleFinish = async (values: any) => {
-    console.log(values)
     const payload = {
       project: id,
       tasks: values.tasks,
     };
-    console.log(payload)
     await mutate(payload);
   };
   return (
