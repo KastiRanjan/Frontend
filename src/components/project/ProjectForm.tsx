@@ -8,6 +8,7 @@ import FormSelectWrapper from "../FormSelectWrapper";
 import moment from "moment";
 import { ProjectType } from "@/types/project";
 import TextArea from "antd/es/input/TextArea";
+import { useClient } from "@/hooks/client/useClient";
 
 interface ProjectFormProps {
   editProjectData?: ProjectType;
@@ -18,23 +19,39 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   console.log(editProjectData);
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
+  const { data: clients } = useClient();
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
-  const { data: users, isPending: isPendingUser } = useUser({ status: 'active', limit: 1000, page: 1, keywords: '' });
+  const { data: users, isPending: isPendingUser } = useUser({
+    status: "active",
+    limit: 1000,
+    page: 1,
+    keywords: "",
+  });
 
   const onFinish = (values: any) => {
-    editProjectData?.id ? mutateEdit({ id: editProjectData.id, payload: values }, { onSuccess: () => handleCancel() }
-    ) : mutate(values, { onSuccess: () => handleCancel() });
+    if (editProjectData?.id) {
+      mutateEdit(
+        { id: editProjectData.id, payload: values },
+        { onSuccess: () => handleCancel() }
+      );
+    } else {
+      mutate(values, { onSuccess: () => handleCancel() });
+    }
   };
 
   return (
-    <Form form={form} layout="vertical" initialValues={
-      {
+    <Form
+      form={form}
+      layout="vertical"
+      initialValues={{
         ...editProjectData,
         startingDate: moment(editProjectData?.startingDate),
         endingDate: moment(editProjectData?.endingDate),
         users: editProjectData?.users?.map((user: any) => user.id),
-        projectLead: editProjectData?.projectLead?.id
-      }} onFinish={onFinish}>
+        projectLead: editProjectData?.projectLead?.id,
+      }}
+      onFinish={onFinish}
+    >
       <Row gutter={18}>
         <Divider />
         <Col span={24}>
@@ -46,7 +63,6 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               { required: true, message: "Please input the project name!" },
             ]}
           />
-
         </Col>
         <Col span={12}>
           <Form.Item
@@ -78,9 +94,9 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               isPendingUser
                 ? []
                 : users?.results?.map((user: UserType) => ({
-                  value: user.id,
-                  label: user.name,
-                }))
+                    value: user.id,
+                    label: user.name,
+                  }))
             }
           />
         </Col>
@@ -94,13 +110,12 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               isPendingUser
                 ? []
                 : users?.results?.map((user: UserType) => ({
-                  value: user.id,
-                  label: user.name,
-                }))
+                    value: user.id,
+                    label: user.name,
+                  }))
             }
             mode="multiple"
           />
-
         </Col>
 
         <Col span={12}>
@@ -126,7 +141,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             ]}
           />
         </Col>
-     
+
         <Col span={12}>
           <Form.Item
             label="Starting Date"
@@ -160,6 +175,18 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               { value: "archived", label: "Archived" },
               { value: "signed_off", label: "Signed Off" },
             ]}
+            rules={[{ required: true, message: "Please select the status!" }]}
+          />
+        </Col>
+        <Col span={12}>
+          <FormSelectWrapper
+            id="Client"
+            label="Client"
+            name="customer"
+            options={clients?.map((client: any) => ({
+              value: client.id,
+              label: client.name,
+            }))}
             rules={[{ required: true, message: "Please select the status!" }]}
           />
         </Col>

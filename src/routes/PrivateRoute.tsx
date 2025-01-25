@@ -3,7 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {
   const { isAuthenticated, loading } = useSession();
-
+  console.log(loading);
   if (loading) {
     return <></>;
   }

@@ -31,7 +31,7 @@ const FormSelectWrapper = (props: FormSelectWrapperProps) => {
     disabled = false,
     name,
     id,
-    classname = "h-[40px]",
+    classname = "h-[46px] bg-[#eee]",
     changeHandler = () => {},
     value,
     allowClear = false,

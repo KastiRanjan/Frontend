@@ -38,6 +38,7 @@ export const SessionProvider = ({
       setLoading(false);
       setIsAuthenticated(true);
     }
+    setLoading(false);
   }, [cookies]);
 
   return (
