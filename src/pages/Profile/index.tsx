@@ -9,7 +9,7 @@ const Profile = () => {
     const { id } = useParams()
 
     return (
-        <Card className="mt-8">
+        <Card >
             <Row>
                 <Col span={4} className="h-full border-r">
                     <Menu className="h-full">

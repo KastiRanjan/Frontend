@@ -9,13 +9,19 @@ import { Link } from "react-router-dom";
 import SearchBarWithPopover from "../SearchBarPopover";
 import TableToolbar from "../Table/TableToolbar";
 
-const columns = (permissions: any, showModal: any): TableProps<ProjectType>["columns"] => [
+const columns = (
+  permissions: any,
+  showModal: any
+): TableProps<ProjectType>["columns"] => [
   {
-
     title: "Date ",
     dataIndex: "createdAt",
     key: "createdAt",
-    render: (_: any, record: any) => <>{new Date(record?.createdAt).toLocaleDateString() || record?.createdAt}</>,
+    render: (_: any, record: any) => (
+      <>
+        {new Date(record?.createdAt).toLocaleDateString() || record?.createdAt}
+      </>
+    ),
   },
 
   {
@@ -23,13 +29,16 @@ const columns = (permissions: any, showModal: any): TableProps<ProjectType>["col
     dataIndex: "name",
     key: "name",
     render: (_: any, record: any) => (
-      <Link to={`/projects/${record.id}`} className="text-blue-600">{record.name}</Link>
+      <Link to={`/projects/${record.id}`} className="text-blue-600">
+        {record.name}
+      </Link>
     ),
   },
   {
     title: "Project Client",
     dataIndex: "client",
     key: "client",
+    render: (_: any, record: any) => <>{record?.customer?.name}</>,
   },
   {
     title: "Nature Of Project",
@@ -42,7 +51,13 @@ const columns = (permissions: any, showModal: any): TableProps<ProjectType>["col
     key: "natureOfWork",
     render: (_: any, record: any) => (
       <>
-        <Avatar size={"small"} className="bg-zinc-500" src={` ${import.meta.env.VITE_BACKEND_URI}/document/${record?.projectLead?.avatar}`}>
+        <Avatar
+          size={"small"}
+          className="bg-zinc-500"
+          src={` ${import.meta.env.VITE_BACKEND_URI}/document/${
+            record?.projectLead?.avatar
+          }`}
+        >
           {record?.projectLead?.name[0]}
         </Avatar>{" "}
         {record?.projectLead?.name}
@@ -57,15 +72,23 @@ const columns = (permissions: any, showModal: any): TableProps<ProjectType>["col
   {
     title: "Action",
     key: "action",
-    fixed: 'right',
-    hidden: checkPermissionForComponent(permissions, "projects", 'patch', "/projects/:id") ? false : true,
+    fixed: "right",
+    hidden: checkPermissionForComponent(
+      permissions,
+      "projects",
+      "patch",
+      "/projects/:id"
+    )
+      ? false
+      : true,
     width: 50,
     render: (_: any, record: any) => (
       <>
-        <Button type="primary" icon={<EditOutlined />} onClick={() => showModal(record)}>
-
-        </Button>
-
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
+          onClick={() => showModal(record)}
+        ></Button>
       </>
     ),
   },
@@ -76,6 +99,8 @@ const ProjectTable = ({ showModal, status }: any) => {
   const [limit, setLimit] = useState(10);
   const { data: project, isPending } = useProject({ status });
   const { permissions } = useSession();
+
+  console.log(project);
 
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
@@ -110,15 +135,15 @@ const ProjectTable = ({ showModal, status }: any) => {
         <div className="flex w-full justify-between">
           <SearchBarWithPopover />
           <Space size={10}>
-            <Button>
+            <Button size="large" color="danger">
               Delete
             </Button>
             <Tooltip title="Download">
-              <Button>
+              <Button size="large">
                 <DownloadOutlined />
               </Button>
             </Tooltip>
-            <Button type="primary" onClick={() => showModal()}>
+            <Button size="large" type="primary" onClick={() => showModal()}>
               Create Project
             </Button>
           </Space>
@@ -134,8 +159,7 @@ const ProjectTable = ({ showModal, status }: any) => {
         onChange={handleTableChange}
         rowKey={"id"}
         size="middle"
-        // bordered
-        scroll={{ x: 'max-content' }}
+        scroll={{ x: "max-content" }}
       />
     </Card>
   );

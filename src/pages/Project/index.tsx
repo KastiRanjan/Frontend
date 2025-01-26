@@ -1,20 +1,16 @@
-import PageTitle from "@/components/PageTitle";
 import ProjectForm from "@/components/project/ProjectForm";
 import ProjectTable from "@/components/project/ProjectTable";
-import { useSession } from "@/context/SessionContext";
-import { checkPermissionForComponent } from "@/utils/permission";
-import { Button, Card, Modal, Tabs } from "antd";
+import { ProjectType } from "@/types/project";
+import { Modal, Tabs } from "antd";
 import React, { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { Project } from "./type";
 
 const ProjectPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { permissions } = useSession();
   const [open, setOpen] = React.useState(false);
-  const [editTaskGroupData, setEditTaskGroupData] = React.useState<Project | undefined>(undefined);
+  const [editTaskGroupData, setEditTaskGroupData] = React.useState<
+    ProjectType | undefined
+  >(undefined);
 
-  const showModal = useCallback((project?: Project) => {
+  const showModal = useCallback((project?: ProjectType) => {
     setEditTaskGroupData(project);
     setOpen(true);
   }, []);
@@ -23,7 +19,6 @@ const ProjectPage: React.FC = () => {
     setEditTaskGroupData(undefined);
     setOpen(false);
   }, []);
-
 
   return (
     <>
@@ -34,12 +29,14 @@ const ProjectPage: React.FC = () => {
       /> */}
 
       {/* Project table  */}
-   
-        <Tabs defaultActiveKey="1" items={[
+
+      <Tabs
+        defaultActiveKey="1"
+        items={[
           {
             label: `Active`,
             key: "1",
-            children: <ProjectTable  showModal={showModal} status="active" />,
+            children: <ProjectTable showModal={showModal} status="active" />,
           },
           {
             label: `Suspended`,
@@ -49,16 +46,33 @@ const ProjectPage: React.FC = () => {
           {
             label: `Signed Off`,
             key: "3",
-            children: <ProjectTable showModal={showModal} status="signed_off" />,
+            children: (
+              <ProjectTable showModal={showModal} status="signed_off" />
+            ),
           },
-        ]} />
-   
-
+          {
+            label: `Archived`,
+            key: "3",
+            children: (
+              <ProjectTable showModal={showModal} status="archived" />
+            ),
+          },
+        ]}
+      />
 
       {open && (
-        <Modal title="Add Task Template" footer={null} open={open} onCancel={handleCancel} width={700}>
+        <Modal
+          title="Add Task Template"
+          footer={null}
+          open={open}
+          onCancel={handleCancel}
+          width={700}
+        >
           <div className="max-h-[70vh] overflow-y-scroll">
-            <ProjectForm editProjectData={editTaskGroupData} handleCancel={handleCancel} />
+            <ProjectForm
+              editProjectData={editTaskGroupData}
+              handleCancel={handleCancel}
+            />
           </div>
         </Modal>
       )}

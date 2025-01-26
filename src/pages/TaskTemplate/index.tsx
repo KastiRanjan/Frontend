@@ -1,21 +1,17 @@
-import PageTitle from "@/components/PageTitle";
 import TaskTemplateTable from "@/components/TaskTemplate/TaskTemplateTable";
-import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
-import { Button, Card, Col, Modal, Row } from "antd";
+import TaskTemplateForm from "@/components/TaskTemplate/TaskTemplatForm";
+import { useTaskGroupById } from "@/hooks/taskGroup/useTaskGroupById";
+import { TaskType } from "@/types/task";
+import { Modal } from "antd";
 import React, { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { TaskGroup } from "../TaskGroup/type";
-import { useTaskGroupById } from "@/hooks/taskGroup/useTaskGroupById";
-import TaskTemplateForm from "@/components/TaskTemplate/TaskTemplatForm";
-import { Task } from "../Project/type";
-import { set } from "lodash";
 
 interface TaskTemplate {
   id: number;
   createdAt?: string;
   updatedAt?: string;
   name: string;
-  taskType?: string
+  taskType?: string;
   description?: string;
 }
 
@@ -23,14 +19,15 @@ const TaskTemplate: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRowSelected, setIsRowSelected] = useState(false);
-  const { id } = useParams()
+  const { id } = useParams();
   const { data: taskGroup, isPending } = useTaskGroupById({ id });
 
-
   const [open, setOpen] = React.useState(false);
-  const [editTaskTemplateData, setEditTaskTemplateData] = React.useState<Task | undefined>(undefined);
+  const [editTaskTemplateData, setEditTaskTemplateData] = React.useState<
+    TaskType | undefined
+  >(undefined);
 
-  const showModal = useCallback((task?: Task) => {
+  const showModal = useCallback((task?: TaskType) => {
     setEditTaskTemplateData(task);
     setOpen(true);
   }, []);
@@ -48,8 +45,16 @@ const TaskTemplate: React.FC = () => {
       /> */}
 
       {open && (
-        <Modal title="Add Task Template" footer={null} open={open} onCancel={handleCancel}>
-          <TaskTemplateForm editTaskTemplateData={editTaskTemplateData} handleCancel={handleCancel} />
+        <Modal
+          title="Add Task Template"
+          footer={null}
+          open={open}
+          onCancel={handleCancel}
+        >
+          <TaskTemplateForm
+            editTaskTemplateData={editTaskTemplateData}
+            handleCancel={handleCancel}
+          />
         </Modal>
       )}
 
