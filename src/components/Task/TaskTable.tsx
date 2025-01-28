@@ -1,11 +1,12 @@
 import { useEditTask } from "@/hooks/task/useEditTask";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
+import { TaskType } from "@/types/task";
+import { EditOutlined } from "@ant-design/icons";
 import {
   Avatar,
   Badge,
   Button,
-  Card,
   Form,
   Table,
   TableProps,
@@ -13,17 +14,26 @@ import {
 } from "antd";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { EditOutlined } from "@ant-design/icons";
 import TableToolbar from "../Table/TableToolbar";
-import { TaskType } from "@/types/task";
 
-const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: any, project: any }) => {
-  const [open, setOpen] = useState(false);
+const TaskTable = ({
+  data,
+  showModal,
+  project,
+}: {
+  data: TaskType[];
+  showModal: any;
+  project: any;
+}) => {
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
-  const { data: users } = useUser({ status: "active", limit: 100, page: 1, keywords: "" });
+  const { data: users } = useUser({
+    status: "active",
+    limit: 100,
+    page: 1,
+    keywords: "",
+  });
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
-
 
   const columns = useMemo(
     () => [
@@ -38,7 +48,12 @@ const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: 
         key: "name",
         render: (_: any, record: TaskType) => (
           <div className="flex items-center justify-between gap-2">
-            <Link to={`/projects/${record?.project?.id}/tasks/${record?.id}`} className="text-blue-600">{record?.name}</Link>
+            <Link
+              to={`/projects/${record?.project?.id}/tasks/${record?.id}`}
+              className="text-blue-600"
+            >
+              {record?.name}
+            </Link>
             {record?.subTasks?.length > 0 && (
               <span>
                 <svg
@@ -83,7 +98,7 @@ const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: 
               />
             </>
           );
-        }
+        },
       },
       {
         title: "Asignee",
@@ -124,10 +139,14 @@ const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: 
         render: (_: any, record: any) => {
           return (
             <>
-              {record?.dueDate ? <span>{new Date(record.dueDate).toLocaleDateString()}</span> : '---'}
+              {record?.dueDate ? (
+                <span>{new Date(record.dueDate).toLocaleDateString()}</span>
+              ) : (
+                "---"
+              )}
             </>
           );
-        }
+        },
       },
       {
         title: "Priority",
@@ -140,14 +159,17 @@ const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: 
         width: 50,
         render: (_: any, record: any) => (
           <>
-            <Button type="primary" onClick={() => showModal(record)} icon={<EditOutlined />}></Button>
+            <Button
+              type="primary"
+              onClick={() => showModal(record)}
+              icon={<EditOutlined />}
+            ></Button>
           </>
-        )
-      }
+        ),
+      },
     ],
     []
   );
-
 
   const onFinish = (values: any) => {
     console.log("Success:", values);
@@ -166,14 +188,10 @@ const TaskTable = ({ data, showModal, project }: { data: TaskType[], showModal: 
   return (
     <>
       <TableToolbar>
-        <Button
-          type="primary"
-          onClick={() => showModal()}
-        >
+        <Button type="primary" onClick={() => showModal()}>
           Add New Task
-        </Button>  <div className="flex gap-4">
-
-
+        </Button>{" "}
+        <div className="flex gap-4">
           {/* <Avatar.Group
             max={{
               count: 4,

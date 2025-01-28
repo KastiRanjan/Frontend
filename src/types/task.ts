@@ -7,7 +7,9 @@ export interface TaskType {
     description?: string;
     dueDate?: string;
     project?:ProjectType
-    subTasks:TaskType[]
+    subTasks:TaskType[];
+    createdAt?: string;
+    updatedAt?: string;
     group: TaskGroupType;
     assignees?: string[];
     status?: "open" | "in_progress" | "done";

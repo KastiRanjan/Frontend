@@ -1,38 +1,44 @@
 import AllTaskTable from "@/components/Task/AllTaskTable";
-import { useTasks } from "@/hooks/task/useTask";
-import { Spin, Tabs } from "antd";
-import { useNavigate, useParams } from "react-router-dom";
+import TaskForm from "@/components/Task/TaskForm";
+import { Button, Modal, Tabs } from "antd";
+import { useState } from "react";
 
 const AllTask = () => {
-    const navigate = useNavigate();
-    const { pid } = useParams();
-    const { data, isPending } = useTasks();
-
-
-    if (isPending) return <Spin />;
-
-    return (
-        <div>
-            <Tabs defaultActiveKey="1" items={[
-                {
-                    label: `TODO`,
-                    key: "1",
-                    children: <AllTaskTable data={data} />,
-                },
-                {
-                    label: `DOING`,
-                    key: "2",
-                    children: <AllTaskTable data={data} />,
-                },
-                {
-                    label: `COMPLETED`,
-                    key: "3",
-                    children: <AllTaskTable data={data} />,
-                },
-            ]}
-            />
-        </div>
-    );
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <Button onClick={() => setOpen(true)}>Add Task</Button>
+      <Tabs
+        defaultActiveKey="1"
+        items={[
+          {
+            label: `TODO`,
+            key: "1",
+            children: <AllTaskTable status={"open"} />,
+          },
+          {
+            label: `DOING`,
+            key: "2",
+            children: <AllTaskTable status={"in_progress"} />,
+          },
+          {
+            label: `COMPLETED`,
+            key: "3",
+            children: <AllTaskTable status={"done"} />,
+          },
+        ]}
+      />
+      <Modal
+        title="Add Task"
+        open={open}
+        width={800}
+        onOk={() => console.log("ok")}
+        onCancel={() => setOpen(false)}
+      >
+        <TaskForm />
+      </Modal>
+    </div>
+  );
 };
 
 export default AllTask;

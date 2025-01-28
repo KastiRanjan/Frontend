@@ -52,7 +52,7 @@ const ProjectPage: React.FC = () => {
           },
           {
             label: `Archived`,
-            key: "3",
+            key: "4",
             children: (
               <ProjectTable showModal={showModal} status="archived" />
             ),

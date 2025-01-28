@@ -46,8 +46,8 @@ const Sidebar = ({
           collapsed={collapsed}
           width={250}
           theme="light"
-        className="bg-none"
-          >
+          className="bg-none"
+        >
           <Menu
             onClick={handleChangePage}
             defaultSelectedKeys={["1"]}

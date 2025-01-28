@@ -38,12 +38,6 @@ const columns = (showModal: any): TableProps<UserType>["columns"] => [
     key: "degination",
     render: (_: any, record: UserType) => record?.role?.name,
   },
-
-  {
-    title: "Status",
-    dataIndex: "status",
-    key: "status",
-  },
   {
     title: "Role",
     dataIndex: "role",

@@ -4,21 +4,28 @@ import FormSelectWrapper from "../FormSelectWrapper";
 import { useCreateTask } from "@/hooks/task/useCreateTask";
 import { useParams } from "react-router-dom";
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
+import Paragraph from "antd/es/typography/Paragraph";
 
 const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
   const { mutate, isPending } = useCreateTask();
-  const {data:group}= useTaskGroup();
+  const { data: group } = useTaskGroup();
   const { id } = useParams();
   const onFinish = (values: any) => {
     values.projectId = id;
     mutate(values, { onSuccess: () => handleCancel() });
   };
   return (
-    <Form layout="vertical" initialValues={editTaskData || {}} onFinish={onFinish}>
+    <Form
+      layout="vertical"
+      initialValues={editTaskData || {}}
+      onFinish={onFinish}
+    >
+      <Paragraph>Required fields are marked with an asterisk *</Paragraph>
       <FormInputWrapper
         id="name"
         label="Name"
         name="name"
+        classname="w-[300px]"
         rules={[{ required: true, message: "Please input the task name!" }]}
       />
 
@@ -26,6 +33,7 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
         id="description"
         label="Description"
         name="description"
+        classname="w-[300px]"
         rules={[
           { required: true, message: "Please input the task description!" },
         ]}
@@ -35,6 +43,7 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
         id="groupId"
         name="groupId"
         label="Group"
+        classname="w-[300px]"
         options={
           group?.map((group: any) => ({
             value: group.id,

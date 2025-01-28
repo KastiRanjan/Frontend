@@ -1,11 +1,11 @@
 import { fetchTasks } from "@/service/task.service";
 import { useQuery } from "@tanstack/react-query";
 
-export const useTasks = () => {
+export const useTasks = ({ status }: { status: string }) => {
   return useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["tasks", status],
     queryFn: async () => {
-      return fetchTasks();
+      return fetchTasks({ status });
     },
   });
 };

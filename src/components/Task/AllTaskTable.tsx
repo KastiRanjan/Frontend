@@ -1,29 +1,29 @@
 import { useEditTask } from "@/hooks/task/useEditTask";
-import { UserType } from "@/hooks/user/type";
-import { useUser } from "@/hooks/user/useUser";
+import { useTasks } from "@/hooks/task/useTask";
+import { TaskType } from "@/types/task";
 import {
   Avatar,
   Button,
+  Card,
   Col,
-  Drawer,
+  Divider,
   Form,
+  Input,
   Row,
   Select,
-  Space,
   Table,
   TableProps,
-  Tooltip
 } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import Title from "antd/es/typography/Title";
 import { useMemo, useState } from "react";
-import FormSelectWrapper from "../FormSelectWrapper";
-import { TaskType } from "@/types/task";
+import { Link } from "react-router-dom";
 
-const AllTaskTable = ({ data }: { data: TaskType[] }) => {
+const AllTaskTable = ({ status }: { status: string }) => {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const { mutate } = useEditTask();
+  const { data } = useTasks({ status });
+
   // const { data: users } = useUser();
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
 
@@ -38,30 +38,22 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
   const columns = useMemo(
     () => [
       {
+        title: "ID",
+        dataIndex: "tcode",
+        key: "tcode",
+      },
+      {
         title: "Name",
         dataIndex: "name",
         key: "name",
         render: (_: any, record: TaskType) => (
           <>
-            <span onClick={() => showDrawer(record)}>{record.name}</span>{" "}
-            {record?.subTasks?.length > 0 && (
-              <span>
-                <svg
-                  fill="none"
-                  width={16}
-                  height={16}
-                  viewBox="0 0 16 16"
-                  role="presentation"
-                >
-                  <path
-                    stroke="currentcolor"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M3 8h10c.69 0 1.25.56 1.25 1.25V13c0 .69-.56 1.25-1.25 1.25H9.25C8.56 14.25 8 13.69 8 13V3c0-.69-.56-1.25-1.25-1.25H3c-.69 0-1.25.56-1.25 1.25v3.75C1.75 7.44 2.31 8 3 8Z"
-                  ></path>
-                </svg>
-              </span>
-            )}
+            <span
+              onClick={() => showDrawer(record)}
+              className="cursor-pointer hover:underline"
+            >
+              {record.name}
+            </span>
           </>
         ),
       },
@@ -71,13 +63,20 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
         dataIndex: "project",
         key: "project",
         render: (_: any, record: any) => {
-          return record.project?.name;
+          return (
+            <Link
+              to={`/projects/${record.project?.id}`}
+              className="text-blue-600"
+            >
+              {record.project?.name}
+            </Link>
+          );
         },
       },
       {
-        title: "Status",
-        dataIndex: "status",
-        key: "status",
+        title: "Type",
+        dataIndex: "taskType",
+        key: "taskType",
       },
       {
         title: "Asignee",
@@ -105,16 +104,10 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
                       </Avatar>
                     </Tooltip>
                   ))} */}
-
               </Avatar.Group>
             </>
           );
         },
-      },
-      {
-        title: "Due date",
-        dataIndex: "dueDate",
-        key: "dueDate",
       },
       {
         title: "Priority",
@@ -141,102 +134,74 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
     }),
   };
   return (
-    <>
-      <Table
-        columns={columns}
-        dataSource={data}
-        rowSelection={rowSelection}
-        size="small"
-        rowKey={"id"}
-        bordered
-      />
-
-      <Drawer
-        onClose={onClose}
-        open={open}
-        size="large"
-        placement="right"
-        styles={{
-          body: {
-            paddingBottom: 80,
-          },
-        }}
-        extra={
-          <Space>
-            <Button onClick={onClose}>delete</Button>
-            <Form form={form} onFinish={onFinish}>
-              <Form.Item
-                name="status"
-                className="m-0"
-                style={{ background: "#f5f5f5" }}
-              >
-                <Select
-                  defaultValue={selectedTask?.status}
-                  onChange={() => form.submit()}
-                  dropdownRender={(menu) => (
-                    <div>
-                      {menu}
-                      <div style={{ padding: 8 }}>
-                        <span
-                          style={{
-                            background:
-                              selectedTask?.status === "open"
-                                ? "#87d068"
-                                : selectedTask?.status === "in_progress"
-                                  ? "#108ee9"
-                                  : "#f50",
-                            padding: "4px 8px",
-                            borderRadius: "2px",
-                            color: "white",
-                          }}
-                        >
-                          {selectedTask?.status?.toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  style={{ backgroundColor: "#f5f5f5" }}
-                >
-                  <Select.Option value="open">Open</Select.Option>
-                  <Select.Option value="in_progress">In Progress</Select.Option>
-                  <Select.Option value="done">Done</Select.Option>
-                </Select>
-              </Form.Item>
-            </Form>
-          </Space>
-        }
-
-      >
-        <div style={{ padding: "16px" }}>
-
-          <p style={{ fontWeight: "bold", marginBottom: "8px" }}>PENG 326</p>
-          <Title level={3}>{selectedTask?.name}</Title>
-
-
-
-          <div className="py-3">
+    <Row gutter={8}>
+      <Col span={16}>
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowSelection={rowSelection}
+          size="small"
+          rowKey={"id"}
+          bordered
+        />
+      </Col>
+      <Col span={8}>
+        <Card>
+          <div style={{ padding: "16px" }}>
             <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
-              Description
+              Code {selectedTask?.tcode}
             </p>
-            <Form
-              form={form}
-              onFinish={onFinish}
-            >
-              <Form.Item id="asignees" name="description" >
-                <TextArea defaultValue={selectedTask?.description} />
+            <Input.TextArea
+              className="text-2xl font-bold"
+              value={selectedTask?.name}
+              onChange={(e) => form.setFieldsValue({ name: e.target.value })}
+            />
+
+            <Form form={form} onFinish={onFinish} className="mt-2">
+              <Form.Item name="status" className="m-0 w-[130px]">
+                <Select
+                  defaultValue={"open"}
+                  onChange={(value) => form.setFieldsValue({ status: value })}
+                  defaultActiveFirstOption
+                  style={{
+                    background:
+                      form.getFieldValue("status") === "done"
+                        ? "green"
+                        : form.getFieldValue("status") === "in_progress"
+                        ? "orange"
+                        : "red",
+                  }}
+                  options={[
+                    { value: "open", label: "Open" },
+                    { value: "in_progress", label: "In Progress" },
+                    { value: "done", label: "Done" },
+                  ]}
+                  variant="filled"
+                  size="large"
+                />
               </Form.Item>
-              <Button htmlType="submit" type="primary">
-                Save
-              </Button>
             </Form>
-          </div>
-          <p style={{ fontWeight: "bold", marginBottom: "8px" }}>Detail</p>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Assignee: </strong>{" "}
-            </Col>
-            <Col span={6}>
-              {/* <Form
+            <div className="py-3">
+              <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
+                Description
+              </p>
+              <Form form={form} onFinish={onFinish}>
+                <Form.Item id="description" name="description">
+                  <TextArea defaultValue={selectedTask?.description} rows={5} />
+                </Form.Item>
+                <Button htmlType="submit" type="primary">
+                  Save
+                </Button>
+              </Form>
+            </div>
+            <p style={{ fontWeight: "bold", marginBottom: "8px" }}>Detail</p>
+            <Divider className="my-2" />
+            <Row gutter={16} className="mb-2">
+              <Col span={6}>
+                <strong>Assignee: </strong>{" "}
+              </Col>
+              <Col span={6}>
+                {/* <Form
                 form={form}
                 initialValues={selectedTask?.assignees || []}
                 onFinish={onFinish}
@@ -253,35 +218,53 @@ const AllTaskTable = ({ data }: { data: TaskType[] }) => {
                   changeHandler={() => form.submit()}
                 />
               </Form> */}
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Reporter:</strong>
-            </Col>
-            <Col>
-              <ul>
-                <li>Ranjan</li>
-              </ul>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Due Date:</strong>
-            </Col>
-            <Col>{selectedTask?.dueDate}</Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={6}>
-              <strong>Project:</strong>
-            </Col>
-            <Col>
-              <strong>Project:</strong>
-            </Col>
-          </Row>
-        </div>
-      </Drawer>
-    </>
+              </Col>
+            </Row>
+            <Row gutter={16} className="mb-2">
+              <Col span={6}>
+                <strong>Reporter:</strong>
+              </Col>
+              <Col>
+                <ul>
+                  <li>Ranjan</li>
+                </ul>
+              </Col>
+            </Row>
+            <Row gutter={24} className="mb-2">
+              <Col span={12}>
+                <strong>Created Date:</strong>
+              </Col>
+              <Col>
+                {selectedTask?.createdAt
+                  ? new Date(selectedTask?.createdAt).toLocaleString()
+                  : ""}
+              </Col>
+            </Row>
+            <Row gutter={24} className="mb-2">
+              <Col span={12}>
+                <strong>Updated Date:</strong>
+              </Col>
+              <Col>
+                {selectedTask?.updatedAt
+                  ? new Date(selectedTask.updatedAt).toLocaleString()
+                  : ""}
+              </Col>
+            </Row>
+            <Row gutter={24} className="mb-2">
+              <Col span={12}>
+                <strong>Due Date:</strong>
+              </Col>
+              <Col>{selectedTask?.dueDate}</Col>
+            </Row>
+            <Row gutter={16} className="mb-2">
+              <Col>
+                <strong>Project:{selectedTask?.project?.name}</strong>
+              </Col>
+            </Row>
+          </div>
+        </Card>
+      </Col>
+    </Row>
   );
 };
 
