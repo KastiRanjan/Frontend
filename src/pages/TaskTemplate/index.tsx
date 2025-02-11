@@ -1,8 +1,10 @@
+import PageTitle from "@/components/PageTitle";
+import MoveTemplateModal from "@/components/TaskTemplate/MoveTemplateModal";
 import TaskTemplateTable from "@/components/TaskTemplate/TaskTemplateTable";
 import TaskTemplateForm from "@/components/TaskTemplate/TaskTemplatForm";
 import { useTaskGroupById } from "@/hooks/taskGroup/useTaskGroupById";
 import { TaskType } from "@/types/task";
-import { Modal } from "antd";
+import { Button, Modal } from "antd";
 import React, { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -18,8 +20,12 @@ interface TaskTemplate {
 const TaskTemplate: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen1, setIsModalOpen1] = useState(false);
   const [isRowSelected, setIsRowSelected] = useState(false);
   const { id } = useParams();
+  const [checkedRows, setCheckedRows] = useState<string[]>([]);
+
+  console.log("hello",checkedRows)
   const { data: taskGroup, isPending } = useTaskGroupById({ id });
 
   const [open, setOpen] = React.useState(false);
@@ -43,7 +49,7 @@ const TaskTemplate: React.FC = () => {
         title={taskGroup?.name}
         description="Add, search, and manage your task templates all in one place."
       /> */}
-
+      <Button  type="primary" onClick={() => setIsModalOpen1(true)} >Add To</Button>
       {open && (
         <Modal
           title="Add Task Template"
@@ -62,10 +68,20 @@ const TaskTemplate: React.FC = () => {
         handleCancel={handleCancel}
         isModalOpen={isModalOpen}
         setIsRowSelected={setIsRowSelected}
+        setCheckedRows={setCheckedRows}
         taskList={taskGroup?.tasktemplate}
         isPending={isPending}
         showModal={showModal}
       />
+
+{isModalOpen1 && (
+        <MoveTemplateModal
+          selectedRow={checkedRows}
+          handleCancel={() => setIsModalOpen1(false)}
+          isModalOpen={isModalOpen1}
+        />
+      )}
+
     </>
   );
 };

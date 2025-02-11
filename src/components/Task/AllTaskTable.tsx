@@ -21,12 +21,13 @@ import { Link } from "react-router-dom";
 const AllTaskTable = ({ status }: { status: string }) => {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
+  const [form1] = Form.useForm();
   const { mutate } = useEditTask();
   const { data } = useTasks({ status });
 
   // const { data: users } = useUser();
   const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
-
+  console.log("selectedTask", selectedTask);
   const showDrawer = (record: TaskType) => {
     setOpen(true);
     setSelectedTask(record);
@@ -185,9 +186,9 @@ const AllTaskTable = ({ status }: { status: string }) => {
               <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
                 Description
               </p>
-              <Form form={form} onFinish={onFinish}>
-                <Form.Item id="description" name="description">
-                  <TextArea defaultValue={selectedTask?.description} rows={5} />
+              <Form form={form1} onFinish={onFinish} defaultValue={selectedTask?.description} >
+                <Form.Item id="description" name="description" >
+                  <Input.TextArea  rows={5} />
                 </Form.Item>
                 <Button htmlType="submit" type="primary">
                   Save

@@ -59,6 +59,7 @@ interface TaskTemplateTableProps {
 const TaskTemplateTable = ({
   handleCancel,
   isModalOpen,
+  setCheckedRows,
   setIsRowSelected,
   taskList = [],
   isPending,
@@ -89,6 +90,8 @@ const TaskTemplateTable = ({
     // }),
     onChange: (selectedRowKeys, selectedRows) => {
       console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+      setSelectedRow(selectedRows);
+      console.log("jj")
     },
     onSelect: (record, selected, selectedRows) => {
       console.log(record, selected, selectedRows);
