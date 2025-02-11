@@ -12,7 +12,7 @@ interface TaskGroupListProps {
 }
 
 
-const TaskGroupList = ({ showModal }: TaskGroupListProps) => {
+const TaskGroupList = ({  showModal }: TaskGroupListProps) => {
   const [modal, contextHolder] = Modal.useModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [checkedRows, setCheckedRows] = useState<string[]>([]);
@@ -71,8 +71,7 @@ const TaskGroupList = ({ showModal }: TaskGroupListProps) => {
                 avatar={<Avatar src="https://api.dicebear.com/7.x/miniavs/svg?seed=1" />}
                 description={
                   <>
-                    <p>This is the description</p>
-                    <p>This is the description</p>
+                    <p>{group.description}</p>
                   </>
                 }
               />

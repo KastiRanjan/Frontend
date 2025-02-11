@@ -5,13 +5,15 @@ import { useCreateTask } from "@/hooks/task/useCreateTask";
 import { useParams } from "react-router-dom";
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
 import Paragraph from "antd/es/typography/Paragraph";
+import { useProject } from "@/hooks/project/useProject";
 
 const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
   const { mutate, isPending } = useCreateTask();
   const { data: group } = useTaskGroup();
   const { id } = useParams();
+  const { data:projects} = useProject({status:"active"});
   const onFinish = (values: any) => {
-    values.projectId = id;
+    values.projectId = id||values.projectId[0];
     mutate(values, { onSuccess: () => handleCancel() });
   };
   return (
@@ -83,6 +85,19 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
           })) || []
         }
       />
+
+{  !id&&    <FormSelectWrapper
+        id="projectId"
+        name="projectId"
+        label="Project"
+        mode="multiple"
+        options={
+          projects?.map((project: any) => ({
+            value: project.id,
+            label: project.name,
+          })) || []
+        }
+      />}
 
       <Form.Item>
         <Button

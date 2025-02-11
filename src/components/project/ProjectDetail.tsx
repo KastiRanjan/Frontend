@@ -1,10 +1,11 @@
 // src/ProjectDetail.tsx
 import { ProjectType } from '@/types/project';
-import { Button, Card, Col, Row, Space, Tabs, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Button, Card, Col, Modal, Row, Space, Tabs, Typography } from 'antd';
 import TaskTable from '../Task/TaskTable';
 import { useProjectTask } from '@/hooks/task/useProjectTask';
 import ProjectSummary from './ProjectSummary';
+import { useState } from 'react';
+import TaskForm from '../Task/TaskForm';
 
 const { Title, Text } = Typography;
 
@@ -16,8 +17,10 @@ interface ProjectDetailProps {
 
 const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
   const { name, startingDate, endingDate, users, tasks, projectLead, status } = project;
-  const navigate = useNavigate();
   const { data, isPending } = useProjectTask({ id });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleCancel = () => setIsModalOpen(false);
+  
 
 
 
@@ -37,8 +40,15 @@ const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
 
   return (
     <Row gutter={8}>
+    {isModalOpen && (
+        <Modal title="Add Task" footer={null} open={isModalOpen} onCancel={handleCancel}>
+          <div className="max-h-[70vh] overflow-y-scroll">
+            <TaskForm  users={project?.users} tasks={project?.tasks} handleCancel={handleCancel} />
+          </div>
+        </Modal>
+      )}
       <Col span={16}>
-        <Card title={name} extra={<Button onClick={() => navigate(`/project/${id}`)}>Add Task</Button>}>
+        <Card title={name} extra={<Button onClick={() =>setIsModalOpen(true)}>Add Task</Button>}>
           <Tabs defaultActiveKey="1" items={[
             {
               label: 'Summary', key: '1',
