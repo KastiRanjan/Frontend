@@ -91,6 +91,8 @@ const TaskTemplateTable = ({
     onChange: (selectedRowKeys, selectedRows) => {
       console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
       setSelectedRow(selectedRows);
+      setIsRowSelected(true);
+      setCheckedRows(selectedRowKeys);
       console.log("jj")
     },
     onSelect: (record, selected, selectedRows) => {
