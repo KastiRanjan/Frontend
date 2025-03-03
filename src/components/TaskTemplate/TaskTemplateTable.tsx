@@ -5,9 +5,10 @@ import { Badge, Button, Card, Modal, Table, TableProps } from "antd";
 import _ from "lodash";
 import { useState } from "react";
 import TableToolbar from "../Table/TableToolbar";
-import MoveTemplateModal from "./MoveTemplateModal";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { TaskType } from "@/types/task";
+import MoveTemplateModalList from "./MoveTemplateModalList";
+import MoveTemplateModal from "./MoveTemplateModal";
 
 const column = ({ showModal, handleDelete }: any): TableProps<TaskTemplateType>["columns"] => [
   {
@@ -51,8 +52,10 @@ interface TaskTemplateTableProps {
   handleCancel: () => void;
   isModalOpen: boolean;
   setIsRowSelected: (value: boolean) => void;
+  setCheckedRows: (value: string[]) => void
   taskList?: any
   isPending?: boolean;
+  taskGroup?: any;
   showModal?: (task?: TaskType) => void
 }
 
@@ -60,6 +63,7 @@ const TaskTemplateTable = ({
   handleCancel,
   isModalOpen,
   setCheckedRows,
+  taskGroup,
   setIsRowSelected,
   taskList = [],
   isPending,
@@ -68,7 +72,6 @@ const TaskTemplateTable = ({
   const [modal, contextHolder] = Modal.useModal();
   const [selectedRow, setSelectedRow] = useState<TaskTemplateType[]>([]);
   const { mutate: mutateDelete } = useDeleteTaskTemplate()
-
 
   const expandedData: any = _.map(taskList, (task) => {
     const nestedTasks = _.map(task.subTasks || [], (subTask) => {
@@ -93,7 +96,6 @@ const TaskTemplateTable = ({
       setSelectedRow(selectedRows);
       setIsRowSelected(true);
       setCheckedRows(selectedRowKeys);
-      console.log("jj")
     },
     onSelect: (record, selected, selectedRows) => {
       console.log(record, selected, selectedRows);
@@ -138,16 +140,16 @@ const TaskTemplateTable = ({
         />
       </Card>
 
-      {contextHolder}
+  
 
-      {isModalOpen && (
+      {isModalOpen &&(
         <MoveTemplateModal
           selectedRow={selectedRow}
           handleCancel={handleCancel}
           isModalOpen={isModalOpen}
         />
       )}
-    </>
+    </> 
   );
 };
 

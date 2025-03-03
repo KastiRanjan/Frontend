@@ -1,5 +1,6 @@
 import PageTitle from "@/components/PageTitle";
 import MoveTemplateModal from "@/components/TaskTemplate/MoveTemplateModal";
+import MoveTemplateModalList from "@/components/TaskTemplate/MoveTemplateModalList";
 import TaskTemplateTable from "@/components/TaskTemplate/TaskTemplateTable";
 import TaskTemplateForm from "@/components/TaskTemplate/TaskTemplatForm";
 import { useTaskGroupById } from "@/hooks/taskGroup/useTaskGroupById";
@@ -49,7 +50,7 @@ const TaskTemplate: React.FC = () => {
         title={taskGroup?.name}
         description="Add, search, and manage your task templates all in one place."
       /> */}
-      <Button  type="primary" onClick={() => setIsModalOpen1(true)} >Add To</Button>
+      {isRowSelected && <Button  type="primary" onClick={() => setIsModalOpen1(true)} >Add Template</Button>}
       {open && (
         <Modal
           title="Add Task Template"
@@ -75,10 +76,11 @@ const TaskTemplate: React.FC = () => {
       />
 
 {isModalOpen1 && (
-        <MoveTemplateModal
+        <MoveTemplateModalList
           selectedRow={checkedRows}
           handleCancel={() => setIsModalOpen1(false)}
           isModalOpen={isModalOpen1}
+          groupId={id}
         />
       )}
 

@@ -186,7 +186,7 @@ const AllTaskTable = ({ status }: { status: string }) => {
               <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
                 Description
               </p>
-              <Form form={form1} onFinish={onFinish} defaultValue={selectedTask?.description} >
+              <Form form={form} onFinish={onFinish} defaultValue={selectedTask?.description} >
                 <Form.Item id="description" name="description" >
                   <Input.TextArea  rows={5} />
                 </Form.Item>
