@@ -228,27 +228,28 @@ const Router = [
       },
       {
         path: "/profile/:id",
-        element: <Profile />,
+        element: <Profile component={PersonalDetails}/>,
       },
       {
         path: "/account-detail/:id",
         element: <AccountDetails />,
       },
       {
-        path: "/personal-detail:id",
-        element: <PersonalDetails />,
+        path: "profile/:id/personal-detail",
+        element: <Profile component={PersonalDetails}/>,
       },
       {
-        path: "/educational-detail/:id",
-        element: <EducationalDetails />,
+        path: "profile/:id/educational-detail",
+        element: <Profile component={EducationalDetails}/>,
       },
       {
-        path: "/bank-detai/:id",
-        element: <BankDetails />,
+        path: "profile/:id/bank-detail",
+        element: <Profile component={BankDetails} />,
       },
       {
-        path: "/training-detail:id",
-        element: <TrainingDetails />,
+        path: "profile/:id/training-detail",
+        element: <Profile component={TrainingDetails} />,
+      
       },
       {
         path: "/settings",
@@ -259,3 +260,7 @@ const Router = [
 ];
 
 export default Router;
+
+
+
+

@@ -3,10 +3,14 @@ import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { UserType } from "@/types/user";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Checkbox, Col, Form, Row, Select, TimePicker } from "antd";
+import { Button, Card, Checkbox, Col, Form, Row, Select, TimePicker, DatePicker, message } from "antd";
 import { useState } from "react";
 import ReactQuill from "react-quill";
 import { useNavigate } from "react-router-dom";
+// import { useAuth } from "@/hooks/useAuth"; // Assuming you have an auth hook
+import { useSession } from "@/context/SessionContext";
+import moment from "moment";
+
 
 const OWorklogForm = () => {
   const [form] = Form.useForm();
@@ -15,17 +19,34 @@ const OWorklogForm = () => {
   const { data: projects } = useProject({ status: "active" });
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
+  const { profile } = useSession(); // Get current user info (you'll need to implement this)
+  const user = profile;
+
+  // Check if user is manager or admin
+  const isManagerOrAdmin = user?.role?.name === "manager" || user?.role === "admin" || user?.role?.name === "superuser";
 
   // Handle the form submission
   const handleFinish = (values: any) => {
-    console.log(values.timeEntries);
-    createWorklog(values.timeEntries, {
+    const updatedTimeEntries = values.timeEntries.map((entry: any) => ({
+      ...entry,
+      status: "requested",
+    }));
+
+    console.log(updatedTimeEntries);
+
+    createWorklog(updatedTimeEntries, {
       onSuccess: () => {
         navigate("/worklogs-all");
+      },
+      onError: (error: any) => {
+        // Extract message from error response
+        const errorMessage = error?.response?.data?.message || "An error occurred while creating the worklog";
+        message.error(errorMessage); // Display the error message
       },
     });
   };
 
+  const timeFormat = "HH:mm";
 
   // Handle project change for a specific form entry
   const handleProjectChange = (projectId: string, fieldName: any) => {
@@ -38,7 +59,7 @@ const OWorklogForm = () => {
       setUsers((prevUsers) => ({
         ...prevUsers,
         [fieldName]: selectedProject.users || [],
-      }))
+      }));
     }
   };
 
@@ -51,6 +72,27 @@ const OWorklogForm = () => {
               {fields.map((field) => (
                 <Card key={field.key} style={{ marginBottom: "20px" }}>
                   <Row gutter={16} key={field.key}>
+                                      {/* Date Field */}
+                                      <Col span={4}>
+                      <Form.Item
+                        label="Date"
+                        name={[field.name, "date"]}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select a date!",
+                          },
+                        ]}
+                        initialValue={moment()} // Default to current date
+                      >
+                        <DatePicker
+                          className="w-full py-2"
+                          disabled={!isManagerOrAdmin} // Disable if not manager/admin
+                        />
+                      </Form.Item>
+                    </Col>
+
+
                     {/* Project Dropdown */}
                     <Col span={5}>
                       <Form.Item
@@ -87,11 +129,8 @@ const OWorklogForm = () => {
                       </Form.Item>
                     </Col>
 
-
-
-
                     {/* Start Time Field */}
-                    <Col span={4}>
+                    <Col span={3}>
                       <Form.Item
                         label="Start Time"
                         name={[field.name, "startTime"]}
@@ -102,12 +141,12 @@ const OWorklogForm = () => {
                           },
                         ]}
                       >
-                        <TimePicker width={"100%"} className="py-2" />
+                        <TimePicker className="w-full py-2" format={timeFormat} minuteStep={1} />
                       </Form.Item>
                     </Col>
 
                     {/* End Time Field */}
-                    <Col span={4}>
+                    <Col span={3}>
                       <Form.Item
                         label="End Time"
                         name={[field.name, "endTime"]}
@@ -118,9 +157,10 @@ const OWorklogForm = () => {
                           },
                         ]}
                       >
-                        <TimePicker className="py-2" />
+                        <TimePicker className="w-full py-2" format={timeFormat} minuteStep={1} />
                       </Form.Item>
                     </Col>
+
                     <Col span={3}>
                       <Form.Item
                         label="Request To"
@@ -137,6 +177,7 @@ const OWorklogForm = () => {
                         />
                       </Form.Item>
                     </Col>
+
                     {/* Description Field */}
                     <Col span={12}>
                       <Form.Item
