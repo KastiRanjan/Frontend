@@ -25,6 +25,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Notification from "../Notification/Notification";
 import SearchBarWithPopover from "../SearchBarPopover";
+import Clock from "../Clock/Clock";
 
 const Navbar = ({
   collapsed,
@@ -88,7 +89,7 @@ const Navbar = ({
         <SearchBarWithPopover />
       </div>
 
-      {/* <Clock /> */}
+      <Clock />
       {/* <Title level={5}> {location?.country}</Title> */}
       <div className="pr-4 flex gap-4 items-center">
         <FileDoneOutlined

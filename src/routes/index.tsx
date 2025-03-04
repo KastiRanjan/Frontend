@@ -35,6 +35,7 @@ import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
+import EditWorklog from "@/pages/Worklog/edit";
 
 const Router = [
   {
@@ -193,6 +194,10 @@ const Router = [
       {
         path: "worklogs-all",
         element: <AllWorklogs />,
+      },
+      {
+        path: "worklogs/edit/:id",
+        element: <EditWorklog />,
       },
       {
         path: "worklogs/new",

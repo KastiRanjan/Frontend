@@ -6,12 +6,11 @@ import { Tabs } from "antd";
 const AllWorklogs = () => {
     return (
         <>
-            {/* <PageTitle title="All Worklogs" /> */}
-            <Tabs defaultActiveKey="1" items={[
+            <Tabs defaultActiveKey="2" items={[
                 {
-                    label: `Pending`,
+                    label: `Requested`,
                     key: "1",
-                    children: <AllWorklogTable status="open" />,
+                    children: <AllWorklogTable status="requested" />,
                 },
                 {
                     label: `Approved`,
@@ -23,13 +22,7 @@ const AllWorklogs = () => {
                     key: "3",
                     children: <AllWorklogTable status="rejected" />,
                 },
-                {
-                    label: `Requested`,
-                    key: "4",
-                    children: <AllWorklogTable status="requested" />,
-                },
             ]} />
-
         </>
     );
 };

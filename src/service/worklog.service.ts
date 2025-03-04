@@ -24,12 +24,17 @@ export const createWorklog = async (payload: any) => {
   return response.data;
 };
 export const editWorklog = async ({
-  status,
+  payload,
   id,
 }: {
-  status: any;
+  payload: any;
   id: string;
 }) => {
-  const response = await axios.patch(`${backendURI}/worklogs/${id}`, { status });
+  const response = await axios.patch(`${backendURI}/worklogs/${id}`, payload);
+  return response.data;
+};
+
+export const deleteWorklog = async ({ id }: { id: string }) => {
+  const response = await axios.delete(`${backendURI}/worklogs/${id}`);
   return response.data;
 };

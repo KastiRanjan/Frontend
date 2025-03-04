@@ -3,18 +3,29 @@ import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { UserType } from "@/types/user";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Checkbox, Col, Form, Row, Select, TimePicker, DatePicker, message } from "antd";
+import {
+  Button,
+  Card,
+  Checkbox,
+  Col,
+  Form,
+  Row,
+  Select,
+  TimePicker,
+  DatePicker,
+  message,
+} from "antd";
 import { useState } from "react";
 import ReactQuill from "react-quill";
 import { useNavigate } from "react-router-dom";
-// import { useAuth } from "@/hooks/useAuth"; // Assuming you have an auth hook
 import { useSession } from "@/context/SessionContext";
 import moment from "moment";
 
-
 const OWorklogForm = () => {
   const [form] = Form.useForm();
-  const [tasks, setTasks] = useState<{ [fieldName: string]: TaskTemplateType[] }>({});
+  const [tasks, setTasks] = useState<{
+    [fieldName: string]: TaskTemplateType[];
+  }>({});
   const [users, setUsers] = useState<{ [fieldName: string]: UserType[] }>({});
   const { data: projects } = useProject({ status: "active" });
   const { mutate: createWorklog } = useCreateWorklog();
@@ -23,7 +34,10 @@ const OWorklogForm = () => {
   const user = profile;
 
   // Check if user is manager or admin
-  const isManagerOrAdmin = user?.role?.name === "manager" || user?.role === "admin" || user?.role?.name === "superuser";
+  const isManagerOrAdmin =
+    user?.role?.name === "manager" ||
+    user?.role === "admin" ||
+    user?.role?.name === "superuser";
 
   // Handle the form submission
   const handleFinish = (values: any) => {
@@ -32,15 +46,15 @@ const OWorklogForm = () => {
       status: "requested",
     }));
 
-    console.log(updatedTimeEntries);
-
     createWorklog(updatedTimeEntries, {
       onSuccess: () => {
         navigate("/worklogs-all");
       },
       onError: (error: any) => {
         // Extract message from error response
-        const errorMessage = error?.response?.data?.message || "An error occurred while creating the worklog";
+        const errorMessage =
+          error?.response?.data?.message ||
+          "An error occurred while creating the worklog";
         message.error(errorMessage); // Display the error message
       },
     });
@@ -50,7 +64,9 @@ const OWorklogForm = () => {
 
   // Handle project change for a specific form entry
   const handleProjectChange = (projectId: string, fieldName: any) => {
-    const selectedProject = projects?.find((project: any) => project.id === projectId);
+    const selectedProject = projects?.find(
+      (project: any) => project.id === projectId
+    );
     if (selectedProject) {
       setTasks((prevTasks) => ({
         ...prevTasks,
@@ -72,8 +88,8 @@ const OWorklogForm = () => {
               {fields.map((field) => (
                 <Card key={field.key} style={{ marginBottom: "20px" }}>
                   <Row gutter={16} key={field.key}>
-                                      {/* Date Field */}
-                                      <Col span={4}>
+                    {/* Date Field */}
+                    <Col span={4}>
                       <Form.Item
                         label="Date"
                         name={[field.name, "date"]}
@@ -92,17 +108,23 @@ const OWorklogForm = () => {
                       </Form.Item>
                     </Col>
 
-
                     {/* Project Dropdown */}
                     <Col span={5}>
                       <Form.Item
                         label="Project"
                         name={[field.name, "projectId"]}
-                        rules={[{ required: true, message: "Please select a project!" }]}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select a project!",
+                          },
+                        ]}
                       >
                         <Select
                           className="h-[40px]"
-                          onChange={(projectId) => handleProjectChange(projectId, field.name)}
+                          onChange={(projectId) =>
+                            handleProjectChange(projectId, field.name)
+                          }
                           options={projects?.map((p: TaskTemplateType) => ({
                             label: p.name,
                             value: p.id,
@@ -116,20 +138,23 @@ const OWorklogForm = () => {
                       <Form.Item
                         label="Task"
                         name={[field.name, "taskId"]}
-                        rules={[{ required: true, message: "Please select a task!" }]}
+                        rules={[
+                          { required: true, message: "Please select a task!" },
+                        ]}
                       >
                         <Select
                           className="h-[40px]"
-                          options={tasks[field.name]?.map((t: TaskTemplateType) => ({
-                            label: t.name,
-                            value: t.id,
-                          }))}
+                          options={tasks[field.name]?.map(
+                            (t: TaskTemplateType) => ({
+                              label: t.name,
+                              value: t.id,
+                            })
+                          )}
                           disabled={!tasks[field.name]?.length}
                         />
                       </Form.Item>
                     </Col>
 
-                    {/* Start Time Field */}
                     <Col span={3}>
                       <Form.Item
                         label="Start Time"
@@ -139,9 +164,55 @@ const OWorklogForm = () => {
                             required: true,
                             message: "Please select start time!",
                           },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const endTime = getFieldValue([
+                                "timeEntries",
+                                field.name,
+                                "endTime",
+                              ]);
+                              if (
+                                !value ||
+                                !endTime ||
+                                value.isBefore(endTime)
+                              ) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(
+                                new Error(
+                                  "Start time cannot be after end time!"
+                                )
+                              );
+                            },
+                          }),
                         ]}
                       >
-                        <TimePicker className="w-full py-2" format={timeFormat} minuteStep={1} />
+                        <TimePicker
+                          className="w-full py-2"
+                          format={timeFormat}
+                          minuteStep={1}
+                          onSelect={(time) => {
+                            form.setFieldsValue({
+                              timeEntries: {
+                                [field.name]: { startTime: time },
+                              },
+                            });
+                            // Trigger validation manually if needed
+                            form.validateFields([
+                              ["timeEntries", field.name, "startTime"],
+                            ]);
+                          }}
+                          onChange={(time) => {
+                            // Ensure the value is updated even if popup closes without OK
+                            if (time) {
+                              form.setFieldsValue({
+                                timeEntries: {
+                                  [field.name]: { startTime: time },
+                                },
+                              });
+                            }
+                          }}
+                        />
                       </Form.Item>
                     </Col>
 
@@ -155,9 +226,51 @@ const OWorklogForm = () => {
                             required: true,
                             message: "Please select end time!",
                           },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const startTime = getFieldValue([
+                                "timeEntries",
+                                field.name,
+                                "startTime",
+                              ]);
+                              if (
+                                !value ||
+                                !startTime ||
+                                value.isAfter(startTime)
+                              ) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(
+                                new Error("End time must be after start time!")
+                              );
+                            },
+                          }),
                         ]}
                       >
-                        <TimePicker className="w-full py-2" format={timeFormat} minuteStep={1} />
+                        <TimePicker
+                          className="w-full py-2"
+                          format={timeFormat}
+                          minuteStep={1}
+                          onSelect={(time) => {
+                            form.setFieldsValue({
+                              timeEntries: { [field.name]: { endTime: time } },
+                            });
+                            // Trigger validation manually if needed
+                            form.validateFields([
+                              ["timeEntries", field.name, "endTime"],
+                            ]);
+                          }}
+                          onChange={(time) => {
+                            // Ensure the value is updated even if popup closes without OK
+                            if (time) {
+                              form.setFieldsValue({
+                                timeEntries: {
+                                  [field.name]: { endTime: time },
+                                },
+                              });
+                            }
+                          }}
+                        />
                       </Form.Item>
                     </Col>
 
@@ -165,7 +278,9 @@ const OWorklogForm = () => {
                       <Form.Item
                         label="Request To"
                         name={[field.name, "approvedBy"]}
-                        rules={[{ required: true, message: "Please select a task!" }]}
+                        rules={[
+                          { required: true, message: "Please select a task!" },
+                        ]}
                       >
                         <Select
                           className="h-[40px]"
@@ -192,9 +307,15 @@ const OWorklogForm = () => {
                         <ReactQuill
                           theme="snow"
                           onChange={(value) => {
-                            form.setFieldValue([field.name, "description"], value);
+                            form.setFieldValue(
+                              [field.name, "description"],
+                              value
+                            );
                           }}
-                          value={form.getFieldValue([field.name, "description"])}
+                          value={form.getFieldValue([
+                            field.name,
+                            "description",
+                          ])}
                         />
                       </Form.Item>
                     </Col>

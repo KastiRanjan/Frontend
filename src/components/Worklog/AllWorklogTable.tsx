@@ -1,12 +1,13 @@
 
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
 import { useWorklog } from "@/hooks/worklog/useWorklog";
-import { Button, Card, Table } from "antd";
+import { Button, Card, Table, Popconfirm } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
+import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
 
-const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
+const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPending: boolean, navigate: any) => [
   {
     title: "Date",
     dataIndex: "date",
@@ -43,17 +44,15 @@ const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
     dataIndex: "startTime",
     key: "startTime",
     render: (_: any, record: any) => {
-
       return <>
-      <div>
-      {moment(record?.startTime).format("hh:mm A") + " - " + moment(record?.endTime).format("hh:mm A")}
-      </div>
-      
+        <div>
+          {moment(record?.startTime).format("hh:mm A") + " - " + moment(record?.endTime).format("hh:mm A")}
+        </div>
         {` (${moment.duration(moment(record?.endTime).diff(moment(record?.startTime))).asMinutes()} minutes)`}
       </>
     }
   },
-
+  
   {
     title: "Requestor",
     dataIndex: "userId",
@@ -66,7 +65,7 @@ const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
     title: "Approved by",
     dataIndex: "userId",
     key: "userId",
-    hidden: status === "open" || status === "rejected",
+    hidden: status === "rejected",
     render: (_: any, record: any) => {
       return (record?.user?.name);
     }
@@ -75,28 +74,69 @@ const columns = (status: string, editWorklog: any, isEditPending: boolean) => [
     title: "Action",
     dataIndex: "o",
     key: "s",
-    hidden: status !== "open" && status !== "rejected",
+    hidden: status !== "open" && status !== "rejected" && status !== "requested",
     render: (_: any, record: any) => {
-      return <Button type="primary" title="Your request will be sent to the  project manager"
-        onClick={() => editWorklog({ id: record?.id, status: "requested" })}
-      >Send Request</Button>
-    }
-  },
-  {
-    title: "Action",
-    dataIndex: "o",
-    key: "s",
-    hidden: status !== "requested",
-    render: (_: any, record: any) => {
-      return <Button type="primary" title="Your request will be sent to the  project manager" onClick={() => editWorklog({ id: record?.id, status: "approved" })}>Approve</Button>
+      if (status === "open") {
+        return (
+          <Button 
+            type="primary" 
+            title="Your request will be sent to the project manager"
+            onClick={() => editWorklog({ id: record?.id, status: "requested" })}
+          >
+            Send Request
+          </Button>
+        );
+      }
+      if (status === "rejected" || status === "requested") {
+        return (
+          <div className="flex gap-2">
+            <Button 
+              type="primary"
+              onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
+            >
+              Edit
+            </Button>
+            <Popconfirm
+              title="Are you sure you want to delete this worklog?"
+              onConfirm={() => deleteWorklog({id:record?.id})}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button 
+                type="primary" 
+                danger
+              >
+                Delete
+              </Button>
+            </Popconfirm>
+            {status === "requested" && (
+              <>
+                <Button 
+                  type="primary"
+                  onClick={() => editWorklog({ id: record?.id, status: "approved" })}
+                >
+                  Approve
+                </Button>
+                <Button 
+                  type="primary"
+                  danger
+                  onClick={() => editWorklog({ id: record?.id, status: "rejected" })}
+                >
+                  Reject
+                </Button>
+              </>
+            )}
+          </div>
+        );
+      }
     }
   },
 ];
-
 const AllWorklogTable = ({ status }: { status: string }) => {
   const navigate = useNavigate();
   const { data: worklogs, isPending } = useWorklog(status);
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
+  const { mutate: deleteWorklog } = useDeleteWorklog();
 
   return (
     <Card>
@@ -106,7 +146,7 @@ const AllWorklogTable = ({ status }: { status: string }) => {
       <Table
         loading={isPending}
         dataSource={worklogs || []}
-        columns={columns(status, editWorklog, isEditPending)}
+        columns={columns(status, editWorklog, deleteWorklog, isEditPending,navigate)}
         rowKey="id"
         bordered
       />
