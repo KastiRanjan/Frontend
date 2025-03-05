@@ -1,6 +1,3 @@
-import { useWorklogById } from "@/hooks/worklog/useWorklogById"; // You'll need to create this hook
-import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
-import { useProject } from "@/hooks/project/useProject";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { UserType } from "@/types/user";
 import { Button, Card, Col, Form, Row, Select, TimePicker, DatePicker, message } from "antd";
@@ -9,72 +6,80 @@ import ReactQuill from "react-quill";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import moment from "moment";
+import { useWorklogSingle } from "@/hooks/worklog/useWorklogSingle";
+import { useEditingWorklog } from "@/hooks/worklog/useEditingWorklog";
 
 const EWorklogForm = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const { id } = useParams(); // Get the worklog ID from URL
+  const { id } = useParams();
   const { profile } = useSession();
   const user = profile;
-  
 
-  // Hooks for data fetching and mutations
-  const { data: worklog, isLoading } = useWorklogById({ id: id});
-  console.log(worklog);
-  const { data: projects } = useProject({ status: "active" });
-  const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
+  const { data: worklog, isLoading } = useWorklogSingle({ id });
+  const { mutate: editingWorklog, isPending: isEditPending } = useEditingWorklog();
 
-  // State for tasks and users
+  const [projects, setProjects] = useState<TaskTemplateType[]>([]);
   const [tasks, setTasks] = useState<TaskTemplateType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
 
-  // Check if user is manager or admin
   const isManagerOrAdmin =
     user?.role?.name === "manager" ||
-    user?.role === "admin" ||
+    user?.role?.name === "admin" ||
     user?.role?.name === "superuser";
 
-  // Set form initial values when worklog data is loaded
   useEffect(() => {
     if (worklog) {
+      const startMoment = moment(worklog.startTime);
+      const endMoment = moment(worklog.endTime);
+
       form.setFieldsValue({
-        date: moment(worklog.date),
-        projectId: worklog.projectId,
-        taskId: worklog.taskId,
-        startTime: moment(worklog.startTime),
-        endTime: moment(worklog.endTime),
+        date: startMoment,
+        projectId: worklog.task?.project?.id,
+        taskId: worklog.task?.id,
+        startTime: startMoment,
+        endTime: endMoment,
         approvedBy: worklog.approvedBy,
         description: worklog.description,
       });
 
-      // Load tasks and users for the selected project
-      const selectedProject = projects?.find((p) => p.id === worklog.projectId);
-      if (selectedProject) {
-        setTasks(selectedProject.tasks || []);
-        setUsers(selectedProject.users || []);
+      if (worklog.task?.project) {
+        setProjects([worklog.task.project]);
+        setTasks([worklog.task]);
+        setUsers(worklog.task.project.users || []);
       }
     }
-  }, [worklog, projects, form]);
+  }, [worklog, form]);
 
-  // Handle project change
-  const handleProjectChange = (projectId: string) => {
-    const selectedProject = projects?.find((project) => project.id === projectId);
-    if (selectedProject) {
-      setTasks(selectedProject.tasks || []);
-      setUsers(selectedProject.users || []);
-      form.setFieldsValue({ taskId: undefined }); // Reset task when project changes
-    }
-  };
+  // Removed handleProjectChange as it's no longer needed since project and task are fixed
 
-  // Handle form submission
   const handleFinish = (values: any) => {
+    const startTime = moment(values.date)
+      .set({
+        hour: values.startTime.hour(),
+        minute: values.startTime.minute(),
+      })
+      .toISOString();
+    
+    const endTime = moment(values.date)
+      .set({
+        hour: values.endTime.hour(),
+        minute: values.endTime.minute(),
+      })
+      .toISOString();
+
     const updatedWorklog = {
       id,
-      ...values,
-      status: "requested", // Preserve current status or modify based on your needs
+      description: values.description,
+      startTime,
+      endTime,
+      approvedBy: values.approvedBy, // Only this can be changed
+      projectId: worklog.task.project.id, // Fixed
+      taskId: worklog.task.id, // Fixed
+      status: "requested",
     };
 
-    editWorklog(updatedWorklog, {
+    editingWorklog(updatedWorklog, {
       onSuccess: () => {
         message.success("Worklog updated successfully");
         navigate("/worklogs-all");
@@ -98,7 +103,6 @@ const EWorklogForm = () => {
     <Card title="Edit Worklog">
       <Form form={form} onFinish={handleFinish} layout="vertical">
         <Row gutter={16}>
-          {/* Date Field */}
           <Col span={6}>
             <Form.Item
               label="Date"
@@ -112,7 +116,6 @@ const EWorklogForm = () => {
             </Form.Item>
           </Col>
 
-          {/* Project Dropdown */}
           <Col span={6}>
             <Form.Item
               label="Project"
@@ -121,16 +124,15 @@ const EWorklogForm = () => {
             >
               <Select
                 className="h-[40px]"
-                onChange={handleProjectChange}
-                options={projects?.map((p: TaskTemplateType) => ({
+                options={projects.map((p) => ({
                   label: p.name,
                   value: p.id,
                 }))}
+                disabled // Always disabled as per requirement
               />
             </Form.Item>
           </Col>
 
-          {/* Task Dropdown */}
           <Col span={6}>
             <Form.Item
               label="Task"
@@ -139,16 +141,15 @@ const EWorklogForm = () => {
             >
               <Select
                 className="h-[40px]"
-                options={tasks.map((t: TaskTemplateType) => ({
+                options={tasks.map((t) => ({
                   label: t.name,
                   value: t.id,
                 }))}
-                disabled={!tasks.length}
+                disabled // Always disabled as per requirement
               />
             </Form.Item>
           </Col>
 
-          {/* Request To */}
           <Col span={6}>
             <Form.Item
               label="Request To"
@@ -159,7 +160,7 @@ const EWorklogForm = () => {
             >
               <Select
                 className="h-[40px]"
-                options={users.map((u: UserType) => ({
+                options={users.map((u) => ({
                   label: u.name,
                   value: u.id,
                 }))}
@@ -168,7 +169,6 @@ const EWorklogForm = () => {
             </Form.Item>
           </Col>
 
-          {/* Start Time */}
           <Col span={6}>
             <Form.Item
               label="Start Time"
@@ -192,20 +192,10 @@ const EWorklogForm = () => {
                 className="w-full py-2"
                 format={timeFormat}
                 minuteStep={1}
-                onSelect={(time) => {
-                  form.setFieldsValue({ startTime: time });
-                  form.validateFields(["startTime"]);
-                }}
-                onChange={(time) => {
-                  if (time) {
-                    form.setFieldsValue({ startTime: time });
-                  }
-                }}
               />
             </Form.Item>
           </Col>
 
-          {/* End Time */}
           <Col span={6}>
             <Form.Item
               label="End Time"
@@ -229,20 +219,10 @@ const EWorklogForm = () => {
                 className="w-full py-2"
                 format={timeFormat}
                 minuteStep={1}
-                onSelect={(time) => {
-                  form.setFieldsValue({ endTime: time });
-                  form.validateFields(["endTime"]);
-                }}
-                onChange={(time) => {
-                  if (time) {
-                    form.setFieldsValue({ endTime: time });
-                  }
-                }}
               />
             </Form.Item>
           </Col>
 
-          {/* Description */}
           <Col span={24}>
             <Form.Item
               label="Description"
@@ -251,13 +231,7 @@ const EWorklogForm = () => {
                 { required: true, message: "Please input the description!" },
               ]}
             >
-              <ReactQuill
-                theme="snow"
-                onChange={(value) => {
-                  form.setFieldValue("description", value);
-                }}
-                value={form.getFieldValue("description")}
-              />
+              <ReactQuill theme="snow" />
             </Form.Item>
           </Col>
         </Row>

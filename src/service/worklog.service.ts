@@ -24,15 +24,38 @@ export const createWorklog = async (payload: any) => {
   return response.data;
 };
 export const editWorklog = async ({
-  payload,
+  status,
   id,
 }: {
-  payload: any;
+  status: any;
   id: string;
 }) => {
-  const response = await axios.patch(`${backendURI}/worklogs/${id}`, payload);
+  const response = await axios.patch(`${backendURI}/worklogs/${id}`, {status});
   return response.data;
 };
+
+export const editingWorklog = async ({
+  date,
+  startTime,
+  endTime,
+  description,
+  approvedBy,
+  status,
+  id,
+}: {
+  date: string;
+  startTime: string;
+  endTime: string;
+  description: string;
+  approvedBy: string;
+  status: any;
+  id: string;
+}) => {
+  const response = await axios.patch(`${backendURI}/worklogs/${id}`, {date, startTime, endTime, description, approvedBy, status});
+  return response.data;
+};
+
+
 
 export const deleteWorklog = async ({ id }: { id: string }) => {
   const response = await axios.delete(`${backendURI}/worklogs/${id}`);

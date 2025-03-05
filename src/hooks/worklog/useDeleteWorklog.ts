@@ -10,7 +10,7 @@ export const useDeleteWorklog = () => {
             return deleteWorklog({ id });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["worklog", id] });
+            queryClient.invalidateQueries({ queryKey: ["worklog-all"] });
         },
     });
 };

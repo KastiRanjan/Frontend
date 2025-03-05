@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { editWorklog } from "../../service/worklog.service";
+import { editingWorklog } from "../../service/worklog.service";
 
-export const useEditWorklog = () => {
+export const useEditingWorklog = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ status, id }: any) => {
-            return editWorklog({ status, id });
+        mutationFn: ({ date, startTime, endTime, description, approvedBy, status, id }: any) => {
+            return editingWorklog({ date, startTime, endTime, description, approvedBy, status, id });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["worklog-all", 'open'] });
