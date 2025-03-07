@@ -16,7 +16,6 @@ interface ProjectFormProps {
 }
 
 const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
-  console.log(editProjectData);
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
   const { data: clients } = useClient();
@@ -28,16 +27,37 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
     keywords: "",
   });
 
+  // Get the current project lead value from the form
+  const projectLead = Form.useWatch("projectLead", form);
+
   const onFinish = (values: any) => {
+    // Ensure projectLead is included in the users array
+    const updatedValues = {
+      ...values,
+      users: values.users 
+        ? [...new Set([...values.users, values.projectLead])] // Add projectLead to users array and remove duplicates
+        : [values.projectLead], // If no users selected, just send projectLead
+    };
+
     if (editProjectData?.id) {
       mutateEdit(
-        { id: editProjectData.id, payload: values },
+        { id: editProjectData.id, payload: updatedValues },
         { onSuccess: () => handleCancel() }
       );
     } else {
-      mutate(values, { onSuccess: () => handleCancel() });
+      mutate(updatedValues, { onSuccess: () => handleCancel() });
     }
   };
+
+  // Filter out the project lead from available users for the "Invite Users" field
+  const filteredUsers = isPendingUser
+    ? []
+    : users?.results
+        ?.filter((user: UserType) => user.id !== projectLead)
+        ?.map((user: UserType) => ({
+          value: user.id,
+          label: user.name,
+        })) || [];
 
   return (
     <Form
@@ -98,6 +118,9 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
                     label: user.name,
                   }))
             }
+            rules={[
+              { required: true, message: "Please select a project lead!" },
+            ]}
           />
         </Col>
         <Col span={12}>
@@ -106,18 +129,12 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             name="users"
             label="Invite Users"
             placeholder="Select users"
-            options={
-              isPendingUser
-                ? []
-                : users?.results?.map((user: UserType) => ({
-                    value: user.id,
-                    label: user.name,
-                  }))
-            }
+            options={filteredUsers}
             mode="multiple"
           />
         </Col>
 
+        {/* Rest of the form fields remain unchanged */}
         <Col span={12}>
           <FormSelectWrapper
             id="Nature of Work"
@@ -187,7 +204,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               value: client.id,
               label: client.name,
             }))}
-            rules={[{ required: true, message: "Please select the status!" }]}
+            rules={[{ required: true, message: "Please select the client!" }]}
           />
         </Col>
 

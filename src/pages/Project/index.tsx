@@ -29,7 +29,6 @@ const ProjectPage: React.FC = () => {
       /> */}
 
       {/* Project table  */}
-
       <Tabs
         defaultActiveKey="1"
         items={[
@@ -62,7 +61,7 @@ const ProjectPage: React.FC = () => {
 
       {open && (
         <Modal
-          title="Add Task Template"
+          title={editTaskGroupData ? "Edit Project" : "Create New Project"}
           footer={null}
           open={open}
           onCancel={handleCancel}
