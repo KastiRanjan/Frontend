@@ -75,7 +75,7 @@ const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
         <Card>
           <Row gutter={16} className='py-1'>
             <Col flex="100px"><Text>Project Id</Text></Col>
-            <Col><Text>ajbjha</Text></Col>
+            <Col><Text>{id}</Text></Col>
           </Row>
           <Row gutter={16} className='py-1'>
             <Col flex="100px"><Text>Status</Text></Col>
@@ -94,19 +94,19 @@ const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
             <Row gutter={16} className='py-1'>
               <Col span={8}>
                 <div className='text-center'>
-                  <Title level={5}>0</Title>
+                  <Title level={5}>{project?.tasks?.length}</Title>
                   <Text>Total</Text>
                 </div>
               </Col>
               <Col span={8}>
                 <div className='text-center'>
-                  <Title level={5}>0</Title>
+                  <Title level={5}>{project?.tasks?.length}</Title>
                   <Text>Pending</Text>
                 </div>
               </Col>
               <Col span={8}>
                 <div className='text-center'>
-                  <Title level={5}>0</Title>
+                  <Title level={5}>{project?.tasks?.length}</Title>
                   <Text>Completed</Text>
                 </div>
               </Col>

@@ -7,7 +7,7 @@ import { Tabs } from "antd";
 const AllWorklogs = () => {
     return (
         <>
-            <Tabs defaultActiveKey="2" items={[
+            <Tabs defaultActiveKey="1" items={[
                 {
                     label: `Requested`,
                     key: "1",

@@ -6,7 +6,6 @@ import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import {
   Button,
   Card,
-  Checkbox,
   Col,
   Form,
   Row,
@@ -30,7 +29,7 @@ const OWorklogForm = () => {
   const { data: projects } = useProject({ status: "active" });
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
-  const { profile } = useSession(); // Get current user info (you'll need to implement this)
+  const { profile } = useSession(); // Get current user info
   const user = profile;
 
   // Check if user is manager or admin
@@ -51,11 +50,10 @@ const OWorklogForm = () => {
         navigate("/worklogs-all");
       },
       onError: (error: any) => {
-        // Extract message from error response
         const errorMessage =
           error?.response?.data?.message ||
           "An error occurred while creating the worklog";
-        message.error(errorMessage); // Display the error message
+        message.error(errorMessage);
       },
     });
   };
@@ -81,7 +79,14 @@ const OWorklogForm = () => {
 
   return (
     <>
-      <Form form={form} onFinish={handleFinish} layout="vertical">
+      <Form
+        form={form}
+        onFinish={handleFinish}
+        layout="vertical"
+        initialValues={{
+          timeEntries: [{ date: moment() }], // Initialize with one entry
+        }}
+      >
         <Form.List name="timeEntries">
           {(fields, { add, remove }) => (
             <>
@@ -99,11 +104,10 @@ const OWorklogForm = () => {
                             message: "Please select a date!",
                           },
                         ]}
-                        initialValue={moment()} // Default to current date
                       >
                         <DatePicker
                           className="w-full py-2"
-                          disabled={!isManagerOrAdmin} // Disable if not manager/admin
+                          disabled={!isManagerOrAdmin}
                         />
                       </Form.Item>
                     </Col>
@@ -197,13 +201,11 @@ const OWorklogForm = () => {
                                 [field.name]: { startTime: time },
                               },
                             });
-                            // Trigger validation manually if needed
                             form.validateFields([
                               ["timeEntries", field.name, "startTime"],
                             ]);
                           }}
                           onChange={(time) => {
-                            // Ensure the value is updated even if popup closes without OK
                             if (time) {
                               form.setFieldsValue({
                                 timeEntries: {
@@ -255,13 +257,11 @@ const OWorklogForm = () => {
                             form.setFieldsValue({
                               timeEntries: { [field.name]: { endTime: time } },
                             });
-                            // Trigger validation manually if needed
                             form.validateFields([
                               ["timeEntries", field.name, "endTime"],
                             ]);
                           }}
                           onChange={(time) => {
-                            // Ensure the value is updated even if popup closes without OK
                             if (time) {
                               form.setFieldsValue({
                                 timeEntries: {
@@ -279,7 +279,7 @@ const OWorklogForm = () => {
                         label="Request To"
                         name={[field.name, "approvedBy"]}
                         rules={[
-                          { required: true, message: "Please select a task!" },
+                          { required: true, message: "Please select a user!" },
                         ]}
                       >
                         <Select
@@ -288,7 +288,7 @@ const OWorklogForm = () => {
                             label: t.name,
                             value: t.id,
                           }))}
-                          disabled={!tasks[field.name]?.length}
+                          disabled={!users[field.name]?.length}
                         />
                       </Form.Item>
                     </Col>
@@ -308,11 +308,12 @@ const OWorklogForm = () => {
                           theme="snow"
                           onChange={(value) => {
                             form.setFieldValue(
-                              [field.name, "description"],
+                              ["timeEntries", field.name, "description"],
                               value
                             );
                           }}
                           value={form.getFieldValue([
+                            "timeEntries",
                             field.name,
                             "description",
                           ])}
@@ -339,7 +340,6 @@ const OWorklogForm = () => {
             </>
           )}
         </Form.List>
-
 
         <Button type="primary" htmlType="submit">
           Submit

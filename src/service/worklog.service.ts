@@ -30,13 +30,15 @@ export const createWorklog = async (payload: any) => {
   return response.data;
 };
 export const editWorklog = async ({
+  remark,
   status,
   id,
 }: {
+  remark: string;
   status: any;
   id: string;
 }) => {
-  const response = await axios.patch(`${backendURI}/worklogs/${id}`, {status});
+  const response = await axios.patch(`${backendURI}/worklogs/${id}`, {status, remark});
   return response.data;
 };
 
