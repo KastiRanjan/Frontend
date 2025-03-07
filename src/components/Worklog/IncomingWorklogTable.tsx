@@ -1,5 +1,5 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
-import { Button, Card, Table, Modal, Input } from "antd";
+import { Button, Card, Table, Modal, Input, Popconfirm } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
@@ -9,8 +9,7 @@ import { useState } from "react";
 
 const { TextArea } = Input;
 
-const columns = (status: string, editWorklog: any, navigate: any) => {
-  // Determine column title based on status
+const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate: any) => {
   const getStatusTitle = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
@@ -84,7 +83,6 @@ const columns = (status: string, editWorklog: any, navigate: any) => {
     },
   ];
 
-  // Add Remark column only for rejected status
   if (status.toLowerCase() === "rejected") {
     baseColumns.push({
       title: "Remark",
@@ -96,29 +94,43 @@ const columns = (status: string, editWorklog: any, navigate: any) => {
     });
   }
 
+  // Modified Action column to work with all statuses
   baseColumns.push({
     title: "Action",
-    dataIndex: "o",
-    key: "s",
-    hidden: status !== "open" && status !== "requested",
+    dataIndex: "action",
+    key: "action",
     render: (_: any, record: any) => {
-      if (status === "rejected" || status === "requested") {
-        return (
-          <div className="flex gap-2">
-            {status === "requested" && (
-              <>
-                <Button
-                  type="primary"
-                  onClick={() => editWorklog({ id: record?.id, status: "approved" })}
-                >
-                  Approve
-                </Button>
-                {/* Reject button will trigger modal, handled in component */}
-              </>
-            )}
-          </div>
-        );
-      }
+      return (
+        <div className="flex gap-2">
+          <Button
+            type="primary"
+            onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
+          >
+            Edit
+          </Button>
+          <Popconfirm
+            title="Are you sure you want to delete this worklog?"
+            onConfirm={() => deleteWorklog({ id: record?.id })}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="primary" danger>
+              Delete
+            </Button>
+          </Popconfirm>
+          {status === "requested" && (
+            <>
+              <Button
+                type="primary"
+                onClick={() => editWorklog({ id: record?.id, status: "approved" })}
+              >
+                Approve
+              </Button>
+              {/* Reject button will trigger modal, handled in component */}
+            </>
+          )}
+        </div>
+      );
     }
   });
 
@@ -135,7 +147,6 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [remark, setRemark] = useState("");
 
-  // Function to toggle description visibility
   const toggleDescription = (id: string) => {
     setExpandedRows(prev =>
       prev.includes(id)
@@ -144,7 +155,6 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     );
   };
 
-  // Custom expand icon
   const customExpandIcon = ({ expanded, onExpand, record }: any) => {
     return (
       <span
@@ -159,7 +169,6 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     );
   };
 
-  // Expanded row render function for description
   const expandedRowRender = (record: any) => {
     const description = record?.description || "No description available";
     return (
@@ -170,14 +179,12 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     );
   };
 
-  // Handle Reject button click
   const showRejectModal = (id: string) => {
     setCurrentRecordId(id);
     setRemark("");
     setIsModalVisible(true);
   };
 
-  // Handle modal OK
   const handleReject = () => {
     if (currentRecordId) {
       editWorklog({ 
@@ -191,7 +198,6 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     setRemark("");
   };
 
-  // Handle modal cancel
   const handleCancel = () => {
     setIsModalVisible(false);
     setCurrentRecordId(null);
@@ -206,33 +212,42 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
       <Table
         loading={isPending || isEditPending}
         dataSource={worklogs || []}
-        columns={columns(status, editWorklog, navigate).map(col => ({
+        columns={columns(status, deleteWorklog, editWorklog, navigate).map(col => ({
           ...col,
-          // Add custom render for Action column to include Reject button with modal
-          render: col.key === "s" ? (_: any, record: any) => {
-            if (status === "rejected" || status === "requested") {
-              return (
-                <div className="flex gap-2">
-                  {status === "requested" && (
-                    <>
-                      <Button
-                        type="primary"
-                        onClick={() => editWorklog({ id: record?.id, status: "approved" })}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        type="primary"
-                        danger
-                        onClick={() => showRejectModal(record?.id)}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                </div>
-              );
-            }
+          render: col.key === "action" && status === "requested" ? (_: any, record: any) => {
+            return (
+              <div className="flex gap-2">
+                <Button
+                  type="primary"
+                  onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
+                >
+                  Edit
+                </Button>
+                <Popconfirm
+                  title="Are you sure you want to delete this worklog?"
+                  onConfirm={() => deleteWorklog({ id: record?.id })}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button type="primary" danger>
+                    Delete
+                  </Button>
+                </Popconfirm>
+                <Button
+                  type="primary"
+                  onClick={() => editWorklog({ id: record?.id, status: "approved" })}
+                >
+                  Approve
+                </Button>
+                <Button
+                  type="primary"
+                  danger
+                  onClick={() => showRejectModal(record?.id)}
+                >
+                  Reject
+                </Button>
+              </div>
+            );
           } : col.render
         }))}
         expandable={{
@@ -244,7 +259,6 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
         bordered
       />
 
-      {/* Reject Remark Modal */}
       <Modal
         title="Reject Worklog"
         visible={isModalVisible}

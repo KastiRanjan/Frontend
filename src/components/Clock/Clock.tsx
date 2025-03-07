@@ -1,6 +1,6 @@
 import { useCreateAttendence } from "@/hooks/attendence/useCreateAttendence";
 import { useGetMyAttendence } from "@/hooks/attendence/useGetMyAttendence";
-import { Button } from "antd";
+import { Button, Modal } from "antd"; // Added Modal import
 import moment from "moment";
 import { useEffect, useState } from "react";
 
@@ -9,14 +9,11 @@ const Clock = () => {
   const { mutate } = useCreateAttendence();
   const isClockedIn = data?.length > 0 ? true : false;
   const [timer, setTimer] = useState(0);
-
-  // State to manage location
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
 
-  // Get the user's location when they clock in or clock out
   const getLocation = () => {
     return new Promise<{ latitude: number; longitude: number }>(
       (resolve, reject) => {
@@ -39,7 +36,6 @@ const Clock = () => {
     );
   };
 
-  // Timer for the clock
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer((prevTimer) => prevTimer + 1);
@@ -48,38 +44,64 @@ const Clock = () => {
   }, []);
 
   const handleClockIn = async () => {
-    try {
-      const currentLocation = await getLocation();
-      setLocation(currentLocation); // Store the location
+    Modal.confirm({
+      title: "Confirm Clock In",
+      content: "Are you sure you want to clock in now?",
+      onOk: async () => {
+        try {
+          const currentLocation = await getLocation();
+          setLocation(currentLocation);
 
-      const payload = {
-        date: moment().format("YYYY-MM-DD"),
-        clockIn: moment().format("HH:mm:ss a"),
-        latitude: currentLocation.latitude.toString(),
-        longitude: currentLocation.longitude.toString(),
-      };
+          const payload = {
+            date: moment().format("YYYY-MM-DD"),
+            clockIn: moment().format("HH:mm:ss a"),
+            latitude: currentLocation.latitude.toString(),
+            longitude: currentLocation.longitude.toString(),
+          };
 
-      mutate(payload);
-    } catch (error) {
-      console.error("Error getting location:", error);
-    }
+          mutate(payload);
+        } catch (error) {
+          console.error("Error getting location:", error);
+          Modal.error({
+            title: "Error",
+            content: "Failed to get location. Please try again.",
+          });
+        }
+      },
+      onCancel: () => {
+        console.log("Clock in cancelled");
+      },
+    });
   };
 
   const handleClockOut = async () => {
-    try {
-      const currentLocation = await getLocation();
-      setLocation(currentLocation); // Store the location
+    Modal.confirm({
+      title: "Confirm Clock Out",
+      content: "Are you sure you want to clock out now?",
+      onOk: async () => {
+        try {
+          const currentLocation = await getLocation();
+          setLocation(currentLocation);
 
-      const payload = {
-        clockOut: moment().format("HH:mm:ss a"),
-        latitude: currentLocation.latitude.toString(),
-        longitude: currentLocation.longitude.toString(),
-      };
+          const payload = {
+            clockOut: moment().format("HH:mm:ss a"),
+            latitude: currentLocation.latitude.toString(),
+            longitude: currentLocation.longitude.toString(),
+          };
 
-      mutate(payload);
-    } catch (error) {
-      console.error("Error getting location:", error);
-    }
+          mutate(payload);
+        } catch (error) {
+          console.error("Error getting location:", error);
+          Modal.error({
+            title: "Error",
+            content: "Failed to get location. Please try again.",
+          });
+        }
+      },
+      onCancel: () => {
+        console.log("Clock out cancelled");
+      },
+    });
   };
 
   return (
