@@ -339,13 +339,7 @@ const OWorklogForm = () => {
             </>
           )}
         </Form.List>
-        <Row>
-          <Col span={8}>
-            <Form.Item name="approvalRequest" valuePropName="checked">
-              <Checkbox>Send Request for Approval?</Checkbox>
-            </Form.Item>
-          </Col>
-        </Row>
+
 
         <Button type="primary" htmlType="submit">
           Submit

@@ -7,6 +7,12 @@ export const fetchWorklogs = async (status: string) => {
   const response = await axios.get(`${backendURI}/worklogs?status=${status}`);
   return response.data;
 };
+
+export const fetchWorklogsByUser = async (status: string) => {
+  const response = await axios.get(`${backendURI}/worklogs/user?status=${status}`);
+  return response.data;
+}
+
 export const fetchWorklog = async ({ id }: { id: string }) => {
   const response = await axios.get(`${backendURI}/worklogs/${id}`);
 

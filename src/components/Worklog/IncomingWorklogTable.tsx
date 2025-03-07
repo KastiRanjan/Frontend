@@ -1,13 +1,13 @@
 
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
-import { useWorklog } from "@/hooks/worklog/useWorklog";
-import { Button, Card, Table, Popconfirm } from "antd";
+import { Button, Card, Table, } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
+import { useWorklogbyUser } from "@/hooks/worklog/useWorklogbyUser";
 
-const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPending: boolean, navigate: any) => [
+const columns = (status: string, editWorklog: any, navigate: any) => [
   {
     title: "Date",
     dataIndex: "date",
@@ -57,10 +57,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
   },
   
   {
-    title: "Approved by",
-    dataIndex: "approvedBy",
-    key: "approvedBy",
-
+    title: "Requestor",
+    dataIndex: "userId",
+    key: "userId",
     render: (_: any, record: any) => {
       return (record?.user?.name);
     }
@@ -69,39 +68,38 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
     title: "Action",
     dataIndex: "o",
     key: "s",
+    hidden: status !== "open" && status !== "requested",
     render: (_: any, record: any) => {
-      // if (status === "rejected" || status === "requested") 
-      {
+
+      if (status === "rejected" || status === "requested") {
         return (
           <div className="flex gap-2">
-            <Button 
-              type="primary"
-              onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
-            >
-              Edit
-            </Button>
-            <Popconfirm
-              title="Are you sure you want to delete this worklog?"
-              onConfirm={() => deleteWorklog({id:record?.id})}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button 
-                type="primary" 
-                danger
-              >
-                Delete
-              </Button>
-            </Popconfirm>
+            {status === "requested" && (
+              <>
+                <Button 
+                  type="primary"
+                  onClick={() => editWorklog({ id: record?.id, status: "approved" })}
+                >
+                  Approve
+                </Button>
+                <Button 
+                  type="primary"
+                  danger
+                  onClick={() => editWorklog({ id: record?.id, status: "rejected" })}
+                >
+                  Reject
+                </Button>
+              </>
+            )}
           </div>
         );
       }
     }
   },
 ];
-const AllWorklogTable = ({ status }: { status: string }) => {
+const IncomingWorklogTable = ({ status }: { status: string }) => {
   const navigate = useNavigate();
-  const { data: worklogs, isPending } = useWorklog(status);
+  const { data: worklogs, isPending } = useWorklogbyUser(status);
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
   const { mutate: deleteWorklog } = useDeleteWorklog();
 
@@ -121,4 +119,4 @@ const AllWorklogTable = ({ status }: { status: string }) => {
   );
 };
 
-export default AllWorklogTable;
+export default IncomingWorklogTable;
