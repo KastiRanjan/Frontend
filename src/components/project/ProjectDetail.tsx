@@ -6,21 +6,23 @@ import { useProjectTask } from '@/hooks/task/useProjectTask';
 import ProjectSummary from './ProjectSummary';
 import { useState } from 'react';
 import TaskForm from '../Task/TaskForm';
+import User from '@/pages/User';
+import ProjectUserCard from './ProjectUserCard';
 
 const { Title, Text } = Typography;
 
 
 interface ProjectDetailProps {
   project: ProjectType;
-  id?: string
 }
 
-const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
-  const { name, startingDate, endingDate, users, tasks, projectLead, status } = project;
-  const { data, isPending } = useProjectTask({ id });
+const ProjectDetailComponent = ({ project}: ProjectDetailProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleCancel = () => setIsModalOpen(false);
-  
+
+  const tasks = project?.tasks;
+  const users = project?.users;
+
 
 
 
@@ -59,10 +61,11 @@ const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
             },
             {
               label: 'Tasks', key: '3',
-              children: <><TaskTable data={data} project={project} /></>
+              children: <><TaskTable data={tasks} showModal={isModalOpen} /></>
             },
             {
               label: 'Members', key: '4',
+              children: <><ProjectUserCard data={users}/></>
             },
             {
               label: 'Time Sheet', key: '5',
@@ -75,19 +78,19 @@ const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
         <Card>
           <Row gutter={16} className='py-1'>
             <Col flex="100px"><Text>Project Id</Text></Col>
-            <Col><Text>{id}</Text></Col>
+            <Col><Text>{project?.id}</Text></Col>
           </Row>
           <Row gutter={16} className='py-1'>
             <Col flex="100px"><Text>Status</Text></Col>
-            <Col><Text >{status}</Text></Col>
+            <Col><Text >{project?.status}</Text></Col>
           </Row>
           <Row gutter={16} className='py-1'>
             <Col flex="100px"><Text>Project Lead</Text></Col>
-            <Col><Text >{projectLead?.name}</Text></Col>
+            <Col><Text >{project?.projectLead?.name}</Text></Col>
           </Row>
           <Row gutter={16} className='py-1'>
             <Col flex="100px"><Text>Due Date</Text></Col>
-            <Col><Text >{endingDate}</Text></Col>
+            <Col><Text >{project?.endingDate}</Text></Col>
           </Row>
           <div className='py-3'>
             <Title level={5}>MY TASKS</Title>
@@ -100,13 +103,13 @@ const ProjectDetailComponent = ({ project, id }: ProjectDetailProps) => {
               </Col>
               <Col span={8}>
                 <div className='text-center'>
-                  <Title level={5}>{project?.tasks?.length}</Title>
+                  <Title level={5}>{project?.tasks?.filter(task => task.status === "in_progress").length}</Title>
                   <Text>Pending</Text>
                 </div>
               </Col>
               <Col span={8}>
                 <div className='text-center'>
-                  <Title level={5}>{project?.tasks?.length}</Title>
+                  <Title level={5}>{project?.tasks?.filter(task => task.status === "done").length}</Title>
                   <Text>Completed</Text>
                 </div>
               </Col>

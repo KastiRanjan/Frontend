@@ -1,4 +1,4 @@
-import { Button, DatePicker, Form } from "antd";
+import { Button, DatePicker, Form, message } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { useCreateTask } from "@/hooks/task/useCreateTask";
@@ -6,23 +6,69 @@ import { useParams } from "react-router-dom";
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
 import Paragraph from "antd/es/typography/Paragraph";
 import { useProject } from "@/hooks/project/useProject";
+import { useState } from "react";
 
 const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
+  const [form] = Form.useForm();
   const { mutate, isPending } = useCreateTask();
   const { data: group } = useTaskGroup();
   const { id } = useParams();
-  const { data:projects} = useProject({status:"active"});
+  const { data: projects } = useProject({ status: "active" });
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
+    editTaskData?.groupId || null
+  );
+
   const onFinish = (values: any) => {
-    values.projectId = id||values.projectId[0];
-    mutate(values, { onSuccess: () => handleCancel() });
+    values.projectId = id || values.projectId[0];
+    mutate(values, {
+      onSuccess: () => {
+        message.success("Task saved successfully");
+        handleCancel();
+      },
+      onError: (error: any) => {
+        // Handle backend errors
+        const errorMessage = error.response?.data?.message || 
+          "Failed to save task. Please try again.";
+        message.error(errorMessage);
+        
+        // If there are field-specific errors
+        if (error.response?.data?.errors) {
+          const fieldErrors = error.response.data.errors.map((err: any) => ({
+            name: err.field,
+            errors: [err.message],
+          }));
+          form.setFields(fieldErrors);
+        }
+      },
+    });
   };
+
+  // Filter parent tasks based on selected group
+  const filteredParentTasks = tasks?.filter(
+    (task: any) => !selectedGroupId || task.groupId === selectedGroupId
+  ) || [];
+
+  const handleGroupChange = (value: string) => {
+    setSelectedGroupId(value);
+    // Reset parentTaskId if it doesn't belong to the new group
+    const currentParentId = form.getFieldValue("parentTaskId");
+    if (
+      currentParentId && 
+      !filteredParentTasks.some((task: any) => task.id === currentParentId)
+    ) {
+      form.setFieldsValue({ parentTaskId: undefined });
+    }
+  };
+
   return (
     <Form
+      form={form}
       layout="vertical"
       initialValues={editTaskData || {}}
       onFinish={onFinish}
     >
       <Paragraph>Required fields are marked with an asterisk *</Paragraph>
+      
       <FormInputWrapper
         id="name"
         label="Name"
@@ -52,13 +98,15 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
             label: group.name,
           })) || []
         }
+        onChange={handleGroupChange}
       />
+
       <FormSelectWrapper
         id="parentTaskId"
         name="parentTaskId"
         label="Parent"
         options={
-          tasks?.map((task: any) => ({
+          filteredParentTasks.map((task: any) => ({
             value: task.id,
             label: task.name,
           })) || []
@@ -86,18 +134,20 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
         }
       />
 
-{  !id&&    <FormSelectWrapper
-        id="projectId"
-        name="projectId"
-        label="Project"
-        mode="multiple"
-        options={
-          projects?.map((project: any) => ({
-            value: project.id,
-            label: project.name,
-          })) || []
-        }
-      />}
+      {!id && (
+        <FormSelectWrapper
+          id="projectId"
+          name="projectId"
+          label="Project"
+          mode="multiple"
+          options={
+            projects?.map((project: any) => ({
+              value: project.id,
+              label: project.name,
+            })) || []
+          }
+        />
+      )}
 
       <Form.Item>
         <Button

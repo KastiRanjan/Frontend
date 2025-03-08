@@ -100,8 +100,6 @@ const ProjectTable = ({ showModal, status }: any) => {
   const { data: project, isPending } = useProject({ status });
   const { permissions } = useSession();
 
-  console.log(project);
-
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);

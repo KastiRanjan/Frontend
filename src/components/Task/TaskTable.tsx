@@ -3,72 +3,54 @@ import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
 import { TaskType } from "@/types/task";
 import { EditOutlined } from "@ant-design/icons";
-import {
-  Avatar,
-  Badge,
-  Button,
-  Form,
-  Table,
-  TableProps,
-  Tooltip
-} from "antd";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip } from "antd";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import TableToolbar from "../Table/TableToolbar";
 
-const TaskTable = ({
-  data,
-  showModal,
-  project,
-}: {
+interface TaskTableProps {
   data: TaskType[];
-  showModal: any;
-  project: any;
-}) => {
+  showModal:any;
+  project: {
+    id: string;
+    users: UserType[];
+    projectLead: UserType;
+  };
+}
+
+const TaskTable = ({ data, showModal}: TaskTableProps) => {
   const [form] = Form.useForm();
-  const { mutate } = useEditTask();
-  const { data: users } = useUser({
-    status: "active",
-    limit: 100,
-    page: 1,
-    keywords: "",
-  });
-  const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  
+  console.log(data);
+
+
+  const handleEditClick = (task: TaskType) => {
+    setSelectedTask(task);
+    form.setFieldsValue(task);
+    showModal(task);
+  };
 
   const columns = useMemo(
     () => [
-      {
-        title: "ID",
-        dataIndex: "tcode",
-        key: "id",
-      },
+      { title: "ID", dataIndex: "tcode", key: "id" },
       {
         title: "Name",
         dataIndex: "name",
         key: "name",
-        render: (_: any, record: TaskType) => (
+        render: (name: string, record: TaskType) => (
           <div className="flex items-center justify-between gap-2">
-            <Link
-              to={`/projects/${record?.project?.id}/tasks/${record?.id}`}
-              className="text-blue-600"
-            >
-              {record?.name}
+            <Link to={`/projects/${record.project?.id}/tasks/${record.id}`} className="text-blue-600">
+              {name}
             </Link>
-            {record?.subTasks?.length > 0 && (
+            {record.subTasks?.length > 0 && (
               <span>
-                <svg
-                  fill="none"
-                  width={16}
-                  height={16}
-                  viewBox="0 0 16 16"
-                  role="presentation"
-                >
+                <svg fill="none" width={16} height={16} viewBox="0 0 16 16" role="presentation">
                   <path
                     stroke="currentcolor"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
                     d="M3 8h10c.69 0 1.25.56 1.25 1.25V13c0 .69-.56 1.25-1.25 1.25H9.25C8.56 14.25 8 13.69 8 13V3c0-.69-.56-1.25-1.25-1.25H3c-.69 0-1.25.56-1.25 1.25v3.75C1.75 7.44 2.31 8 3 8Z"
-                  ></path>
+                  />
                 </svg>
               </span>
             )}
@@ -79,106 +61,63 @@ const TaskTable = ({
         title: "Group",
         dataIndex: "group",
         key: "group",
-        render: (_: any, record: TaskType) => {
-          return record.group?.name;
-        },
+        render: (group: TaskType["group"]) => group?.name ?? "---",
       },
       {
         title: "Status",
         dataIndex: "status",
         key: "status",
         width: 100,
-        render: (_: any, record: any) => {
-          return (
-            <>
-              <Badge
-                count={record.status}
-                color="#52c41a"
-                style={{ cursor: "pointer" }}
-              />
-            </>
-          );
-        },
+        render: (status: string) => (
+          <Badge count={status} color="#52c41a" style={{ cursor: "pointer" }} />
+        ),
       },
       {
-        title: "Asignee",
-        dataIndex: "asignees",
-        key: "asignees",
-        render: (_: any, record: TaskType) => {
-          console.log(record);
-          return (
-            <>
-              <Avatar.Group
-                max={{
-                  count: 2,
-                  style: {
-                    color: "#f56a00",
-                    backgroundColor: "#fde3cf",
-                    cursor: "pointer",
-                  },
-                  popover: { trigger: "click" },
-                }}
-              >
-                {record.assignees.length > 0 &&
-                  record.assignees?.map((user: UserType) => (
-                    <Tooltip title={user.username} placement="top">
-                      <Avatar style={{ backgroundColor: "#87d068" }}>
-                        {user.username.split("")[0]}
-                      </Avatar>
-                    </Tooltip>
-                  ))}
-              </Avatar.Group>
-            </>
-          );
-        },
+        title: "Assignee",
+        dataIndex: "users",
+        key: "assignees",
+        render: (users: UserType[]) => (
+          <Avatar.Group
+            max={{
+              count: 2,
+              style: { color: "#f56a00", backgroundColor: "#fde3cf", cursor: "pointer" },
+              popover: { trigger: "click" },
+            }}
+          >
+            {users?.map((user) => (
+              <Tooltip key={user.id} title={user.username} placement="top">
+                <Avatar style={{ backgroundColor: "#87d068" }}>
+                  {user.username.charAt(0).toUpperCase()}
+                </Avatar>
+              </Tooltip>
+            ))}
+          </Avatar.Group>
+        ),
       },
       {
         title: "Due date",
         dataIndex: "dueDate",
         key: "dueDate",
-        render: (_: any, record: any) => {
-          return (
-            <>
-              {record?.dueDate ? (
-                <span>{new Date(record.dueDate).toLocaleDateString()}</span>
-              ) : (
-                "---"
-              )}
-            </>
-          );
-        },
+        render: (dueDate: string | null) =>
+          dueDate ? new Date(dueDate).toLocaleDateString() : "---",
       },
-      {
-        title: "Priority",
-        dataIndex: "priority",
-        key: "priority",
-      },
+      { title: "Priority", dataIndex: "priority", key: "priority" },
       {
         title: "",
         key: "action",
         width: 50,
-        render: (_: any, record: any) => (
-          <>
-            <Button
-              type="primary"
-              onClick={() => showModal(record)}
-              icon={<EditOutlined />}
-            ></Button>
-          </>
+        render: (_: unknown, record: TaskType) => (
+          <Button type="primary" onClick={() => handleEditClick(record)} icon={<EditOutlined />} />
         ),
       },
     ],
     []
   );
 
-  const onFinish = (values: any) => {
-    console.log("Success:", values);
-    mutate({ id: selectedTask.id, payload: values });
-  };
-
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
-    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
-      console.log(_selectedRowKeys, selectedRows);
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
+      setSelectedRowKeys(newSelectedRowKeys);
     },
     getCheckboxProps: (record: TaskType) => ({
       name: record.name,
@@ -187,42 +126,12 @@ const TaskTable = ({
 
   return (
     <>
-      <TableToolbar>
-        <Button type="primary" onClick={() => showModal()}>
-          Add New Task
-        </Button>{" "}
-        <div className="flex gap-4">
-          {/* <Avatar.Group
-            max={{
-              count: 4,
-              style: {
-                color: "#f56a00",
-                backgroundColor: "#fde3cf",
-                cursor: "pointer",
-              },
-              popover: { trigger: "click" },
-            }}
-          >
-            {project?.users?.map((user: any) => (
-              <Tooltip title={user.username} placement="top">
-                <Avatar style={{ backgroundColor: "#87d068" }}>
-                  {user.username.split("")[0]}
-                </Avatar>
-              </Tooltip>
-            ))}
-          </Avatar.Group>
-          <Tooltip title={project?.projectLead?.username} placement="top">
-            <Avatar style={{ backgroundColor: "#87d068" }}>
-              {project?.projectLead?.username.split("")[0]}
-            </Avatar>
-          </Tooltip> */}
-        </div>
-      </TableToolbar>
+
       <Table
         columns={columns}
         dataSource={data}
         rowSelection={rowSelection}
-        rowKey={"id"}
+        rowKey="id"
         size="small"
         bordered
       />
