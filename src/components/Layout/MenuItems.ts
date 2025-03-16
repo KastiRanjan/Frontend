@@ -67,12 +67,12 @@ export const MenuItems = (): MenuProps[] => {
       resource: "worklogs",
       icon: React.createElement(UserOutlined),
     },
-    // {
-    //   key: "/attendance",
-    //   label: "Attendance",
-    //   resource: "attendance",
-    //   icon: React.createElement(UserOutlined),
-    // },
+    {
+      key: "/attendance",
+      label: "Attendance",
+      resource: "attendance",
+      icon: React.createElement(UserOutlined),
+    },
     // {
     //   key: "/reports",
     //   label: "Reports",

@@ -22,8 +22,8 @@ export const createAttendence = async (payload: any) => {
   const response = await axios.post(`${backendURI}/attendence`, payload);
   return response.data;
 };
-export const updateAttendence = async ({ payload }: any) => {
-  const response = await axios.patch(`${backendURI}/attendence`, payload);
+export const updateAttendence = async ({ payload ,id}: {payload:any,id:string}) => {
+  const response = await axios.patch(`${backendURI}/attendence/${id}`, payload);
   return response.data;
 };
 
