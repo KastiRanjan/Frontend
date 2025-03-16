@@ -1,162 +1,207 @@
-import { Button, DatePicker, Form, message } from "antd";
+import { useCreateTask } from "@/hooks/task/useCreateTask";
+import { useEditTask } from "@/hooks/task/useEditTask";
+import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
+import { useProject } from "@/hooks/project/useProject";
+import { Button, Col, DatePicker, Divider, Form, Row, message } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
-import { useCreateTask } from "@/hooks/task/useCreateTask";
+import TextArea from "antd/es/input/TextArea";
+import { useState, useEffect } from "react";
+import moment from "moment";
 import { useParams } from "react-router-dom";
-import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
-import Paragraph from "antd/es/typography/Paragraph";
-import { useProject } from "@/hooks/project/useProject";
-import { useState } from "react";
 
-const TaskForm = ({ users, tasks, editTaskData, handleCancel }: any) => {
+interface TaskFormProps {
+  users: any[];
+  tasks: any[];
+  editTaskData?: any;
+  handleCancel: () => void;
+  projectId?: string;
+}
+
+const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId }: TaskFormProps) => {
   const [form] = Form.useForm();
-  const { mutate, isPending } = useCreateTask();
+  const { mutate: createTask, isPending: isCreating } = useCreateTask();
+  const { mutate: updateTask, isPending: isUpdating } = useEditTask();
   const { data: group } = useTaskGroup();
-  const { id } = useParams();
+  const { id: paramId } = useParams();
   const { data: projects } = useProject({ status: "active" });
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
     editTaskData?.groupId || null
   );
 
+  const isEditing = !!editTaskData;
+  const isPending = isCreating || isUpdating;
+  const projectIdToUse = projectId || paramId;
+
+  useEffect(() => {
+    if (isEditing && editTaskData) {
+      console.log("editTaskData:", editTaskData);
+      const initialData = {
+        name: editTaskData.name,
+        description: editTaskData.description,
+        group: editTaskData.group?.id,
+        parentTaskId: editTaskData.parentTaskId,
+        dueDate: editTaskData.dueDate ? moment(editTaskData.dueDate) : null,
+        assigneeId: editTaskData.assignees?.map((user: any) => user.id) || [],
+        projectId: editTaskData.projectId,
+        status: editTaskData.status,
+      };
+      form.setFieldsValue(initialData);
+      setSelectedGroupId(editTaskData.groupId || null);
+    }
+  }, [editTaskData, form, isEditing]);
+
   const onFinish = (values: any) => {
-    values.projectId = id || values.projectId[0];
-    mutate(values, {
-      onSuccess: () => {
-        message.success("Task saved successfully");
-        handleCancel();
-      },
-      onError: (error: any) => {
-        // Handle backend errors
-        const errorMessage = error.response?.data?.message || 
-          "Failed to save task. Please try again.";
-        message.error(errorMessage);
-        
-        // If there are field-specific errors
-        if (error.response?.data?.errors) {
-          const fieldErrors = error.response.data.errors.map((err: any) => ({
-            name: err.field,
-            errors: [err.message],
-          }));
-          form.setFields(fieldErrors);
-        }
-      },
-    });
+    // Prepare task data with all fields, excluding id
+    const taskData = {
+      name: values.name,
+      description: values.description,
+      groupId: values.group,
+      parentTaskId: values.parentTaskId,
+      dueDate: values.dueDate,
+      assineeId: values.assignees,
+      projectId: projectIdToUse || values.projectId?.[0],
+      status: values.status,
+    };
+
+    console.log("Task data to submit:", taskData);
+
+    const mutation = isEditing ? updateTask : createTask;
+    const successMessage = isEditing ? "Task updated successfully" : "Task saved successfully";
+
+    mutation(
+      isEditing ? { id: editTaskData.id, payload: taskData } : taskData,
+      {
+        onSuccess: (response) => {
+          console.log("Mutation response:", response);
+          message.success(successMessage);
+          handleCancel();
+          form.resetFields();
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error.response?.data?.message ||
+            `Failed to ${isEditing ? "update" : "save"} task. Please try again.`;
+          message.error(errorMessage);
+          console.error("Mutation error:", error);
+          if (error.response?.data?.errors) {
+            const fieldErrors = error.response.data.errors.map((err: any) => ({
+              name: err.field,
+              errors: [err.message],
+            }));
+            form.setFields(fieldErrors);
+          }
+        },
+      }
+    );
   };
 
-  // Filter parent tasks based on selected group
-  const filteredParentTasks = tasks?.filter(
-    (task: any) => !selectedGroupId || task.groupId === selectedGroupId
-  ) || [];
+  const filteredParentTasks =
+    tasks?.filter((task: any) => !selectedGroupId || task.groupId === selectedGroupId) || [];
 
   const handleGroupChange = (value: string) => {
     setSelectedGroupId(value);
-    // Reset parentTaskId if it doesn't belong to the new group
     const currentParentId = form.getFieldValue("parentTaskId");
-    if (
-      currentParentId && 
-      !filteredParentTasks.some((task: any) => task.id === currentParentId)
-    ) {
+    if (currentParentId && !filteredParentTasks.some((task: any) => task.id === currentParentId)) {
       form.setFieldsValue({ parentTaskId: undefined });
     }
   };
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      initialValues={editTaskData || {}}
-      onFinish={onFinish}
-    >
-      <Paragraph>Required fields are marked with an asterisk *</Paragraph>
-      
-      <FormInputWrapper
-        id="name"
-        label="Name"
-        name="name"
-        classname="w-[300px]"
-        rules={[{ required: true, message: "Please input the task name!" }]}
-      />
+    <Form form={form} layout="vertical" onFinish={onFinish}>
+      <Row gutter={18}>
+        <Divider />
+        <Col span={24}>
+          <FormInputWrapper
+            id="name"
+            label="Task Name"
+            name="name"
+            rules={[{ required: true, message: "Please input the task name!" }]}
+          />
+        </Col>
 
-      <FormInputWrapper
-        id="description"
-        label="Description"
-        name="description"
-        classname="w-[300px]"
-        rules={[
-          { required: true, message: "Please input the task description!" },
-        ]}
-      />
+        <Col span={24}>
+          <Form.Item
+            id="description"
+            label="Description"
+            name="description"
+            rules={[{ required: true, message: "Please input the task description!" }]}
+          >
+            <TextArea rows={4} />
+          </Form.Item>
+        </Col>
 
-      <FormSelectWrapper
-        id="groupId"
-        name="groupId"
-        label="Group"
-        classname="w-[300px]"
-        options={
-          group?.map((group: any) => ({
-            value: group.id,
-            label: group.name,
-          })) || []
-        }
-        onChange={handleGroupChange}
-      />
+        <Col span={12}>
+          <FormSelectWrapper
+            id="group"
+            name="group"
+            label="Group"
+            options={group?.map((g: any) => ({ value: g.id, label: g.name })) || []}
+            onChange={handleGroupChange}
+          />
+        </Col>
 
-      <FormSelectWrapper
-        id="parentTaskId"
-        name="parentTaskId"
-        label="Parent"
-        options={
-          filteredParentTasks.map((task: any) => ({
-            value: task.id,
-            label: task.name,
-          })) || []
-        }
-      />
+        <Col span={12}>
+          <FormSelectWrapper
+            id="parentTaskId"
+            name="parentTaskId"
+            label="Parent Task"
+            options={filteredParentTasks.map((task: any) => ({ value: task.id, label: task.name })) || []}
+          />
+        </Col>
 
-      <Form.Item
-        name="dueDate"
-        label="Due Date"
-        rules={[{ required: true, message: "Please input the due date!" }]}
-      >
-        <DatePicker showTime format="YYYY-MM-DD" />
-      </Form.Item>
+        <Col span={12}>
+          <Form.Item
+            name="dueDate"
+            label="Due Date"
+            rules={[{ required: true, message: "Please select the due date!" }]}
+          >
+            <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
+          </Form.Item>
+        </Col>
 
-      <FormSelectWrapper
-        id="assineeId"
-        name="assineeId"
-        label="Assignee"
-        mode="multiple"
-        options={
-          users?.map((user: any) => ({
-            value: user.id,
-            label: user.name,
-          })) || []
-        }
-      />
+        <Col span={12}>
+          <FormSelectWrapper
+            id="assignees"
+            name="assignees"
+            label="Assignees"
+            mode="multiple"
+            placeholder="Select users"
+            options={users?.map((user: any) => ({ value: user.id, label: user.name })) || []}
+            rules={[{ required: true, message: "Please select at least one assignee!" }]}
+          />
+        </Col>
 
-      {!id && (
-        <FormSelectWrapper
-          id="projectId"
-          name="projectId"
-          label="Project"
-          mode="multiple"
-          options={
-            projects?.map((project: any) => ({
-              value: project.id,
-              label: project.name,
-            })) || []
-          }
-        />
-      )}
+        {!projectIdToUse && (
+          <Col span={12}>
+            <FormSelectWrapper
+              id="projectId"
+              name="projectId"
+              label="Project"
+              options={projects?.map((p: any) => ({ value: p.id, label: p.name })) || []}
+              rules={[{ required: true, message: "Please select a project!" }]}
+            />
+          </Col>
+        )}
+
+        <Col span={12}>
+          <FormSelectWrapper
+            id="status"
+            name="status"
+            label="Status"
+            options={[
+              { value: "open", label: "Open" },
+              { value: "in_progress", label: "In Progress" },
+              { value: "done", label: "Done" },
+            ]}
+            rules={[{ required: true, message: "Please select a status!" }]}
+          />
+        </Col>
+      </Row>
 
       <Form.Item>
-        <Button
-          type="primary"
-          htmlType="submit"
-          disabled={isPending}
-          loading={isPending}
-        >
-          Save
+        <Button type="primary" htmlType="submit" disabled={isPending} loading={isPending}>
+          {isEditing ? "Update" : "Save"}
         </Button>
       </Form.Item>
     </Form>

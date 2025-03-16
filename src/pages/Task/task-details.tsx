@@ -2,11 +2,13 @@ import { useProjectTaskDetail } from "@/hooks/task/useProjectTaskDetail";
 import { Card, Col, Divider, Form, Row, Tabs, Typography } from "antd";
 import { useParams } from "react-router-dom";
 import Worklog from "../Worklog";
+import TaskDetail from "@/components/Task/TaskDetail";
 
 const { Title, Text } = Typography;
 
 const TaskDetails = () => {
     const { pid, tid } = useParams()
+    console.log('pid:', pid, 'tid:', tid)
     const [form] = Form.useForm()
     const { data: task, isPending } = useProjectTaskDetail({ pid, tid })
 
@@ -19,7 +21,7 @@ const TaskDetails = () => {
                     <Tabs defaultActiveKey="1" items={[
                         {
                             label: 'Task Details', key: '1',
-                            children: <>sahbj</>
+                            children: <TaskDetail data={task} />
                         },
                         {
                             label: 'Sub Tasks', key: '2',

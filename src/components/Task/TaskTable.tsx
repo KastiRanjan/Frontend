@@ -1,15 +1,23 @@
+// TaskTable.tsx
 import { useEditTask } from "@/hooks/task/useEditTask";
 import { UserType } from "@/hooks/user/type";
-import { useUser } from "@/hooks/user/useUser";
 import { TaskType } from "@/types/task";
 import { EditOutlined } from "@ant-design/icons";
 import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip } from "antd";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import moment from "moment";
+
+// Update the TaskType interface (you might need to do this in your types/task.ts file)
+interface ExtendedTaskType extends TaskType {
+  first?: boolean;
+  last?: boolean;
+  projectId: string; // Add projectId to the interface
+}
 
 interface TaskTableProps {
-  data: TaskType[];
-  showModal:any;
+  data: TaskType[]; // Original data doesn't need projectId since we'll add it
+  showModal: (task?: ExtendedTaskType) => void;
   project: {
     id: string;
     users: UserType[];
@@ -17,16 +25,23 @@ interface TaskTableProps {
   };
 }
 
-const TaskTable = ({ data, showModal}: TaskTableProps) => {
+const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
   const [form] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  
-  console.log(data);
+  const { mutate: editTask } = useEditTask();
 
+  // Add projectId to each task in the data
+  const enhancedData: ExtendedTaskType[] = useMemo(
+    () => data.map(task => ({ ...task, projectId: project.id })),
+    [data, project.id]
+  );
 
-  const handleEditClick = (task: TaskType) => {
-    setSelectedTask(task);
-    form.setFieldsValue(task);
+  const handleEditClick = (task: ExtendedTaskType) => {
+    form.setFieldsValue({
+      ...task,
+      assineeId: task.assignees?.map(user => user.id),
+      dueDate: task.dueDate ? moment(task.dueDate) : null,
+    });
     showModal(task);
   };
 
@@ -37,9 +52,9 @@ const TaskTable = ({ data, showModal}: TaskTableProps) => {
         title: "Name",
         dataIndex: "name",
         key: "name",
-        render: (name: string, record: TaskType) => (
+        render: (name: string, record: ExtendedTaskType) => (
           <div className="flex items-center justify-between gap-2">
-            <Link to={`/projects/${record.project?.id}/tasks/${record.id}`} className="text-blue-600">
+            <Link to={`/projects/${record.projectId}/tasks/${record.id}`} className="text-blue-600">
               {name}
             </Link>
             {record.subTasks?.length > 0 && (
@@ -61,7 +76,7 @@ const TaskTable = ({ data, showModal}: TaskTableProps) => {
         title: "Group",
         dataIndex: "group",
         key: "group",
-        render: (group: TaskType["group"]) => group?.name ?? "---",
+        render: (group: ExtendedTaskType["group"]) => group?.name ?? "---",
       },
       {
         title: "Status",
@@ -74,9 +89,9 @@ const TaskTable = ({ data, showModal}: TaskTableProps) => {
       },
       {
         title: "Assignee",
-        dataIndex: "users",
+        dataIndex: "assignees",
         key: "assignees",
-        render: (users: UserType[]) => (
+        render: (assignees: UserType[]) => (
           <Avatar.Group
             max={{
               count: 2,
@@ -84,7 +99,7 @@ const TaskTable = ({ data, showModal}: TaskTableProps) => {
               popover: { trigger: "click" },
             }}
           >
-            {users?.map((user) => (
+            {assignees?.map((user) => (
               <Tooltip key={user.id} title={user.username} placement="top">
                 <Avatar style={{ backgroundColor: "#87d068" }}>
                   {user.username.charAt(0).toUpperCase()}
@@ -101,41 +116,59 @@ const TaskTable = ({ data, showModal}: TaskTableProps) => {
         render: (dueDate: string | null) =>
           dueDate ? new Date(dueDate).toLocaleDateString() : "---",
       },
-      { title: "Priority", dataIndex: "priority", key: "priority" },
+      {
+        title: "1st Verification",
+        dataIndex: "first",
+        key: "first",
+        width: 120,
+        render: (firstVerification: boolean | undefined) => (
+          <span style={{ color: firstVerification ? "#52c41a" : "#ff4d4f" }}>
+            {firstVerification ? "✓" : "✗"}
+          </span>
+        ),
+      },
+      {
+        title: "2nd Verification",
+        dataIndex: "last",
+        key: "last",
+        width: 120,
+        render: (secondVerification: boolean | undefined) => (
+          <span style={{ color: secondVerification ? "#52c41a" : "#ff4d4f" }}>
+            {secondVerification ? "✓" : "✗"}
+          </span>
+        ),
+      },
       {
         title: "",
         key: "action",
         width: 50,
-        render: (_: unknown, record: TaskType) => (
+        render: (_: unknown, record: ExtendedTaskType) => (
           <Button type="primary" onClick={() => handleEditClick(record)} icon={<EditOutlined />} />
         ),
       },
     ],
-    []
+    [] // No dependencies needed unless columns dynamically depend on something
   );
 
-  const rowSelection: TableProps<TaskType>["rowSelection"] = {
+  const rowSelection: TableProps<ExtendedTaskType>["rowSelection"] = {
     selectedRowKeys,
-    onChange: (newSelectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
+    onChange: (newSelectedRowKeys: React.Key[], selectedRows: ExtendedTaskType[]) => {
       setSelectedRowKeys(newSelectedRowKeys);
     },
-    getCheckboxProps: (record: TaskType) => ({
+    getCheckboxProps: (record: ExtendedTaskType) => ({
       name: record.name,
     }),
   };
 
   return (
-    <>
-
-      <Table
-        columns={columns}
-        dataSource={data}
-        rowSelection={rowSelection}
-        rowKey="id"
-        size="small"
-        bordered
-      />
-    </>
+    <Table
+      columns={columns}
+      dataSource={enhancedData} // Use enhanced data with projectId
+      rowSelection={rowSelection}
+      rowKey="id"
+      size="small"
+      bordered
+    />
   );
 };
 
