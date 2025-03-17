@@ -16,8 +16,12 @@ const Clock = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [remark, setRemark] = useState<string>("");
+  const [clockInRemark, setClockInRemark] = useState<string>("");
+  const [clockOutRemark, setClockOutRemark] = useState<string>("");
+  const [historyRemark, setHistoryRemark] = useState<string>("");
+  const [isClockInModalVisible, setIsClockInModalVisible] = useState(false);
   const [isClockOutModalVisible, setIsClockOutModalVisible] = useState(false);
+  const [isFinalClockOutModalVisible, setIsFinalClockOutModalVisible] = useState(false); // New state for final clockout modal
 
   const getLocation = () => {
     return new Promise<{ latitude: number; longitude: number }>(
@@ -48,37 +52,42 @@ const Clock = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleClockIn = async () => {
-    Modal.confirm({
-      title: "Confirm Clock In",
-      content: "Are you sure you want to clock in now?",
-      onOk: async () => {
-        try {
-          const currentLocation = await getLocation();
-          setLocation(currentLocation);
+  const handleClockIn = () => {
+    console.log("Opening Clock In Modal");
+    setIsClockInModalVisible(true);
+  };
 
-          const payload = {
-            date: moment().format("YYYY-MM-DD"),
-            clockIn: moment().format("HH:mm:ss a"), // Send as HH:mm:ss a
-            latitude: currentLocation.latitude.toString(),
-            longitude: currentLocation.longitude.toString(),
-          };
+  const handleClockInConfirm = async () => {
+    try {
+      const currentLocation = await getLocation();
+      setLocation(currentLocation);
 
-          createAttendance(payload, {
-            onSuccess: () => refetch(),
-          });
-        } catch (error) {
-          console.error("Error getting location:", error);
-          Modal.error({
-            title: "Error",
-            content: "Failed to get location. Please try again.",
-          });
-        }
-      },
-      onCancel: () => {
-        console.log("Clock in cancelled");
-      },
-    });
+      const payload = {
+        date: moment().format("YYYY-MM-DD"),
+        clockIn: moment().format("HH:mm:ss a"),
+        clockInRemark: clockInRemark || undefined,
+        latitude: currentLocation.latitude.toString(),
+        longitude: currentLocation.longitude.toString(),
+      };
+
+      console.log("Clock In Payload:", payload);
+
+      createAttendance(payload, {
+        onSuccess: () => {
+          console.log("Clock In Success");
+          refetch();
+          setClockInRemark("");
+          setIsClockInModalVisible(false);
+        },
+        onError: (error) => console.error("Clock In Error:", error),
+      });
+    } catch (error) {
+      console.error("Clock In Location Error:", error);
+      Modal.error({
+        title: "Error",
+        content: "Failed to get location. Please try again.",
+      });
+    }
   };
 
   const handleClockOut = () => {
@@ -89,6 +98,7 @@ const Clock = () => {
         okText: "OK",
       });
     } else {
+      console.log("Opening Normal Clock Out Modal");
       setIsClockOutModalVisible(true);
     }
   };
@@ -99,21 +109,25 @@ const Clock = () => {
       setLocation(currentLocation);
 
       const payload = {
-        clockOut: moment().format("HH:mm:ss a").toString(),
+        clockOut: moment().format("HH:mm:ss a"),
         latitude: currentLocation.latitude.toString(),
         longitude: currentLocation.longitude.toString(),
-        remark: remark || undefined,
+        remark: historyRemark || undefined,
       };
+
+      console.log("Normal Clock Out Payload:", payload);
 
       createAttendance(payload, {
         onSuccess: () => {
+          console.log("Normal Clock Out Success");
           refetch();
-          setRemark("");
+          setHistoryRemark("");
           setIsClockOutModalVisible(false);
         },
+        onError: (error) => console.error("Normal Clock Out Error:", error),
       });
     } catch (error) {
-      console.error("Error getting location:", error);
+      console.error("Normal Clock Out Location Error:", error);
       Modal.error({
         title: "Error",
         content: "Failed to get location. Please try again.",
@@ -121,7 +135,7 @@ const Clock = () => {
     }
   };
 
-  const handleSetFinalClockOut = async () => {
+  const handleSetFinalClockOut = () => {
     if (!isClockedIn || !data?.[0]?.id) {
       Modal.error({
         title: "Error",
@@ -129,39 +143,43 @@ const Clock = () => {
       });
       return;
     }
+    console.log("Opening Final Clock Out Modal");
+    setIsFinalClockOutModalVisible(true);
+  };
 
-    Modal.confirm({
-      title: "Set Final Clock Out",
-      content: "Are you sure you want to set this as your final clock-out for the day?",
-      onOk: async () => {
-        try {
-          const currentLocation = await getLocation();
-          setLocation(currentLocation);
+  const handleFinalClockOutConfirm = async () => {
+    try {
+      const currentLocation = await getLocation();
+      setLocation(currentLocation);
 
-          const payload = {
-            clockOut: moment().format("HH:mm:ss a"), // Send as HH:mm:ss a
-            latitude: currentLocation.latitude.toString(),
-            longitude: currentLocation.longitude.toString(),
-          };
+      const payload = {
+        clockOut: moment().format("HH:mm:ss a"),
+        clockOutRemark: clockOutRemark || undefined,
+        latitude: currentLocation.latitude.toString(),
+        longitude: currentLocation.longitude.toString(),
+      };
 
-          updateAttendance(
-            { payload, id: data[0].id },
-            {
-              onSuccess: () => refetch(),
-            }
-          );
-        } catch (error) {
-          console.error("Error setting final clock-out:", error);
-          Modal.error({
-            title: "Error",
-            content: "Failed to set final clock-out. Please try again.",
-          });
+      console.log("Final Clock Out Payload:", payload);
+
+      updateAttendance(
+        { payload, id: data[0].id },
+        {
+          onSuccess: () => {
+            console.log("Final Clock Out Success");
+            refetch();
+            setClockOutRemark("");
+            setIsFinalClockOutModalVisible(false);
+          },
+          onError: (error) => console.error("Final Clock Out Error:", error),
         }
-      },
-      onCancel: () => {
-        console.log("Final clock-out cancelled");
-      },
-    });
+      );
+    } catch (error) {
+      console.error("Final Clock Out Location Error:", error);
+      Modal.error({
+        title: "Error",
+        content: "Failed to set final clock-out. Please try again.",
+      });
+    }
   };
 
   return (
@@ -193,13 +211,42 @@ const Clock = () => {
           </div>
         )}
       </div>
+
+      {/* Clock In Modal */}
+      <Modal
+        title="Confirm Clock In"
+        open={isClockInModalVisible}
+        onOk={handleClockInConfirm}
+        onCancel={() => {
+          console.log("Clock In Modal Cancelled");
+          setIsClockInModalVisible(false);
+          setClockInRemark("");
+        }}
+        okText="Confirm"
+        cancelText="Cancel"
+      >
+        <p>Are you sure you want to clock in now?</p>
+        <Input
+          placeholder="Enter a remark for clock-in (optional)"
+          value={clockInRemark}
+          onChange={(e) => {
+            console.log("Clock In Remark Changed:", e.target.value);
+            setClockInRemark(e.target.value);
+          }}
+          style={{ marginTop: 10 }}
+          autoFocus
+        />
+      </Modal>
+
+      {/* Normal Clock Out Modal */}
       <Modal
         title="Confirm Clock Out"
-        visible={isClockOutModalVisible}
+        open={isClockOutModalVisible}
         onOk={handleClockOutConfirm}
         onCancel={() => {
+          console.log("Normal Clock Out Modal Cancelled");
           setIsClockOutModalVisible(false);
-          setRemark("");
+          setHistoryRemark("");
         }}
         okText="Confirm"
         cancelText="Cancel"
@@ -207,9 +254,39 @@ const Clock = () => {
         <p>Are you sure you want to clock out now?</p>
         <Input
           placeholder="Enter a remark (optional)"
-          value={remark}
-          onChange={(e) => setRemark(e.target.value)}
+          value={historyRemark}
+          onChange={(e) => {
+            console.log("History Remark Changed:", e.target.value);
+            setHistoryRemark(e.target.value);
+          }}
           style={{ marginTop: 10 }}
+          autoFocus
+        />
+      </Modal>
+
+      {/* Final Clock Out Modal */}
+      <Modal
+        title="Set Final Clock Out"
+        open={isFinalClockOutModalVisible}
+        onOk={handleFinalClockOutConfirm}
+        onCancel={() => {
+          console.log("Final Clock Out Modal Cancelled");
+          setIsFinalClockOutModalVisible(false);
+          setClockOutRemark("");
+        }}
+        okText="Confirm"
+        cancelText="Cancel"
+      >
+        <p>Are you sure you want to set this as your final clock-out for the day?</p>
+        <Input
+          placeholder="Enter a remark for final clock-out (optional)"
+          value={clockOutRemark}
+          onChange={(e) => {
+            console.log("Final Clock Out Remark Changed:", e.target.value);
+            setClockOutRemark(e.target.value);
+          }}
+          style={{ marginTop: 10 }}
+          autoFocus
         />
       </Modal>
     </>

@@ -15,9 +15,21 @@ const AttendenceTable = () => {
       key: "clockIn",
     },
     {
+      title: "Clock In Remark",
+      dataIndex: "clockInRemark",
+      key: "clockInRemark",
+      render: (text: string) => text || "N/A", // Display "N/A" if no remark
+    },
+    {
       title: "Clock Out",
       dataIndex: "clockOut",
       key: "clockOut",
+    },
+    {
+      title: "Clock Out Remark",
+      dataIndex: "clockOutRemark",
+      key: "clockOutRemark",
+      render: (text: string) => text || "N/A", // Display "N/A" if no remark
     },
     {
       title: "Duration",
@@ -56,8 +68,8 @@ const AttendenceTable = () => {
   const calculateDuration = (clockIn: string, clockOut: string | null) => {
     if (!clockOut) return "N/A"; // Handle case where clockOut isn’t set yet
 
-    const clockInTime = moment(clockIn,"HH:mm:ss a"); // Parse ISO timestamp
-    const clockOutTime = moment(clockOut,"HH:mm:ss a"); // Parse ISO timestamp
+    const clockInTime = moment(clockIn, "HH:mm:ss a"); // Parse HH:mm:ss a format
+    const clockOutTime = moment(clockOut, "HH:mm:ss a"); // Parse HH:mm:ss a format
 
     // Calculate the difference in minutes
     const durationInMinutes = moment.duration(clockOutTime.diff(clockInTime)).asMinutes();
@@ -88,7 +100,6 @@ const AttendenceTable = () => {
         title: "Clock Out",
         dataIndex: "clockOut",
         key: "clockOut",
-        render: (text: string) => moment(text).format("hh:mm:ss a"),
       },
       {
         title: "Latitude",
@@ -141,7 +152,7 @@ const AttendenceTable = () => {
       bordered
       expandable={{
         expandedRowRender,
-        rowExpandable: (record) => record.history && record.history.length > 0, 
+        rowExpandable: (record) => record.history && record.history.length > 0,
       }}
     />
   );
