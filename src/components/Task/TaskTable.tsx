@@ -3,7 +3,7 @@ import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
 import { EditOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal } from "antd";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal, message } from "antd";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
@@ -22,13 +22,14 @@ interface TaskTableProps {
     users: UserType[];
     projectLead: UserType;
   };
+  onRefresh?: () => void;
 }
 
-const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
+const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
   const [form] = Form.useForm();
   const [bulkForm] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const { mutate: editTask } = useEditTask();
+  const { mutate: editTask, isPending: isUpdating } = useEditTask();
   const { mutate: bulkUpdateTasks } = useBulkUpdateTasks();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [isDueDateModalVisible, setIsDueDateModalVisible] = useState(false);
@@ -60,7 +61,44 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
     });
   };
 
+  // Kept from first version - more detailed and robust
   const saveEdit = async (key: string) => {
+    try {
+      const values = await form.validateFields();
+      
+      const taskData = {
+        dueDate: values.dueDate?.toISOString(),
+        assineeId: values.assineeId,
+        first: values.first,
+        last: values.last,
+        projectId: project.id,
+        name: enhancedData.find(item => item.id === key)?.name,
+        description: enhancedData.find(item => item.id === key)?.description,
+        groupId: enhancedData.find(item => item.id === key)?.group?.id,
+        parentTaskId: enhancedData.find(item => item.id === key)?.parentTaskId,
+        status: enhancedData.find(item => item.id === key)?.status,
+      };
+
+      editTask(
+        { id: key, payload: taskData },
+        {
+          onSuccess: () => {
+            message.success("Task updated successfully");
+            setEditingKey(null);
+            if (onRefresh) onRefresh();
+          },
+          onError: (error: any) => {
+            message.error(error.response?.data?.message || "Failed to update task");
+          },
+        }
+      );
+    } catch (err) {
+      console.log('Validation Failed:', err);
+    }
+  };
+
+  // Renamed from second version's saveEdit
+  const saveSingleEdit = async (key: string) => {
     try {
       const row = await form.validateFields();
       const updatedTask = {
@@ -71,8 +109,18 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
         ).filter(Boolean),
         dueDate: row.dueDate?.toISOString(),
       };
-      editTask({ payload: updatedTask, id: key });
-      setEditingKey(null);
+      editTask({ payload: updatedTask, id: key },
+        {
+          onSuccess: () => {
+            message.success("Task updated successfully");
+            setEditingKey(null);
+            if (onRefresh) onRefresh();
+          },
+          onError: (error: any) => {
+            message.error(error.response?.data?.message || "Failed to update task");
+          },
+        }
+      );
     } catch (err) {
       console.log('Validation Failed:', err);
     }
@@ -96,6 +144,15 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
       bulkUpdateTasks({
         taskIds: selectedRowKeys.map(String),
         dueDate: values.dueDate?.toISOString(),
+      },
+      {
+        onSuccess: () => {
+          message.success("Tasks updated successfully");
+          if (onRefresh) onRefresh();
+        },
+        onError: (error: any) => {
+          message.error(error.response?.data?.message || "Failed to update tasks");
+        },
       });
       setIsDueDateModalVisible(false);
       bulkForm.resetFields();
@@ -110,6 +167,15 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
       bulkUpdateTasks({
         taskIds: selectedRowKeys.map(String),
         assigneeIds: values.assigneeIds,
+      },
+      {
+        onSuccess: () => {
+          message.success("Tasks assigned successfully");
+          if (onRefresh) onRefresh();
+        },
+        onError: (error: any) => {
+          message.error(error.response?.data?.message || "Failed to assign tasks");
+        },
       });
       setIsAssigneeModalVisible(false);
       bulkForm.resetFields();
@@ -148,7 +214,7 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
       {
         title: "Group",
         dataIndex: "group",
-        key: "group",
+        key: "group sights",
         render: (group: ExtendedTaskType["group"]) => group?.name ?? "---",
       },
       {
@@ -262,18 +328,30 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
           const editable = isEditing(record);
           return editable ? (
             <span>
-              <Button type="primary" onClick={() => saveEdit(record.id)} style={{ marginRight: 8 }}>
+              <Button
+                type="primary"
+                onClick={() => saveEdit(record.id)} // Using the more robust saveEdit
+                style={{ marginRight: 8 }}
+                loading={isUpdating}
+                disabled={isUpdating}
+              >
                 Save
               </Button>
-              <Button onClick={() => setEditingKey(null)}>Cancel</Button>
+              <Button onClick={() => setEditingKey(null)} disabled={isUpdating}>
+                Cancel
+              </Button>
             </span>
           ) : (
-            <Button type="primary" onClick={() => handleEditClick(record)} icon={<EditOutlined />} />
+            <Button
+              type="primary"
+              onClick={() => handleEditClick(record)}
+              icon={<EditOutlined />}
+            />
           );
         },
       },
     ],
-    [editingKey, project.users]
+    [editingKey, project.users, project.id, isUpdating]
   );
 
   const mergedColumns = columns.map(col => {
