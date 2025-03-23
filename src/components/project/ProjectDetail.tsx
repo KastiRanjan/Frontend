@@ -76,7 +76,7 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
                   showModal={showModal}
                   project={{
                     id: project.id?.toString(),
-                    users: project.users?.map(user => user.id?.toString()),
+                    users: project.users?.map(user => user),
                     projectLead: project.projectLead
                   }}
                 />

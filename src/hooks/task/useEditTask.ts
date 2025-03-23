@@ -11,7 +11,7 @@ export const useEditTask = () => {
       return updateTask({ payload, id });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project_task"] });
+      queryClient.invalidateQueries({ queryKey: ["project","project_task"] });
     },
   });
 };

@@ -1,22 +1,20 @@
-// TaskTable.tsx
 import { useEditTask } from "@/hooks/task/useEditTask";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
 import { EditOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip } from "antd";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch } from "antd";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
 
-// Update the TaskType interface (you might need to do this in your types/task.ts file)
 interface ExtendedTaskType extends TaskType {
   first?: boolean;
   last?: boolean;
-  projectId: string; // Add projectId to the interface
+  projectId: string;
 }
 
 interface TaskTableProps {
-  data: TaskType[]; // Original data doesn't need projectId since we'll add it
+  data: TaskType[];
   showModal: (task?: ExtendedTaskType) => void;
   project: {
     id: string;
@@ -26,15 +24,18 @@ interface TaskTableProps {
 }
 
 const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
+  console.log(project)
   const [form] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const { mutate: editTask } = useEditTask();
+  const [editingKey, setEditingKey] = useState<string | null>(null);
 
-  // Add projectId to each task in the data
   const enhancedData: ExtendedTaskType[] = useMemo(
     () => data.map(task => ({ ...task, projectId: project.id })),
     [data, project.id]
   );
+
+  const isEditing = (record: ExtendedTaskType) => record.id === editingKey;
 
   const handleEditClick = (task: ExtendedTaskType) => {
     form.setFieldsValue({
@@ -43,6 +44,35 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
       dueDate: task.dueDate ? moment(task.dueDate) : null,
     });
     showModal(task);
+  };
+
+  const startEditing = (record: ExtendedTaskType) => {
+    setEditingKey(record.id);
+    form.setFieldsValue({
+      dueDate: record.dueDate ? moment(record.dueDate) : null,
+      assineeId: record.assignees?.map(user => user.id),
+      first: record.first,
+      last: record.last,
+    });
+  };
+
+  const saveEdit = async (key: string) => {
+    try {
+      const row = await form.validateFields();
+      const updatedTask = {
+        ...enhancedData.find(item => item.id === key),
+        ...row,
+        assignees: row.assineeId?.map((id: string) => 
+          project.users.find(user => user.id === id)
+        ).filter(Boolean),
+        dueDate: row.dueDate?.toISOString(),
+      };
+      console.log(updatedTask);
+      editTask(updatedTask);
+      setEditingKey(null);
+    } catch (err) {
+      console.log('Validation Failed:', err);
+    }
   };
 
   const columns = useMemo(
@@ -91,64 +121,159 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
         title: "Assignee",
         dataIndex: "assignees",
         key: "assignees",
-        render: (assignees: UserType[]) => (
-          <Avatar.Group
-            max={{
-              count: 2,
-              style: { color: "#f56a00", backgroundColor: "#fde3cf", cursor: "pointer" },
-              popover: { trigger: "click" },
-            }}
-          >
-            {assignees?.map((user) => (
-              <Tooltip key={user.id} title={user.username} placement="top">
-                <Avatar style={{ backgroundColor: "#87d068" }}>
-                  {user.username.charAt(0).toUpperCase()}
-                </Avatar>
-              </Tooltip>
-            ))}
-          </Avatar.Group>
-        ),
+        editable: true,
+        render: (assignees: UserType[], record: ExtendedTaskType) => {
+          const editable = isEditing(record);
+          return editable ? (
+            <Form.Item
+              name="assineeId"
+              style={{ margin: 0 }}
+              rules={[{ required: false }]}
+            >
+              <Select
+                mode="multiple"
+                style={{ width: '100%' }}
+                placeholder="Select assignees"
+                options={project.users.map(user => ({
+                  label: user.username,
+                  value: user.id,
+                }))}
+                optionFilterProp="label" // Allows searching by username
+                showSearch // Enables search functionality
+              />
+            </Form.Item>
+          ) : (
+            <Avatar.Group
+              max={{
+                count: 2,
+                style: { color: "#f56a00", backgroundColor: "#fde3cf", cursor: "pointer" },
+                popover: { trigger: "click" },
+              }}
+            >
+              {assignees?.map((user) => (
+                <Tooltip key={user.id} title={user.username} placement="top">
+                  <Avatar style={{ backgroundColor: "#87d068" }}>
+                    {user.username.charAt(0).toUpperCase()}
+                  </Avatar>
+                </Tooltip>
+              ))}
+            </Avatar.Group>
+          );
+        },
       },
       {
         title: "Due date",
         dataIndex: "dueDate",
         key: "dueDate",
-        render: (dueDate: string | null) =>
-          dueDate ? new Date(dueDate).toLocaleDateString() : "---",
+        editable: true,
+        render: (dueDate: string | null, record: ExtendedTaskType) => {
+          const editable = isEditing(record);
+          return editable ? (
+            <Form.Item
+              name="dueDate"
+              style={{ margin: 0 }}
+              rules={[{ required: false }]}
+            >
+              <DatePicker />
+            </Form.Item>
+          ) : (
+            dueDate ? new Date(dueDate).toLocaleDateString() : "---"
+          );
+        },
       },
       {
         title: "1st Verification",
         dataIndex: "first",
         key: "first",
         width: 120,
-        render: (firstVerification: boolean | undefined) => (
-          <span style={{ color: firstVerification ? "#52c41a" : "#ff4d4f" }}>
-            {firstVerification ? "✓" : "✗"}
-          </span>
-        ),
+        editable: true,
+        render: (firstVerification: boolean | undefined, record: ExtendedTaskType) => {
+          const editable = isEditing(record);
+          return editable ? (
+            <Form.Item
+              name="first"
+              style={{ margin: 0 }}
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
+          ) : (
+            <span style={{ color: firstVerification ? "#52c41a" : "#ff4d4f" }}>
+              {firstVerification ? "✓" : "✗"}
+            </span>
+          );
+        },
       },
       {
         title: "2nd Verification",
         dataIndex: "last",
         key: "last",
         width: 120,
-        render: (secondVerification: boolean | undefined) => (
-          <span style={{ color: secondVerification ? "#52c41a" : "#ff4d4f" }}>
-            {secondVerification ? "✓" : "✗"}
-          </span>
-        ),
+        editable: true,
+        render: (secondVerification: boolean | undefined, record: ExtendedTaskType) => {
+          const editable = isEditing(record);
+          return editable ? (
+            <Form.Item
+              name="last"
+              style={{ margin: 0 }}
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
+          ) : (
+            <span style={{ color: secondVerification ? "#52c41a" : "#ff4d4f" }}>
+              {secondVerification ? "✓" : "✗"}
+            </span>
+          );
+        },
       },
       {
         title: "",
         key: "action",
-        width: 50,
-        render: (_: unknown, record: ExtendedTaskType) => (
-          <Button type="primary" onClick={() => handleEditClick(record)} icon={<EditOutlined />} />
-        ),
+        width: 100,
+        render: (_: unknown, record: ExtendedTaskType) => {
+          const editable = isEditing(record);
+          return editable ? (
+            <span>
+              <Button
+                type="primary"
+                onClick={() => saveEdit(record.id)}
+                style={{ marginRight: 8 }}
+              >
+                Save
+              </Button>
+              <Button onClick={() => setEditingKey(null)}>
+                Cancel
+              </Button>
+            </span>
+          ) : (
+            <Button
+              type="primary"
+              onClick={() => handleEditClick(record)}
+              icon={<EditOutlined />}
+            />
+          );
+        },
       },
     ],
-    [] // No dependencies needed unless columns dynamically depend on something
+    [editingKey, project.users] // Added project.users as dependency
   );
+
+  const mergedColumns = columns.map(col => {
+    if (!col.editable) {
+      return col;
+    }
+    return {
+      ...col,
+      onCell: (record: ExtendedTaskType) => ({
+        record,
+        dataIndex: col.dataIndex,
+        title: col.title,
+        editing: isEditing(record),
+        onDoubleClick: () => !editingKey && startEditing(record),
+      }),
+    };
+  });
 
   const rowSelection: TableProps<ExtendedTaskType>["rowSelection"] = {
     selectedRowKeys,
@@ -161,14 +286,46 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
   };
 
   return (
-    <Table
-      columns={columns}
-      dataSource={enhancedData} // Use enhanced data with projectId
-      rowSelection={rowSelection}
-      rowKey="id"
-      size="small"
-      bordered
-    />
+    <Form form={form} component={false}>
+      <Table
+        components={{
+          body: {
+            cell: EditableCell,
+          },
+        }}
+        columns={mergedColumns}
+        dataSource={enhancedData}
+        rowSelection={rowSelection}
+        rowKey="id"
+        size="small"
+        bordered
+      />
+    </Form>
+  );
+};
+
+const EditableCell: React.FC<any> = ({
+  editing,
+  dataIndex,
+  title,
+  record,
+  children,
+  onDoubleClick,
+  ...restProps
+}) => {
+  return (
+    <td {...restProps} onDoubleClick={onDoubleClick}>
+      {editing ? (
+        <Form.Item
+          name={dataIndex}
+          style={{ margin: 0 }}
+        >
+          {children}
+        </Form.Item>
+      ) : (
+        children
+      )}
+    </td>
   );
 };
 
