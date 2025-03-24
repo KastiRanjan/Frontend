@@ -1,8 +1,9 @@
 import { useEditTask } from "@/hooks/task/useEditTask";
+import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
 import { EditOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch } from "antd";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal } from "antd";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
@@ -24,11 +25,14 @@ interface TaskTableProps {
 }
 
 const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
-  console.log(project)
   const [form] = Form.useForm();
+  const [bulkForm] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const { mutate: editTask } = useEditTask();
+  const { mutate: bulkUpdateTasks } = useBulkUpdateTasks();
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [isDueDateModalVisible, setIsDueDateModalVisible] = useState(false);
+  const [isAssigneeModalVisible, setIsAssigneeModalVisible] = useState(false);
 
   const enhancedData: ExtendedTaskType[] = useMemo(
     () => data.map(task => ({ ...task, projectId: project.id })),
@@ -67,11 +71,50 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
         ).filter(Boolean),
         dueDate: row.dueDate?.toISOString(),
       };
-      console.log(updatedTask);
-      editTask(updatedTask);
+      editTask({ payload: updatedTask, id: key });
       setEditingKey(null);
     } catch (err) {
       console.log('Validation Failed:', err);
+    }
+  };
+
+  const handleSetDueDate = () => {
+    if (selectedRowKeys.length > 0) {
+      setIsDueDateModalVisible(true);
+    }
+  };
+
+  const handleAssign = () => {
+    if (selectedRowKeys.length > 0) {
+      setIsAssigneeModalVisible(true);
+    }
+  };
+
+  const handleDueDateOk = async () => {
+    try {
+      const values = await bulkForm.validateFields();
+      bulkUpdateTasks({
+        taskIds: selectedRowKeys.map(String),
+        dueDate: values.dueDate?.toISOString(),
+      });
+      setIsDueDateModalVisible(false);
+      bulkForm.resetFields();
+    } catch (err) {
+      console.log('Bulk Due Date Update Failed:', err);
+    }
+  };
+
+  const handleAssigneeOk = async () => {
+    try {
+      const values = await bulkForm.validateFields();
+      bulkUpdateTasks({
+        taskIds: selectedRowKeys.map(String),
+        assigneeIds: values.assigneeIds,
+      });
+      setIsAssigneeModalVisible(false);
+      bulkForm.resetFields();
+    } catch (err) {
+      console.log('Bulk Assignee Update Failed:', err);
     }
   };
 
@@ -125,21 +168,17 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
         render: (assignees: UserType[], record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
-            <Form.Item
-              name="assineeId"
-              style={{ margin: 0 }}
-              rules={[{ required: false }]}
-            >
+            <Form.Item name="assineeId" style={{ margin: 0 }} rules={[{ required: false }]}>
               <Select
                 mode="multiple"
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 placeholder="Select assignees"
                 options={project.users.map(user => ({
                   label: user.username,
                   value: user.id,
                 }))}
-                optionFilterProp="label" // Allows searching by username
-                showSearch // Enables search functionality
+                optionFilterProp="label"
+                showSearch
               />
             </Form.Item>
           ) : (
@@ -169,11 +208,7 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
         render: (dueDate: string | null, record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
-            <Form.Item
-              name="dueDate"
-              style={{ margin: 0 }}
-              rules={[{ required: false }]}
-            >
+            <Form.Item name="dueDate" style={{ margin: 0 }} rules={[{ required: false }]}>
               <DatePicker />
             </Form.Item>
           ) : (
@@ -190,11 +225,7 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
         render: (firstVerification: boolean | undefined, record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
-            <Form.Item
-              name="first"
-              style={{ margin: 0 }}
-              valuePropName="checked"
-            >
+            <Form.Item name="first" style={{ margin: 0 }} valuePropName="checked">
               <Switch />
             </Form.Item>
           ) : (
@@ -213,11 +244,7 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
         render: (secondVerification: boolean | undefined, record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
-            <Form.Item
-              name="last"
-              style={{ margin: 0 }}
-              valuePropName="checked"
-            >
+            <Form.Item name="last" style={{ margin: 0 }} valuePropName="checked">
               <Switch />
             </Form.Item>
           ) : (
@@ -235,34 +262,22 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
           const editable = isEditing(record);
           return editable ? (
             <span>
-              <Button
-                type="primary"
-                onClick={() => saveEdit(record.id)}
-                style={{ marginRight: 8 }}
-              >
+              <Button type="primary" onClick={() => saveEdit(record.id)} style={{ marginRight: 8 }}>
                 Save
               </Button>
-              <Button onClick={() => setEditingKey(null)}>
-                Cancel
-              </Button>
+              <Button onClick={() => setEditingKey(null)}>Cancel</Button>
             </span>
           ) : (
-            <Button
-              type="primary"
-              onClick={() => handleEditClick(record)}
-              icon={<EditOutlined />}
-            />
+            <Button type="primary" onClick={() => handleEditClick(record)} icon={<EditOutlined />} />
           );
         },
       },
     ],
-    [editingKey, project.users] // Added project.users as dependency
+    [editingKey, project.users]
   );
 
   const mergedColumns = columns.map(col => {
-    if (!col.editable) {
-      return col;
-    }
+    if (!col.editable) return col;
     return {
       ...col,
       onCell: (record: ExtendedTaskType) => ({
@@ -277,7 +292,7 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
 
   const rowSelection: TableProps<ExtendedTaskType>["rowSelection"] = {
     selectedRowKeys,
-    onChange: (newSelectedRowKeys: React.Key[], selectedRows: ExtendedTaskType[]) => {
+    onChange: (newSelectedRowKeys: React.Key[]) => {
       setSelectedRowKeys(newSelectedRowKeys);
     },
     getCheckboxProps: (record: ExtendedTaskType) => ({
@@ -286,21 +301,72 @@ const TaskTable = ({ data, showModal, project }: TaskTableProps) => {
   };
 
   return (
-    <Form form={form} component={false}>
-      <Table
-        components={{
-          body: {
-            cell: EditableCell,
-          },
-        }}
-        columns={mergedColumns}
-        dataSource={enhancedData}
-        rowSelection={rowSelection}
-        rowKey="id"
-        size="small"
-        bordered
-      />
-    </Form>
+    <>
+      <div style={{ marginBottom: 16 }}>
+        <Button
+          type="primary"
+          onClick={handleSetDueDate}
+          disabled={selectedRowKeys.length === 0}
+          style={{ marginRight: 8 }}
+        >
+          Set Due Date
+        </Button>
+        <Button
+          type="primary"
+          onClick={handleAssign}
+          disabled={selectedRowKeys.length === 0}
+        >
+          Assign
+        </Button>
+      </div>
+      <Form form={form} component={false}>
+        <Table
+          components={{ body: { cell: EditableCell } }}
+          columns={mergedColumns}
+          dataSource={enhancedData}
+          rowSelection={rowSelection}
+          rowKey="id"
+          size="small"
+          bordered
+        />
+      </Form>
+
+      <Modal
+        title="Set Due Date for Selected Tasks"
+        open={isDueDateModalVisible}
+        onOk={handleDueDateOk}
+        onCancel={() => setIsDueDateModalVisible(false)}
+      >
+        <Form form={bulkForm} layout="vertical">
+          <Form.Item name="dueDate" label="Due Date">
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Assign Users to Selected Tasks"
+        open={isAssigneeModalVisible}
+        onOk={handleAssigneeOk}
+        onCancel={() => setIsAssigneeModalVisible(false)}
+      >
+        <Form form={bulkForm} layout="vertical">
+          <Form.Item name="assigneeIds" label="Assignees">
+            <Select
+              mode="multiple"
+              placeholder="Select assignees"
+              options={project.users.map(user => ({
+                label: user.username,
+                value: user.id,
+              }))}
+              optionFilterProp="label"
+              showSearch
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 };
 
@@ -316,10 +382,7 @@ const EditableCell: React.FC<any> = ({
   return (
     <td {...restProps} onDoubleClick={onDoubleClick}>
       {editing ? (
-        <Form.Item
-          name={dataIndex}
-          style={{ margin: 0 }}
-        >
+        <Form.Item name={dataIndex} style={{ margin: 0 }}>
           {children}
         </Form.Item>
       ) : (

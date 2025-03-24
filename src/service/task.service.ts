@@ -46,3 +46,8 @@ export const updateTask = async ({ id, payload }: any) => {
   const response = await axios.patch(`${backendURI}/tasks/${id}`, payload);
   return response.data;
 };
+
+export const bulkUpdateTasks = async (payload:any) => {
+  const response = await axios.patch(`${backendURI}/tasks/bulk-update`, payload);
+  return response.data;
+};
