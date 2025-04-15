@@ -21,26 +21,49 @@ const Clock = () => {
   const [historyRemark, setHistoryRemark] = useState<string>("");
   const [isClockInModalVisible, setIsClockInModalVisible] = useState(false);
   const [isClockOutModalVisible, setIsClockOutModalVisible] = useState(false);
-  const [isFinalClockOutModalVisible, setIsFinalClockOutModalVisible] = useState(false); // New state for final clockout modal
+  const [isFinalClockOutModalVisible, setIsFinalClockOutModalVisible] = useState(false);
 
   const getLocation = () => {
-    return new Promise<{ latitude: number; longitude: number }>(
-      (resolve, reject) => {
-        if (navigator.geolocation) {
+    return new Promise<{ latitude: number; longitude: number; accuracy: number }>(
+      async (resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocation is not supported by this browser."));
+          return;
+        }
+
+        const tryGetPosition = (attempt = 1, maxAttempts = 3) => {
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              resolve({
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-              });
+              const accuracy = position.coords.accuracy;
+              console.log(`Attempt ${attempt} - Location Accuracy: ${accuracy} meters`);
+
+              if (accuracy <= 50) {
+                // If accuracy is good, resolve immediately
+                resolve({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                  accuracy: position.coords.accuracy,
+                });
+              } else if (attempt < maxAttempts) {
+                // If accuracy is low and more attempts remain, wait and retry
+                setTimeout(() => tryGetPosition(attempt + 1, maxAttempts), 2000); // Wait 2 seconds before retrying
+              } else {
+                // If max attempts reached, reject with the last result
+                reject(new Error(`Could not get precise location. Best accuracy: ${accuracy} meters`));
+              }
             },
             (error) => {
               reject(error);
+            },
+            {
+              enableHighAccuracy: true, // Use GPS for high accuracy
+              timeout: 10000, // Wait up to 10 seconds per attempt
+              maximumAge: 0, // No cached data
             }
           );
-        } else {
-          reject(new Error("Geolocation not supported"));
-        }
+        };
+
+        tryGetPosition(); // Start the first attempt
       }
     );
   };
@@ -59,15 +82,16 @@ const Clock = () => {
 
   const handleClockInConfirm = async () => {
     try {
-      const currentLocation = await getLocation();
-      setLocation(currentLocation);
+      const { latitude, longitude, accuracy } = await getLocation();
+      setLocation({ latitude, longitude });
+      console.log(`Clock In Final Location Accuracy: ${accuracy} meters`);
 
       const payload = {
         date: moment().format("YYYY-MM-DD"),
         clockIn: moment().format("HH:mm:ss a"),
         clockInRemark: clockInRemark || undefined,
-        latitude: currentLocation.latitude.toString(),
-        longitude: currentLocation.longitude.toString(),
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
       };
 
       console.log("Clock In Payload:", payload);
@@ -85,7 +109,8 @@ const Clock = () => {
       console.error("Clock In Location Error:", error);
       Modal.error({
         title: "Error",
-        content: "Failed to get location. Please try again.",
+        content:
+          error.message || "Failed to get precise location. Please ensure location services are enabled.",
       });
     }
   };
@@ -105,13 +130,14 @@ const Clock = () => {
 
   const handleClockOutConfirm = async () => {
     try {
-      const currentLocation = await getLocation();
-      setLocation(currentLocation);
+      const { latitude, longitude, accuracy } = await getLocation();
+      setLocation({ latitude, longitude });
+      console.log(`Normal Clock Out Final Location Accuracy: ${accuracy} meters`);
 
       const payload = {
         clockOut: moment().format("HH:mm:ss a"),
-        latitude: currentLocation.latitude.toString(),
-        longitude: currentLocation.longitude.toString(),
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
         remark: historyRemark || undefined,
       };
 
@@ -130,7 +156,8 @@ const Clock = () => {
       console.error("Normal Clock Out Location Error:", error);
       Modal.error({
         title: "Error",
-        content: "Failed to get location. Please try again.",
+        content:
+          error.message || "Failed to get precise location. Please ensure location services are enabled.",
       });
     }
   };
@@ -149,14 +176,15 @@ const Clock = () => {
 
   const handleFinalClockOutConfirm = async () => {
     try {
-      const currentLocation = await getLocation();
-      setLocation(currentLocation);
+      const { latitude, longitude, accuracy } = await getLocation();
+      setLocation({ latitude, longitude });
+      console.log(`Final Clock Out Final Location Accuracy: ${accuracy} meters`);
 
       const payload = {
         clockOut: moment().format("HH:mm:ss a"),
         clockOutRemark: clockOutRemark || undefined,
-        latitude: currentLocation.latitude.toString(),
-        longitude: currentLocation.longitude.toString(),
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
       };
 
       console.log("Final Clock Out Payload:", payload);
@@ -177,7 +205,8 @@ const Clock = () => {
       console.error("Final Clock Out Location Error:", error);
       Modal.error({
         title: "Error",
-        content: "Failed to set final clock-out. Please try again.",
+        content:
+          error.message || "Failed to set final clock-out. Please ensure location services are enabled.",
       });
     }
   };

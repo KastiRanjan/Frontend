@@ -17,4 +17,6 @@ export default defineConfig({
       "@/context": "/src/context",
     },
   },
+  server: {
+    host: '0.0.0.0'  },
 });

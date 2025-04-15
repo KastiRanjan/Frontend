@@ -1,18 +1,27 @@
-import { useProfile } from "@/hooks/user/useProfile";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
+import { useProfile } from "@/hooks/user/useProfile";
+
+type Profile = {
+  role?: { permission: string[] };
+  // Add other profile fields as needed
+};
 
 type SessionContextType = {
   isAuthenticated: boolean;
   loading: boolean;
-  profile?: any;
+  profile?: Profile;
   isProfilePending?: boolean;
-  permissions?: any;
+  permissions?: string[];
 };
 
-const SessionContext = createContext<SessionContextType>(
-  {} as SessionContextType
-);
+const SessionContext = createContext<SessionContextType>({
+  isAuthenticated: false,
+  loading: true,
+  profile: undefined,
+  isProfilePending: false,
+  permissions: [],
+});
 
 export const SessionProvider = ({
   children,
@@ -20,30 +29,36 @@ export const SessionProvider = ({
   children: React.ReactNode;
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [cookies] = useCookies(["ExpiresIn"], {
-    doNotParse: true,
-  });
+  const [cookies] = useCookies(["ExpiresIn"]);
   const [loading, setLoading] = useState(true);
-  const { data: profile, isPending: isProfilePending } =
+  const { data: profile, isPending: isProfilePending, error } =
     useProfile(isAuthenticated);
 
   useEffect(() => {
     const currentDateTime = new Date().getTime();
-    const expiresInDateTime = cookies?.ExpiresIn
+    const expiresInDateTime = cookies?.ExpiresIn && !isNaN(new Date(cookies.ExpiresIn).getTime())
       ? new Date(cookies.ExpiresIn).getTime()
       : 0;
-    if (expiresInDateTime < currentDateTime) {
-      setIsAuthenticated(false);
-    } else {
-      setLoading(false);
-      setIsAuthenticated(true);
-    }
+    setIsAuthenticated(expiresInDateTime >= currentDateTime);
     setLoading(false);
   }, [cookies]);
 
+  useEffect(() => {
+    if (error) {
+      setIsAuthenticated(false);
+      setLoading(false);
+    }
+  }, [error]);
+
   return (
     <SessionContext.Provider
-      value={{ isAuthenticated, loading, profile, isProfilePending, permissions: profile?.role?.permission || [] }}
+      value={{
+        isAuthenticated,
+        loading,
+        profile,
+        isProfilePending,
+        permissions: profile?.role?.permission || [],
+      }}
     >
       {children}
     </SessionContext.Provider>

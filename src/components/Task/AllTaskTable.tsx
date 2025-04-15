@@ -14,7 +14,6 @@ import {
   Table,
   TableProps,
 } from "antd";
-import TextArea from "antd/es/input/TextArea";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -136,7 +135,7 @@ const AllTaskTable = ({ status }: { status: string }) => {
   };
   return (
     <Row gutter={8}>
-      <Col span={16}>
+      <Col span={24}>
         <Table
           columns={columns}
           dataSource={data}
@@ -145,125 +144,6 @@ const AllTaskTable = ({ status }: { status: string }) => {
           rowKey={"id"}
           bordered
         />
-      </Col>
-      <Col span={8}>
-        <Card>
-          <div style={{ padding: "16px" }}>
-            <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
-              Code {selectedTask?.tcode}
-            </p>
-            <Input.TextArea
-              className="text-2xl font-bold"
-              value={selectedTask?.name}
-              onChange={(e) => form.setFieldsValue({ name: e.target.value })}
-            />
-
-            <Form form={form} onFinish={onFinish} className="mt-2">
-              <Form.Item name="status" className="m-0 w-[130px]">
-                <Select
-                  defaultValue={"open"}
-                  onChange={(value) => form.setFieldsValue({ status: value })}
-                  defaultActiveFirstOption
-                  style={{
-                    background:
-                      form.getFieldValue("status") === "done"
-                        ? "green"
-                        : form.getFieldValue("status") === "in_progress"
-                        ? "orange"
-                        : "red",
-                  }}
-                  options={[
-                    { value: "open", label: "Open" },
-                    { value: "in_progress", label: "In Progress" },
-                    { value: "done", label: "Done" },
-                  ]}
-                  variant="filled"
-                  size="large"
-                />
-              </Form.Item>
-            </Form>
-            <div className="py-3">
-              <p style={{ fontWeight: "bold", marginBottom: "8px" }}>
-                Description
-              </p>
-              <Form form={form} onFinish={onFinish} defaultValue={selectedTask?.description} >
-                <Form.Item id="description" name="description" >
-                  <Input.TextArea  rows={5} />
-                </Form.Item>
-                <Button htmlType="submit" type="primary">
-                  Save
-                </Button>
-              </Form>
-            </div>
-            <p style={{ fontWeight: "bold", marginBottom: "8px" }}>Detail</p>
-            <Divider className="my-2" />
-            <Row gutter={16} className="mb-2">
-              <Col span={6}>
-                <strong>Assignee: </strong>{" "}
-              </Col>
-              <Col span={6}>
-                {/* <Form
-                form={form}
-                initialValues={selectedTask?.assignees || []}
-                onFinish={onFinish}
-              >
-                <FormSelectWrapper
-                  id="asignees"
-                  name="assineeId"
-                  mode="multiple"
-                  classname="h-[38px]"
-                  options={users?.results.map((user: UserType) => ({
-                    label: user.username,
-                    value: user.id,
-                  }))}
-                  changeHandler={() => form.submit()}
-                />
-              </Form> */}
-              </Col>
-            </Row>
-            <Row gutter={16} className="mb-2">
-              <Col span={6}>
-                <strong>Reporter:</strong>
-              </Col>
-              <Col>
-                <ul>
-                  <li>Ranjan</li>
-                </ul>
-              </Col>
-            </Row>
-            <Row gutter={24} className="mb-2">
-              <Col span={12}>
-                <strong>Created Date:</strong>
-              </Col>
-              <Col>
-                {selectedTask?.createdAt
-                  ? new Date(selectedTask?.createdAt).toLocaleString()
-                  : ""}
-              </Col>
-            </Row>
-            <Row gutter={24} className="mb-2">
-              <Col span={12}>
-                <strong>Updated Date:</strong>
-              </Col>
-              <Col>
-                {selectedTask?.updatedAt
-                  ? new Date(selectedTask.updatedAt).toLocaleString()
-                  : ""}
-              </Col>
-            </Row>
-            <Row gutter={24} className="mb-2">
-              <Col span={12}>
-                <strong>Due Date:</strong>
-              </Col>
-              <Col>{selectedTask?.dueDate}</Col>
-            </Row>
-            <Row gutter={16} className="mb-2">
-              <Col>
-                <strong>Project:{selectedTask?.project?.name}</strong>
-              </Col>
-            </Row>
-          </div>
-        </Card>
       </Col>
     </Row>
   );

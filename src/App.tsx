@@ -5,8 +5,7 @@ import { useNavigate, useRoutes } from "react-router-dom";
 import Router from "./routes";
 import { useSession } from "./context/SessionContext";
 import { antTheme } from "./theme";
-import 'react-quill/dist/quill.snow.css';
-
+import "react-quill/dist/quill.snow.css";
 
 const App: React.FC = () => {
   const routes = useRoutes(Router);
@@ -14,12 +13,16 @@ const App: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      if (window.location.pathname.includes("/login")) {
-        navigate("/");
-      }
+    if (isAuthenticated && window.location.pathname === "/login") {
+      navigate("/");
+    } else if (
+      !isAuthenticated &&
+      !["/login", "/signup"].includes(window.location.pathname)
+    ) {
+      navigate("/login");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
+
   return <ConfigProvider theme={antTheme}>{routes}</ConfigProvider>;
 };
 
