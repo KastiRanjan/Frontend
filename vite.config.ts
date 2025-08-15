@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import fs from 'fs';
-import path from 'path';
+// import fs from 'fs';
+// import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
@@ -20,9 +20,9 @@ export default defineConfig({
     },
   },
   server: {
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'ssl/private.key')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/certificate.crt')),
-    },
+    // https: {
+    //   key: fs.readFileSync(path.resolve(__dirname, 'ssl/private.key')),
+    //   cert: fs.readFileSync(path.resolve(__dirname, 'ssl/certificate.crt')),
+    // },
     host: '0.0.0.0'  },
 });

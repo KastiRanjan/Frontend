@@ -12,7 +12,7 @@ const EditRole = () => {
   return (
     <>
       <PageTitle
-        title="Create Task Group"
+        title="Edit Role"
         element={
           <Button type="primary" onClick={() => navigate(-1)}>
             Close

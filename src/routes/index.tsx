@@ -36,6 +36,12 @@ import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
 import EditWorklog from "@/pages/Worklog/edit";
+import Perimssion from "@/pages/Permission";
+import RolePermision from "@/pages/Role/role-permission";
+import RolesPage from "@/pages/Role";
+import RoleTable from "@/components/Role/RoleTable";
+import RolePermissionForm from "@/components/Role/RolePermissionForm";
+import RoleForm from "@/components/Role/RoleForm";
 
 const Router = [
   {
@@ -260,7 +266,28 @@ const Router = [
         path: "/settings",
         element: <Setting />,
       },
+       {
+        path: "/permission",
+        element: <RoleTable />,
+
+      },
+       {
+        path: "/role/permission/:id",
+        element: <RolePermision />,
+
+      },
+      //  {
+      //   path: "/role/edit/:id",
+      //   element: <RolePermision />,
+
+      // },
+       {
+        path: "/role",
+        element: <RolePermision />,
+
+      },
     ],
+    
   },
 ];
 

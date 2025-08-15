@@ -16,7 +16,7 @@ const ProtectedRoute = ({ component, method, resource }: any) => {
         return <div className="flex justify-center py-24"><Spin size="large" /></div> 
     }
 
-    return <>{hasPermission ? component : <>forbidden</>}</>
+    return <>{hasPermission ? component : <>You Don't Have access to this resource </>}</>
 
 };
 

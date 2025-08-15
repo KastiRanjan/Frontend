@@ -1,8 +1,12 @@
-import { Card, Col, Row } from "antd";
+import { Button, Card, Col, Row } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Title from "antd/es/typography/Title";
+import { useNavigate } from "react-router-dom";
+
 
 const Setting = () => {
+  
+  const navigate = useNavigate();
   return (
     <Row gutter={16}>
       <Col span={6}>
@@ -12,7 +16,13 @@ const Setting = () => {
           </svg>
           <Title level={4} className="text-blue-600">
             {" "}
-            Users & Permissions
+            
+            <Button 
+                        onClick={() => {
+            navigate("/permission");
+          }}
+            >Users & Permissions</Button>
+            
           </Title>
           <Paragraph>
             Roles Users GroupsTechnician GroupsFine-Grained AccessPrivacy

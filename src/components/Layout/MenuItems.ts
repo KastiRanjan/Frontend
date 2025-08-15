@@ -18,6 +18,7 @@ export interface MenuItem {
 
 export const MenuItems = (): MenuProps[] => {
   const { permissions } = useSession()
+  console.log(permissions)
   const items = [
     {
       key: "/",
@@ -81,9 +82,9 @@ export const MenuItems = (): MenuProps[] => {
     // },
   ]
 
-  // const filteredItems = _.filter(items, item =>
-  //   _.some(permissions, { resource: item.resource })
-  // );
+  const filteredItems = _.filter(items, item =>
+    _.some(permissions, { resource: item.resource })
+  );
 
-  return items
+  return filteredItems
 };
