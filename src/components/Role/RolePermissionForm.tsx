@@ -33,8 +33,12 @@ const RolePermissionForm = ({ id }) => {
   const handleCheck = (checked) => setCheckedKeys(checked);
 
   const handleSubmit = async () => {
+    // Only send permission IDs (numbers or uuids), not group keys (like 'task-template')
+    const filteredKeys = checkedKeys.filter(
+      (key) => typeof key === 'number' || /^[0-9a-fA-F-]{36}$/.test(key)
+    );
     try {
-      await updateRolePermissions.mutateAsync({ id, permissions: checkedKeys });
+      await updateRolePermissions.mutateAsync({ id, permissions: filteredKeys });
       message.success("Permissions updated!");
     } catch {
       message.error("Failed to update permissions.");
