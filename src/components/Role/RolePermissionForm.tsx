@@ -1,64 +1,58 @@
-import { useModifiedPermission } from "@/hooks/permission/useMoodifiedPermission";
-import { useRolePermissionById } from "@/hooks/permission/useRolePermissionById";
-import { Role } from "@/pages/Role/type";
-import { Form, Tree, TreeProps } from "antd";
 import { useEffect, useState } from "react";
+import { usePermission } from "@/hooks/permission/usePermission";
+import { useRolePermissionById } from "@/hooks/permission/useRolePermissionById";
+import { useUpdateRolePermissions } from "@/hooks/role/useUpdateRolePermissions";
+import { Spin, Tree, message } from "antd";
 
-interface RoleFormProps {
-  editRoleData?: Role;
-  id?: string;
-}
+const PAGE_SIZE = 100; // adjust as needed
 
-const RolePermissionForm = ({ editRoleData, id }: RoleFormProps) => {
-  const [form] = Form.useForm();
-  const { data: rolePermissions } = useRolePermissionById({ id });
-  const [checkedKeys, setCheckedKeys] = useState<React.Key[]>(["b319e9ca-783b-4d90-bb1d-8140ec57209c"]);
-  // const [, setSelectedKeys] = useState<React.Key[]>([]);
-
-  useEffect(() => {
-    if (id && editRoleData) {
-      form.setFieldsValue(editRoleData);
-    } else {
-      form.resetFields();
-    }
-  }, [editRoleData, form, id]);
+const RolePermissionForm = ({ id }) => {
+  const { data: allPermissions, isLoading: loadingPermissions } = usePermission({ page: 1, limit: PAGE_SIZE });
+  const { data: rolePermissions, isLoading: loadingRolePerms } = useRolePermissionById({ id });
+  const [checkedKeys, setCheckedKeys] = useState<number[]>([]);
+  const updateRolePermissions = useUpdateRolePermissions();
 
   useEffect(() => {
-    if (rolePermissions) {
-      setCheckedKeys(rolePermissions);
-    }
+    if (rolePermissions) setCheckedKeys(rolePermissions);
   }, [rolePermissions]);
 
-  const { data: permission, isPending: isPendingPermission } =
-    useModifiedPermission({
-      page: 1,
-      limit: 100,
-    });
+  if (loadingPermissions || loadingRolePerms) return <Spin />;
 
-  const onFinish = () => { };
+  // Transform permissions for AntD Tree
+  const treeData = (allPermissions?.results || []).reduce((acc, perm) => {
+    const group = acc.find(g => g.title === perm.resource);
+    const node = { title: perm.description, key: perm.id };
+    if (group) {
+      group.children.push(node);
+    } else {
+      acc.push({ title: perm.resource, key: perm.resource, children: [node] });
+    }
+    return acc;
+  }, []);
 
+  const handleCheck = (checked) => setCheckedKeys(checked);
 
-  const onCheck: TreeProps['onCheck'] = (checkedKeysValue) => {
-    setCheckedKeys(checkedKeysValue as React.Key[]);
+  const handleSubmit = async () => {
+    try {
+      await updateRolePermissions.mutateAsync({ id, permissions: checkedKeys });
+      message.success("Permissions updated!");
+    } catch {
+      message.error("Failed to update permissions.");
+    }
   };
 
-  // const onSelect: TreeProps['onSelect'] = (selectedKeysValue, info) => {
-  //   console.log('onSelect', info);
-  //   setSelectedKeys(selectedKeysValue);
-  // };
-
   return (
-    <Form form={form} layout="vertical" initialValues={{}} onFinish={onFinish}>
+    <div>
       <Tree
-        disabled={isPendingPermission}
-        selectable={false}
-        defaultExpandAll
         checkable
-        onCheck={onCheck}
+        treeData={treeData}
         checkedKeys={checkedKeys}
-        treeData={permission || []}
+        onCheck={handleCheck}
       />
-    </Form>
+      <button type="button" onClick={handleSubmit} style={{ marginTop: 16 }}>
+        Save Permissions
+      </button>
+    </div>
   );
 };
 

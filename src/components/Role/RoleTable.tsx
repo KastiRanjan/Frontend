@@ -20,24 +20,24 @@ const columns = [
     dataIndex: "createdAt",
     key: "createdAt",
   },
-  {
-    title: "Actions",
-    key: "actions",
-    render: (_: any, record: any) => (
-      <>
-        <Link to={`/role/edit/${record.id}`}>
-          <Button type="primary" icon={<EditOutlined />}>
-            Edit
-          </Button>
-        </Link>
-        <Link to={`/role/permission/${record.id}`}>
-          <Button type="primary" icon={<EditOutlined />}>
-      Permission
-          </Button>
-        </Link>
-      </>
-    ),
-  },
+{
+  title: "Actions",
+  key: "actions",
+  render: (_: any, record: any) => (
+    <>
+      <Link to={`/role/edit/${record.id}`}>
+        <Button type="primary" icon={<EditOutlined />}>
+          Edit
+        </Button>
+      </Link>
+      <Link to={`/role/permission/${record.id}`}>
+        <Button type="default" style={{ marginLeft: 8 }}>
+          Assign Permissions
+        </Button>
+      </Link>
+    </>
+  ),
+},
 ];
 const RoleTable = () => {
   const [page, setPage] = useState(1);

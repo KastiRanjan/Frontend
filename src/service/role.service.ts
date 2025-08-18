@@ -34,3 +34,16 @@ export const editRole = async ({
   const response = await axios.put(`${backendURI}/roles/${id}`, payload);
   return response.data;
 };
+export const updateRolePermissions = async ({
+  id,
+  permissions,
+}: {
+  id: string;
+  permissions: number[];
+}) => {
+  const response = await axios.put(
+    `${backendURI}/roles/${id}/permissions`,
+    { permissions }
+  );
+  return response.data;
+};

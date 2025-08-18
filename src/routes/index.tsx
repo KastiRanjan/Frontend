@@ -39,9 +39,8 @@ import EditWorklog from "@/pages/Worklog/edit";
 import Perimssion from "@/pages/Permission";
 import RolePermision from "@/pages/Role/role-permission";
 import RolesPage from "@/pages/Role";
-import RoleTable from "@/components/Role/RoleTable";
-import RolePermissionForm from "@/components/Role/RolePermissionForm";
-import RoleForm from "@/components/Role/RoleForm";
+import CreateRole from "@/pages/Role/new";
+import EditRole from "@/pages/Role/edit";
 
 const Router = [
   {
@@ -267,25 +266,25 @@ const Router = [
         element: <Setting />,
       },
        {
-        path: "/permission",
-        element: <RoleTable />,
-
-      },
-       {
-        path: "/role/permission/:id",
-        element: <RolePermision />,
-
-      },
-      //  {
-      //   path: "/role/edit/:id",
-      //   element: <RolePermision />,
-
-      // },
-       {
-        path: "/role",
-        element: <RolePermision />,
-
-      },
+  path: "/permission",
+  element: <Perimssion />,
+},
+{
+  path: "/role",
+  element: <RolesPage />,
+},
+{
+  path: "/role/new",
+  element: <CreateRole />,
+},
+{
+  path: "/role/edit/:id",
+  element: <EditRole />,
+},
+{
+  path: "/role/permission/:id",
+  element: <RolePermision />,
+},
     ],
     
   },

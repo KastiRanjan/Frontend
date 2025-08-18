@@ -1,7 +1,7 @@
-import { Button, Card, Col, Row } from "antd";
-import Paragraph from "antd/es/typography/Paragraph";
-import Title from "antd/es/typography/Title";
+import { Button, Card, Col, Row,Typography } from "antd";
 import { useNavigate } from "react-router-dom";
+const { Title, Paragraph } = Typography;
+
 
 
 const Setting = () => {
@@ -10,23 +10,20 @@ const Setting = () => {
   return (
     <Row gutter={16}>
       <Col span={6}>
-        <Card className="h-full">
-          <svg className="admin-icon-prop">
-            <use></use>
-          </svg>
+        <Card className="h-full" onClick={() => navigate("/role")} hoverable>
           <Title level={4} className="text-blue-600">
-            {" "}
-            
-            <Button 
-                        onClick={() => {
-            navigate("/permission");
-          }}
-            >Users & Permissions</Button>
-            
+            Roles & Permissions
           </Title>
           <Paragraph>
-            Roles Users GroupsTechnician GroupsFine-Grained AccessPrivacy
-            Settings
+            Manage roles and assign permissions to control access.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/permission")} hoverable>
+          <Title level={4}>Permissions</Title>
+          <Paragraph>
+            Create and edit permissions for resources.
           </Paragraph>
         </Card>
       </Col>
