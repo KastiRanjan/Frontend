@@ -1,3 +1,8 @@
+// Fetch project timeline
+export const getProjectTimeline = async (projectId: number) => {
+  const response = await axios.get(`${backendURI}/projects/${projectId}/timeline`);
+  return response.data;
+};
 import axios from "axios";
 
 axios.defaults.withCredentials = true;

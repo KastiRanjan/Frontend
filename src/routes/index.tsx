@@ -1,3 +1,4 @@
+import ProjectTimelinePage from "@/pages/Project/timeline";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import Attendence from "@/pages/Attendence";
 import Client from "@/pages/Client";

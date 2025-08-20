@@ -6,6 +6,7 @@ import TaskForm from '../Task/TaskForm';
 import { useState } from 'react';
 import ProjectSummary from './ProjectSummary';
 import ProjectUserCard from './ProjectUserCard';
+import ProjectTimeline from './ProjectTimeline';
 
 const { Title, Text } = Typography;
 
@@ -93,9 +94,9 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
               children: <ProjectUserCard data={users || []} />
             },
             {
-              label: 'Time Sheet',
+              label: 'Timeline',
               key: '5',
-              children: <div>Time Sheet Content</div>
+              children: <ProjectTimeline projectId={project.id} />
             },
           ]} />
         </Card>
