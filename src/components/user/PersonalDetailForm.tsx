@@ -3,6 +3,7 @@ import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { useCreateUserDetail } from "@/hooks/user/userCreateuserDetail";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -49,7 +50,9 @@ interface PersonalDetailFormProps {
 
 const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
   const [form] = Form.useForm<PersonalDetailFormValues>();
-  const { mutate, isLoading } = useCreateUserDetail();
+  const mutation = useCreateUserDetail();
+  const { mutate } = mutation;
+  const queryClient = useQueryClient();
   const [sameAsPermanent, setSameAsPermanent] = useState(false);
   const { id } = useParams();
   // Handle form submission
@@ -71,7 +74,8 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
     mutate({id,payload,query:"profile"},{
       onSuccess: () => {
         message.success("User details saved successfully!");
-        form.resetFields(); // Reset form after success
+        // Refetch user details so parent gets latest data
+        queryClient.invalidateQueries({ queryKey: ["users", id] });
       },
       onError: (error: any) => {
         const errorMessage =
@@ -438,7 +442,7 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
         </Row>
       </Card>
 
-      <Button type="primary" htmlType="submit" loading={isLoading}>
+  <Button type="primary" htmlType="submit" loading={mutation.status === 'pending'}>
         Save
       </Button>
     </Form>

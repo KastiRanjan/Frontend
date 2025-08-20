@@ -27,18 +27,19 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
     keywords: "",
   });
 
-  // Get the current project lead value from the form
+  // Get the current project lead and manager value from the form
   const projectLead = Form.useWatch("projectLead", form);
+  const projectManager = Form.useWatch("projectManager", form);
 
   const onFinish = (values: any) => {
-    // Ensure projectLead is included in the users array
+    // Ensure projectLead and projectManager are included in the users array
+    const userIds = [values.projectLead, values.projectManager].filter(Boolean);
     const updatedValues = {
       ...values,
-      users: values.users 
-        ? [...new Set([...values.users, values.projectLead])] // Add projectLead to users array and remove duplicates
-        : [values.projectLead], // If no users selected, just send projectLead
+      users: values.users
+        ? [...new Set([...values.users, ...userIds])]
+        : userIds,
     };
-
     if (editProjectData?.id) {
       mutateEdit(
         { id: editProjectData.id, payload: updatedValues },
@@ -49,11 +50,21 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
     }
   };
 
-  // Filter out the project lead from available users for the "Invite Users" field
+  // Filter out the project lead and manager from available users for the "Invite Users" field
   const filteredUsers = isPendingUser
     ? []
     : users?.results
-        ?.filter((user: UserType) => user.id !== projectLead)
+        ?.filter((user: UserType) => user.id !== projectLead && user.id !== projectManager)
+        ?.map((user: UserType) => ({
+          value: user.id,
+          label: user.name,
+        })) || [];
+
+  // Filter users with role 'manager' for Project Manager field
+  const managerOptions = isPendingUser
+    ? []
+    : users?.results
+        ?.filter((user: UserType) => user.role?.name?.toLowerCase() === "projectmanager")
         ?.map((user: UserType) => ({
           value: user.id,
           label: user.name,
@@ -69,6 +80,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         endingDate: moment(editProjectData?.endingDate),
         users: editProjectData?.users?.map((user: any) => user.id),
         projectLead: editProjectData?.projectLead?.id,
+        projectManager: editProjectData?.projectManager?.id,
       }}
       onFinish={onFinish}
     >
@@ -120,6 +132,18 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             }
             rules={[
               { required: true, message: "Please select a project lead!" },
+            ]}
+          />
+        </Col>
+        <Col span={12}>
+          <FormSelectWrapper
+            id="projectManager"
+            name="projectManager"
+            label="Project Manager"
+            placeholder="Select project manager"
+            options={managerOptions}
+            rules={[
+              { required: true, message: "Please select a project manager!" },
             ]}
           />
         </Col>

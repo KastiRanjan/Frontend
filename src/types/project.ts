@@ -20,6 +20,7 @@ export interface ProjectType {
     startingDate: string;
     endingDate: string;
     projectLead?: UserType;
+    projectManager?: UserType;
     users?: UserType[];
     tasks?: TaskType[];
     createdAt?: string;

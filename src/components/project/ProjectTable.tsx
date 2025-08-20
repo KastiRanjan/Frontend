@@ -47,21 +47,40 @@ const columns = (
   },
   {
     title: "Project Lead",
-    dataIndex: "natureOfWork",
-    key: "natureOfWork",
+    dataIndex: "projectLead",
+    key: "projectLead",
     render: (_: any, record: any) => (
-      <>
-        <Avatar
-          size={"small"}
-          className="bg-zinc-500"
-          src={` ${import.meta.env.VITE_BACKEND_URI}/document/${
-            record?.projectLead?.avatar
-          }`}
-        >
-          {record?.projectLead?.name[0]}
-        </Avatar>{" "}
-        {record?.projectLead?.name}
-      </>
+      record?.projectLead ? (
+        <>
+          <Avatar
+            size={"small"}
+            className="bg-zinc-500"
+            src={` ${import.meta.env.VITE_BACKEND_URI}/document/${record?.projectLead?.avatar}`}
+          >
+            {record?.projectLead?.name?.[0]}
+          </Avatar>{" "}
+          {record?.projectLead?.name}
+        </>
+      ) : null
+    ),
+  },
+  {
+    title: "Project Manager",
+    dataIndex: "projectManager",
+    key: "projectManager",
+    render: (_: any, record: any) => (
+      record?.projectManager ? (
+        <>
+          <Avatar
+            size={"small"}
+            className="bg-zinc-500"
+            src={` ${import.meta.env.VITE_BACKEND_URI}/document/${record?.projectManager?.avatar}`}
+          >
+            {record?.projectManager?.name?.[0]}
+          </Avatar>{" "}
+          {record?.projectManager?.name}
+        </>
+      ) : null
     ),
   },
   {
