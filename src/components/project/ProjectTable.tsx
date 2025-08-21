@@ -117,7 +117,11 @@ const ProjectTable = ({ showModal, status }: any) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: project, isPending } = useProject({ status });
-  const { permissions } = useSession();
+  const { permissions, profile } = useSession();
+
+  // Determine if user is auditsenior or junior
+  const userRole = profile?.role?.name?.toLowerCase();
+  const hideCreateDelete = userRole === "auditsenior" || userRole === "auditjunior";
 
   const handleTableChange = (pagination: any) => {
     setPage(pagination.current);
@@ -152,17 +156,21 @@ const ProjectTable = ({ showModal, status }: any) => {
         <div className="flex w-full justify-between">
           <SearchBarWithPopover />
           <Space size={10}>
-            <Button size="large" color="danger">
-              Delete
-            </Button>
+            {!hideCreateDelete && (
+              <Button size="large" color="danger">
+                Delete
+              </Button>
+            )}
             <Tooltip title="Download">
               <Button size="large">
                 <DownloadOutlined />
               </Button>
             </Tooltip>
-            <Button size="large" type="primary" onClick={() => showModal()}>
-              Create Project
-            </Button>
+            {!hideCreateDelete && (
+              <Button size="large" type="primary" onClick={() => showModal()}>
+                Create Project
+              </Button>
+            )}
           </Space>
         </div>
       </TableToolbar>

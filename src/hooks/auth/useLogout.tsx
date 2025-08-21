@@ -10,10 +10,8 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: logout,
     onSuccess: (response) => {
-      // Clear profile cache so SessionContext refetches
-  queryClient.removeQueries({ queryKey: ["profile"] });
-      // Optionally, clear all queries if needed:
-      // queryClient.clear();
+      // Invalidate all queries on logout
+      queryClient.clear();
       navigate("/login");
     },
   });

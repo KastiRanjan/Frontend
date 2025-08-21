@@ -81,6 +81,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         users: editProjectData?.users?.map((user: any) => user.id),
         projectLead: editProjectData?.projectLead?.id,
         projectManager: editProjectData?.projectManager?.id,
+        customer: editProjectData?.customer?.id,
       }}
       onFinish={onFinish}
     >

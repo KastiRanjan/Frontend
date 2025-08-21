@@ -1,6 +1,7 @@
 // src/ProjectDetail.tsx
 import { ProjectType } from '@/types/project';
 import { Button, Card, Col, Modal, Row, Space, Tabs, Typography } from 'antd';
+import { useSession } from '@/context/SessionContext';
 import TaskTable from '../Task/TaskTable';
 import TaskForm from '../Task/TaskForm';
 import { useState } from 'react';
@@ -8,15 +9,22 @@ import ProjectSummary from './ProjectSummary';
 import ProjectUserCard from './ProjectUserCard';
 import ProjectTimeline from './ProjectTimeline';
 
-const { Title, Text } = Typography;
+
 
 interface ProjectDetailProps {
   project: ProjectType;
 }
 
+
 const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const { profile } = useSession();
+  // Support both { name } and { permission } in role
+  const userRole = (profile?.role && 'name' in profile.role && typeof profile.role.name === 'string')
+    ? profile.role.name.toLowerCase()
+    : undefined;
+  const hideAddTask = userRole === 'auditsenior' || userRole === 'auditjunior';
 
   const tasks = project?.tasks;
   const users = project?.users;
@@ -43,20 +51,17 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
         >
           <div className="max-h-[70vh] overflow-y-scroll">
             <TaskForm
-              users={project?.users}
-              tasks={project?.tasks}
+              users={project?.users ?? []}
+              tasks={project?.tasks ?? []}
               editTaskData={selectedTask}
               handleCancel={handleCancel}
-              projectId={project?.id}
+              projectId={project?.id?.toString?.() ?? String(project?.id)}
             />
           </div>
         </Modal>
       )}
-      <Col span={24}> {/* Changed from span={16} to span={24} */}
-        <Card 
-          title={name} 
-          extra={<Button onClick={() => showModal()}>Add Task</Button>}
-        >
+      <Col span={24}>
+  <Card title={name ?? ''}>
           <Tabs defaultActiveKey="1" items={[
             {
               label: 'Summary',
@@ -72,26 +77,37 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
               label: 'Tasks',
               key: '3',
               children: (
-                <TaskTable 
-                  data={tasks || []}
-                  showModal={showModal}
-                  project={{
-                    id: project.id?.toString(),
-                    users: project.users?.map(user => user),
-                    projectLead: project.projectLead
-                  }}
-                  id={project.id?.toString()}
-                  users={project.users?.map(user => user)}
-                  projectLead={project.projectLead}
-                  onRefresh={() => {
-                  }}
-                />
+                <>
+                  {!hideAddTask && (
+                    <Button type="primary" style={{ marginBottom: 16 }} onClick={() => showModal()}>
+                      Add Task
+                    </Button>
+                  )}
+                  <TaskTable 
+                    data={tasks ?? []}
+                    showModal={showModal}
+                    project={{
+                      id: project.id?.toString?.() ?? String(project.id),
+                      users: project.users ?? [],
+                      projectLead: project.projectLead ?? { id: '', name: '' }
+                    }}
+                    id={project.id?.toString?.() ?? String(project.id)}
+                    users={project.users ?? []}
+                    projectLead={project.projectLead ?? { id: '', name: '' }}
+                    onRefresh={() => {}}
+                  />
+                </>
               )
             },
             {
               label: 'Members',
               key: '4',
-              children: <ProjectUserCard data={users || []} />
+              children: <ProjectUserCard data={(users ?? []).map(u => ({
+                id: String(u.id ?? ''),
+                avatar: u.avatar ?? '',
+                name: u.name ?? '',
+                email: u.email ?? ''
+              }))} />
             },
             {
               label: 'Timeline',

@@ -1,41 +1,35 @@
-import { useEditTask } from "@/hooks/task/useEditTask";
 import { useTasks } from "@/hooks/task/useTask";
 import { TaskType } from "@/types/task";
 import {
   Avatar,
-  Button,
-  Card,
   Col,
-  Divider,
-  Form,
-  Input,
   Row,
-  Select,
   Table,
   TableProps,
 } from "antd";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 
-const AllTaskTable = ({ status }: { status: string }) => {
-  const [open, setOpen] = useState(false);
-  const [form] = Form.useForm();
-  const [form1] = Form.useForm();
-  const { mutate } = useEditTask();
+const AllTaskTable = ({ status, userId }: { status: string, userId?: number }) => {
+  // Removed unused open and form state
+  // Removed unused mutate from useEditTask
   const { data } = useTasks({ status });
-
-  // const { data: users } = useUser();
-  const [selectedTask, setSelectedTask] = useState<TaskType>({} as TaskType);
-  console.log("selectedTask", selectedTask);
-  const showDrawer = (record: TaskType) => {
-    setOpen(true);
-    setSelectedTask(record);
+  // Filter tasks assigned to the current user (works for array of user objects or empty)
+  const filteredData = userId !== undefined
+    ? (data || []).filter((task: TaskType) => {
+        const assignees = task.assignees;
+        if (!assignees || !Array.isArray(assignees) || assignees.length === 0) return false;
+        // Assignees is an array of user objects
+        return assignees.some((user: any) => user?.id?.toString() === userId.toString());
+      })
+    : data;
+  // Removed unused selectedTask and setSelectedTask
+  const showDrawer = () => {
+    // Drawer logic removed; function kept for future use
   };
 
-  const onClose = () => {
-    setOpen(false);
-  };
-  const columns = useMemo(
+  // Removed unused onClose
+  const columns = useMemo(  
     () => [
       {
         title: "ID",
@@ -49,7 +43,7 @@ const AllTaskTable = ({ status }: { status: string }) => {
         render: (_: any, record: TaskType) => (
           <>
             <span
-              onClick={() => showDrawer(record)}
+              onClick={showDrawer}
               className="cursor-pointer hover:underline"
             >
               {record.name}
@@ -79,33 +73,30 @@ const AllTaskTable = ({ status }: { status: string }) => {
         key: "taskType",
       },
       {
-        title: "Asignee",
-        dataIndex: "asignees",
-        key: "asignees",
+        title: "Assignee",
+        dataIndex: "assignees",
+        key: "assignees",
         render: (_: any, record: TaskType) => {
+          const assignees = record.assignees;
+          if (!assignees || !Array.isArray(assignees) || assignees.length === 0) return null;
           return (
-            <>
-              <Avatar.Group
-                max={{
-                  count: 2,
-                  style: {
-                    color: "#f56a00",
-                    backgroundColor: "#fde3cf",
-                    cursor: "pointer",
-                  },
-                  popover: { trigger: "click" },
-                }}
-              >
-                {/* {record.assignees.length > 0 &&
-                  record.assignees?.map((user: UserType) => (
-                    <Tooltip title={user.username} placement="top">
-                      <Avatar style={{ backgroundColor: "#87d068" }}>
-                        {user.username.split("")[0]}
-                      </Avatar>
-                    </Tooltip>
-                  ))} */}
-              </Avatar.Group>
-            </>
+            <Avatar.Group
+              max={{
+                count: 2,
+                style: {
+                  color: "#f56a00",
+                  backgroundColor: "#fde3cf",
+                  cursor: "pointer",
+                },
+                popover: { trigger: "click" },
+              }}
+            >
+              {assignees.map((user: any) => (
+                <Avatar key={user.id} style={{ backgroundColor: "#87d068" }}>
+                  {user.username ? user.username.charAt(0).toUpperCase() : "?"}
+                </Avatar>
+              ))}
+            </Avatar.Group>
           );
         },
       },
@@ -121,9 +112,7 @@ const AllTaskTable = ({ status }: { status: string }) => {
   //   console.log(`selected ${value}`);
   // };
 
-  const onFinish = (values: any) => {
-    mutate({ id: selectedTask.id, payload: values });
-  };
+  // Removed unused onFinish
 
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
     onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
@@ -138,7 +127,7 @@ const AllTaskTable = ({ status }: { status: string }) => {
       <Col span={24}>
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={filteredData}
           rowSelection={rowSelection}
           size="small"
           rowKey={"id"}
