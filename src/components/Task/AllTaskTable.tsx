@@ -10,7 +10,11 @@ import {
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 
-const AllTaskTable = ({ status, userId }: { status: string, userId?: number }) => {
+// import { useSession } from "@/context/SessionContext";
+import { Button } from "antd";
+import { EditOutlined } from "@ant-design/icons";
+
+const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, userId?: number, userRole?: string, onEdit?: (task: TaskType) => void }) => {
   // Removed unused open and form state
   // Removed unused mutate from useEditTask
   const { data } = useTasks({ status });
@@ -105,6 +109,16 @@ const AllTaskTable = ({ status, userId }: { status: string, userId?: number }) =
         dataIndex: "priority",
         key: "priority",
       },
+      // Edit button column (only for non-auditjunior/auditsenior)
+      ...(userRole !== "auditjunior" && userRole !== "auditsenior"
+        ? [{
+            title: "Edit",
+            key: "edit",
+            render: (_: any, record: TaskType) => (
+              <Button icon={<EditOutlined />} onClick={() => onEdit && onEdit(record)} />
+            ),
+          }]
+        : []),
     ],
     []
   );

@@ -22,21 +22,22 @@ import moment from "moment";
 
 const OWorklogForm = () => {
   const [form] = Form.useForm();
-  const [tasks, setTasks] = useState<{
-    [fieldName: string]: TaskTemplateType[];
-  }>({});
   const [users, setUsers] = useState<{ [fieldName: string]: UserType[] }>({});
+  const [filteredTasks, setFilteredTasks] = useState<{ [fieldName: string]: TaskTemplateType[] }>({});
+  const [loadingTasks, setLoadingTasks] = useState<{ [fieldName: string]: boolean }>({});
+  
   const { data: projects } = useProject({ status: "active" });
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
-  const { profile } = useSession(); // Get current user info
+  const { profile } = useSession();
   const user = profile;
-
+  
   // Check if user is manager or admin
+  const roleName = user?.role && (user.role as any).name ? (user.role as any).name.toLowerCase() : "";
   const isManagerOrAdmin =
-    user?.role?.name === "manager" ||
-    user?.role === "admin" ||
-    user?.role?.name === "superuser";
+    roleName === "projectmanager" ||
+    roleName === "admin" ||
+    roleName === "superuser";
 
   // Handle the form submission
   const handleFinish = (values: any) => {
@@ -60,20 +61,69 @@ const OWorklogForm = () => {
 
   const timeFormat = "HH:mm";
 
+  // Fetch tasks for a specific project
+  const fetchProjectTasks = async (projectId: string, fieldName: string) => {
+    setLoadingTasks(prev => ({ ...prev, [fieldName]: true }));
+    
+    try {
+      // Import the service function directly
+      const { fetchProjectTasks } = await import("@/service/task.service");
+      const tasksData = await fetchProjectTasks({ id: projectId });
+      
+      const userId = (user as any)?.id;
+      let tasksList = tasksData || [];
+      
+      // Filter tasks where current user is assigned
+      tasksList = tasksList.filter((task: any) => {
+        if (!task.assignees || !Array.isArray(task.assignees)) return false;
+        return task.assignees.some((assignee: any) => 
+          assignee?.id?.toString() === userId?.toString()
+        );
+      });
+      
+      setFilteredTasks(prev => ({
+        ...prev,
+        [fieldName]: tasksList
+      }));
+      
+    } catch (error) {
+      console.error("Error fetching project tasks:", error);
+      setFilteredTasks(prev => ({
+        ...prev,
+        [fieldName]: []
+      }));
+    } finally {
+      setLoadingTasks(prev => ({ ...prev, [fieldName]: false }));
+    }
+  };
+
   // Handle project change for a specific form entry
   const handleProjectChange = (projectId: string, fieldName: any) => {
+    // Find selected project for users
     const selectedProject = projects?.find(
-      (project: any) => project.id === projectId
+      (project: any) => project.id?.toString() === projectId?.toString()
     );
-    if (selectedProject) {
-      setTasks((prevTasks) => ({
-        ...prevTasks,
-        [fieldName]: selectedProject.tasks || [],
-      }));
-      setUsers((prevUsers) => ({
-        ...prevUsers,
-        [fieldName]: selectedProject.users || [],
-      }));
+    setUsers((prevUsers) => ({
+      ...prevUsers,
+      [fieldName]: selectedProject?.users || [],
+    }));
+    
+    // Clear existing tasks for this field
+    setFilteredTasks(prev => ({
+      ...prev,
+      [fieldName]: []
+    }));
+    
+    // Clear task selection in form
+    const currentValues = form.getFieldsValue();
+    if (currentValues.timeEntries && currentValues.timeEntries[fieldName]) {
+      currentValues.timeEntries[fieldName].taskId = undefined;
+      form.setFieldsValue(currentValues);
+    }
+    
+    // Fetch tasks for the selected project
+    if (projectId) {
+      fetchProjectTasks(projectId, fieldName);
     }
   };
 
@@ -148,13 +198,15 @@ const OWorklogForm = () => {
                       >
                         <Select
                           className="h-[40px]"
-                          options={tasks[field.name]?.map(
+                          loading={loadingTasks[field.name]}
+                          options={filteredTasks[field.name]?.map(
                             (t: TaskTemplateType) => ({
                               label: t.name,
                               value: t.id,
                             })
                           )}
-                          disabled={!tasks[field.name]?.length}
+                          disabled={loadingTasks[field.name] || !filteredTasks[field.name]?.length}
+                          placeholder="Select a task"
                         />
                       </Form.Item>
                     </Col>
@@ -289,6 +341,7 @@ const OWorklogForm = () => {
                             value: t.id,
                           }))}
                           disabled={!users[field.name]?.length}
+                          placeholder="Select a user"
                         />
                       </Form.Item>
                     </Col>

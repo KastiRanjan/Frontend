@@ -35,19 +35,21 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId }: TaskF
 
   useEffect(() => {
     if (isEditing && editTaskData) {
-      console.log("editTaskData:", editTaskData);
       const initialData = {
         name: editTaskData.name,
         description: editTaskData.description,
         group: editTaskData.group?.id,
         parentTaskId: editTaskData.parentTaskId,
         dueDate: editTaskData.dueDate ? moment(editTaskData.dueDate) : null,
-        assigneeId: editTaskData.assignees?.map((user: any) => user.id) || [],
+        assignees: editTaskData.assignees?.map((user: any) => user.id) || [],
         projectId: editTaskData.projectId,
         status: editTaskData.status,
       };
       form.setFieldsValue(initialData);
       setSelectedGroupId(editTaskData.groupId || null);
+    } else {
+      // Reset form when not editing
+      form.resetFields();
     }
   }, [editTaskData, form, isEditing]);
 
