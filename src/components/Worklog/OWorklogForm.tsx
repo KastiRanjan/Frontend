@@ -103,24 +103,42 @@ const OWorklogForm = () => {
     const selectedProject = projects?.find(
       (project: any) => project.id?.toString() === projectId?.toString()
     );
+    let filteredUsers: UserType[] = selectedProject?.users || [];
+    console.log("Filtered Users:", filteredUsers);
+    const currentUserId = (user as any)?.id?.toString();
+    const currentUserRole = user?.role && (user.role as any).name ? (user.role as any).name.toLowerCase() : "";
+
+    // Remove auditjunior and self from the list
+    filteredUsers = filteredUsers.filter((u: any) => {
+      const roleName = u?.role && u.role.name ? u.role.name.toLowerCase() : "";
+      const isProjectLead = u?.position === "projectLead";
+      if (u?.id?.toString() === currentUserId) return false; // Exclude self
+      if (roleName === "auditjunior") return false; // Always exclude auditjunior
+      // For auditsenior, only allow projectmanager, admin, superuser, or project lead (by position)
+      if (currentUserRole === "auditsenior") {
+        return ["projectmanager", "admin", "superuser"].includes(roleName) || isProjectLead;
+      }
+      return true;
+    });
+
     setUsers((prevUsers) => ({
       ...prevUsers,
-      [fieldName]: selectedProject?.users || [],
+      [fieldName]: filteredUsers,
     }));
-    
+
     // Clear existing tasks for this field
     setFilteredTasks(prev => ({
       ...prev,
       [fieldName]: []
     }));
-    
+
     // Clear task selection in form
     const currentValues = form.getFieldsValue();
     if (currentValues.timeEntries && currentValues.timeEntries[fieldName]) {
       currentValues.timeEntries[fieldName].taskId = undefined;
       form.setFieldsValue(currentValues);
     }
-    
+
     // Fetch tasks for the selected project
     if (projectId) {
       fetchProjectTasks(projectId, fieldName);
