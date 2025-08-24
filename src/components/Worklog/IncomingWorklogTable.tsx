@@ -4,8 +4,9 @@ import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
-import { useWorklogbyUser } from "@/hooks/worklog/useWorklogbyUser";
+import { useSession } from "@/context/SessionContext";
 import { useState } from "react";
+import { useWorklogbyUser } from "@/hooks/worklog/useWorklogbyUser";
 
 const { TextArea } = Input;
 
@@ -139,7 +140,10 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
 
 const IncomingWorklogTable = ({ status }: { status: string }) => {
   const navigate = useNavigate();
+  const { profile } = useSession();
+  const currentUserId = (profile as any)?.id;
   const { data: worklogs, isPending } = useWorklogbyUser(status);
+  console.log(worklogs);
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
   const { mutate: deleteWorklog } = useDeleteWorklog();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
@@ -204,6 +208,15 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     setRemark("");
   };
 
+  // Only show worklogs where the current user is the approver (approvedBy)
+  const filteredWorklogs = (worklogs || []).filter((w: any) => {
+    // For requested status, check approvedBy; for others, fallback to userId
+    if (status.toLowerCase() === "requested") {
+      return w?.approvedBy?.toString() === currentUserId?.toString();
+    }
+    return w?.approvedBy?.toString() === currentUserId?.toString();
+  });
+
   return (
     <Card>
       <TableToolbar>
@@ -211,7 +224,7 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
       </TableToolbar>
       <Table
         loading={isPending || isEditPending}
-        dataSource={worklogs || []}
+        dataSource={filteredWorklogs}
         columns={columns(status, deleteWorklog, editWorklog, navigate).map(col => ({
           ...col,
           render: col.key === "action" && status === "requested" ? (_: any, record: any) => {
