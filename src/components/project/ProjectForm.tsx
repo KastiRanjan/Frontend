@@ -3,6 +3,7 @@ import { useEditProject } from "@/hooks/project/useEditProject";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
 import { Button, Col, DatePicker, Divider, Form, Row, Select } from "antd";
+import { useEffect } from "react";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import moment from "moment";
@@ -70,34 +71,44 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           label: user.name,
         })) || [];
 
+
+  useEffect(() => {
+    if (editProjectData) {
+      form.setFieldsValue({
+        ...editProjectData,
+        startingDate: editProjectData.startingDate ? moment(editProjectData.startingDate) : null,
+        endingDate: editProjectData.endingDate ? moment(editProjectData.endingDate) : null,
+        users: editProjectData.users?.map((user: any) => user.id),
+        projectLead: editProjectData.projectLead?.id,
+        projectManager: editProjectData.projectManager?.id,
+        ...(editProjectData.customer && { customer: editProjectData.customer.id }),
+      });
+    } else {
+      form.resetFields();
+    }
+  }, [editProjectData, form]);
+
   return (
     <Form
       form={form}
       layout="vertical"
-      initialValues={{
-        ...editProjectData,
-        startingDate: moment(editProjectData?.startingDate),
-        endingDate: moment(editProjectData?.endingDate),
-        users: editProjectData?.users?.map((user: any) => user.id),
-        projectLead: editProjectData?.projectLead?.id,
-        projectManager: editProjectData?.projectManager?.id,
-        customer: editProjectData?.customer?.id,
-      }}
       onFinish={onFinish}
     >
       <Row gutter={18}>
         <Divider />
-        <Col span={24}>
-          <FormInputWrapper
-            id="Project Name"
-            label="Project Name"
-            name="name"
-            rules={[
-              { required: true, message: "Please input the project name!" },
-            ]}
+          <Col span={12}>
+          <FormSelectWrapper
+            id="Client"
+            label="Client"
+            name="customer"
+            options={clients?.map((client: any) => ({
+              value: client.id,
+              label: client.name,
+            }))}
+            rules={[{ required: true, message: "Please select the client!" }]}
           />
         </Col>
-        <Col span={12}>
+          <Col span={12}>
           <Form.Item
             label="Fiscal Year"
             name="fiscalYear"
@@ -107,15 +118,32 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           >
             <Select
               className="h-[48px] w-full"
-              options={[...Array(5).keys()].map((_, index) => {
-                const year = new Date().getFullYear() + index;
-                return {
-                  value: year,
-                  label: year.toString(),
-                };
-              })}
+              options={(() => {
+                // Get current Nepali year (roughly, adjust as needed)
+                const today = new Date();
+                // Example: Nepali year is about 56-57 years ahead of AD
+                const nepaliYear = today.getFullYear() + 57;
+                return [...Array(5).keys()].map((_, idx) => {
+                  const startYear = nepaliYear - idx;
+                  const endYear = (startYear + 1).toString().slice(-2);
+                  return {
+                    value: startYear,
+                    label: `${startYear}/${endYear}`,
+                  };
+                });
+              })()}
             />
           </Form.Item>
+        </Col>
+        <Col span={24}>
+          <FormInputWrapper
+            id="Project Name"
+            label="Project Name"
+            name="name"
+            rules={[
+              { required: true, message: "Please input the project name!" },
+            ]}
+          />
         </Col>
         <Col span={12}>
           <FormSelectWrapper
@@ -192,7 +220,11 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               { required: true, message: "Please select the starting date!" },
             ]}
           >
-            <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
+            <DatePicker 
+              className="py-3 w-full" 
+              format="YYYY-MM-DD" 
+              inputReadOnly={true}
+            />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -203,7 +235,11 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               { required: true, message: "Please select the ending date!" },
             ]}
           >
-            <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
+            <DatePicker 
+              className="py-3 w-full" 
+              format="YYYY-MM-DD" 
+              inputReadOnly={true}
+            />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -220,19 +256,6 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             rules={[{ required: true, message: "Please select the status!" }]}
           />
         </Col>
-        <Col span={12}>
-          <FormSelectWrapper
-            id="Client"
-            label="Client"
-            name="customer"
-            options={clients?.map((client: any) => ({
-              value: client.id,
-              label: client.name,
-            }))}
-            rules={[{ required: true, message: "Please select the client!" }]}
-          />
-        </Col>
-
         <Col span={24}>
           <Form.Item
             id="Description"

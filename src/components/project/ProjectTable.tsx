@@ -23,6 +23,16 @@ const columns = (
       </>
     ),
   },
+  {
+    title: "Fiscal Year",
+    dataIndex: "fiscalYear",
+    key: "fiscalYear",
+    render: (fiscalYear: number) => {
+      if (!fiscalYear) return null;
+      const endYear = (fiscalYear + 1).toString().slice(-2);
+      return `${fiscalYear}/${endYear}`;
+    },
+  },
 
   {
     title: "Project Name",
