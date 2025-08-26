@@ -37,7 +37,7 @@ const Clock = () => {
               const accuracy = position.coords.accuracy;
               console.log(`Attempt ${attempt} - Location Accuracy: ${accuracy} meters`);
 
-              if (accuracy <= 50) {
+              if (accuracy <= 500) {
                 // If accuracy is good, resolve immediately
                 resolve({
                   latitude: position.coords.latitude,
