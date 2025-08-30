@@ -25,8 +25,25 @@ export interface UpdateLeaveTypeDto {
 }
 
 export const fetchLeaveTypes = async () => {
-  const response = await axios.get(`${backendURI}/leave-type`);
-  return response.data;
+  try {
+    const response = await axios.get(`${backendURI}/leave-type`);
+    
+    // Ensure we always return an array
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    } else if (response.data && typeof response.data === 'object') {
+      // If it's an object with properties, wrap it in an array
+      return [response.data];
+    } else {
+      console.warn('Unexpected leaveTypes data structure:', response.data);
+      return [];
+    }
+  } catch (error: any) {
+    console.error('Fetch leave types error:', error);
+    throw error;
+  }
 };
 
 export const createLeaveType = async (payload: CreateLeaveTypeDto) => {

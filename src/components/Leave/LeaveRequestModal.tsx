@@ -9,6 +9,7 @@ import {
   message,
   Tag,
   Divider,
+  Alert,
 } from "antd";
 import {
   CalendarOutlined,
@@ -30,25 +31,40 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const createLeaveMutation = useCreateLeave();
-  const { data: leaveTypes } = useLeaveTypes();
+  const { data: leaveTypes, isLoading: isLoadingLeaveTypes, error: leaveTypesError } = useLeaveTypes();
+
+  // Ensure leaveTypes is always an array
+  const validLeaveTypes = Array.isArray(leaveTypes) ? leaveTypes : [];
 
   const handleSubmit = async (values: any) => {
     try {
       const [startDate, endDate] = values.dateRange;
+      
+      if (!startDate || !endDate) {
+        message.error("Please select both start and end dates");
+        return;
+      }
+
       const payload = {
         startDate: startDate.format("YYYY-MM-DD"),
         endDate: endDate.format("YYYY-MM-DD"),
         type: values.type,
-        reason: values.reason,
+        reason: values.reason || "",
       };
 
       await createLeaveMutation.mutateAsync(payload);
       message.success("Leave request submitted successfully");
       form.resetFields();
       onCancel();
-    } catch (error) {
-      message.error("Failed to submit leave request");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to submit leave request";
+      message.error(errorMessage);
     }
+  };
+
+  const handleCancel = () => {
+    form.resetFields();
+    onCancel();
   };
 
   return (
@@ -60,10 +76,12 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
         </div>
       }
       open={open}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       footer={null}
       width={600}
       className="leave-request-modal"
+      maskClosable={false}
+      destroyOnClose={true}
     >
       <Form
         form={form}
@@ -71,6 +89,26 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
         onFinish={handleSubmit}
         className="mt-4"
       >
+        {leaveTypesError && (
+          <Alert
+            message="Error loading leave types"
+            description="Please refresh the page or contact support if the issue persists."
+            type="error"
+            className="mb-4"
+            showIcon
+          />
+        )}
+
+        {!isLoadingLeaveTypes && validLeaveTypes.length === 0 && !leaveTypesError && (
+          <Alert
+            message="No leave types available"
+            description="Please contact your administrator to set up leave types."
+            type="warning"
+            className="mb-4"
+            showIcon
+          />
+        )}
+
         <Form.Item
           name="type"
           label="Leave Type"
@@ -80,8 +118,10 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
             placeholder="Select leave type"
             size="large"
             className="w-full"
+            loading={isLoadingLeaveTypes}
+            notFoundContent={leaveTypesError ? "Error loading leave types" : "No leave types available"}
           >
-            {leaveTypes?.map((type: any) => (
+            {validLeaveTypes.map((type: any) => (
               <Select.Option
                 key={type.id}
                 value={type.name}
@@ -94,6 +134,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
                       Max: {type.maxDaysPerYear} days/year
                     </Tag>
                   )}
+                  {!type.isActive && (
+                    <Tag color="red" className="ml-2">
+                      Inactive
+                    </Tag>
+                  )}
                 </div>
               </Select.Option>
             ))}
@@ -103,13 +148,30 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
         <Form.Item
           name="dateRange"
           label="Date Range"
-          rules={[{ required: true, message: "Please select date range" }]}
+          rules={[
+            { required: true, message: "Please select date range" },
+            {
+              validator: (_, value) => {
+                if (!value || !value[0] || !value[1]) {
+                  return Promise.reject(new Error("Please select both start and end dates"));
+                }
+                if (value[0].isBefore(new Date(), 'day')) {
+                  return Promise.reject(new Error("Start date cannot be in the past"));
+                }
+                if (value[1].isBefore(value[0])) {
+                  return Promise.reject(new Error("End date must be after start date"));
+                }
+                return Promise.resolve();
+              }
+            }
+          ]}
         >
           <RangePicker
             size="large"
             className="w-full"
             format="YYYY-MM-DD"
             placeholder={["Start Date", "End Date"]}
+            disabledDate={(current) => current && current.isBefore(new Date(), 'day')}
           />
         </Form.Item>
 
@@ -128,7 +190,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
         <Divider />
 
         <div className="flex justify-end gap-2">
-          <Button onClick={onCancel} size="large">
+          <Button onClick={handleCancel} size="large" disabled={createLeaveMutation.isPending}>
             Cancel
           </Button>
           <Button
@@ -137,8 +199,9 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
             loading={createLeaveMutation.isPending}
             size="large"
             icon={<CalendarOutlined />}
+            disabled={isLoadingLeaveTypes || validLeaveTypes.length === 0}
           >
-            Submit Request
+            {createLeaveMutation.isPending ? "Submitting..." : "Submit Request"}
           </Button>
         </div>
       </Form>

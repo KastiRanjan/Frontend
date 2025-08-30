@@ -6,14 +6,12 @@ import {
   Button, 
   Tag, 
   Spin,
-  Dropdown,
-  Menu
+  Dropdown
 } from 'antd';
 import { 
   LeftOutlined, 
   RightOutlined, 
   CalendarOutlined, 
-  ClockCircleOutlined, 
   PlusOutlined,
   SettingOutlined,
   FileTextOutlined
@@ -193,24 +191,20 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
     );
   };
 
-  const actionMenu = (
-    <Menu>
-      <Menu.Item key="leave" icon={<FileTextOutlined />} onClick={() => setIsLeaveModalVisible(true)}>
-        Request Leave
-      </Menu.Item>
-      <Menu.Item key="worklog" icon={<ClockCircleOutlined />} onClick={() => {
-        // Navigate to worklog creation page instead of modal
-        navigate('/worklogs/new');
-      }}>
-        Add Worklog
-      </Menu.Item>
-      {isAdmin && (
-        <Menu.Item key="manage-leave-types" icon={<SettingOutlined />} onClick={() => setIsLeaveTypeManagerVisible(true)}>
-          Manage Leave Types
-        </Menu.Item>
-      )}
-    </Menu>
-  );
+  const actionMenuItems = [
+    {
+      key: 'leave',
+      icon: <FileTextOutlined />,
+      label: 'Request Leave',
+      onClick: () => setIsLeaveModalVisible(true)
+    },
+    ...(isAdmin ? [{
+      key: 'manage-leave-types',
+      icon: <SettingOutlined />,
+      label: 'Manage Leave Types', 
+      onClick: () => setIsLeaveTypeManagerVisible(true)
+    }] : [])
+  ];
 
   return (
     <div className="modern-nepali-calendar">
@@ -248,7 +242,7 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
             >
               आज
             </Button>
-            <Dropdown overlay={actionMenu} trigger={['click']}>
+            <Dropdown menu={{ items: actionMenuItems }} trigger={['click']}>
               <Button type="primary" icon={<PlusOutlined />} className="bg-green-600 border-green-600 hover:bg-green-700">
                 Actions
               </Button>

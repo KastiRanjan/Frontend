@@ -45,8 +45,13 @@ export const fetchLeaves = async (status?: string) => {
 };
 
 export const createLeave = async (payload: CreateLeaveDto) => {
-  const response = await axios.post(`${backendURI}/leave`, payload);
-  return response.data;
+  try {
+    const response = await axios.post(`${backendURI}/leave`, payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Create leave error:', error);
+    throw error;
+  }
 };
 
 export const updateLeave = async (id: string, payload: UpdateLeaveDto) => {
