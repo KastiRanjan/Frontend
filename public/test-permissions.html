@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Permission Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        .success {
+            color: #52c41a;
+            font-weight: bold;
+        }
+        .error {
+            color: #ff4d4f;
+            font-weight: bold;
+        }
+        .info {
+            color: #1890ff;
+        }
+        pre {
+            background: #001529;
+            color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Permission System Test</h1>
+    
+    <div class="container">
+        <h2>1. Sync Permissions</h2>
+        <p>Click to sync permissions from backend configuration:</p>
+        <button onclick="syncPermissions()">Sync Permissions</button>
+        <div id="syncResult"></div>
+    </div>
+
+    <div class="container">
+        <h2>2. View All Permissions</h2>
+        <button onclick="fetchPermissions()">Load Permissions</button>
+        <div id="permissionsResult"></div>
+    </div>
+
+    <div class="container">
+        <h2>3. View All Roles</h2>
+        <button onclick="fetchRoles()">Load Roles</button>
+        <div id="rolesResult"></div>
+    </div>
+
+    <div class="container">
+        <h2>4. Assign Permissions to Administrator</h2>
+        <button onclick="assignAdminPermissions()">Assign All Permissions to Admin</button>
+        <div id="assignResult"></div>
+    </div>
+
+    <script>
+        const baseURL = 'http://localhost:3000';
+        
+        async function syncPermissions() {
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.innerHTML = '<div class="info">Syncing permissions...</div>';
+            
+            try {
+                const response = await fetch(`${baseURL}/permissions/sync`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<div class="success">✓ Permissions synced successfully!</div>
+                                          <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">✗ Sync failed: ${response.status}</div>
+                                          <pre>${JSON.stringify(errorData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">✗ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function fetchPermissions() {
+            const resultDiv = document.getElementById('permissionsResult');
+            resultDiv.innerHTML = '<div class="info">Loading permissions...</div>';
+            
+            try {
+                const response = await fetch(`${baseURL}/permissions?limit=1000&page=1`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const permissions = data.results || data;
+                    resultDiv.innerHTML = `<div class="success">✓ Loaded ${permissions.length} permissions</div>
+                                          <pre>${JSON.stringify(permissions.slice(0, 10), null, 2)}</pre>
+                                          <div class="info">${permissions.length > 10 ? `... and ${permissions.length - 10} more` : ''}</div>`;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">✗ Failed to load permissions: ${response.status}</div>
+                                          <pre>${JSON.stringify(errorData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">✗ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function fetchRoles() {
+            const resultDiv = document.getElementById('rolesResult');
+            resultDiv.innerHTML = '<div class="info">Loading roles...</div>';
+            
+            try {
+                const response = await fetch(`${baseURL}/roles?limit=100&page=1`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const roles = data.results || data;
+                    resultDiv.innerHTML = `<div class="success">✓ Loaded ${roles.length} roles</div>
+                                          <pre>${JSON.stringify(roles, null, 2)}</pre>`;
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<div class="error">✗ Failed to load roles: ${response.status}</div>
+                                          <pre>${JSON.stringify(errorData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">✗ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function assignAdminPermissions() {
+            const resultDiv = document.getElementById('assignResult');
+            resultDiv.innerHTML = '<div class="info">Assigning permissions...</div>';
+            
+            try {
+                // First, get all permissions
+                const permResponse = await fetch(`${baseURL}/permissions?limit=1000&page=1`);
+                if (!permResponse.ok) {
+                    throw new Error('Failed to fetch permissions');
+                }
+                const permData = await permResponse.json();
+                const permissions = permData.results || permData;
+                const permissionIds = permissions.map(p => p.id);
+                
+                // Then, get admin role
+                const roleResponse = await fetch(`${baseURL}/roles?limit=100&page=1`);
+                if (!roleResponse.ok) {
+                    throw new Error('Failed to fetch roles');
+                }
+                const roleData = await roleResponse.json();
+                const roles = roleData.results || roleData;
+                const adminRole = roles.find(r => r.name.toLowerCase().includes('admin'));
+                
+                if (!adminRole) {
+                    throw new Error('Admin role not found');
+                }
+                
+                // Assign all permissions to admin
+                const assignResponse = await fetch(`${baseURL}/roles/${adminRole.id}/permissions`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        permissions: permissionIds
+                    })
+                });
+                
+                if (assignResponse.ok) {
+                    const assignData = await assignResponse.json();
+                    resultDiv.innerHTML = `<div class="success">✓ Assigned ${permissionIds.length} permissions to ${adminRole.displayName || adminRole.name}</div>
+                                          <pre>${JSON.stringify(assignData, null, 2)}</pre>`;
+                } else {
+                    const errorData = await assignResponse.json();
+                    resultDiv.innerHTML = `<div class="error">✗ Assignment failed: ${assignResponse.status}</div>
+                                          <pre>${JSON.stringify(errorData, null, 2)}</pre>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">✗ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

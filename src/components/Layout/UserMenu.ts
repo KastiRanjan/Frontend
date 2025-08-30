@@ -2,7 +2,8 @@ import {
   DashboardOutlined,
   FileOutlined,
   ProjectOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined,
+  ClockCircleOutlined
 } from "@ant-design/icons";
 import React from "react";
 
@@ -33,6 +34,11 @@ export const UserMenu = (id: string | undefined) => {
       key: `/profile/${id}/training-detail`,
       label: "Trainning Details",
       icon: React.createElement(FileOutlined),
+    },
+    {
+      key: `/profile/${id}/workhour-detail`,
+      label: "Work Hours",
+      icon: React.createElement(ClockCircleOutlined),
     },
     {
       key: `/profile/${id}/contract-detail`,

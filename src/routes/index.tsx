@@ -26,9 +26,13 @@ import EducationalDetails from "@/pages/User/EducationalDetails";
 import CreateUser from "@/pages/User/new";
 import PersonalDetails from "@/pages/User/PersonalDetails";
 import TrainingDetails from "@/pages/User/TrainingDetails";
+import WorkHourDetails from "@/pages/User/WorkHourDetails";
 import Worklog from "@/pages/Worklog";
 import AllWorklogs from "@/pages/Worklog/AllWorklogs";
 import NewWorklog from "@/pages/Worklog/new";
+import CalendarPage from "@/pages/Calendar";
+import WorkhourSettingsPage from "@/pages/Workhour/settings";
+import HolidayPage from "@/pages/Holiday";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import Project from "../pages/Project";
@@ -42,6 +46,7 @@ import RolePermision from "@/pages/Role/role-permission";
 import RolesPage from "@/pages/Role";
 import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
+import PermissionAssignmentManager from "@/pages/Permission/AssignmentManager";
 
 const Router = [
   {
@@ -260,15 +265,52 @@ const Router = [
       {
         path: "profile/:id/training-detail",
         element: <Profile component={TrainingDetails} />,
-      
+      },
+      {
+        path: "profile/:id/workhour-detail",
+        element: <Profile component={WorkHourDetails} />,
+      },
+      {
+        path: "/calendar",
+        element: <CalendarPage />,
       },
       {
         path: "/settings",
         element: <Setting />,
       },
+      {
+        path: "/workhour-settings",
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="admin"
+            component={<WorkhourSettingsPage />}
+          />
+        ),
+      },
+      {
+        path: "/holiday",
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="admin"
+            component={<HolidayPage />}
+          />
+        ),
+      },
        {
   path: "/permission",
   element: <Perimssion />,
+},
+{
+  path: "/permission/assign",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="admin"
+      component={<PermissionAssignmentManager />}
+    />
+  ),
 },
 {
   path: "/role",

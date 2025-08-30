@@ -4,7 +4,11 @@ import {
   FileOutlined,
   ProjectOutlined,
   UsergroupAddOutlined,
-  UserOutlined
+  UserOutlined,
+  CalendarOutlined,
+  SettingOutlined,
+  SafetyOutlined,
+  TeamOutlined
 } from "@ant-design/icons";
 import { MenuProps } from "antd";
 import _ from "lodash";
@@ -37,6 +41,12 @@ export const MenuItems = (): MenuProps[] => {
       label: "Project",
       resource: "projects",
       icon: React.createElement(ProjectOutlined),
+    },
+    {
+      key: "/calendar",
+      label: "Calendar",
+      resource: "calendar",
+      icon: React.createElement(CalendarOutlined),
     },
     // {
     //   key: "/tasks",
@@ -73,6 +83,24 @@ export const MenuItems = (): MenuProps[] => {
       label: "Attendance",
       resource: "attendance",
       icon: React.createElement(UserOutlined),
+    },
+    {
+      key: "/role",
+      label: "Roles",
+      resource: "admin",
+      icon: React.createElement(TeamOutlined),
+    },
+    {
+      key: "/permission",
+      label: "Permissions",
+      resource: "admin",
+      icon: React.createElement(SafetyOutlined),
+    },
+    {
+      key: "/permission/assign",
+      label: "Assign Permissions",
+      resource: "admin",
+      icon: React.createElement(SettingOutlined),
     },
     // {
     //   key: "/reports",

@@ -1,5 +1,5 @@
 export interface PermissionType {
-    id: number;
+    id: string; // Changed from number to string to match backend UUID
     createdAt: string;
     updatedAt: string;
     resource: string;

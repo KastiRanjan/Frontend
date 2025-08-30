@@ -39,7 +39,7 @@ export const updateRolePermissions = async ({
   permissions,
 }: {
   id: string;
-  permissions: number[];
+  permissions: string[]; // Changed from number[] to string[] for UUID compatibility
 }) => {
   const response = await axios.put(
     `${backendURI}/roles/${id}/permissions`,

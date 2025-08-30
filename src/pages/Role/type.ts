@@ -1,5 +1,5 @@
 export interface Role {
-  id: number;
+  id: string; // Changed from number to string to match backend UUID
   name: string;
   description: string;
 }

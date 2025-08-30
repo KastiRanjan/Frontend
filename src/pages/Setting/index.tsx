@@ -28,6 +28,22 @@ const Setting = () => {
         </Card>
       </Col>
       <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/workhour-settings")} hoverable>
+          <Title level={4}>Work Hour Settings</Title>
+          <Paragraph>
+            Configure work hours for roles and individual users. Set daily work hours and schedules.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/holiday")} hoverable>
+          <Title level={4}>Holiday Management</Title>
+          <Paragraph>
+            Manage company holidays and leave policies. Import holidays from CSV files.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
         <Card className="h-full">
           <svg className="admin-icon-prop">
             <use></use>
