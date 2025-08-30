@@ -47,6 +47,7 @@ import RolesPage from "@/pages/Role";
 import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
 import PermissionAssignmentManager from "@/pages/Permission/AssignmentManager";
+import LeaveTypeManagementPage from "@/pages/Leave/LeaveTypeManagement";
 
 const Router = [
   {
@@ -283,7 +284,7 @@ const Router = [
         element: (
           <ProtectedRoute
             method="get"
-            resource="admin"
+            resource="workhour"
             component={<WorkhourSettingsPage />}
           />
         ),
@@ -293,7 +294,7 @@ const Router = [
         element: (
           <ProtectedRoute
             method="get"
-            resource="admin"
+            resource="holiday"
             component={<HolidayPage />}
           />
         ),
@@ -307,7 +308,7 @@ const Router = [
   element: (
     <ProtectedRoute
       method="get"
-      resource="admin"
+      resource="permission"
       component={<PermissionAssignmentManager />}
     />
   ),
@@ -327,6 +328,16 @@ const Router = [
 {
   path: "/role/permission/:id",
   element: <RolePermision />,
+},
+{
+  path: "/leave-types",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="leave"
+      component={<LeaveTypeManagementPage />}
+    />
+  ),
 },
     ],
     

@@ -3,13 +3,21 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
-export const fetchWorklogs = async (status: string) => {
-  const response = await axios.get(`${backendURI}/worklogs?status=${status}`);
+export const fetchWorklogs = async (status?: string) => {
+  let url = `${backendURI}/worklogs`;
+  if (status && status !== 'all') {
+    url += `?status=${status}`;
+  }
+  const response = await axios.get(url);
   return response.data;
 };
 
-export const fetchWorklogsByUser = async (status: string) => {
-  const response = await axios.get(`${backendURI}/worklogs/user?status=${status}`);
+export const fetchWorklogsByUser = async (status?: string) => {
+  let url = `${backendURI}/worklogs/user`;
+  if (status && status !== 'all') {
+    url += `?status=${status}`;
+  }
+  const response = await axios.get(url);
   return response.data;
 }
 

@@ -14,9 +14,9 @@ import {
   DatePicker,
   message,
 } from "antd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import moment from "moment";
 
@@ -29,8 +29,22 @@ const OWorklogForm = () => {
   const { data: projects } = useProject({ status: "active" });
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useSession();
   const user = profile;
+  
+  // Get date from URL parameters if provided
+  const urlParams = new URLSearchParams(location.search);
+  const dateParam = urlParams.get('date');
+  
+  // Initialize form with date parameter if available
+  useEffect(() => {
+    if (dateParam) {
+      form.setFieldsValue({
+        timeEntries: [{ date: moment(dateParam) }],
+      });
+    }
+  }, [dateParam, form]);
   
   // Check if user is manager or admin
   const roleName = user?.role && (user.role as any).name ? (user.role as any).name.toLowerCase() : "";
@@ -152,7 +166,7 @@ const OWorklogForm = () => {
         onFinish={handleFinish}
         layout="vertical"
         initialValues={{
-          timeEntries: [{ date: moment() }], // Initialize with one entry
+          timeEntries: [{ date: dateParam ? moment(dateParam) : moment() }], // Initialize with date parameter or current date
         }}
       >
         <Form.List name="timeEntries">
