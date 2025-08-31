@@ -25,7 +25,7 @@ import { getItem } from '../../hooks/useCookies';
 import type { HolidayType } from '../../types/holiday';
 import LeaveRequestModal from '../Leave/LeaveRequestModal';
 import EventHolidayModal from './EventHolidayModal';
-import LeaveTypeManager from '../Leave/LeaveTypeManager';
+import LeaveTypeManager from '../LeaveTypeManager';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
@@ -61,6 +61,7 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   const { data: holidayData, isLoading: holidaysLoading } = useHolidays();
   const { data: calendarData } = useCalendarEvents();
   const { data: worklogData } = useWorklogbyUser();
+  console.log(worklogData)
   
   // Get Nepali date for current view
   const currentNepaliDate = useMemo(() => {
@@ -109,18 +110,8 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   const handleDateClick = (date: Dayjs) => {
     setSelectedDate(date);
     
-    // Check if there are events or holidays for this date
-    const dayEvents = getEventsForDate(date);
-    const dayHolidays = getHolidaysForDate(date);
-    
-    if (dayEvents.length > 0 || dayHolidays.length > 0) {
-      // Show event/holiday modal if there are events or holidays
-      setIsEventModalVisible(true);
-    } else {
-      // Navigate to worklog creation with selected date
-      const dateParam = date.format('YYYY-MM-DD');
-      navigate(`/worklogs/new?date=${dateParam}`);
-    }
+    // Always show the event/holiday modal with worklogs for the selected date
+    setIsEventModalVisible(true);
   };
 
   const getEventsForDate = (date: Dayjs) => {
@@ -133,6 +124,14 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
     return holidayData.filter((holiday: HolidayType) => dayjs(holiday.date).isSame(date, 'day'));
   };
 
+  const getWorklogsForDate = (date: Dayjs) => {
+    if (!worklogData) return [];
+    return worklogData.filter((worklog: any) => {
+      // Use startTime to match the date since that's the work date
+      return dayjs(worklog.startTime).isSame(date, 'day');
+    });
+  };
+
   const isToday = (date: Dayjs) => date.isSame(today, 'day');
   const isCurrentMonth = (date: Dayjs) => date.isSame(currentViewDate, 'month');
   const isWeekend = (date: Dayjs) => date.day() === 6; // Saturday is weekend in Nepal
@@ -140,6 +139,7 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   const renderDateCell = (date: Dayjs) => {
     const dayEvents = getEventsForDate(date);
     const dayHolidays = getHolidaysForDate(date);
+    const dayWorklogs = getWorklogsForDate(date);
     const nepaliDate = DualDateConverter.gregorianToNepali(date);
     
     const isCurrentDay = isToday(date);
@@ -156,6 +156,7 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
           ${isOtherMonth ? 'opacity-40' : ''}
           ${isWeekendDay ? 'bg-red-50' : ''}
           ${hasEvents ? 'border-orange-300 bg-orange-50' : ''}
+          ${dayWorklogs.length > 0 ? 'border-green-300 bg-green-50' : ''}
         `}
         onClick={() => handleDateClick(date)}
       >
@@ -169,22 +170,39 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
           </div>
         </div>
         
+        {/* Holiday Indicators */}
+        {dayHolidays.slice(0, 1).map((holiday: HolidayType, idx: number) => (
+          <div key={idx} className="text-xs bg-red-100 text-red-700 px-1 rounded mb-1 truncate">
+            🎉 {holiday.title}
+          </div>
+        ))}
+
         {/* Event Indicators */}
-        <div className="flex flex-wrap justify-center gap-1">
-          {dayHolidays.map((_: any, idx: number) => (
-            <div key={idx} className="text-xs">
-              🎉
+        {dayEvents.slice(0, 1).map((event: any, idx: number) => (
+          <div key={idx} className="text-xs bg-blue-100 text-blue-700 px-1 rounded mb-1 truncate">
+            📅 {event.title || event.description}
+          </div>
+        ))}
+
+        {/* Worklog Indicators */}
+        <div className="space-y-1">
+          {dayWorklogs.slice(0, 2).map((worklog: any, idx: number) => (
+            <div 
+              key={idx} 
+              className="text-xs bg-green-100 text-green-700 px-1 rounded truncate"
+              title={`${worklog.task?.name} - ${worklog.user?.name} (${worklog.status})`}
+            >
+              {worklog.status === 'approved' && '✅'}
+              {worklog.status === 'requested' && '⏳'}
+              {worklog.status === 'rejected' && '❌'}
+              {worklog.task?.name || 'Work'} 
             </div>
           ))}
-          {dayEvents.slice(0, 2).map((event: any, idx: number) => (
-            <div key={idx} className="text-xs" title={event.title || event.description}>
-              {event.status === 'approved' && '✅'}
-              {event.status === 'pending' && '⏳'}
-              {event.status === 'rejected' && '❌'}
-            </div>
-          ))}
-          {dayEvents.length > 2 && (
-            <div className="text-xs text-blue-600 font-semibold">+{dayEvents.length - 2}</div>
+          {dayWorklogs.length > 2 && (
+            <div className="text-xs text-green-600 font-semibold">+{dayWorklogs.length - 2} more</div>
+          )}
+          {dayWorklogs.length === 0 && isCurrentMonth(date) && (
+            <div className="text-xs text-gray-400 italic">No worklogs</div>
           )}
         </div>
       </div>

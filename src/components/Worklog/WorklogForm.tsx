@@ -3,7 +3,7 @@ import {  useTasks } from "@/hooks/task/useTask";
 import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd";
+import { Button, Col, DatePicker, Form, Input, Row, Select, message } from "antd";
 import { useParams } from "react-router-dom";
 
 const WorklogForm = () => {
@@ -14,8 +14,17 @@ const WorklogForm = () => {
 
   const handleFinish = (values: any) => {
     console.log(values.timeEntries);
-    // Implement the worklog submission logic here.
-    createWorklog(values.timeEntries);
+    createWorklog(values.timeEntries, {
+      onSuccess: () => {
+        message.success("Worklog created successfully");
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error?.response?.data?.message ||
+          "Failed to create worklog";
+        message.error(errorMessage);
+      },
+    });
   };
 
   return (

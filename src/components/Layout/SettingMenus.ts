@@ -3,7 +3,8 @@ import {
   FileDoneOutlined,
   ProjectOutlined,
   SolutionOutlined,
-  UserOutlined
+  UserOutlined,
+  CalendarOutlined
 } from "@ant-design/icons";
 import React from "react";
 
@@ -38,5 +39,10 @@ export const SettingMenus: MenuItem[] = [
     key: "/project",
     label: "Project",
     icon: React.createElement(ProjectOutlined),
+  },
+  {
+    key: "/leave-types",
+    label: "Leave Types",
+    icon: React.createElement(CalendarOutlined),
   },
 ];

@@ -47,12 +47,12 @@ const EventHolidayModal: React.FC<EventHolidayModalProps> = ({
   );
 
   const selectedDateWorklogs = worklogs.filter((worklog: any) =>
-    dayjs(worklog.date).isSame(dayjs(selectedDate), 'day')
+    dayjs(worklog.startTime).isSame(dayjs(selectedDate), 'day')
   );
 
   const totalWorkHours = selectedDateWorklogs.reduce((total: number, worklog: any) => {
-    const start = dayjs(`2000-01-01 ${worklog.startTime}`);
-    const end = dayjs(`2000-01-01 ${worklog.endTime}`);
+    const start = dayjs(worklog.startTime);
+    const end = dayjs(worklog.endTime);
     return total + end.diff(start, 'hour', true);
   }, 0);
 
@@ -183,11 +183,11 @@ const EventHolidayModal: React.FC<EventHolidayModalProps> = ({
                   
                   <Descriptions size="small" column={2} className="mb-3">
                     <Descriptions.Item label="Time">
-                      {formatTime(worklog.startTime)} - {formatTime(worklog.endTime)}
+                      {dayjs(worklog.startTime).format('HH:mm')} - {dayjs(worklog.endTime).format('HH:mm')}
                     </Descriptions.Item>
                     <Descriptions.Item label="Duration">
-                      {dayjs(`2000-01-01 ${worklog.endTime}`)
-                        .diff(dayjs(`2000-01-01 ${worklog.startTime}`), 'hour', true)
+                      {dayjs(worklog.endTime)
+                        .diff(dayjs(worklog.startTime), 'hour', true)
                         .toFixed(1)}h
                     </Descriptions.Item>
                     {worklog.project && (

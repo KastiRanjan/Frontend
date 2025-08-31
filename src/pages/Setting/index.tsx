@@ -1,4 +1,4 @@
-import { Button, Card, Col, Row,Typography } from "antd";
+import { Card, Col, Row, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 const { Title, Paragraph } = Typography;
 
@@ -40,6 +40,14 @@ const Setting = () => {
           <Title level={4}>Holiday Management</Title>
           <Paragraph>
             Manage company holidays and leave policies. Import holidays from CSV files.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/leave-types")} hoverable>
+          <Title level={4}>Leave Types</Title>
+          <Paragraph>
+            Configure leave types, set maximum days per year, and manage leave policies.
           </Paragraph>
         </Card>
       </Col>

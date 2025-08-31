@@ -47,7 +47,7 @@ import RolesPage from "@/pages/Role";
 import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
 import PermissionAssignmentManager from "@/pages/Permission/AssignmentManager";
-import LeaveTypeManagementPage from "@/pages/Leave/LeaveTypeManagement";
+import LeaveTypeManagementPage from "@/pages/LeaveTypeManagementPage";
 
 const Router = [
   {
@@ -334,7 +334,7 @@ const Router = [
   element: (
     <ProtectedRoute
       method="get"
-      resource="leave"
+      resource="leave-type"
       component={<LeaveTypeManagementPage />}
     />
   ),

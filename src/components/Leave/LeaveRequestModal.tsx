@@ -15,7 +15,7 @@ import {
   CalendarOutlined,
 } from "@ant-design/icons";
 import { useCreateLeave } from "../../hooks/leave/useLeave";
-import { useLeaveTypes } from "../../hooks/leaveType/useLeaveType";
+import { useActiveLeaveTypes } from "../../hooks/useLeaveTypes";
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -31,7 +31,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const createLeaveMutation = useCreateLeave();
-  const { data: leaveTypes, isLoading: isLoadingLeaveTypes, error: leaveTypesError } = useLeaveTypes();
+  const { data: leaveTypes, isLoading: isLoadingLeaveTypes, error: leaveTypesError } = useActiveLeaveTypes();
 
   // Ensure leaveTypes is always an array
   const validLeaveTypes = Array.isArray(leaveTypes) ? leaveTypes : [];
