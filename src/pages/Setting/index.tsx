@@ -52,6 +52,14 @@ const Setting = () => {
         </Card>
       </Col>
       <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/project-setting")} hoverable>
+          <Title level={4}>Project Setting</Title>
+          <Paragraph>
+            Manage Nature of Work (add, edit, remove) and short names for project automation.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
         <Card className="h-full">
           <svg className="admin-icon-prop">
             <use></use>

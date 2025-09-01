@@ -55,6 +55,18 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
             />
           </Col>
           <Col span={8}>
+            {/* Short Name Field */}
+            <FormInputWrapper
+              id="shortName"
+              name="shortName"
+              label="Short Name"
+              rules={[
+                { required: true, message: "Please input the short name" },
+                { max: 20, message: "Short name cannot exceed 20 characters" },
+              ]}
+            />
+          </Col>
+          <Col span={8}>
             {/* PAN No Field */}
             <FormInputWrapper
               id="panNo"

@@ -121,7 +121,13 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
 
   const getHolidaysForDate = (date: Dayjs) => {
     if (!holidayData) return [];
-    return holidayData.filter((holiday: HolidayType) => dayjs(holiday.date).isSame(date, 'day'));
+    // Compare only the date part (YYYY-MM-DD) to avoid timezone/time issues
+    const target = date.format('YYYY-MM-DD');
+    return holidayData.filter((holiday: HolidayType) => {
+      // holiday.date may be in 'YYYY-MM-DD' or ISO string
+      const holidayDate = dayjs(holiday.date).format('YYYY-MM-DD');
+      return holidayDate === target;
+    });
   };
 
   const getWorklogsForDate = (date: Dayjs) => {

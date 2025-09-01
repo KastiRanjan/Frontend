@@ -12,6 +12,7 @@ import ProjectUsers from "@/pages/Project/users";
 import Request from "@/pages/Request";
 import ResetPasswordForm from "@/pages/ResetPassword";
 import Setting from "@/pages/Setting";
+import ProjectSetting from "@/pages/Setting/ProjectSetting";
 import AllTask from "@/pages/Task/all";
 import NewTask from "@/pages/Task/new";
 import TaskDetails from "@/pages/Task/task-details";
@@ -278,6 +279,10 @@ const Router = [
       {
         path: "/settings",
         element: <Setting />,
+      },
+      {
+        path: "/project-setting",
+        element: <ProjectSetting />,
       },
       {
         path: "/workhour-settings",
