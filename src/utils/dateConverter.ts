@@ -15,7 +15,10 @@ export class DualDateConverter {
    */
   static gregorianToNepali(date: Dayjs): NepaliDate {
     try {
-      return new NepaliDate(date.toDate());
+      // Always convert to Nepal time (UTC+5:45) before passing to NepaliDate
+      // Add 5 hours and 45 minutes to the date
+      const nepalTime = date.add(5, 'hour').add(45, 'minute');
+      return new NepaliDate(nepalTime.toDate());
     } catch (error) {
       console.warn('Failed to convert Gregorian to Nepali date:', error);
       return new NepaliDate(); // Return current date as fallback
