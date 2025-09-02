@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 const { Title, Text } = Typography;
 
 interface WorkhourProfileProps {
-  userId?: number;
+  userId?: string;
   userRole?: string;
   userName?: string;
   showTitle?: boolean;
@@ -23,7 +23,15 @@ const WorkhourProfile: React.FC<WorkhourProfileProps> = ({
   // Fetch user's resolved work hours
   const { data: resolvedHours, isLoading: loadingResolved } = useQuery({
     queryKey: ['workhour-resolved', userId],
-    queryFn: () => resolveWorkhour(userId!),
+    queryFn: () => {
+      // Convert string userId to number if it's a valid number
+      const numericUserId = userId && !isNaN(Number(userId)) ? Number(userId) : null;
+      if (numericUserId) {
+        return resolveWorkhour(numericUserId);
+      }
+      // If userId is not a valid number (i.e., it's a UUID), skip the call
+      return Promise.resolve(null);
+    },
     enabled: !!userId
   });
 
@@ -33,7 +41,8 @@ const WorkhourProfile: React.FC<WorkhourProfileProps> = ({
   const isLoading = loadingResolved || loadingAll;
 
   // Find user-specific and role-specific configurations
-  const userSpecificConfig = workhours.find((wh: any) => wh.userId === userId);
+  const numericUserId = userId && !isNaN(Number(userId)) ? Number(userId) : null;
+  const userSpecificConfig = workhours.find((wh: any) => wh.userId === numericUserId);
   const roleConfig = workhours.find((wh: any) => wh.role === userRole && !wh.userId);
 
   const formatTime = (hours: number) => {

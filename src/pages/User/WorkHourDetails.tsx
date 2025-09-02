@@ -1,11 +1,16 @@
 import React from 'react';
+import { useSession } from '../../context/SessionContext';
+import { useParams } from 'react-router-dom';
 import WorkhourProfile from '../../components/Workhour/WorkhourProfile';
 
 const WorkHourDetails: React.FC = () => {
-  // Mock user data - in real implementation, get from profile context or API
-  const userId = 1;
-  const userRole = 'audit-junior';
-  const userName = 'Current User';
+  const { profile } = useSession();
+  const { id } = useParams();
+  
+  // Use the actual user ID from URL params or session
+  const userId = id || (profile as any)?.id;
+  const userRole = (profile as any)?.role?.name;
+  const userName = `${(profile as any)?.firstName || ''} ${(profile as any)?.lastName || ''}`.trim() || 'Current User';
 
   return (
     <div>

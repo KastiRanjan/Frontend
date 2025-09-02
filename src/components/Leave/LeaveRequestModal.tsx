@@ -23,11 +23,13 @@ const { TextArea } = Input;
 interface LeaveRequestModalProps {
   open: boolean;
   onCancel: () => void;
+  onSuccess?: () => void;
 }
 
 const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
   open,
   onCancel,
+  onSuccess,
 }) => {
   const [form] = Form.useForm();
   const createLeaveMutation = useCreateLeave();
@@ -55,6 +57,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
       await createLeaveMutation.mutateAsync(payload);
       message.success("Leave request submitted successfully");
       form.resetFields();
+      onSuccess?.();
       onCancel();
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to submit leave request";

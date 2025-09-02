@@ -15,6 +15,8 @@ export function useCreateLeave() {
     mutationFn: leaveService.createLeave,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
     },
   });
 }

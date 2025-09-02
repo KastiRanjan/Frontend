@@ -28,6 +28,7 @@ import CreateUser from "@/pages/User/new";
 import PersonalDetails from "@/pages/User/PersonalDetails";
 import TrainingDetails from "@/pages/User/TrainingDetails";
 import WorkHourDetails from "@/pages/User/WorkHourDetails";
+import LeaveManagement from "@/pages/Leave/LeaveManagement";
 import Worklog from "@/pages/Worklog";
 import AllWorklogs from "@/pages/Worklog/AllWorklogs";
 import NewWorklog from "@/pages/Worklog/new";
@@ -271,6 +272,10 @@ const Router = [
       {
         path: "profile/:id/workhour-detail",
         element: <Profile component={WorkHourDetails} />,
+      },
+      {
+        path: "profile/:id/leave-detail",
+        element: <Profile component={LeaveManagement} />,
       },
       {
         path: "/calendar",

@@ -55,32 +55,46 @@ export const createLeave = async (payload: CreateLeaveDto) => {
 };
 
 export const updateLeave = async (id: string, payload: UpdateLeaveDto) => {
-  const response = await axios.patch(`${backendURI}/leave/${id}`, payload);
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}`, payload);
   return response.data;
 };
 
 export const deleteLeave = async (id: string) => {
-  const response = await axios.delete(`${backendURI}/leave/${id}`);
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.delete(`${backendURI}/leave/${cleanId}`);
   return response.data;
 };
 
 export const approveLeaveByLead = async (id: string, userId: string) => {
-  const response = await axios.patch(`${backendURI}/leave/${id}/approve/lead`, { userId });
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/lead`, { userId });
   return response.data;
 };
 
 export const approveLeaveByPM = async (id: string, userId: string) => {
-  const response = await axios.patch(`${backendURI}/leave/${id}/approve/pm`, { userId });
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/pm`, { userId });
   return response.data;
 };
 
 export const approveLeaveByAdmin = async (id: string, userId: string) => {
-  const response = await axios.patch(`${backendURI}/leave/${id}/approve/admin`, { userId });
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/admin`, { userId });
   return response.data;
 };
 
 export const rejectLeave = async (id: string, userId: string) => {
-  const response = await axios.patch(`${backendURI}/leave/${id}/reject`, { userId });
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/reject`, { userId });
+  return response.data;
+};
+
+// Generic approve function that determines the approval level based on user role
+export const approveLeave = async (id: string) => {
+  // This will use the user's session to determine the appropriate approval level
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve`);
   return response.data;
 };
 
@@ -88,5 +102,27 @@ export const getLeaveCalendarView = async (from: string, to: string, projectId?:
   const response = await axios.get(`${backendURI}/leave/calendar/view`, {
     params: { from, to, ...(projectId && { projectId }) }
   });
+  return response.data;
+};
+
+export const fetchUserLeaveBalances = async (userId: string, year?: number) => {
+  const params: any = {};
+  if (year) params.year = year;
+  
+  const response = await axios.get(`${backendURI}/leave/balance/${userId}`, { params });
+  return response.data;
+};
+
+export const fetchUserLeaves = async (status?: string) => {
+  const params: any = {};
+  if (status && status !== 'all') params.status = status;
+  
+  const endpoint = '/leave/my-leaves';
+  const response = await axios.get(`${backendURI}${endpoint}`, { params });
+  return response.data;
+};
+
+export const getPendingApprovals = async () => {
+  const response = await axios.get(`${backendURI}/leave/approvals/pending`);
   return response.data;
 };
