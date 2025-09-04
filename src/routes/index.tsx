@@ -27,6 +27,7 @@ import EducationalDetails from "@/pages/User/EducationalDetails";
 import CreateUser from "@/pages/User/new";
 import PersonalDetails from "@/pages/User/PersonalDetails";
 import TrainingDetails from "@/pages/User/TrainingDetails";
+import ContractDetails from "@/pages/User/ContractDetails";
 import WorkHourDetails from "@/pages/User/WorkHourDetails";
 import LeaveManagement from "@/pages/Leave/LeaveManagement";
 import Worklog from "@/pages/Worklog";
@@ -278,6 +279,10 @@ const Router = [
         element: <Profile component={LeaveManagement} />,
       },
       {
+        path: "profile/:id/contract-detail",
+        element: <Profile component={ContractDetails} />,
+      },
+      {
         path: "/calendar",
         element: <CalendarPage />,
       },
@@ -346,6 +351,16 @@ const Router = [
       method="get"
       resource="leave-type"
       component={<LeaveTypeManagementPage />}
+    />
+  ),
+},
+{
+  path: "/leave-management",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="leave"
+      component={<LeaveManagement />}
     />
   ),
 },

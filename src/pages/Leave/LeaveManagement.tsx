@@ -28,7 +28,9 @@ import {
   fetchUserLeaveBalances,
   getPendingApprovals,
   approveLeave,
-  rejectLeave
+  rejectLeave,
+  overrideLeave,
+  fetchLeavesForUser
 } from '../../service/leave.service';
 import LeaveRequestModal from '../../components/Leave/LeaveRequestModal';
 import LeaveDetailsModal from '../../components/Leave/LeaveDetailsModal';
@@ -36,10 +38,14 @@ import { LeaveType } from '../../types/leave';
 
 const { Title, Text } = Typography;
 
-const LeaveManagement: React.FC = () => {
+interface LeaveManagementProps {
+  userId?: string; // optional, when viewing someone's profile
+}
+
+const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId }) => {
   const { profile, permissions } = useSession();
   const queryClient = useQueryClient();
-  const userId = (profile as any)?.id;
+  const userId = profileUserId || (profile as any)?.id;
   
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState<LeaveType | null>(null);
@@ -48,14 +54,14 @@ const LeaveManagement: React.FC = () => {
   // Fetch user's leave balances
   const { data: balances = [], isLoading: balancesLoading } = useQuery({
     queryKey: ['leave-balances', userId],
-    queryFn: () => fetchUserLeaveBalances(userId),
+  queryFn: () => fetchUserLeaveBalances(userId),
     enabled: !!userId
   });
 
-  // Fetch user's leaves
+  // Fetch user's leaves. If viewing a profile user's page (profileUserId passed), use fetchLeavesForUser
   const { data: userLeaves = [], isLoading: leavesLoading } = useQuery({
     queryKey: ['user-leaves', userId],
-    queryFn: () => fetchUserLeaves(),
+    queryFn: () => (profileUserId ? fetchLeavesForUser(userId) : fetchUserLeaves()),
     enabled: !!userId
   });
 
@@ -63,7 +69,8 @@ const LeaveManagement: React.FC = () => {
   const { data: pendingApprovals = [], isLoading: approvalsLoading } = useQuery({
     queryKey: ['pending-approvals', userId],
     queryFn: () => getPendingApprovals(),
-    enabled: !!userId && (permissions?.includes('leave:approve') || false)
+    // Only fetch pending approvals for current session user (approver). Do not fetch when viewing someone else's profile unless the session user is that approver.
+    enabled: !!userId && !!(permissions?.includes('leave:approve') || false) && !profileUserId
   });
 
   // Approval mutations
@@ -96,6 +103,19 @@ const LeaveManagement: React.FC = () => {
     onError: (error: any) => {
       console.error('Reject leave error:', error);
       message.error(error?.response?.data?.message || 'Failed to reject leave');
+    }
+  });
+
+  const overrideMutation = useMutation({
+    mutationFn: ({ leaveId, newStatus }: { leaveId: string, newStatus?: 'pending' | 'rejected' }) => 
+      overrideLeave(leaveId, newStatus || 'pending'),
+    onSuccess: () => {
+      message.success('Leave approval overridden');
+      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+      queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.message || 'Failed to override approval');
     }
   });
 
@@ -134,6 +154,15 @@ const LeaveManagement: React.FC = () => {
       title: 'Reject Leave',
       content: 'Are you sure you want to reject this leave request?',
       onOk: () => rejectMutation.mutate({ leaveId })
+    });
+  };
+
+  const handleOverride = (leaveId: string, newStatus: 'pending' | 'rejected') => {
+    const actionText = newStatus === 'pending' ? 'revert to pending' : 'reject';
+    Modal.confirm({
+      title: 'Override Approval',
+      content: `This will override the current approval and ${actionText} this leave. Are you sure?`,
+      onOk: () => overrideMutation.mutate({ leaveId, newStatus })
     });
   };
 
@@ -228,39 +257,82 @@ const LeaveManagement: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (record: LeaveType) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<CheckCircleOutlined />}
-            onClick={() => handleApprove(record.id)}
-            loading={approveMutation.isPending}
-          >
-            Approve
-          </Button>
-          <Button
-            danger
-            size="small"
-            icon={<CloseCircleOutlined />}
-            onClick={() => handleReject(record.id)}
-            loading={rejectMutation.isPending}
-          >
-            Reject
-          </Button>
-          <Button
-            type="text"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedLeave(record);
-              setIsDetailsModalOpen(true);
-            }}
-          >
-            View
-          </Button>
-        </Space>
-      )
+      render: (record: LeaveType) => {
+        const isPending = ['pending', 'approved_by_lead', 'approved_by_pm'].includes(record.status);
+        const isApproved = record.status === 'approved';
+        const currentUserRole = (profile as any)?.role?.name?.toLowerCase() || '';
+        const requesterRole = record.user?.role?.name?.toLowerCase() || '';
+        
+        // Check if current user can override this approved leave
+        const canOverride = isApproved && 
+          ((currentUserRole === 'superuser') ||
+           (currentUserRole === 'administrator' && ['manager', 'projectlead', 'auditjunior'].includes(requesterRole)) ||
+           (currentUserRole === 'manager' && ['projectlead', 'auditjunior'].includes(requesterRole)) ||
+           (currentUserRole === 'projectlead' && requesterRole === 'auditjunior'));
+
+        return (
+          <Space direction="vertical" size="small">
+            {/* Pending approvals */}
+            {isPending && (
+              <Space>
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<CheckCircleOutlined />}
+                  onClick={() => handleApprove(record.id)}
+                  loading={approveMutation.isPending}
+                >
+                  Approve
+                </Button>
+                <Button
+                  danger
+                  size="small"
+                  icon={<CloseCircleOutlined />}
+                  onClick={() => handleReject(record.id)}
+                  loading={rejectMutation.isPending}
+                >
+                  Reject
+                </Button>
+              </Space>
+            )}
+            
+            {/* Already approved - show override options */}
+            {canOverride && (
+              <Space>
+                <Button
+                  type="default"
+                  size="small"
+                  style={{ color: '#fa8c16', borderColor: '#fa8c16' }}
+                  onClick={() => handleOverride(record.id, 'pending')}
+                  loading={overrideMutation.isPending}
+                >
+                  Override → Pending
+                </Button>
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => handleOverride(record.id, 'rejected')}
+                  loading={overrideMutation.isPending}
+                >
+                  Override → Reject
+                </Button>
+              </Space>
+            )}
+            
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => {
+                setSelectedLeave(record);
+                setIsDetailsModalOpen(true);
+              }}
+            >
+              View
+            </Button>
+          </Space>
+        );
+      }
     }
   ];
 
@@ -319,14 +391,16 @@ const LeaveManagement: React.FC = () => {
         />
       </Card>
 
-      {/* Pending Approvals (for leads, PMs, admins) */}
+      {/* Pending Approvals & Overridable Leaves */}
       {permissions?.includes('leave:approve') && (
         <Card
-          title="Pending Approvals"
+          title="Leave Approvals & Overrides"
           extra={
             <Space>
               <ClockCircleOutlined />
-              <Text>{pendingApprovals.length} pending</Text>
+              <Text>{pendingApprovals.filter((leave: LeaveType) => ['pending', 'approved_by_lead', 'approved_by_pm'].includes(leave.status)).length} pending</Text>
+              <Text>•</Text>
+              <Text>{pendingApprovals.filter((leave: LeaveType) => leave.status === 'approved').length} overridable</Text>
             </Space>
           }
         >
@@ -336,7 +410,7 @@ const LeaveManagement: React.FC = () => {
             loading={approvalsLoading}
             rowKey="id"
             pagination={{ pageSize: 10 }}
-            locale={{ emptyText: 'No pending approvals' }}
+            locale={{ emptyText: 'No leave requests requiring action' }}
           />
         </Card>
       )}

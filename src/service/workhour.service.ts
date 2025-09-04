@@ -15,17 +15,17 @@ export const createWorkhour = async (payload: CreateWorkhourDto) => {
 	return response.data;
 };
 
-export const updateWorkhour = async (id: number, payload: UpdateWorkhourDto) => {
+export const updateWorkhour = async (id: string, payload: UpdateWorkhourDto) => {
 	const response = await axios.patch(`${backendURI}/workhour/${id}`, payload);
 	return response.data;
 };
 
-export const deleteWorkhour = async (id: number) => {
+export const deleteWorkhour = async (id: string) => {
 	const response = await axios.delete(`${backendURI}/workhour/${id}`);
 	return response.data;
 };
 
-export const resolveWorkhour = async (userId: number) => {
+export const resolveWorkhour = async (userId: string) => {
 	const response = await axios.get(`${backendURI}/workhour/resolve/${userId}`);
 	return response.data;
 };

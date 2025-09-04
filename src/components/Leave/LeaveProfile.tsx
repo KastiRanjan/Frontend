@@ -16,7 +16,7 @@ import {
 import { 
   CalendarOutlined, 
   PlusOutlined, 
-  EyeOutlined,
+  // EyeOutlined,
   ClockCircleOutlined 
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
@@ -24,10 +24,17 @@ import moment from 'moment';
 import { useSession } from '../../context/SessionContext';
 import { 
   fetchUserLeaveBalances, 
-  fetchUserLeaves 
+  fetchUserLeaves,
+  approveLeave,
+  rejectLeave,
+  overrideLeave,
+  fetchLeavesForUser,
+  getPendingApprovals
 } from '../../service/leave.service';
+import { Modal, message } from 'antd';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import LeaveRequestModal from './LeaveRequestModal';
-import LeaveDetailsModal from './LeaveDetailsModal';
+// import LeaveDetailsModal from './LeaveDetailsModal';
 import { LeaveType } from '../../types/leave';
 
 const { Title, Text } = Typography;
@@ -41,11 +48,11 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
   userId, 
   showTitle = true 
 }) => {
-  const { profile } = useSession();
+  const { profile, permissions } = useSession();
   const targetUserId = userId || (profile as any)?.id;
   const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
-  const [selectedLeave, setSelectedLeave] = useState<LeaveType | null>(null);
-  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
+  // const [selectedLeave, setSelectedLeave] = useState<LeaveType | null>(null);
+  // const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
 
   // Fetch leave balances
   const { data: balances = [], isLoading: balancesLoading } = useQuery({
@@ -54,11 +61,18 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
     enabled: !!targetUserId
   });
 
-  // Fetch user's recent leaves
+  // Fetch user's leaves. When viewing another user's profile, fetch that user's leaves
   const { data: recentLeaves = [], isLoading: leavesLoading } = useQuery({
     queryKey: ['user-leaves', targetUserId],
-    queryFn: () => fetchUserLeaves(),
+    queryFn: () => (targetUserId && targetUserId !== (profile as any)?.id ? fetchLeavesForUser(targetUserId) : fetchUserLeaves()),
     enabled: !!targetUserId
+  });
+
+  // Fetch pending approvals for current session user (not the profile user)
+  const { data: pendingApprovals = [], isLoading: approvalsLoading } = useQuery({
+    queryKey: ['pending-approvals'],
+    queryFn: () => getPendingApprovals(),
+    enabled: !!(permissions?.includes('leave:approve'))
   });
 
   const getStatusColor = (status: string) => {
@@ -123,20 +137,137 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: LeaveType) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => {
-            setSelectedLeave(record);
-            setIsDetailsModalVisible(true);
-          }}
-        >
-          View
-        </Button>
-      )
+      render: (_: any, record: LeaveType) => {
+        // Check if current user can approve based on role hierarchy
+        const currentUserRole = (profile as any)?.role?.name?.toLowerCase() || '';
+        const requesterRole = record.user?.role?.name?.toLowerCase() || '';
+        
+        const canApprove = permissions?.includes('leave:approve') && 
+          ((requesterRole === 'auditjunior' && ['projectlead', 'manager', 'administrator', 'superuser'].includes(currentUserRole)) ||
+           (requesterRole === 'projectlead' && ['manager', 'administrator', 'superuser'].includes(currentUserRole)) ||
+           (requesterRole === 'manager' && ['administrator', 'superuser'].includes(currentUserRole)) ||
+           (requesterRole === 'administrator' && ['superuser'].includes(currentUserRole)) ||
+           (requesterRole === 'superuser' && ['superuser', 'administrator'].includes(currentUserRole)));
+           
+        const isPending = record.status === 'pending' || record.status === 'approved_by_lead' || record.status === 'approved_by_pm';
+        
+        // Check if current user can override this approved leave
+        const canOverride = record.status === 'approved' && permissions?.includes('leave:approve') &&
+          ((currentUserRole === 'superuser') ||
+           (currentUserRole === 'administrator' && ['manager', 'projectlead', 'auditjunior'].includes(requesterRole)) ||
+           (currentUserRole === 'manager' && ['projectlead', 'auditjunior'].includes(requesterRole)) ||
+           (currentUserRole === 'projectlead' && requesterRole === 'auditjunior'));
+        
+        return (
+          <Space direction="vertical" size="small">
+            {/* Pending approvals - show approve/reject */}
+            {canApprove && isPending && (
+              <Space>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Approve Leave',
+                      content: 'Are you sure you want to approve this leave request?',
+                      onOk: () => approveMutation.mutate({ leaveId: record.id })
+                    });
+                  }}
+                >
+                  Approve
+                </Button>
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Reject Leave',
+                      content: 'Are you sure you want to reject this leave request?',
+                      onOk: () => rejectMutation.mutate({ leaveId: record.id })
+                    });
+                  }}
+                >
+                  Reject
+                </Button>
+              </Space>
+            )}
+            
+            {/* Already approved - show override options */}
+            {canOverride && (
+              <Space>
+                <Button
+                  type="default"
+                  size="small"
+                  style={{ color: '#fa8c16', borderColor: '#fa8c16' }}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Override Approval',
+                      content: 'This will revert the leave back to pending status. Are you sure?',
+                      onOk: () => overrideMutation.mutate({ leaveId: record.id, newStatus: 'pending' })
+                    });
+                  }}
+                >
+                  Override → Pending
+                </Button>
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Override & Reject',
+                      content: 'This will override the approval and reject this leave. Are you sure?',
+                      onOk: () => overrideMutation.mutate({ leaveId: record.id, newStatus: 'rejected' })
+                    });
+                  }}
+                >
+                  Override → Reject
+                </Button>
+              </Space>
+            )}
+          </Space>
+        );
+      }
     }
   ];
+
+  // Mutations for approve/reject
+  const queryClient = useQueryClient();
+  const approveMutation = useMutation({
+    mutationFn: ({ leaveId }: { leaveId: string }) => approveLeave(leaveId),
+    onSuccess: () => {
+      message.success('Leave approved');
+      queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.message || 'Failed to approve leave');
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ leaveId }: { leaveId: string }) => rejectLeave(leaveId, (profile as any)?.id),
+    onSuccess: () => {
+      message.success('Leave rejected');
+      queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.message || 'Failed to reject leave');
+    }
+  });
+
+  const overrideMutation = useMutation({
+    mutationFn: ({ leaveId, newStatus }: { leaveId: string, newStatus?: 'pending' | 'rejected' }) => 
+      overrideLeave(leaveId, newStatus || 'pending'),
+    onSuccess: () => {
+      message.success('Leave approval overridden');
+      queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.message || 'Failed to override approval');
+    }
+  });
 
   if (balancesLoading || leavesLoading) {
     return (
@@ -231,6 +362,136 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
             }}
           />
         </div>
+
+        {/* Other Leave Requests Section - Show pending approvals for current user */}
+        {permissions?.includes('leave:approve') && (
+          <>
+            <Divider />
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <Title level={5}>Other Leave Requests (Pending Approval)</Title>
+                <Space>
+                  <ClockCircleOutlined />
+                  <Text type="secondary">{pendingApprovals.length} pending</Text>
+                </Space>
+              </div>
+
+              <Table
+                columns={[
+                  {
+                    title: 'Employee',
+                    key: 'employee',
+                    render: (record: LeaveType) => (
+                      <Space direction="vertical" size={0}>
+                        <Text strong>{record.user.firstName} {record.user.lastName}</Text>
+                        <Text type="secondary">{record.user.email}</Text>
+                      </Space>
+                    )
+                  },
+                  {
+                    title: 'Type',
+                    dataIndex: ['leaveType', 'name'],
+                    key: 'type',
+                    render: (type: string, record: LeaveType) => (
+                      <Tag color="blue">{type || record.type}</Tag>
+                    )
+                  },
+                  {
+                    title: 'Period',
+                    key: 'period',
+                    render: (_: any, record: LeaveType) => (
+                      <Space direction="vertical" size={0}>
+                        <Text strong>
+                          {moment(record.startDate).format('MMM DD')} - {moment(record.endDate).format('MMM DD, YYYY')}
+                        </Text>
+                        <Text type="secondary">
+                          {moment(record.endDate).diff(moment(record.startDate), 'days') + 1} days
+                        </Text>
+                      </Space>
+                    )
+                  },
+                  {
+                    title: 'Status',
+                    dataIndex: 'status',
+                    key: 'status',
+                    render: (status: string) => (
+                      <Tag color={getStatusColor(status)}>
+                        {getStatusText(status)}
+                      </Tag>
+                    )
+                  },
+                  {
+                    title: 'Applied',
+                    dataIndex: 'createdAt',
+                    key: 'applied',
+                    render: (date: string) => moment(date).format('MMM DD, YYYY')
+                  },
+                  {
+                    title: 'Actions',
+                    key: 'actions',
+                    render: (_: any, record: LeaveType) => {
+                      const isPending = record.status === 'pending' || record.status === 'approved_by_lead' || record.status === 'approved_by_pm';
+                      return (
+                        <Space>
+                          {/*
+                          <Button
+                            type="link"
+                            icon={<EyeOutlined />}
+                            onClick={() => {
+                              setSelectedLeave(record);
+                              setIsDetailsModalVisible(true);
+                            }}
+                          >
+                            View
+                          </Button>
+                          */}
+                          {isPending && (
+                            <>
+                              <Button
+                                type="primary"
+                                size="small"
+                                onClick={() => {
+                                  Modal.confirm({
+                                    title: 'Approve Leave',
+                                    content: 'Are you sure you want to approve this leave request?',
+                                    onOk: () => approveMutation.mutate({ leaveId: record.id })
+                                  });
+                                }}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                danger
+                                size="small"
+                                onClick={() => {
+                                  Modal.confirm({
+                                    title: 'Reject Leave',
+                                    content: 'Are you sure you want to reject this leave request?',
+                                    onOk: () => rejectMutation.mutate({ leaveId: record.id })
+                                  });
+                                }}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </Space>
+                      );
+                    }
+                  }
+                ]}
+                dataSource={pendingApprovals}
+                rowKey="id"
+                size="small"
+                loading={approvalsLoading}
+                pagination={pendingApprovals.length > 10 ? { pageSize: 10 } : false}
+                locale={{
+                  emptyText: 'No pending approvals'
+                }}
+              />
+            </div>
+          </>
+        )}
       </Card>
 
       {/* Modals */}
@@ -244,6 +505,7 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
         }}
       />
 
+      {/* TODO: Fix LeaveDetailsModal import issue
       <LeaveDetailsModal
         visible={isDetailsModalVisible}
         leave={selectedLeave}
@@ -252,6 +514,7 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
           setSelectedLeave(null);
         }}
       />
+      */}
     </>
   );
 };

@@ -5,6 +5,16 @@ export interface LeaveType {
     firstName: string;
     lastName: string;
     email: string;
+    role?: {
+      name: string;
+      displayName?: string;
+    };
+  };
+  leaveType?: {
+    id: string;
+    name: string;
+    maxDaysPerYear?: number;
+    isActive: boolean;
   };
   startDate: string;
   endDate: string;
@@ -14,6 +24,9 @@ export interface LeaveType {
   leadApproverId?: string;
   pmApproverId?: string;
   adminApproverId?: string;
+  overriddenBy?: string;
+  overriddenAt?: string;
+  canOverride?: boolean; // For frontend display logic
   createdAt: string;
   updatedAt: string;
 }

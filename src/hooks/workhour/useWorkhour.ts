@@ -25,7 +25,7 @@ export function useCreateWorkhour() {
 export function useUpdateWorkhour() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: ({ id, payload }: { id: number; payload: UpdateWorkhourDto }) => workhourService.updateWorkhour(id, payload),
+		mutationFn: ({ id, payload }: { id: string; payload: UpdateWorkhourDto }) => workhourService.updateWorkhour(id, payload),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workhours"] }),
 	});
 }
@@ -34,7 +34,7 @@ export function useUpdateWorkhour() {
 export function useDeleteWorkhour() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (id: number) => workhourService.deleteWorkhour(id),
+		mutationFn: (id: string) => workhourService.deleteWorkhour(id),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workhours"] }),
 	});
 }

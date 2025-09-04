@@ -14,8 +14,11 @@ import {
 import {
   CalendarOutlined,
 } from "@ant-design/icons";
+import moment from 'moment';
 import { useCreateLeave } from "../../hooks/leave/useLeave";
 import { useActiveLeaveTypes } from "../../hooks/useLeaveTypes";
+import { useHolidays } from '../../hooks/holiday/useHoliday';
+import { getLeaveCalendarView } from '../../service/leave.service';
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -34,6 +37,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
   const [form] = Form.useForm();
   const createLeaveMutation = useCreateLeave();
   const { data: leaveTypes, isLoading: isLoadingLeaveTypes, error: leaveTypesError } = useActiveLeaveTypes();
+  const { data: holidays = [] } = useHolidays();
 
   // Ensure leaveTypes is always an array
   const validLeaveTypes = Array.isArray(leaveTypes) ? leaveTypes : [];
@@ -53,6 +57,47 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
         type: values.type,
         reason: values.reason || "",
       };
+
+      // Client-side: check for holiday overlap
+      const selectedDays: string[] = [];
+      
+      // Ensure we have proper moment objects
+      let start, end;
+      try {
+        start = moment(startDate);
+        end = moment(endDate);
+      } catch (error) {
+        console.error('Error creating moment objects:', error);
+        message.error("Invalid date selection");
+        return;
+      }
+      
+      if (!start.isValid() || !end.isValid()) {
+        console.error('Invalid dates:', { startDate, endDate, start: start.isValid(), end: end.isValid() });
+        message.error("Invalid date selection");
+        return;
+      }
+      
+      // Generate date range safely
+      const current = start.clone();
+      while (current.isSameOrBefore(end)) {
+        selectedDays.push(current.format('YYYY-MM-DD'));
+        current.add(1, 'day');
+      }
+
+      const holidayDates = (holidays || []).map((h: any) => h.date);
+      const conflictHoliday = selectedDays.find(d => holidayDates.includes(d));
+      if (conflictHoliday) {
+        message.error(`Cannot request leave on holiday: ${conflictHoliday}`);
+        return;
+      }
+
+      // Client-side: check for already approved leaves overlapping via calendar endpoint (approved leaves only)
+      const calendarLeaves = await getLeaveCalendarView(payload.startDate, payload.endDate);
+      if (Array.isArray(calendarLeaves) && calendarLeaves.length > 0) {
+        message.error('Selected dates overlap with an already approved leave');
+        return;
+      }
 
       await createLeaveMutation.mutateAsync(payload);
       message.success("Leave request submitted successfully");

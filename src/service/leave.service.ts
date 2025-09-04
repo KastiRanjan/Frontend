@@ -98,6 +98,13 @@ export const approveLeave = async (id: string) => {
   return response.data;
 };
 
+// Override an approved leave (revert to pending or reject)
+export const overrideLeave = async (id: string, newStatus: 'pending' | 'rejected' = 'pending') => {
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/override`, { newStatus });
+  return response.data;
+};
+
 export const getLeaveCalendarView = async (from: string, to: string, projectId?: string) => {
   const response = await axios.get(`${backendURI}/leave/calendar/view`, {
     params: { from, to, ...(projectId && { projectId }) }
@@ -119,6 +126,13 @@ export const fetchUserLeaves = async (status?: string) => {
   
   const endpoint = '/leave/my-leaves';
   const response = await axios.get(`${backendURI}${endpoint}`, { params });
+  return response.data;
+};
+
+export const fetchLeavesForUser = async (userId: string, status?: string) => {
+  const params: any = {};
+  if (status && status !== 'all') params.status = status;
+  const response = await axios.get(`${backendURI}/leave/user/${encodeURIComponent(String(userId))}`, { params });
   return response.data;
 };
 

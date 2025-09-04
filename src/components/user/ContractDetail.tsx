@@ -1,7 +1,11 @@
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 
-const ContractDetailForm = () => {
+interface ContractDetailFormProps {
+  initialValues?: any;
+}
+
+const ContractDetailForm: React.FC<ContractDetailFormProps> = ({ initialValues }) => {
   return (
     <>
       <Title level={5}>Contract & Other Details</Title>
@@ -11,6 +15,7 @@ const ContractDetailForm = () => {
         id="filename"
         name="filename"
         label="Filename"
+        value={initialValues?.filename}
         // rules={[{ required: true, message: "Please input the Filename" }]}
       />
 

@@ -67,7 +67,7 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
     setIsModalVisible(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       await deleteWorkhour.mutateAsync(id);
       message.success('Work hour configuration deleted successfully');
@@ -111,7 +111,7 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
       const user = users.find(u => u.id === record.userId);
       return {
         type: 'User-specific',
-        name: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+        name: user ? `${user.name} (${user.username})` : 'Unknown User',
         color: '#52c41a',
         icon: <UserOutlined />
       };
@@ -119,7 +119,7 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
       const role = roles.find(r => r.id === record.roleId);
       return {
         type: 'Role-based',
-        name: role ? role.name : 'Unknown Role',
+        name: role ? role.displayName : 'Unknown Role',
         color: '#1890ff',
         icon: <TeamOutlined />
       };
@@ -282,7 +282,7 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
                     <Select placeholder="Select user" showSearch>
                       {users.map(user => (
                         <Option key={user.id} value={user.id}>
-                          {user.firstName} {user.lastName} ({user.email})
+                          {user.name} ({user.username}) - {user.email}
                         </Option>
                       ))}
                     </Select>
@@ -300,7 +300,7 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
                     <Select placeholder="Select role">
                       {roles.map(role => (
                         <Option key={role.id} value={role.id}>
-                          {role.name}
+                          {role.displayName}
                         </Option>
                       ))}
                     </Select>
