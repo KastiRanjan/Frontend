@@ -1,6 +1,7 @@
 import ProjectTimelinePage from "@/pages/Project/timeline";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import Attendence from "@/pages/Attendence";
+import Billing from "@/pages/Billing";
 import Client from "@/pages/Client";
 import EditClient from "@/pages/Client/edit";
 import CreateClient from "@/pages/Client/new";
@@ -201,6 +202,16 @@ const Router = [
       {
         path: "/client/edit/:id",
         element: <EditClient />,
+      },
+      {
+        path: "/billing",
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="billing"
+            component={<Billing />}
+          />
+        ),
       },
       {
         path: "/attendance",

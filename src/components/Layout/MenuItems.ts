@@ -73,6 +73,12 @@ export const MenuItems = (): MenuProps[] => {
       icon: React.createElement(UserOutlined),
     },
     {
+      key: "/billing",
+      label: "Billing",
+      resource: "billing",
+      icon: React.createElement(FileOutlined),
+    },
+    {
       key: "/worklogs-all",
       label: "Worklogs",
       resource: "worklogs",

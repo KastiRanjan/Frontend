@@ -8,6 +8,7 @@ import { useState } from 'react';
 import ProjectSummary from './ProjectSummary';
 import ProjectUserCard from './ProjectUserCard';
 import ProjectTimeline from './ProjectTimeline';
+import ProjectDetails from './ProjectDetails';
 
 
 
@@ -71,7 +72,7 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
             {
               label: 'Details',
               key: '2',
-              children: <div>Project Details Content</div>
+              children: <ProjectDetails project={project} />
             },
             {
               label: 'Tasks',

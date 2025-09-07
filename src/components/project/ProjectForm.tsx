@@ -12,6 +12,7 @@ import moment from "moment";
 import { ProjectType } from "@/types/project";
 import TextArea from "antd/es/input/TextArea";
 import { useClient } from "@/hooks/client/useClient";
+import { useBilling } from "@/hooks/billing/useBilling";
 
 interface ProjectFormProps {
   editProjectData?: ProjectType;
@@ -22,6 +23,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
   const { data: clients } = useClient();
+  const { data: billings } = useBilling("active");
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
   const { data: users, isPending: isPendingUser } = useUser({
     status: "active",
@@ -162,6 +164,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           projectLead: editProjectData.projectLead?.id,
           projectManager: editProjectData.projectManager?.id,
           client: (editProjectData as any).client?.id || (editProjectData as any).customer?.id || (editProjectData as any).client || (editProjectData as any).customer,
+          billing: (editProjectData as any).billing?.id || (editProjectData as any).billing,
           natureOfWork: typeof editProjectData.natureOfWork === "string" ? editProjectData.natureOfWork : (editProjectData.natureOfWork as any)?.id,
         };
 
@@ -210,7 +213,19 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             changeHandler={handleFieldChange}
           />
         </Col>
-          <Col span={12}>
+        <Col span={12}>
+          <FormSelectWrapper
+            id="Billing"
+            label="Billing Entity"
+            name="billing"
+            options={billings?.map((billing: any) => ({
+              value: billing.id,
+              label: billing.name,
+            }))}
+            rules={[{ required: false, message: "Please select the billing entity!" }]}
+          />
+        </Col>
+        <Col span={12}>
           <Form.Item
             label="Fiscal Year"
             name="fiscalYear"

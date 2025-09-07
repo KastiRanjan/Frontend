@@ -1,0 +1,180 @@
+import { useCreateBilling } from "@/hooks/billing/useCreateBilling";
+import { useEditBilling } from "@/hooks/billing/useEditBilling";
+import { BillingType } from "@/types/billing";
+import { Button, Col, Form, Input, Row, Select } from "antd";
+import { useEffect } from "react";
+import FormInputWrapper from "../FormInputWrapper";
+import FormSelectWrapper from "../FormSelectWrapper";
+
+interface BillingFormProps {
+  editBillingData?: BillingType;
+  handleCancel: () => void;
+}
+
+const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
+  const [form] = Form.useForm();
+  const { mutate, isPending } = useCreateBilling();
+  const { mutate: mutateEdit, isPending: isPendingEdit } = useEditBilling();
+
+  const onFinish = (values: any) => {
+    if (editBillingData?.id) {
+      mutateEdit(
+        { id: editBillingData.id.toString(), payload: values },
+        { onSuccess: () => handleCancel() }
+      );
+    } else {
+      mutate(values, { onSuccess: () => handleCancel() });
+    }
+  };
+
+  useEffect(() => {
+    if (editBillingData) {
+      form.setFieldsValue({
+        name: editBillingData.name,
+        registration_number: editBillingData.registration_number,
+        pan_number: editBillingData.pan_number,
+        vat_number: editBillingData.vat_number,
+        address: editBillingData.address,
+        email: editBillingData.email,
+        phone: editBillingData.phone,
+        logo_url: editBillingData.logo_url,
+        bank_account_name: editBillingData.bank_account_name,
+        bank_name: editBillingData.bank_name,
+        bank_account_number: editBillingData.bank_account_number,
+        status: editBillingData.status
+      });
+    } else {
+      form.resetFields();
+    }
+  }, [editBillingData, form]);
+
+  return (
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={onFinish}
+    >
+      <Row gutter={18}>
+        <Col span={24}>
+          <FormInputWrapper
+            id="Name"
+            label="Name"
+            name="name"
+            rules={[
+              { required: true, message: "Please input the billing entity name!" },
+            ]}
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="Registration Number"
+            label="Registration Number"
+            name="registration_number"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="PAN Number"
+            label="PAN Number"
+            name="pan_number"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="VAT Number"
+            label="VAT Number"
+            name="vat_number"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="Address"
+            label="Address"
+            name="address"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="Email"
+            label="Email"
+            name="email"
+            rules={[
+              { type: 'email', message: 'Please enter a valid email!' },
+            ]}
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="Phone"
+            label="Phone"
+            name="phone"
+          />
+        </Col>
+
+        <Col span={24}>
+          <FormInputWrapper
+            id="Logo URL"
+            label="Logo URL"
+            name="logo_url"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="Bank Account Name"
+            label="Bank Account Name"
+            name="bank_account_name"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="Bank Name"
+            label="Bank Name"
+            name="bank_name"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="Bank Account Number"
+            label="Bank Account Number"
+            name="bank_account_number"
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormSelectWrapper
+            id="Status"
+            label="Status"
+            name="status"
+            options={[
+              { value: "active", label: "Active" },
+              { value: "suspended", label: "Suspended" },
+              { value: "archived", label: "Archived" },
+            ]}
+            rules={[{ required: true, message: "Please select the status!" }]}
+          />
+        </Col>
+      </Row>
+      <Form.Item>
+        <Button
+          type="primary"
+          htmlType="submit"
+          disabled={isPending || isPendingEdit}
+          loading={isPending || isPendingEdit}
+        >
+          Save
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
+
+export default BillingForm;
