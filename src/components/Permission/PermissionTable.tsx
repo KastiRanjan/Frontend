@@ -1,17 +1,21 @@
-import { EditOutlined, SyncOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Button, Table, Space, Tooltip, message, Popconfirm } from "antd";
-import { useState } from "react";
+import { EditOutlined, SyncOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Table, Space, Tooltip, message, Popconfirm, Input } from "antd";
+import { useState, useRef } from "react";
 import { usePermission } from "../../hooks/permission/usePermission";
 import { useSyncPermissions } from "../../hooks/permission/useSyncPermissions";
 import { useDeletePermission } from "../../hooks/permission/useDeletePermission";
+import Highlighter from "react-highlight-words";
 
 // Modified columns definition to be a function
-const columns = (showEditModal: any, handleDelete: any) => [
+const columns = (showEditModal: any, handleDelete: any, getColumnSearchProps: any, sortedInfo: any) => [
   {
     title: "ID",
     dataIndex: "id",
     key: "id",
     width: 80,
+    ...getColumnSearchProps('id', 'ID'),
+    sorter: (a: any, b: any) => a.id.localeCompare(b.id),
+    sortOrder: sortedInfo.columnKey === 'id' && sortedInfo.order,
     render: (id: string) => (
       <Tooltip title={id}>
         <span>{id.slice(0, 8)}...</span>
@@ -22,6 +26,9 @@ const columns = (showEditModal: any, handleDelete: any) => [
     title: "Description",
     dataIndex: "description",
     key: "description",
+    ...getColumnSearchProps('description', 'Description'),
+    sorter: (a: any, b: any) => a.description.localeCompare(b.description),
+    sortOrder: sortedInfo.columnKey === 'description' && sortedInfo.order,
     ellipsis: {
       showTitle: false,
     },
@@ -35,6 +42,9 @@ const columns = (showEditModal: any, handleDelete: any) => [
     title: "Resource",
     dataIndex: "resource",
     key: "resource",
+    ...getColumnSearchProps('resource', 'Resource'),
+    sorter: (a: any, b: any) => a.resource.localeCompare(b.resource),
+    sortOrder: sortedInfo.columnKey === 'resource' && sortedInfo.order,
     filters: [
       { text: 'User', value: 'user' },
       { text: 'Role', value: 'role' },
@@ -55,6 +65,9 @@ const columns = (showEditModal: any, handleDelete: any) => [
     title: "Method",
     dataIndex: "method",
     key: "method",
+    ...getColumnSearchProps('method', 'Method'),
+    sorter: (a: any, b: any) => a.method.localeCompare(b.method),
+    sortOrder: sortedInfo.columnKey === 'method' && sortedInfo.order,
     filters: [
       { text: 'GET', value: 'GET' },
       { text: 'POST', value: 'POST' },
@@ -68,6 +81,9 @@ const columns = (showEditModal: any, handleDelete: any) => [
     title: "Path",
     dataIndex: "path",
     key: "path",
+    ...getColumnSearchProps('path', 'Path'),
+    sorter: (a: any, b: any) => a.path.localeCompare(b.path),
+    sortOrder: sortedInfo.columnKey === 'path' && sortedInfo.order,
     ellipsis: {
       showTitle: false,
     },
@@ -83,6 +99,7 @@ const columns = (showEditModal: any, handleDelete: any) => [
     key: "createdAt",
     render: (date: string) => new Date(date).toLocaleDateString(),
     sorter: (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    sortOrder: sortedInfo.columnKey === 'createdAt' && sortedInfo.order,
   },
   {
     title: "Action",
@@ -125,10 +142,19 @@ const PermissionTable = ({ showEditModal }: { showEditModal: any }) => {
   const { data: permissionData, isPending } = usePermission({ page, limit });
   const syncPermissions = useSyncPermissions();
   const deletePermission = useDeletePermission();
+  
+  // For search
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<any>(null);
+  
+  // For sorting
+  const [sortedInfo, setSortedInfo] = useState<any>({});
 
-  const handleTableChange = (pagination: any) => {
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
+    setSortedInfo(sorter);
   };
 
   const handleSyncPermissions = async () => {
@@ -148,6 +174,83 @@ const PermissionTable = ({ showEditModal }: { showEditModal: any }) => {
       message.error('Failed to delete permission');
     }
   };
+
+  const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: any) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: string, title: string) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${title}`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value: string, record: any) => {
+      if (dataIndex.includes('.')) {
+        const keys = dataIndex.split('.');
+        let nestedObj = record;
+        for (const key of keys) {
+          if (!nestedObj || !nestedObj[key]) return false;
+          nestedObj = nestedObj[key];
+        }
+        return nestedObj.toString().toLowerCase().includes(value.toLowerCase());
+      }
+      return record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '';
+    },
+    onFilterDropdownOpenChange: (visible: boolean) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text: string) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
 
   const paginationOptions = {
     current: page,
@@ -176,7 +279,7 @@ const PermissionTable = ({ showEditModal }: { showEditModal: any }) => {
         loading={isPending}
         pagination={paginationOptions}
         dataSource={permissionData?.results || []}
-        columns={columns(showEditModal, handleDelete)}
+        columns={columns(showEditModal, handleDelete, getColumnSearchProps, sortedInfo)}
         onChange={handleTableChange}
         rowKey="id"
         size="small"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Table,
   Card,
@@ -10,15 +10,18 @@ import {
   Typography,
   Upload,
   Modal,
-  Tooltip
+  Tooltip,
+  Input
 } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
   CalendarOutlined,
   UploadOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import { useHolidays, useDeleteHoliday, useImportHolidaysFromCSV } from '../../hooks/holiday/useHoliday';
 import { HolidayType } from '../../types/holiday';
 
@@ -32,6 +35,14 @@ interface HolidayTableProps {
 const HolidayTable: React.FC<HolidayTableProps> = ({ onEdit }) => {
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  // For search functionality
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<any>(null);
+  
+  // For sorting functionality
+  const [sortedInfo, setSortedInfo] = useState<any>({});
 
   const { data: holidays = [], isLoading, refetch } = useHolidays();
   const deleteHoliday = useDeleteHoliday();
@@ -45,6 +56,10 @@ const HolidayTable: React.FC<HolidayTableProps> = ({ onEdit }) => {
     } catch (error) {
       message.error('Failed to delete holiday');
     }
+  };
+
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setSortedInfo(sorter);
   };
 
   const handleImport = async (file: File) => {
@@ -61,6 +76,83 @@ const HolidayTable: React.FC<HolidayTableProps> = ({ onEdit }) => {
     }
   };
 
+  const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: any) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: string, title: string) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${title}`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value: string, record: any) => {
+      if (dataIndex.includes('.')) {
+        const keys = dataIndex.split('.');
+        let nestedObj = record;
+        for (const key of keys) {
+          if (!nestedObj || !nestedObj[key]) return false;
+          nestedObj = nestedObj[key];
+        }
+        return nestedObj.toString().toLowerCase().includes(value.toLowerCase());
+      }
+      return record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '';
+    },
+    onFilterDropdownOpenChange: (visible: boolean) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text: string) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
   const getHolidayTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case 'public': return 'red';
@@ -75,24 +167,31 @@ const HolidayTable: React.FC<HolidayTableProps> = ({ onEdit }) => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
+      ...getColumnSearchProps('date', 'Date'),
       sorter: (a: HolidayType, b: HolidayType) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      sortOrder: sortedInfo.columnKey === 'date' && sortedInfo.order,
       render: (date: string) => new Date(date).toLocaleDateString()
     },
     {
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
-      sorter: (a: HolidayType, b: HolidayType) => a.title.localeCompare(b.title)
+      ...getColumnSearchProps('title', 'Title'),
+      sorter: (a: HolidayType, b: HolidayType) => a.title.localeCompare(b.title),
+      sortOrder: sortedInfo.columnKey === 'title' && sortedInfo.order
     },
     {
       title: 'Type',
       dataIndex: 'type',
       key: 'type',
+      ...getColumnSearchProps('type', 'Type'),
       render: (type: string) => (
         <Tag color={getHolidayTypeColor(type)}>
           {type.toUpperCase()}
         </Tag>
       ),
+      sorter: (a: HolidayType, b: HolidayType) => a.type.localeCompare(b.type),
+      sortOrder: sortedInfo.columnKey === 'type' && sortedInfo.order,
       filters: [
         { text: 'Public', value: 'public' },
         { text: 'Company', value: 'company' },
@@ -104,6 +203,9 @@ const HolidayTable: React.FC<HolidayTableProps> = ({ onEdit }) => {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
+      ...getColumnSearchProps('description', 'Description'),
+      sorter: (a: HolidayType, b: HolidayType) => (a.description || '').localeCompare(b.description || ''),
+      sortOrder: sortedInfo.columnKey === 'description' && sortedInfo.order,
       ellipsis: {
         showTitle: false
       },
@@ -117,6 +219,9 @@ const HolidayTable: React.FC<HolidayTableProps> = ({ onEdit }) => {
       title: 'BS Date',
       dataIndex: 'bsDate',
       key: 'bsDate',
+      ...getColumnSearchProps('bsDate', 'BS Date'),
+      sorter: (a: HolidayType, b: HolidayType) => (a.bsDate || '').localeCompare(b.bsDate || ''),
+      sortOrder: sortedInfo.columnKey === 'bsDate' && sortedInfo.order,
       render: (bsDate: string) => bsDate || '-'
     },
     {
@@ -204,10 +309,11 @@ const HolidayTable: React.FC<HolidayTableProps> = ({ onEdit }) => {
       }
     >
       <Table
-        columns={columns}
+        columns={columns as any}
         dataSource={holidays}
         rowKey="id"
         loading={isLoading}
+        onChange={handleTableChange}
         pagination={{
           showSizeChanger: true,
           showQuickJumper: true,

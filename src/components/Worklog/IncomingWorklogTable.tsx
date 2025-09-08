@@ -1,16 +1,26 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
-import { Button, Card, Table, Modal, Input, Popconfirm } from "antd";
+import { Button, Card, Table, Modal, Input, Popconfirm, Space } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
 import { useSession } from "@/context/SessionContext";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useWorklogbyUser } from "@/hooks/worklog/useWorklogbyUser";
+import { SearchOutlined } from "@ant-design/icons";
+import Highlighter from "react-highlight-words";
 
 const { TextArea } = Input;
 
-const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate: any) => {
+const columns = (
+  status: string, 
+  deleteWorklog: any, 
+  editWorklog: any, 
+  navigate: any, 
+  getColumnSearchProps: any, 
+  sortedInfo: any, 
+  showRejectModal: (id: string) => void
+) => {
   const getStatusTitle = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
@@ -29,8 +39,9 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
       title: "Date",
       dataIndex: "date",
       key: "date",
-      sorter: true,
-      showSorterTooltip: false,
+      ...getColumnSearchProps('startTime', 'Date'),
+      sorter: (a: any, b: any) => moment(a.startTime).unix() - moment(b.startTime).unix(),
+      sortOrder: sortedInfo.columnKey === 'date' && sortedInfo.order,
       render: (_: any, record: any) => {
         return new Date(record?.startTime).toLocaleDateString();
       }
@@ -39,6 +50,9 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
       title: "Project Name",
       dataIndex: "project",
       key: "project",
+      ...getColumnSearchProps('task.project.name', 'Project'),
+      sorter: (a: any, b: any) => (a.task?.project?.name || '').localeCompare(b.task?.project?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'project' && sortedInfo.order,
       render: (_: any, record: any) => {
         return <Link to={`/projects/${record?.task?.project?.id}`} className="text-blue-600">{record?.task?.project?.name}</Link>
       }
@@ -47,6 +61,9 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
       title: "Task",
       dataIndex: "Task",
       key: "task",
+      ...getColumnSearchProps('task.name', 'Task'),
+      sorter: (a: any, b: any) => (a.task?.name || '').localeCompare(b.task?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'task' && sortedInfo.order,
       render: (_: any, record: any) => {
         return <Link to={`/projects/${record?.task?.project?.id}/tasks/${record?.task?.id}`} className="text-blue-600">{record?.task?.name}</Link>
       }
@@ -55,6 +72,9 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
       title: "Review Date",
       dataIndex: "updatedAt",
       key: "updatedAt",
+      ...getColumnSearchProps('updatedAt', 'Review Date'),
+      sorter: (a: any, b: any) => moment(a.updatedAt).unix() - moment(b.updatedAt).unix(),
+      sortOrder: sortedInfo.columnKey === 'updatedAt' && sortedInfo.order,
       render: (_: any, record: any) => {
         return new Date(record?.updatedAt).toLocaleDateString();
       }
@@ -63,6 +83,9 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
       title: "Duration",
       dataIndex: "startTime",
       key: "startTime",
+      sorter: (a: any, b: any) => moment.duration(moment(a.endTime).diff(moment(a.startTime))).asMinutes() - 
+                                 moment.duration(moment(b.endTime).diff(moment(b.startTime))).asMinutes(),
+      sortOrder: sortedInfo.columnKey === 'startTime' && sortedInfo.order,
       render: (_: any, record: any) => {
         return (
           <>
@@ -78,6 +101,9 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
       title: getStatusTitle(status),
       dataIndex: "userId",
       key: "userId",
+      ...getColumnSearchProps('user.name', 'User'),
+      sorter: (a: any, b: any) => (a.user?.name || '').localeCompare(b.user?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'userId' && sortedInfo.order,
       render: (_: any, record: any) => {
         return record?.user?.name;
       }
@@ -89,6 +115,9 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
       title: "Remark",
       dataIndex: "remark",
       key: "remark",
+      ...getColumnSearchProps('remark', 'Remark'),
+      sorter: (a: any, b: any) => (a.remark || '').localeCompare(b.remark || ''),
+      sortOrder: sortedInfo.columnKey === 'remark' && sortedInfo.order,
       render: (_: any, record: any) => {
         return record?.remark || "-";
       }
@@ -127,7 +156,13 @@ const columns = (status: string, deleteWorklog: any, editWorklog: any, navigate:
               >
                 Approve
               </Button>
-              {/* Reject button will trigger modal, handled in component */}
+              <Button
+                type="primary"
+                danger
+                onClick={() => showRejectModal(record?.id)}
+              >
+                Reject
+              </Button>
             </>
           )}
         </div>
@@ -150,6 +185,14 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [remark, setRemark] = useState("");
+  
+  // For search functionality
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<any>(null);
+  
+  // For sorting
+  const [sortedInfo, setSortedInfo] = useState<any>({});
 
   const toggleDescription = (id: string) => {
     setExpandedRows(prev =>
@@ -172,6 +215,87 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
       </span>
     );
   };
+  
+  const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: any) => {
+    clearFilters();
+    setSearchText('');
+  };
+  
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setSortedInfo(sorter);
+  };
+  
+  const getColumnSearchProps = (dataIndex: string, title: string) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${title}`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value: string, record: any) => {
+      if (dataIndex.includes('.')) {
+        const keys = dataIndex.split('.');
+        let nestedObj = record;
+        for (const key of keys) {
+          if (!nestedObj || !nestedObj[key]) return false;
+          nestedObj = nestedObj[key];
+        }
+        return nestedObj.toString().toLowerCase().includes(value.toLowerCase());
+      }
+      return record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '';
+    },
+    onFilterDropdownOpenChange: (visible: boolean) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text: string) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
 
   const expandedRowRender = (record: any) => {
     const description = record?.description || "No description available";
@@ -225,7 +349,15 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
       <Table
         loading={isPending || isEditPending}
         dataSource={filteredWorklogs}
-        columns={columns(status, deleteWorklog, editWorklog, navigate).map(col => ({
+        columns={columns(
+          status, 
+          deleteWorklog, 
+          editWorklog, 
+          navigate, 
+          getColumnSearchProps, 
+          sortedInfo, 
+          showRejectModal
+        ).map(col => ({
           ...col,
           render: col.key === "action" && status === "requested" ? (_: any, record: any) => {
             return (
@@ -268,8 +400,15 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
           expandedRowKeys: expandedRows,
           expandIcon: customExpandIcon,
         }}
+        onChange={handleTableChange}
         rowKey="id"
         bordered
+        pagination={{
+          showSizeChanger: true,
+          showQuickJumper: true,
+          pageSizeOptions: [5, 10, 20, 50],
+          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+        }}
       />
 
       <Modal

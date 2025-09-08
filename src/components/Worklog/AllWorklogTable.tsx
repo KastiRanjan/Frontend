@@ -1,13 +1,21 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
 import { useWorklog } from "@/hooks/worklog/useWorklog";
-import { Button, Card, Table, Popconfirm } from "antd";
+import { Button, Card, Table, Popconfirm, Input, Space } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
-  import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
-import { useState } from "react";
+import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
+import { useState, useRef } from "react";
+import { SearchOutlined } from "@ant-design/icons";
+import Highlighter from "react-highlight-words";
 
-const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPending: boolean, navigate: any) => {
+const columns = (
+  status: string, 
+  deleteWorklog: any, 
+  navigate: any, 
+  getColumnSearchProps: any, 
+  sortedInfo: any
+) => {
   // Determine column title based on status
   const getStatusTitle = (status: string) => {
     switch (status.toLowerCase()) {
@@ -27,8 +35,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
       title: "Date",
       dataIndex: "date",
       key: "date",
-      sorter: true,
-      showSorterTooltip: false,
+      ...getColumnSearchProps('startTime', 'Date'),
+      sorter: (a: any, b: any) => moment(a.startTime).unix() - moment(b.startTime).unix(),
+      sortOrder: sortedInfo.columnKey === 'date' && sortedInfo.order,
       render: (_: any, record: any) => {
         return new Date(record?.startTime).toLocaleDateString();
       }
@@ -37,6 +46,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
       title: "Project Name",
       dataIndex: "project",
       key: "project",
+      ...getColumnSearchProps('task.project.name', 'Project'),
+      sorter: (a: any, b: any) => (a.task?.project?.name || '').localeCompare(b.task?.project?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'project' && sortedInfo.order,
       render: (_: any, record: any) => {
         return <Link to={`/projects/${record?.task?.project?.id}`} className="text-blue-600">{record?.task?.project?.name}</Link>
       }
@@ -45,6 +57,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
       title: "Task",
       dataIndex: "Task",
       key: "task",
+      ...getColumnSearchProps('task.name', 'Task'),
+      sorter: (a: any, b: any) => (a.task?.name || '').localeCompare(b.task?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'task' && sortedInfo.order,
       render: (_: any, record: any) => {
         return <Link to={`/projects/${record?.task?.project?.id}/tasks/${record?.task?.id}`} className="text-blue-600">{record?.task?.name}</Link>
       }
@@ -53,6 +68,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
       title: "Review Date",
       dataIndex: "updatedAt",
       key: "updatedAt",
+      ...getColumnSearchProps('updatedAt', 'Review Date'),
+      sorter: (a: any, b: any) => moment(a.updatedAt).unix() - moment(b.updatedAt).unix(),
+      sortOrder: sortedInfo.columnKey === 'updatedAt' && sortedInfo.order,
       render: (_: any, record: any) => {
         return new Date(record?.updatedAt).toLocaleDateString();
       }
@@ -61,6 +79,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
       title: "Duration",
       dataIndex: "startTime",
       key: "startTime",
+      sorter: (a: any, b: any) => moment.duration(moment(a.endTime).diff(moment(a.startTime))).asMinutes() - 
+                                 moment.duration(moment(b.endTime).diff(moment(b.startTime))).asMinutes(),
+      sortOrder: sortedInfo.columnKey === 'startTime' && sortedInfo.order,
       render: (_: any, record: any) => {
         return <>
           <div>
@@ -74,6 +95,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
       title: getStatusTitle(status),
       dataIndex: "approvedBy",
       key: "approvedBy",
+      ...getColumnSearchProps('user.name', 'User'),
+      sorter: (a: any, b: any) => (a.user?.name || '').localeCompare(b.user?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'approvedBy' && sortedInfo.order,
       render: (_: any, record: any) => {
         return (record?.user?.name);
       }
@@ -86,6 +110,9 @@ const columns = (status: string, editWorklog: any, deleteWorklog: any, isEditPen
       title: "Remark",
       dataIndex: "remark",
       key: "remark",
+      ...getColumnSearchProps('remark', 'Remark'),
+      sorter: (a: any, b: any) => (a.remark || '').localeCompare(b.remark || ''),
+      sortOrder: sortedInfo.columnKey === 'remark' && sortedInfo.order,
       render: (_: any, record: any) => {
         return record?.remark || "-";
       }
@@ -132,6 +159,14 @@ const AllWorklogTable = ({ status }: { status: string }) => {
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
   const { mutate: deleteWorklog } = useDeleteWorklog();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
+  
+  // For search
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<any>(null);
+  
+  // For sorting
+  const [sortedInfo, setSortedInfo] = useState<any>({});
 
   // Function to toggle description visibility
   const toggleDescription = (id: string) => {
@@ -167,6 +202,87 @@ const AllWorklogTable = ({ status }: { status: string }) => {
       />
     );
   };
+  
+  const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: any) => {
+    clearFilters();
+    setSearchText('');
+  };
+  
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setSortedInfo(sorter);
+  };
+  
+  const getColumnSearchProps = (dataIndex: string, title: string) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${title}`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value: string, record: any) => {
+      if (dataIndex.includes('.')) {
+        const keys = dataIndex.split('.');
+        let nestedObj = record;
+        for (const key of keys) {
+          if (!nestedObj || !nestedObj[key]) return false;
+          nestedObj = nestedObj[key];
+        }
+        return nestedObj.toString().toLowerCase().includes(value.toLowerCase());
+      }
+      return record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '';
+    },
+    onFilterDropdownOpenChange: (visible: boolean) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text: string) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
 
   return (
     <Card>
@@ -176,14 +292,21 @@ const AllWorklogTable = ({ status }: { status: string }) => {
       <Table
         loading={isPending || isEditPending}
         dataSource={worklogs || []}
-        columns={columns(status, editWorklog, deleteWorklog, isEditPending, navigate)}
+        columns={columns(status, deleteWorklog, navigate, getColumnSearchProps, sortedInfo) as any}
         expandable={{
           expandedRowRender,
           expandedRowKeys: expandedRows,
           expandIcon: customExpandIcon,
         }}
+        onChange={handleTableChange}
         rowKey="id"
         bordered
+        pagination={{
+          showSizeChanger: true,
+          showQuickJumper: true,
+          pageSizeOptions: [5, 10, 20, 50],
+          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+        }}
       />
     </Card>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Table,
   Button,
@@ -11,7 +11,8 @@ import {
   Tag,
   Popconfirm,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import {
   useLeaveTypes,
   useCreateLeaveType,
@@ -25,6 +26,14 @@ const LeaveTypeManager: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingLeaveType, setEditingLeaveType] = useState<LeaveType | null>(null);
   const [form] = Form.useForm();
+  
+  // For search functionality
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<any>(null);
+  
+  // For sorting
+  const [sortedInfo, setSortedInfo] = useState<any>({});
 
   // Queries and mutations
   const { data: leaveTypes, isLoading } = useLeaveTypes();
@@ -32,6 +41,87 @@ const LeaveTypeManager: React.FC = () => {
   const updateMutation = useUpdateLeaveType();
   const deleteMutation = useDeleteLeaveType();
   const toggleStatusMutation = useToggleLeaveTypeStatus();
+
+  const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: any) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setSortedInfo(sorter);
+  };
+
+  const getColumnSearchProps = (dataIndex: string, title: string) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${title}`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value: string, record: any) => {
+      if (dataIndex.includes('.')) {
+        const keys = dataIndex.split('.');
+        let nestedObj = record;
+        for (const key of keys) {
+          if (!nestedObj || !nestedObj[key]) return false;
+          nestedObj = nestedObj[key];
+        }
+        return nestedObj.toString().toLowerCase().includes(value.toLowerCase());
+      }
+      return record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '';
+    },
+    onFilterDropdownOpenChange: (visible: boolean) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text: string) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
 
   const handleCreateEdit = () => {
     setEditingLeaveType(null);
@@ -88,6 +178,9 @@ const LeaveTypeManager: React.FC = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      ...getColumnSearchProps('name', 'Name'),
+      sorter: (a: LeaveType, b: LeaveType) => a.name.localeCompare(b.name),
+      sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
       render: (text: string, record: LeaveType) => (
         <Space>
           <span>{text}</span>
@@ -99,18 +192,25 @@ const LeaveTypeManager: React.FC = () => {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
+      ...getColumnSearchProps('description', 'Description'),
+      sorter: (a: LeaveType, b: LeaveType) => (a.description || '').localeCompare(b.description || ''),
+      sortOrder: sortedInfo.columnKey === 'description' && sortedInfo.order,
       render: (text: string) => text || '-',
     },
     {
       title: 'Max Days/Year',
       dataIndex: 'maxDaysPerYear',
       key: 'maxDaysPerYear',
+      sorter: (a: LeaveType, b: LeaveType) => (a.maxDaysPerYear || 0) - (b.maxDaysPerYear || 0),
+      sortOrder: sortedInfo.columnKey === 'maxDaysPerYear' && sortedInfo.order,
       render: (value: number) => value ? `${value} days` : 'Unlimited',
     },
     {
       title: 'Status',
       dataIndex: 'isActive',
       key: 'isActive',
+      sorter: (a: LeaveType, b: LeaveType) => (a.isActive === b.isActive ? 0 : a.isActive ? 1 : -1),
+      sortOrder: sortedInfo.columnKey === 'isActive' && sortedInfo.order,
       render: (isActive: boolean, record: LeaveType) => (
         <Switch
           checked={isActive}
@@ -166,10 +266,11 @@ const LeaveTypeManager: React.FC = () => {
       </div>
 
       <Table
-        columns={columns}
+        columns={columns as any}
         dataSource={leaveTypes || []}
         rowKey="id"
         loading={isLoading}
+        onChange={handleTableChange}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,

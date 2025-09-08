@@ -3,12 +3,13 @@ import { useDeleteTask } from "@/hooks/task/useDeleteTask";
 import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal, message, Popconfirm, Space } from "antd";
-import { useMemo, useState } from "react";
+import { EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal, message, Popconfirm, Space, Input } from "antd";
+import { useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import { useSession } from "@/context/SessionContext";
+import Highlighter from 'react-highlight-words';
 
 interface ExtendedTaskType extends TaskType {
   first?: boolean;
@@ -38,6 +39,10 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
   const [isDueDateModalVisible, setIsDueDateModalVisible] = useState(false);
   const [isAssigneeModalVisible, setIsAssigneeModalVisible] = useState(false);
   const { permissions } = useSession(); // Get permissions from session context
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const [sortedInfo, setSortedInfo] = useState<any>({});
+  const searchInput = useRef<any>(null);
 
   // Check if user has task delete permission
   const canDeleteTask = useMemo(() => {
@@ -60,6 +65,87 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
     () => data.map(task => ({ ...task, projectId: project.id })),
     [data, project.id]
   );
+
+  const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setSortedInfo(sorter);
+  };
+
+  const getColumnSearchProps = (dataIndex: string, title: string): any => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${title}`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value: string, record: any) => {
+      if (dataIndex.includes('.')) {
+        const keys = dataIndex.split('.');
+        let val = record;
+        for (const key of keys) {
+          if (!val) return false;
+          val = val[key];
+        }
+        return val ? val.toString().toLowerCase().includes(value.toLowerCase()) : false;
+      }
+      return record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '';
+    },
+    onFilterDropdownVisibleChange: (visible: boolean) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text: string) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
 
   const isEditing = (record: ExtendedTaskType) => String(record.id) === editingKey;
 
@@ -192,11 +278,21 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
 
   const columns = useMemo(
     () => [
-      { title: "ID", dataIndex: "tcode", key: "id" },
+      { 
+        title: "ID", 
+        dataIndex: "tcode", 
+        key: "id",
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => (a.tcode?.localeCompare(b.tcode || '') || 0),
+        sortOrder: sortedInfo.columnKey === 'id' && sortedInfo.order,
+        ...getColumnSearchProps('tcode', 'ID'),
+      },
       {
         title: "Name",
         dataIndex: "name",
         key: "name",
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => a.name.localeCompare(b.name),
+        sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
+        ...getColumnSearchProps('name', 'Name'),
         render: (name: string, record: ExtendedTaskType) => (
           <div className="flex items-center justify-between gap-2">
             <Link to={`/projects/${record.projectId}/tasks/${record.id}`} className="text-blue-600">
@@ -220,14 +316,28 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
       {
         title: "Group",
         dataIndex: "group",
-        key: "group sights",
+        key: "group",
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
+          const groupNameA = a.group?.name || '';
+          const groupNameB = b.group?.name || '';
+          return groupNameA.localeCompare(groupNameB);
+        },
+        sortOrder: sortedInfo.columnKey === 'group' && sortedInfo.order,
         render: (group: ExtendedTaskType["group"]) => group?.name ?? "---",
+        ...getColumnSearchProps('group.name', 'Group'),
       },
       {
         title: "Status",
         dataIndex: "status",
         key: "status",
         width: 100,
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
+          const statusA = a.status || '';
+          const statusB = b.status || '';
+          return statusA.localeCompare(statusB);
+        },
+        sortOrder: sortedInfo.columnKey === 'status' && sortedInfo.order,
+        ...getColumnSearchProps('status', 'Status'),
         render: (status: string) => (
           <Badge count={status} color="#52c41a" style={{ cursor: "pointer" }} />
         ),
@@ -277,6 +387,12 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
         dataIndex: "dueDate",
         key: "dueDate",
         editable: true,
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
+          if (!a.dueDate) return -1;
+          if (!b.dueDate) return 1;
+          return moment(a.dueDate).unix() - moment(b.dueDate).unix();
+        },
+        sortOrder: sortedInfo.columnKey === 'dueDate' && sortedInfo.order,
         render: (dueDate: string | null, record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
@@ -294,6 +410,12 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
         key: "first",
         width: 120,
         editable: true,
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
+          const aValue = a.first ? 1 : 0;
+          const bValue = b.first ? 1 : 0;
+          return aValue - bValue;
+        },
+        sortOrder: sortedInfo.columnKey === 'first' && sortedInfo.order,
         render: (firstVerification: boolean | undefined, record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
@@ -313,6 +435,12 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
         key: "last",
         width: 120,
         editable: true,
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
+          const aValue = a.last ? 1 : 0;
+          const bValue = b.last ? 1 : 0;
+          return aValue - bValue;
+        },
+        sortOrder: sortedInfo.columnKey === 'last' && sortedInfo.order,
         render: (secondVerification: boolean | undefined, record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
@@ -375,7 +503,7 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
         },
       },
     ],
-    [editingKey, project.users, project.id, isUpdating, canDeleteTask]
+    [editingKey, project.users, project.id, isUpdating, canDeleteTask, sortedInfo, searchText, searchedColumn]
   );
 
   const mergedColumns = columns.map(col => {
@@ -441,6 +569,13 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
           rowKey="id"
           size="small"
           bordered
+          onChange={handleTableChange}
+          pagination={{
+            showSizeChanger: true,
+            showQuickJumper: true,
+            pageSizeOptions: [5, 10, 20, 50],
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+          }}
         />
       </Form>
 
