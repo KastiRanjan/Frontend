@@ -14,6 +14,7 @@ import Request from "@/pages/Request";
 import ResetPasswordForm from "@/pages/ResetPassword";
 import Setting from "@/pages/Setting";
 import ProjectSetting from "@/pages/Setting/ProjectSetting";
+import CustomerSetting from "@/pages/Setting/CustomerSetting";
 import AllTask from "@/pages/Task/all";
 import NewTask from "@/pages/Task/new";
 import TaskDetails from "@/pages/Task/task-details";
@@ -304,6 +305,10 @@ const Router = [
       {
         path: "/project-setting",
         element: <ProjectSetting />,
+      },
+      {
+        path: "/customer-setting",
+        element: <CustomerSetting />,
       },
       {
         path: "/workhour-settings",

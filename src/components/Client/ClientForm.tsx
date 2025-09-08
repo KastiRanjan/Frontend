@@ -1,5 +1,6 @@
 import { useCreateClient } from "@/hooks/client/useCreateClient";
 import { useEditClient } from "@/hooks/client/useEditClient";
+import { useBusinessOptions } from "@/hooks/useBusinessOptions";
 import { Button, Card, Col, DatePicker, Form, Row, Select } from "antd";
 import moment from "moment"; // Import moment
 import { useEffect, useState } from "react";
@@ -23,6 +24,13 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const { 
+    businessSizeOptions, 
+    businessNatureOptions,
+    businessSizeEnumOptions,
+    businessNatureEnumOptions,
+    loading: businessOptionsLoading 
+  } = useBusinessOptions();
 
   useEffect(() => {
     if (id && editClientData) {
@@ -30,10 +38,19 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
         ? moment(editClientData.registeredDate) // Convert registeredDate to moment
         : null;
 
-      form.setFieldsValue({
+      // Prepare data for form with either entity ID or enum fallback values
+      const formData = {
         ...editClientData,
         registeredDate,
-      });
+        // If we have business size entity data, use businessSizeId, otherwise use enum
+        businessSizeId: editClientData.businessSize?.id || null,
+        businessSizeEnum: !editClientData.businessSize?.id ? editClientData.businessSizeEnum : null,
+        // If we have industry nature entity data, use industryNatureId, otherwise use enum
+        industryNatureId: editClientData.industryNature?.id || null,
+        industryNatureEnum: !editClientData.industryNature?.id ? editClientData.industryNatureEnum : null,
+      };
+      
+      form.setFieldsValue(formData);
       
       // Set selected values for cascading dropdowns
       setSelectedCountry(editClientData.country);
@@ -48,10 +65,21 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
   }, [editClientData, form, id]);
 
   const handleFinish = (values: any) => {
+    // Prepare the payload with either entity IDs or enum values
+    const payload = {
+      ...values,
+      // For backward compatibility, ensure we have either businessSizeId or businessSizeEnum
+      businessSizeId: values.businessSizeId || null,
+      businessSizeEnum: !values.businessSizeId ? values.businessSizeEnum : null,
+      // For backward compatibility, ensure we have either industryNatureId or industryNatureEnum
+      industryNatureId: values.industryNatureId || null,
+      industryNatureEnum: !values.industryNatureId ? values.industryNatureEnum : null,
+    };
+    
     if (id) {
-      mutateEdit({ id, payload: values });
+      mutateEdit({ id, payload });
     } else {
-      mutate(values);
+      mutate(payload);
     }
   };
 
@@ -235,82 +263,55 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
           </Col>
           <Col span={8}>
             {/* Business Size Field */}
-            <FormSelectWrapper
-              id="businessSize"
-              name="businessSize"
+            <Form.Item
+              name="businessSizeId"
               label="Business Size"
-              rules={[
-                { required: true, message: "Please select the business size" },
-              ]}
-              options={[
-                { value: "micro", label: "Micro" },
-                { value: "cottage", label: "Cottage" },
-                { value: "small", label: "Small" },
-                { value: "medium", label: "Medium" },
-                { value: "large", label: "Large" },
-                { value: "not_applicable", label: "Not Applicable" },
-              ]}
-            />
+              rules={[{ required: true, message: "Please select the business size" }]}
+            >
+              <Select
+                placeholder="Select business size"
+                loading={businessOptionsLoading.businessSizes}
+                options={businessSizeOptions.length > 0 ? businessSizeOptions : businessSizeEnumOptions}
+                optionFilterProp="label"
+                showSearch
+              />
+            </Form.Item>
+            
+            {/* Fallback for enum-based business size */}
+            <Form.Item
+              name="businessSizeEnum"
+              hidden
+            >
+              <Select
+                options={businessSizeEnumOptions}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             {/* Industry Nature Field */}
-            <FormSelectWrapper
-              id="industryNature"
-              name="industryNature"
+            <Form.Item
+              name="industryNatureId"
               label="Industry Nature"
-              rules={[
-                {
-                  required: true,
-                  message: "Please select the industry nature",
-                },
-              ]}
-              options={[
-                { value: "banking_finance", label: "Banking & Finance" },
-                {
-                  value: "capital_market_broking",
-                  label: "Capital Market Broking",
-                },
-                { value: "insurance", label: "Insurance" },
-                {
-                  value: "energy_mining_mineral",
-                  label: "Energy, Mining & Mineral",
-                },
-                { value: "manufacturing", label: "Manufacturing" },
-                {
-                  value: "agriculture_forestry",
-                  label: "Agriculture & Forestry",
-                },
-                {
-                  value: "construction_real_estate",
-                  label: "Construction & Real Estate",
-                },
-                { value: "travel_tourism", label: "Travel & Tourism" },
-                {
-                  value: "research_development",
-                  label: "Research & Development",
-                },
-                {
-                  value: "transportation_logistics_management",
-                  label: "Transportation & Logistics Management",
-                },
-                {
-                  value: "information_transmission_communication",
-                  label: "Information, Transmission & Communication",
-                },
-                { value: "aviation", label: "Aviation" },
-                {
-                  value: "computer_electronics",
-                  label: "Computer & Electronics",
-                },
-                { value: "trading_of_goods", label: "Trading of Goods" },
-                { value: "personal_service", label: "Personal Service" },
-                {
-                  value: "business_related_service",
-                  label: "Business Related Service",
-                },
-                { value: "others", label: "Others" },
-              ]}
-            />
+              rules={[{ required: true, message: "Please select the industry nature" }]}
+            >
+              <Select
+                placeholder="Select industry nature"
+                loading={businessOptionsLoading.businessNatures}
+                options={businessNatureOptions.length > 0 ? businessNatureOptions : businessNatureEnumOptions}
+                optionFilterProp="label"
+                showSearch
+              />
+            </Form.Item>
+            
+            {/* Fallback for enum-based industry nature */}
+            <Form.Item
+              name="industryNatureEnum"
+              hidden
+            >
+              <Select
+                options={businessNatureEnumOptions}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             {/* Telephone No Field (Optional) */}

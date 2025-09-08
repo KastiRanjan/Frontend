@@ -60,6 +60,14 @@ const Setting = () => {
         </Card>
       </Col>
       <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/customer-setting")} hoverable>
+          <Title level={4}>Customer Setting</Title>
+          <Paragraph>
+            Manage Business Size and Business Nature categories for customers.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
         <Card className="h-full">
           <svg className="admin-icon-prop">
             <use></use>
