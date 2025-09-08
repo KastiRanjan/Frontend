@@ -2,9 +2,15 @@ import { useCreateBilling } from "@/hooks/billing/useCreateBilling";
 import { useEditBilling } from "@/hooks/billing/useEditBilling";
 import { BillingType } from "@/types/billing";
 import { Button, Col, Form, Input, Row, Select } from "antd";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import FormInputWrapper from "@/components/FormInputWrapper";
 import FormSelectWrapper from "@/components/FormSelectWrapper";
+import { 
+  countries, 
+  getStateOptions, 
+  getDistrictOptions, 
+  getLocalJurisdictionOptions 
+} from "@/utils/locationData";
 
 interface BillingFormProps {
   editBillingData?: BillingType;
@@ -15,6 +21,9 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateBilling();
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditBilling();
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
 
   const onFinish = (values: any) => {
     if (editBillingData?.id) {
@@ -42,10 +51,22 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
         bank_account_name: editBillingData.bank_account_name,
         bank_name: editBillingData.bank_name,
         bank_account_number: editBillingData.bank_account_number,
-        status: editBillingData.status
+        status: editBillingData.status,
+        country: editBillingData.country,
+        state: editBillingData.state,
+        district: editBillingData.district,
+        localJurisdiction: editBillingData.localJurisdiction
       });
+      
+      // Set selected values for cascading dropdowns
+      setSelectedCountry(editBillingData.country);
+      setSelectedState(editBillingData.state);
+      setSelectedDistrict(editBillingData.district);
     } else {
       form.resetFields();
+      setSelectedCountry(null);
+      setSelectedState(null);
+      setSelectedDistrict(null);
     }
   }, [editBillingData, form]);
 
@@ -110,6 +131,79 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
             label="Address"
             name="address"
           />
+        </Col>
+
+        <Col span={12}>
+          <Form.Item
+            name="country"
+            label="Country"
+            rules={[{ required: true, message: "Please select the country" }]}
+          >
+            <Select
+              placeholder="Select country"
+              options={countries}
+              onChange={(value) => {
+                setSelectedCountry(value);
+                // Reset dependent fields when country changes
+                form.setFieldsValue({ state: undefined, district: undefined, localJurisdiction: undefined });
+                setSelectedState(null);
+                setSelectedDistrict(null);
+              }}
+            />
+          </Form.Item>
+        </Col>
+
+        <Col span={12}>
+          <Form.Item
+            name="state"
+            label="State/Province"
+            rules={[{ required: true, message: "Please select the state/province" }]}
+          >
+            <Select
+              placeholder="Select state/province"
+              options={selectedCountry ? getStateOptions(selectedCountry) : []}
+              disabled={!selectedCountry}
+              onChange={(value) => {
+                setSelectedState(value);
+                // Reset dependent fields when state changes
+                form.setFieldsValue({ district: undefined, localJurisdiction: undefined });
+                setSelectedDistrict(null);
+              }}
+            />
+          </Form.Item>
+        </Col>
+
+        <Col span={12}>
+          <Form.Item
+            name="district"
+            label="District"
+            rules={[{ required: true, message: "Please select the district" }]}
+          >
+            <Select
+              placeholder="Select district"
+              options={selectedState ? getDistrictOptions(selectedState) : []}
+              disabled={!selectedState}
+              onChange={(value) => {
+                setSelectedDistrict(value);
+                // Reset dependent field when district changes
+                form.setFieldsValue({ localJurisdiction: undefined });
+              }}
+            />
+          </Form.Item>
+        </Col>
+
+        <Col span={12}>
+          <Form.Item
+            name="localJurisdiction"
+            label="Local Jurisdiction"
+            rules={[{ required: true, message: "Please select the local jurisdiction" }]}
+          >
+            <Select
+              placeholder="Select local jurisdiction"
+              options={selectedDistrict ? getLocalJurisdictionOptions(selectedDistrict) : []}
+              disabled={!selectedDistrict}
+            />
+          </Form.Item>
         </Col>
 
         <Col span={12}>

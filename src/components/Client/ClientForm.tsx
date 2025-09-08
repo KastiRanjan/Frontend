@@ -1,10 +1,16 @@
 import { useCreateClient } from "@/hooks/client/useCreateClient";
 import { useEditClient } from "@/hooks/client/useEditClient";
-import { Button, Card, Col, DatePicker, Form, Row } from "antd";
+import { Button, Card, Col, DatePicker, Form, Row, Select } from "antd";
 import moment from "moment"; // Import moment
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
+import { 
+  countries, 
+  getStateOptions, 
+  getDistrictOptions, 
+  getLocalJurisdictionOptions 
+} from "@/utils/locationData";
 
 interface ClientFormProps {
   editClientData?: any;
@@ -14,6 +20,9 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
   const [form] = Form.useForm();
   const { mutate } = useCreateClient();
   const { mutate: mutateEdit } = useEditClient();
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
 
   useEffect(() => {
     if (id && editClientData) {
@@ -25,8 +34,16 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
         ...editClientData,
         registeredDate,
       });
+      
+      // Set selected values for cascading dropdowns
+      setSelectedCountry(editClientData.country);
+      setSelectedState(editClientData.state);
+      setSelectedDistrict(editClientData.district);
     } else {
       form.resetFields();
+      setSelectedCountry(null);
+      setSelectedState(null);
+      setSelectedDistrict(null);
     }
   }, [editClientData, form, id]);
 
@@ -100,57 +117,76 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
           </Col>
           <Col span={8}>
             {/* Country Field */}
-            <FormInputWrapper
-              id="country"
+            <Form.Item
               name="country"
               label="Country"
-              rules={[
-                { required: true, message: "Please input the country" },
-                { max: 100, message: "Country cannot exceed 100 characters" },
-              ]}
-            />
+              rules={[{ required: true, message: "Please select the country" }]}
+            >
+              <Select
+                placeholder="Select country"
+                options={countries}
+                onChange={(value) => {
+                  setSelectedCountry(value);
+                  // Reset dependent fields when country changes
+                  form.setFieldsValue({ state: undefined, district: undefined, localJurisdiction: undefined });
+                  setSelectedState(null);
+                  setSelectedDistrict(null);
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             {/* State Field */}
-            <FormInputWrapper
-              id="state"
+            <Form.Item
               name="state"
-              label="State"
-              rules={[
-                { required: true, message: "Please input the state" },
-                { max: 100, message: "State cannot exceed 100 characters" },
-              ]}
-            />
+              label="State/Province"
+              rules={[{ required: true, message: "Please select the state/province" }]}
+            >
+              <Select
+                placeholder="Select state/province"
+                options={selectedCountry ? getStateOptions(selectedCountry) : []}
+                disabled={!selectedCountry}
+                onChange={(value) => {
+                  setSelectedState(value);
+                  // Reset dependent fields when state changes
+                  form.setFieldsValue({ district: undefined, localJurisdiction: undefined });
+                  setSelectedDistrict(null);
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             {/* District Field */}
-            <FormInputWrapper
-              id="district"
+            <Form.Item
               name="district"
               label="District"
-              rules={[
-                { required: true, message: "Please input the district" },
-                { max: 100, message: "District cannot exceed 100 characters" },
-              ]}
-            />
+              rules={[{ required: true, message: "Please select the district" }]}
+            >
+              <Select
+                placeholder="Select district"
+                options={selectedState ? getDistrictOptions(selectedState) : []}
+                disabled={!selectedState}
+                onChange={(value) => {
+                  setSelectedDistrict(value);
+                  // Reset dependent field when district changes
+                  form.setFieldsValue({ localJurisdiction: undefined });
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             {/* Local Jurisdiction Field */}
-            <FormInputWrapper
-              id="localJurisdiction"
+            <Form.Item
               name="localJurisdiction"
               label="Local Jurisdiction"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input the local jurisdiction",
-                },
-                {
-                  max: 100,
-                  message: "Local Jurisdiction cannot exceed 100 characters",
-                },
-              ]}
-            />
+              rules={[{ required: true, message: "Please select the local jurisdiction" }]}
+            >
+              <Select
+                placeholder="Select local jurisdiction"
+                options={selectedDistrict ? getLocalJurisdictionOptions(selectedDistrict) : []}
+                disabled={!selectedDistrict}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             {/* Ward No Field (Optional) */}
