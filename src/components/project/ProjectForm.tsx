@@ -1,4 +1,3 @@
-
 import { useCreateProject } from "@/hooks/project/useCreateProject";
 import { useEditProject } from "@/hooks/project/useEditProject";
 import { UserType } from "@/hooks/user/type";
@@ -13,6 +12,18 @@ import { ProjectType } from "@/types/project";
 import TextArea from "antd/es/input/TextArea";
 import { useClient } from "@/hooks/client/useClient";
 import { useBilling } from "@/hooks/billing/useBilling";
+import NepaliDatePicker, { NepaliDate } from "../NepaliDatePicker";
+
+// Minimal AD<->BS conversion for frontend (for demo, use backend for accuracy)
+function adToBs(adDate: string): NepaliDate {
+  // Dummy conversion: just offset year by 57, month/day unchanged
+  const [year, month, day] = adDate.split("-").map(Number);
+  return { year: year + 57, month, day };
+}
+function bsToAd(bs: NepaliDate): string {
+  // Dummy conversion: just offset year by -57
+  return `${bs.year - 57}-${String(bs.month).padStart(2, "0")}-${String(bs.day).padStart(2, "0")}`;
+}
 
 interface ProjectFormProps {
   editProjectData?: ProjectType;
@@ -37,6 +48,10 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   // Add separate date states for edit mode - using strings instead of moment
   const [editStartDate, setEditStartDate] = useState<string | null>(null);
   const [editEndDate, setEditEndDate] = useState<string | null>(null);
+
+  // Add state for Nepali dates only
+  const [nepaliStartDate, setNepaliStartDate] = useState<NepaliDate | undefined>(undefined);
+  const [nepaliEndDate, setNepaliEndDate] = useState<NepaliDate | undefined>(undefined);
 
   // Get the current project lead and manager value from the form
   const projectLead = Form.useWatch("projectLead", form);
@@ -70,14 +85,14 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
     const userIds = [values.projectLead, values.projectManager].filter(Boolean);
     
     // For edit mode, use our separate date states; for create mode, use form values
-    const startDate = editProjectData ? editStartDate : values.startingDate;
-    const endDate = editProjectData ? editEndDate : values.endingDate;
+    const startDate = nepaliStartDate ? bsToAd(nepaliStartDate) : undefined;
+    const endDate = nepaliEndDate ? bsToAd(nepaliEndDate) : undefined;
     
     // Transform dates to proper format for backend
     const transformedValues = {
       ...values,
-      startingDate: startDate ? (typeof startDate === 'string' ? startDate : startDate.format('YYYY-MM-DD')) : null,
-      endingDate: endDate ? (typeof endDate === 'string' ? endDate : endDate.format('YYYY-MM-DD')) : null,
+      startingDate: startDate,
+      endingDate: endDate,
       users: values.users
         ? [...new Set([...values.users, ...userIds])]
         : userIds,
@@ -241,7 +256,8 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
                 const today = new Date();
                 // Example: Nepali year is about 56-57 years ahead of AD
                 const nepaliYear = today.getFullYear() + 57;
-                return [...Array(5).keys()].map((_, idx) => {
+                // Generate fiscal years for the last 20 years
+                return [...Array(20).keys()].map((_, idx) => {
                   const startYear = nepaliYear - idx;
                   const endYear = (startYear + 1).toString().slice(-2);
                   return {
@@ -286,14 +302,28 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           />
         </Col>
         <Col span={12}>
-          <FormSelectWrapper
-            id="users"
-            name="users"
+          <Form.Item
             label="Invite Users"
-            placeholder="Select users"
-            options={filteredUsers}
-            mode="multiple"
-          />
+            name="users"
+            className="user-select-field"
+          >
+            <Select
+              placeholder="Select users"
+              options={filteredUsers}
+              mode="multiple"
+              style={{ width: '100%' }}
+              optionFilterProp="label"
+              showSearch
+              allowClear
+              maxTagCount="responsive"
+              virtual={false}
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+            />
+          </Form.Item>
         </Col>
 
         {/* Rest of the form fields remain unchanged */}
@@ -312,59 +342,38 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             changeHandler={handleFieldChange}
           />
         </Col>
-
         <Col span={12}>
           <Form.Item
-            label="Starting Date"
-            name={editProjectData ? undefined : "startingDate"}
+            label="Starting Date (BS)"
+            name={"startingDateNepali"}
             rules={[
               { required: true, message: "Please select the starting date!" },
             ]}
           >
-            <DatePicker 
-              key={`startDate-${editProjectData?.id || 'new'}-${editStartDate || 'null'}`}
-              className="py-3 w-full" 
-              format="YYYY-MM-DD"
-              placeholder="Select starting date"
-              showToday={false}
-              allowClear={true}
-              getPopupContainer={(trigger) => trigger.parentElement || document.body}
-              style={{ width: '100%' }}
-              defaultValue={editProjectData && editStartDate ? moment(editStartDate, 'YYYY-MM-DD') : undefined}
-              onChange={(date) => {
-                if (editProjectData) {
-                  setEditStartDate(date ? date.format('YYYY-MM-DD') : null);
-                } else {
-                  // In create mode, let form handle it normally
-                }
+            <NepaliDatePicker
+              value={nepaliStartDate}
+              onChange={bs => {
+                setNepaliStartDate(bs);
+                const adDate = bsToAd(bs);
+                form.setFieldsValue({ startingDateNepali: bs, startingDate: adDate });
               }}
             />
           </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item
-            label="Ending Date"
-            name={editProjectData ? undefined : "endingDate"}
+            label="Ending Date (BS)"
+            name={"endingDateNepali"}
             rules={[
               { required: true, message: "Please select the ending date!" },
             ]}
           >
-            <DatePicker 
-              key={`endDate-${editProjectData?.id || 'new'}-${editEndDate || 'null'}`}
-              className="py-3 w-full" 
-              format="YYYY-MM-DD"
-              placeholder="Select ending date"
-              showToday={false}
-              allowClear={true}
-              getPopupContainer={(trigger) => trigger.parentElement || document.body}
-              style={{ width: '100%' }}
-              defaultValue={editProjectData && editEndDate ? moment(editEndDate, 'YYYY-MM-DD') : undefined}
-              onChange={(date) => {
-                if (editProjectData) {
-                  setEditEndDate(date ? date.format('YYYY-MM-DD') : null);
-                } else {
-                  // In create mode, let form handle it normally
-                }
+            <NepaliDatePicker
+              value={nepaliEndDate}
+              onChange={bs => {
+                setNepaliEndDate(bs);
+                const adDate = bsToAd(bs);
+                form.setFieldsValue({ endingDateNepali: bs, endingDate: adDate });
               }}
             />
           </Form.Item>
