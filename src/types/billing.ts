@@ -1,6 +1,7 @@
 export interface BillingType {
   id: number;
   name: string;
+  shortName?: string;
   registration_number?: string;
   pan_number?: string;
   vat_number?: string;

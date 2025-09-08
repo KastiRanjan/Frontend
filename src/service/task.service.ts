@@ -51,3 +51,8 @@ export const bulkUpdateTasks = async (payload:any) => {
   const response = await axios.patch(`${backendURI}/tasks/bulk-update`, payload);
   return response.data;
 };
+
+export const deleteTask = async ({ id }: { id: string }) => {
+  const response = await axios.delete(`${backendURI}/tasks/${id}`);
+  return response.data;
+};

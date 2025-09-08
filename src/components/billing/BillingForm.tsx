@@ -3,8 +3,8 @@ import { useEditBilling } from "@/hooks/billing/useEditBilling";
 import { BillingType } from "@/types/billing";
 import { Button, Col, Form, Input, Row, Select } from "antd";
 import { useEffect } from "react";
-import FormInputWrapper from "../FormInputWrapper";
-import FormSelectWrapper from "../FormSelectWrapper";
+import FormInputWrapper from "@/components/FormInputWrapper";
+import FormSelectWrapper from "@/components/FormSelectWrapper";
 
 interface BillingFormProps {
   editBillingData?: BillingType;
@@ -31,6 +31,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
     if (editBillingData) {
       form.setFieldsValue({
         name: editBillingData.name,
+        shortName: editBillingData.shortName,
         registration_number: editBillingData.registration_number,
         pan_number: editBillingData.pan_number,
         vat_number: editBillingData.vat_number,
@@ -63,6 +64,19 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
             rules={[
               { required: true, message: "Please input the billing entity name!" },
             ]}
+          />
+        </Col>
+
+        <Col span={12}>
+          <FormInputWrapper
+            id="ShortName"
+            label="Short Name"
+            name="shortName"
+            rules={[
+              { required: true, message: "Please input the short name for billing entity!" },
+              { max: 20, message: "Short name cannot be longer than 20 characters!" }
+            ]}
+            placeholder="Short name for auto-generating project names"
           />
         </Col>
 

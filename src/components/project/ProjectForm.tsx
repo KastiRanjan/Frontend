@@ -63,12 +63,17 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
       const clientId = form.getFieldValue("client");
       const natureOfWorkId = form.getFieldValue("natureOfWork");
       const fiscalYear = form.getFieldValue("fiscalYear");
+      const billingId = form.getFieldValue("billing");
       
       if (clientId && natureOfWorkId && fiscalYear && clients && natureOfWorkOptions.length > 0) {
         const clientObj = clients.find((c: any) => c.id === clientId);
         const natureObj = natureOfWorkOptions.find((n: any) => n.value === natureOfWorkId);
+        const billingObj = billingId && billings ? billings.find((b: any) => b.id === billingId) : null;
+        
         if (clientObj && natureObj) {
-          const suggested = `${clientObj.shortName}-${natureObj.shortName}-${fiscalYear}`;
+          // Include billing short name if available
+          const billingPrefix = billingObj?.shortName ? `${billingObj.shortName}-` : '';
+          const suggested = `${billingPrefix}${clientObj.shortName}-${natureObj.shortName}-${fiscalYear}`;
           setSuggestedProjectName(suggested);
           // Only set if name field is empty or contains the old suggested name
           const currentName = form.getFieldValue("name");
@@ -141,7 +146,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   // Trigger name suggestion when dependencies change
   useEffect(() => {
     handleFieldChange();
-  }, [clients, natureOfWorkOptions]);
+  }, [clients, natureOfWorkOptions, billings]);
 
   useEffect(() => {
     if (editProjectData) {
@@ -235,9 +240,10 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             name="billing"
             options={billings?.map((billing: any) => ({
               value: billing.id,
-              label: billing.name,
+              label: `${billing.name}${billing.shortName ? ` (${billing.shortName})` : ''}`,
             }))}
             rules={[{ required: false, message: "Please select the billing entity!" }]}
+            changeHandler={handleFieldChange}
           />
         </Col>
         <Col span={12}>

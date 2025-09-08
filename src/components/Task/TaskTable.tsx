@@ -1,12 +1,14 @@
 import { useEditTask } from "@/hooks/task/useEditTask";
+import { useDeleteTask } from "@/hooks/task/useDeleteTask";
 import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
-import { EditOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal, message } from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal, message, Popconfirm, Space } from "antd";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
+import { useSession } from "@/context/SessionContext";
 
 interface ExtendedTaskType extends TaskType {
   first?: boolean;
@@ -30,38 +32,57 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
   const [bulkForm] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const { mutate: editTask, isPending: isUpdating } = useEditTask();
+  const { mutate: deleteTask } = useDeleteTask();
   const { mutate: bulkUpdateTasks } = useBulkUpdateTasks();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [isDueDateModalVisible, setIsDueDateModalVisible] = useState(false);
   const [isAssigneeModalVisible, setIsAssigneeModalVisible] = useState(false);
+  const { permissions } = useSession(); // Get permissions from session context
+
+  // Check if user has task delete permission
+  const canDeleteTask = useMemo(() => {
+    // Check if permissions is an array of strings or objects
+    if (permissions && permissions.length > 0) {
+      if (typeof permissions[0] === 'string') {
+        return permissions.includes('Delete task by id');
+      } else if (typeof permissions[0] === 'object') {
+        // Check for task delete permission based on resource, path and method
+        return permissions.some((perm: any) => 
+          (perm.resource === 'tasks' && perm.path === '/tasks/:id' && perm.method === 'delete') ||
+          perm.name === 'Delete task by id'
+        );
+      }
+    }
+    return false;
+  }, [permissions]);
 
   const enhancedData: ExtendedTaskType[] = useMemo(
     () => data.map(task => ({ ...task, projectId: project.id })),
     [data, project.id]
   );
 
-  const isEditing = (record: ExtendedTaskType) => record.id === editingKey;
+  const isEditing = (record: ExtendedTaskType) => String(record.id) === editingKey;
 
   const handleEditClick = (task: ExtendedTaskType) => {
     form.setFieldsValue({
       ...task,
-      assineeId: task.assignees?.map(user => user.id),
+      assineeId: (task.assignees as any[])?.map(user => user.id),
       dueDate: task.dueDate ? moment(task.dueDate) : null,
     });
     showModal(task);
   };
 
   const startEditing = (record: ExtendedTaskType) => {
-    setEditingKey(record.id);
+    setEditingKey(String(record.id));
     form.setFieldsValue({
       dueDate: record.dueDate ? moment(record.dueDate) : null,
-      assineeId: record.assignees?.map(user => user.id),
+      assineeId: (record.assignees as any[])?.map(user => user.id),
       first: record.first,
       last: record.last,
     });
   };
 
-  // Kept from first version - more detailed and robust
+  // Used for saving changes directly from the table
   const saveEdit = async (key: string) => {
     try {
       const values = await form.validateFields();
@@ -72,44 +93,14 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
         first: values.first,
         last: values.last,
         projectId: project.id,
-        name: enhancedData.find(item => item.id === key)?.name,
-        description: enhancedData.find(item => item.id === key)?.description,
-        groupId: enhancedData.find(item => item.id === key)?.group?.id,
-        parentTaskId: enhancedData.find(item => item.id === key)?.parentTaskId,
-        status: enhancedData.find(item => item.id === key)?.status,
+        name: enhancedData.find(item => String(item.id) === key)?.name,
+        description: enhancedData.find(item => String(item.id) === key)?.description,
+        groupId: enhancedData.find(item => String(item.id) === key)?.group?.id,
+        status: enhancedData.find(item => String(item.id) === key)?.status,
       };
 
       editTask(
         { id: key, payload: taskData },
-        {
-          onSuccess: () => {
-            message.success("Task updated successfully");
-            setEditingKey(null);
-            if (onRefresh) onRefresh();
-          },
-          onError: (error: any) => {
-            message.error(error.response?.data?.message || "Failed to update task");
-          },
-        }
-      );
-    } catch (err) {
-      console.log('Validation Failed:', err);
-    }
-  };
-
-  // Renamed from second version's saveEdit
-  const saveSingleEdit = async (key: string) => {
-    try {
-      const row = await form.validateFields();
-      const updatedTask = {
-        ...enhancedData.find(item => item.id === key),
-        ...row,
-        assignees: row.assineeId?.map((id: string) => 
-          project.users.find(user => user.id === id)
-        ).filter(Boolean),
-        dueDate: row.dueDate?.toISOString(),
-      };
-      editTask({ payload: updatedTask, id: key },
         {
           onSuccess: () => {
             message.success("Task updated successfully");
@@ -159,6 +150,21 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
     } catch (err) {
       console.log('Bulk Due Date Update Failed:', err);
     }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    deleteTask(
+      { id: taskId },
+      {
+        onSuccess: () => {
+          message.success("Task deleted successfully");
+          if (onRefresh) onRefresh();
+        },
+        onError: (error: any) => {
+          message.error(error.response?.data?.message || "Failed to delete task");
+        },
+      }
+    );
   };
 
   const handleAssigneeOk = async () => {
@@ -323,14 +329,14 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
       {
         title: "",
         key: "action",
-        width: 100,
+        width: 120,
         render: (_: unknown, record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
             <span>
               <Button
                 type="primary"
-                onClick={() => saveEdit(record.id)} // Using the more robust saveEdit
+                onClick={() => saveEdit(String(record.id))} // Using the more robust saveEdit
                 style={{ marginRight: 8 }}
                 loading={isUpdating}
                 disabled={isUpdating}
@@ -342,16 +348,34 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
               </Button>
             </span>
           ) : (
-            <Button
-              type="primary"
-              onClick={() => handleEditClick(record)}
-              icon={<EditOutlined />}
-            />
+            <Space>
+              <Button
+                type="primary"
+                onClick={() => handleEditClick(record)}
+                icon={<EditOutlined />}
+              />
+              {canDeleteTask && (
+                <Popconfirm
+                  title="Delete Task"
+                  description="Are you sure you want to delete this task? This action cannot be undone."
+                  onConfirm={() => handleDeleteTask(String(record.id))}
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    type="primary"
+                    danger
+                    icon={<DeleteOutlined />}
+                  />
+                </Popconfirm>
+              )}
+            </Space>
           );
         },
       },
     ],
-    [editingKey, project.users, project.id, isUpdating]
+    [editingKey, project.users, project.id, isUpdating, canDeleteTask]
   );
 
   const mergedColumns = columns.map(col => {
@@ -393,8 +417,19 @@ const TaskTable = ({ data, showModal, project, onRefresh }: TaskTableProps) => {
           type="primary"
           onClick={handleAssign}
           disabled={selectedRowKeys.length === 0}
+          style={{ marginRight: 8 }}
         >
           Assign
+        </Button>
+        {/* Debug button to test permission */}
+        <Button
+          type="default"
+          onClick={() => {
+            console.log("Delete permission check:", canDeleteTask);
+            console.log("All permissions:", permissions);
+          }}
+        >
+          Check Delete Permission
         </Button>
       </div>
       <Form form={form} component={false}>
