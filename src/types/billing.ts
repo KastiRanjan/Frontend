@@ -15,4 +15,10 @@ export interface BillingType {
   status: "active" | "suspended" | "archived";
   createdAt?: string;
   updatedAt?: string;
+  
+  // Location properties
+  country?: string;
+  state?: string;
+  district?: string;
+  localJurisdiction?: string;
 }

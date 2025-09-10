@@ -31,7 +31,19 @@ const BillingDetail = ({ billing }: BillingDetailProps) => {
             {billing.status.toUpperCase()}
           </Tag>
         </Descriptions.Item>
-        <Descriptions.Item label="Address" span={2}>
+        <Descriptions.Item label="Country" span={1}>
+          {billing.country || "N/A"}
+        </Descriptions.Item>
+        <Descriptions.Item label="State/Province" span={1}>
+          {billing.state || "N/A"}
+        </Descriptions.Item>
+        <Descriptions.Item label="District" span={1}>
+          {billing.district || "N/A"}
+        </Descriptions.Item>
+        <Descriptions.Item label="Local Jurisdiction" span={1}>
+          {billing.localJurisdiction || "N/A"}
+        </Descriptions.Item>
+        <Descriptions.Item label="Local Address" span={2}>
           {billing.address || "N/A"}
         </Descriptions.Item>
         <Descriptions.Item label="Email">

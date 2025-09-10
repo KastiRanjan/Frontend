@@ -1,7 +1,7 @@
 import { useCreateBilling } from "@/hooks/billing/useCreateBilling";
 import { useEditBilling } from "@/hooks/billing/useEditBilling";
 import { BillingType } from "@/types/billing";
-import { Button, Col, Form, Input, Row, Select } from "antd";
+import { Button, Col, Form, Input, Row, Select, Checkbox } from "antd";
 import { useEffect, useState } from "react";
 import FormInputWrapper from "@/components/FormInputWrapper";
 import FormSelectWrapper from "@/components/FormSelectWrapper";
@@ -24,15 +24,26 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [isVatRegistered, setIsVatRegistered] = useState<boolean>(false);
 
   const onFinish = (values: any) => {
+    // Create a modified payload with the appropriate VAT number handling
+    const payload = {
+      ...values,
+      // Clear vat_number if not VAT registered
+      vat_number: values.is_vat_registered ? values.vat_number : null
+    };
+    
+    // Remove the is_vat_registered field as it's not part of the backend model
+    delete payload.is_vat_registered;
+    
     if (editBillingData?.id) {
       mutateEdit(
-        { id: editBillingData.id.toString(), payload: values },
+        { id: editBillingData.id.toString(), payload },
         { onSuccess: () => handleCancel() }
       );
     } else {
-      mutate(values, { onSuccess: () => handleCancel() });
+      mutate(payload, { onSuccess: () => handleCancel() });
     }
   };
 
@@ -55,18 +66,23 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
         country: editBillingData.country,
         state: editBillingData.state,
         district: editBillingData.district,
-        localJurisdiction: editBillingData.localJurisdiction
+        localJurisdiction: editBillingData.localJurisdiction,
+        is_vat_registered: !!editBillingData.vat_number // Set checkbox based on whether VAT number exists
       });
       
       // Set selected values for cascading dropdowns
       setSelectedCountry(editBillingData.country);
       setSelectedState(editBillingData.state);
       setSelectedDistrict(editBillingData.district);
+      
+      // Set VAT registration status based on whether VAT number exists
+      setIsVatRegistered(!!editBillingData.vat_number);
     } else {
       form.resetFields();
       setSelectedCountry(null);
       setSelectedState(null);
       setSelectedDistrict(null);
+      setIsVatRegistered(false);
     }
   }, [editBillingData, form]);
 
@@ -118,26 +134,35 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
         </Col>
 
         <Col span={12}>
-          <FormInputWrapper
-            id="VAT Number"
-            label="VAT Number"
-            name="vat_number"
-          />
+          <Form.Item
+            name="is_vat_registered"
+            valuePropName="checked"
+          >
+            <Checkbox onChange={(e) => setIsVatRegistered(e.target.checked)}>
+              VAT Registered
+            </Checkbox>
+          </Form.Item>
+          {/* When VAT Registered is checked, the VAT Number field will be displayed and required */}
         </Col>
 
-        <Col span={12}>
-          <FormInputWrapper
-            id="Address"
-            label="Address"
-            name="address"
-          />
-        </Col>
+        {isVatRegistered && (
+          <Col span={12}>
+            <FormInputWrapper
+              id="VAT Number"
+              label="VAT Number"
+              name="vat_number"
+              rules={[
+                { required: true, message: "Please input the VAT number!" }
+              ]}
+            />
+          </Col>
+        )}
 
         <Col span={12}>
           <Form.Item
             name="country"
             label="Country"
-            rules={[{ required: true, message: "Please select the country" }]}
+            rules={[{ required: false, message: "Please select the country" }]}
           >
             <Select
               placeholder="Select country"
@@ -149,6 +174,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
                 setSelectedState(null);
                 setSelectedDistrict(null);
               }}
+              allowClear
             />
           </Form.Item>
         </Col>
@@ -157,7 +183,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
           <Form.Item
             name="state"
             label="State/Province"
-            rules={[{ required: true, message: "Please select the state/province" }]}
+            rules={[{ required: false, message: "Please select the state/province" }]}
           >
             <Select
               placeholder="Select state/province"
@@ -169,6 +195,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
                 form.setFieldsValue({ district: undefined, localJurisdiction: undefined });
                 setSelectedDistrict(null);
               }}
+              allowClear
             />
           </Form.Item>
         </Col>
@@ -177,7 +204,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
           <Form.Item
             name="district"
             label="District"
-            rules={[{ required: true, message: "Please select the district" }]}
+            rules={[{ required: false, message: "Please select the district" }]}
           >
             <Select
               placeholder="Select district"
@@ -188,6 +215,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
                 // Reset dependent field when district changes
                 form.setFieldsValue({ localJurisdiction: undefined });
               }}
+              allowClear
             />
           </Form.Item>
         </Col>
@@ -196,14 +224,24 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
           <Form.Item
             name="localJurisdiction"
             label="Local Jurisdiction"
-            rules={[{ required: true, message: "Please select the local jurisdiction" }]}
+            rules={[{ required: false, message: "Please select the local jurisdiction" }]}
           >
             <Select
               placeholder="Select local jurisdiction"
               options={selectedDistrict ? getLocalJurisdictionOptions(selectedDistrict) : []}
               disabled={!selectedDistrict}
+              allowClear
             />
           </Form.Item>
+        </Col>
+        
+        <Col span={24}>
+          <FormInputWrapper
+            id="Address"
+            label="Local Address"
+            name="address"
+            placeholder="Detailed local address"
+          />
         </Col>
 
         <Col span={12}>
