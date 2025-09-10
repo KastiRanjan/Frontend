@@ -162,7 +162,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
           <Form.Item
             name="country"
             label="Country"
-            rules={[{ required: false, message: "Please select the country" }]}
+            rules={[{ required: true, message: "Please select the country" }]}
           >
             <Select
               placeholder="Select country"
@@ -183,7 +183,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
           <Form.Item
             name="state"
             label="State/Province"
-            rules={[{ required: false, message: "Please select the state/province" }]}
+            rules={[{ required: true, message: "Please select the state/province" }]}
           >
             <Select
               placeholder="Select state/province"
@@ -204,7 +204,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
           <Form.Item
             name="district"
             label="District"
-            rules={[{ required: false, message: "Please select the district" }]}
+            rules={[{ required: true, message: "Please select the district" }]}
           >
             <Select
               placeholder="Select district"
@@ -224,7 +224,7 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
           <Form.Item
             name="localJurisdiction"
             label="Local Jurisdiction"
-            rules={[{ required: false, message: "Please select the local jurisdiction" }]}
+            rules={[{ required: true, message: "Please select the local jurisdiction" }]}
           >
             <Select
               placeholder="Select local jurisdiction"
