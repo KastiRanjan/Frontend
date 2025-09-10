@@ -5,6 +5,7 @@ import Billing from "@/pages/Billing";
 import Client from "@/pages/Client";
 import EditClient from "@/pages/Client/edit";
 import CreateClient from "@/pages/Client/new";
+import ViewClient from "@/pages/Client/view";
 import Profile from "@/pages/Profile";
 import ProjectDetail from "@/pages/Project/detail";
 import EditProject from "@/pages/Project/edit";
@@ -203,6 +204,10 @@ const Router = [
       {
         path: "/client/edit/:id",
         element: <EditClient />,
+      },
+      {
+        path: "/client/view/:id",
+        element: <ViewClient />,
       },
       {
         path: "/billing",

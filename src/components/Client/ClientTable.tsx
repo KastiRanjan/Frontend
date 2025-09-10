@@ -1,16 +1,20 @@
 import { useClient } from "@/hooks/client/useClient";
-import { EditOutlined, SearchOutlined } from "@ant-design/icons";
-import { Button, Card, Checkbox, Table, Input, Space } from "antd";
+import { EditOutlined, SearchOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Card, Checkbox, Table, Input, Space, Tooltip } from "antd";
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import Highlighter from 'react-highlight-words';
 
-const ClientTable = () => {
+interface ClientTableProps {
+  status?: string;
+}
+
+const ClientTable = ({ status }: ClientTableProps) => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: client, isPending } = useClient();
+  const { data: client, isPending } = useClient(status);
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({});
@@ -113,64 +117,126 @@ const ClientTable = () => {
       ...getColumnSearchProps('name', 'Name'),
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
       sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
+      render: (text: string, record: any) => (
+        <div>
+          <div>{text}</div>
+          <small style={{ color: 'rgba(0, 0, 0, 0.45)' }}>{record.shortName || ''}</small>
+        </div>
+      ),
     },
     {
       title: "Legal Status",
       dataIndex: "legalStatus",
       key: "legalStatus",
-      ...getColumnSearchProps('legalStatus', 'Legal Status'),
-      sorter: (a: any, b: any) => (a.legalStatus || '').localeCompare(b.legalStatus || ''),
+      ...getColumnSearchProps('legalStatus.name', 'Legal Status'),
+      sorter: (a: any, b: any) => {
+        const aName = a.legalStatus?.name || a.legalStatusEnum || '';
+        const bName = b.legalStatus?.name || b.legalStatusEnum || '';
+        return aName.localeCompare(bName);
+      },
       sortOrder: sortedInfo.columnKey === 'legalStatus' && sortedInfo.order,
+      render: (_: any, record: any) => {
+        const statusName = record.legalStatus?.name;
+        const statusEnum = record.legalStatusEnum;
+        
+        if (statusName) return statusName;
+        if (statusEnum) {
+          return statusEnum.split('_')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }
+        return '-';
+      }
     },
     {
-      title: "Nature",
+      title: "Industry Nature",
       dataIndex: "industryNature",
       key: "industryNature",
-      ...getColumnSearchProps('industryNature', 'Nature'),
-      sorter: (a: any, b: any) => (a.industryNature || '').localeCompare(b.industryNature || ''),
+      ...getColumnSearchProps('industryNature.name', 'Industry Nature'),
+      sorter: (a: any, b: any) => {
+        const aName = a.industryNature?.name || a.industryNatureEnum || '';
+        const bName = b.industryNature?.name || b.industryNatureEnum || '';
+        return aName.localeCompare(bName);
+      },
       sortOrder: sortedInfo.columnKey === 'industryNature' && sortedInfo.order,
+      render: (_: any, record: any) => {
+        const natureName = record.industryNature?.name;
+        const natureEnum = record.industryNatureEnum;
+        
+        if (natureName) return natureName;
+        if (natureEnum) {
+          return natureEnum.split('_')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }
+        return '-';
+      }
     },
     {
       title: "Business Size",
       dataIndex: "businessSize",
       key: "businessSize",
-      ...getColumnSearchProps('businessSize', 'Business Size'),
-      sorter: (a: any, b: any) => (a.businessSize || '').localeCompare(b.businessSize || ''),
+      ...getColumnSearchProps('businessSize.name', 'Business Size'),
+      sorter: (a: any, b: any) => {
+        const aName = a.businessSize?.name || a.businessSizeEnum || '';
+        const bName = b.businessSize?.name || b.businessSizeEnum || '';
+        return aName.localeCompare(bName);
+      },
       sortOrder: sortedInfo.columnKey === 'businessSize' && sortedInfo.order,
+      render: (_: any, record: any) => {
+        const sizeName = record.businessSize?.name;
+        const sizeEnum = record.businessSizeEnum;
+        
+        if (sizeName) return sizeName;
+        if (sizeEnum) {
+          return sizeEnum.split('_')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }
+        return '-';
+      }
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      ...getColumnSearchProps('status', 'Status'),
-      sorter: (a: any, b: any) => (a.status || '').localeCompare(b.status || ''),
-      sortOrder: sortedInfo.columnKey === 'status' && sortedInfo.order,
+      title: "Contact",
+      key: "contact",
+      render: (_: any, record: any) => (
+        <div>
+          <div>{record.email || '-'}</div>
+          <div>{record.mobileNo || '-'}</div>
+        </div>
+      ),
     },
     {
       title: "Action", 
       key: "action",
       render: (_: any, record: any) => (
-        <Link to={`/client/edit/${record.id}`}>
-          <Button type="primary" icon={<EditOutlined />}>
-            Edit
-          </Button>
-        </Link>
+        <Space size="middle">
+          <Tooltip title="View">
+            <Button
+              type="default"
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/client/view/${record.id}`)}
+              size="small"
+            />
+          </Tooltip>
+          <Tooltip title="Edit">
+            <Link to={`/client/edit/${record.id}`}>
+              <Button type="primary" icon={<EditOutlined />} size="small" />
+            </Link>
+          </Tooltip>
+        </Space>
       ),
     },
   ];
 
   return (
     <Card>
-      <TableToolbar>
-        <Button type="primary" onClick={() => navigate("/client/new")}>
-          Create
-        </Button>
-      </TableToolbar>
       <Table
         loading={isPending}
         dataSource={client || []}
         columns={columns}
         onChange={handleTableChange}
+        rowKey="id"
         pagination={{
           current: page,
           pageSize: limit,

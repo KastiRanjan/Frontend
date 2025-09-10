@@ -1,12 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchClients } from "../../service/client.service";
 
-export const useClient = () => {
+export const useClient = (status?: string) => {
   return useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", status],
     queryFn: async () => {
-      return fetchClients();
+      return fetchClients(status);
     },
-    // enabled: !!page && !!limit,
   });
 };

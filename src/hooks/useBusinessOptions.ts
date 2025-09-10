@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchBusinessSizes } from "@/service/businessSize.service";
 import { fetchBusinessNatures } from "@/service/businessNature.service";
+import { fetchLegalStatuses } from "@/service/legalStatus.service";
 
 interface BusinessSizeOption {
   id: string;
@@ -16,12 +17,21 @@ interface BusinessNatureOption {
   isActive?: boolean;
 }
 
+interface LegalStatusOption {
+  id: string;
+  name: string;
+  description?: string;
+  status?: string;
+}
+
 export const useBusinessOptions = () => {
   const [businessSizes, setBusinessSizes] = useState<BusinessSizeOption[]>([]);
   const [businessNatures, setBusinessNatures] = useState<BusinessNatureOption[]>([]);
+  const [legalStatuses, setLegalStatuses] = useState<LegalStatusOption[]>([]);
   const [loading, setLoading] = useState({
     businessSizes: false,
     businessNatures: false,
+    legalStatuses: false,
   });
 
   useEffect(() => {
@@ -45,6 +55,16 @@ export const useBusinessOptions = () => {
       } finally {
         setLoading(prev => ({ ...prev, businessNatures: false }));
       }
+
+      try {
+        setLoading(prev => ({ ...prev, legalStatuses: true }));
+        const statuses = await fetchLegalStatuses();
+        setLegalStatuses(statuses);
+      } catch (error) {
+        console.error("Error fetching legal statuses:", error);
+      } finally {
+        setLoading(prev => ({ ...prev, legalStatuses: false }));
+      }
     };
 
     fetchData();
@@ -59,6 +79,11 @@ export const useBusinessOptions = () => {
   const businessNatureOptions = businessNatures.map(nature => ({
     value: nature.id,
     label: nature.name,
+  }));
+
+  const legalStatusOptions = legalStatuses.map(status => ({
+    value: status.id,
+    label: status.name,
   }));
 
   // Also provide enum options as fallback
@@ -91,11 +116,25 @@ export const useBusinessOptions = () => {
     { value: "others", label: "Others" },
   ];
 
+  const legalStatusEnumOptions = [
+    { value: "private_limited", label: "Private Limited" },
+    { value: "public_limited", label: "Public Limited" },
+    { value: "partnership", label: "Partnership" },
+    { value: "proprietorship", label: "Proprietorship" },
+    { value: "natural_person", label: "Natural Person" },
+    { value: "i_ngo", label: "I NGO" },
+    { value: "cooperative", label: "Cooperative" },
+    { value: "government_soe", label: "Government SOE" },
+    { value: "others", label: "Others" },
+  ];
+
   return {
     businessSizeOptions,
     businessNatureOptions,
+    legalStatusOptions,
     businessSizeEnumOptions,
     businessNatureEnumOptions,
+    legalStatusEnumOptions,
     loading,
   };
 };

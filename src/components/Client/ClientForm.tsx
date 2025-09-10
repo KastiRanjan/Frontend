@@ -27,8 +27,10 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
   const { 
     businessSizeOptions, 
     businessNatureOptions,
+    legalStatusOptions,
     businessSizeEnumOptions,
     businessNatureEnumOptions,
+    legalStatusEnumOptions,
     loading: businessOptionsLoading 
   } = useBusinessOptions();
 
@@ -38,7 +40,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
         ? moment(editClientData.registeredDate) // Convert registeredDate to moment
         : null;
 
-      // Prepare data for form with either entity ID or enum fallback values
+        // Prepare data for form with either entity ID or enum fallback values
       const formData = {
         ...editClientData,
         registeredDate,
@@ -48,6 +50,9 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
         // If we have industry nature entity data, use industryNatureId, otherwise use enum
         industryNatureId: editClientData.industryNature?.id || null,
         industryNatureEnum: !editClientData.industryNature?.id ? editClientData.industryNatureEnum : null,
+        // If we have legal status entity data, use legalStatusId, otherwise use enum
+        legalStatusId: editClientData.legalStatus?.id || null,
+        legalStatusEnum: !editClientData.legalStatus?.id ? editClientData.legalStatusEnum : null,
       };
       
       form.setFieldsValue(formData);
@@ -74,6 +79,9 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
       // For backward compatibility, ensure we have either industryNatureId or industryNatureEnum
       industryNatureId: values.industryNatureId || null,
       industryNatureEnum: !values.industryNatureId ? values.industryNatureEnum : null,
+      // For backward compatibility, ensure we have either legalStatusId or legalStatusEnum
+      legalStatusId: values.legalStatusId || null,
+      legalStatusEnum: !values.legalStatusId ? values.legalStatusEnum : null,
     };
     
     if (id) {
@@ -241,25 +249,29 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
           </Col>
           <Col span={8}>
             {/* Legal Status Field */}
-            <FormSelectWrapper
-              id="legalStatus"
-              name="legalStatus"
+            <Form.Item
+              name="legalStatusId"
               label="Legal Status"
-              rules={[
-                { required: true, message: "Please select the legal status" },
-              ]}
-              options={[
-                { value: "private_limited", label: "Private Limited" },
-                { value: "public_limited", label: "Public Limited" },
-                { value: "partnership", label: "Partnership" },
-                { value: "proprietorship", label: "Proprietorship" },
-                { value: "natural_person", label: "Natural Person" },
-                { value: "i_ngo", label: "I NGO" },
-                { value: "cooperative", label: "Cooperative" },
-                { value: "government_soe", label: "Government SOE" },
-                { value: "others", label: "Others" },
-              ]}
-            />
+              rules={[{ required: true, message: "Please select the legal status" }]}
+            >
+              <Select
+                placeholder="Select legal status"
+                loading={businessOptionsLoading.legalStatuses}
+                options={legalStatusOptions.length > 0 ? legalStatusOptions : legalStatusEnumOptions}
+                optionFilterProp="label"
+                showSearch
+              />
+            </Form.Item>
+            
+            {/* Fallback for enum-based legal status */}
+            <Form.Item
+              name="legalStatusEnum"
+              hidden
+            >
+              <Select
+                options={legalStatusEnumOptions}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             {/* Business Size Field */}
@@ -350,39 +362,6 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
           <Col span={8}>
             {/* Website Field (Optional) */}
             <FormInputWrapper id="website" name="website" label="Website" />
-          </Col>
-          <Col span={8}>
-            {/* Web Portal Field (Optional) */}
-            <FormInputWrapper
-              id="webPortal"
-              name="webPortal"
-              label="Web Portal"
-            />
-          </Col>
-          <Col span={8}>
-            {/* Login User Field (Optional) */}
-            <FormInputWrapper
-              id="loginUser"
-              name="loginUser"
-              label="Login User"
-              rules={[
-                {
-                  max: 100,
-                  message: "Login User cannot exceed 100 characters",
-                },
-              ]}
-            />
-          </Col>
-          <Col span={8}>
-            {/* Password Field (Optional) */}
-            <FormInputWrapper
-              id="password"
-              name="password"
-              label="Password"
-              rules={[
-                { max: 100, message: "Password cannot exceed 100 characters" },
-              ]}
-            />
           </Col>
           <Col span={8}>
             {/* Submit Button */}
