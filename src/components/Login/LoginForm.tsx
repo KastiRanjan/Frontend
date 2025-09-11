@@ -30,7 +30,7 @@ export const LoginForm = () => {
       </Paragraph>
 
       {/* Form */}
-      <Form layout="vertical" form={form} onFinish={onFinish} className="">
+      <Form layout="vertical" form={form} onFinish={onFinish} className="" autoComplete="off">
         <FormInputWrapper
           id="email"
           name="username"
@@ -43,6 +43,8 @@ export const LoginForm = () => {
           ]}
           placeholder="Enter your email"
           icon={<UserOutlined />}
+          type="text"
+          autoComplete="off"
         />
 
         <FormInputWrapper
@@ -56,6 +58,9 @@ export const LoginForm = () => {
           ]}
           placeholder="Enter your password"
           icon={<LockOutlined />}
+          passwordInput={true}
+          type="password"
+          autoComplete="off"
         />
         <Form.Item
           name="remember"

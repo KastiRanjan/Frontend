@@ -20,6 +20,7 @@ interface FormInputWrapperProps {
   placeholder?: string;
   required?: boolean;
   icon?: React.ReactNode;
+  autoComplete?: string;
 }
 
 const FormInputWrapper = (props: FormInputWrapperProps) => {
@@ -42,6 +43,7 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
     min = 0,
     max = 0,
     error,
+    autoComplete,
   } = props;
 
   return (
@@ -71,6 +73,8 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
             onChange={changeHandler}
             disabled={disabled}
             allowClear={allowClear}
+            autoComplete="off"
+            visibilityToggle={true}
           />
         ) : (
           <Input
@@ -85,7 +89,7 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
             placeholder={placeholder}
             onChange={changeHandler}
             disabled={disabled}
-         
+            autoComplete={autoComplete || "on"}
           />
         )}
       </Form.Item>

@@ -99,7 +99,7 @@ const WorklogForm = () => {
           // User chose to proceed despite overlaps
           createWorklog(values.timeEntries, {
             onSuccess: () => {
-              message.success("Worklog created successfully");
+              message.success("Worklog created successfully. Tasks are now marked as in progress.");
             },
             onError: (error: any) => {
               const errorMessage =
@@ -114,7 +114,7 @@ const WorklogForm = () => {
       // No overlaps, proceed normally
       createWorklog(values.timeEntries, {
         onSuccess: () => {
-          message.success("Worklog created successfully");
+          message.success("Worklog created successfully. Tasks are now marked as in progress.");
         },
         onError: (error: any) => {
           const errorMessage =

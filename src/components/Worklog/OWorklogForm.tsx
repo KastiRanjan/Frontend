@@ -154,6 +154,7 @@ const OWorklogForm = () => {
           // User chose to proceed despite overlaps
           createWorklog(updatedTimeEntries, {
             onSuccess: () => {
+              message.success("Worklog added successfully. Tasks are now marked as in progress.");
               navigate("/worklogs-all");
             },
             onError: (error: any) => {
@@ -169,6 +170,7 @@ const OWorklogForm = () => {
       // No overlaps, proceed normally
       createWorklog(updatedTimeEntries, {
         onSuccess: () => {
+          message.success("Worklog added successfully. Tasks are now marked as in progress.");
           navigate("/worklogs-all");
         },
         onError: (error: any) => {
