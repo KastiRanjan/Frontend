@@ -17,7 +17,7 @@ const App: React.FC = () => {
       navigate("/");
     } else if (
       !isAuthenticated &&
-      !["/login", "/signup"].includes(window.location.pathname)
+      !["/login", "/signup", ...window.location.pathname.match(/^\/reset\//) ? [window.location.pathname] : []].includes(window.location.pathname)
     ) {
       navigate("/login");
     }
