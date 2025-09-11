@@ -4,6 +4,7 @@ import { resetPassword } from "../../service/auth.service";
 interface ResetPasswordDto {
     token: string;
     password: string;
+    confirmPassword?: string;
 }
 
 export const useResetPassword = () => {

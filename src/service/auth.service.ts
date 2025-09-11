@@ -23,9 +23,15 @@ export const logout = async () => {
   return response.data;
 };
 
-export const resetPassword = async (resetPasswordDto: { token: string; password: string }) => {
+export const resetPassword = async (resetPasswordDto: { token: string; password: string; confirmPassword?: string }) => {
   try {
-    const response = await axios.put(`${backendURI}/auth/reset-password`, resetPasswordDto, {
+    // Make sure to include confirmPassword if it's not provided
+    const payload = {
+      ...resetPasswordDto,
+      confirmPassword: resetPasswordDto.confirmPassword || resetPasswordDto.password
+    };
+    
+    const response = await axios.put(`${backendURI}/auth/reset-password`, payload, {
       withCredentials: true,
     });
     return response.data;

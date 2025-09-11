@@ -60,7 +60,11 @@ const ResetPasswordForm = () => {
         setResetError(null);
         
         try {
-            await resetPassword({ token, password: values.password });
+            await resetPassword({ 
+                token, 
+                password: values.password,
+                confirmPassword: values.confirmPassword
+            });
             setResetSuccess(true);
             message.success('Password reset successfully!');
             form.resetFields();
@@ -70,6 +74,15 @@ const ResetPasswordForm = () => {
             
             if (err.response?.status === 404) {
                 setResetError('Reset link is invalid or has expired.');
+            } else if (err.response?.status === 422) {
+                if (Array.isArray(err.response.data.message)) {
+                    const errorMessages = err.response.data.message.map((e: any) => 
+                        Object.values(e.errors || {}).join(', ')
+                    ).join(', ');
+                    setResetError(`Validation error: ${errorMessages}`);
+                } else {
+                    setResetError(err.response.data.message || 'Validation error. Please check your input.');
+                }
             } else if (err.response?.data?.message) {
                 setResetError(err.response.data.message);
             } else {
