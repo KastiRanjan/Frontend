@@ -121,11 +121,17 @@ const ProjectTable = ({ showModal, status }: any) => {
       key: "createdAt",
       sorter: (a, b) => moment(a.createdAt).unix() - moment(b.createdAt).unix(),
       sortOrder: sortedInfo.columnKey === 'createdAt' && sortedInfo.order,
-      render: (_: any, record: any) => (
-        <>
-          {record.createdAt && new Date(record.createdAt).toLocaleDateString()}
-        </>
-      ),
+      render: (_: any, record: any) => {
+        if (record.createdAt) {
+          const date = new Date(record.createdAt);
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short', 
+            day: 'numeric'
+          });
+        }
+        return '';
+      },
       ...getColumnSearchProps('createdAt', 'Date'),
     },
     {
@@ -262,8 +268,16 @@ const ProjectTable = ({ showModal, status }: any) => {
       sortOrder: sortedInfo.columnKey === 'endingDate' && sortedInfo.order,
       ...getColumnSearchProps('endingDate', 'End Date'),
       render: (_: any, record: any) => {
-        // Use endingDateFormatted from backend if available, otherwise fallback to standard formatting
-        return record.endingDateFormatted || (record.endingDate ? new Date(record.endingDate).toLocaleDateString() : '');
+        if (record.endingDate) {
+          // Format the date in a clear English format
+          const date = new Date(record.endingDate);
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+        }
+        return '';
       }
     },
     {

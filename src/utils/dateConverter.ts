@@ -38,6 +38,31 @@ export class DualDateConverter {
   }
 
   /**
+   * Convert a Nepali date string (format YYYY-MM-DD) to AD date string
+   */
+  static convertToAD(nepaliDateStr: string): string {
+    try {
+      // Parse the Nepali date string into year, month, day
+      const [year, month, day] = nepaliDateStr.split('-').map(Number);
+      if (!year || !month || !day) {
+        throw new Error('Invalid Nepali date format. Expected YYYY-MM-DD');
+      }
+      
+      // Create a NepaliDate object
+      const nepaliDate = new NepaliDate(year, month - 1, day);
+      
+      // Convert to Gregorian date
+      const gregorianDate = this.nepaliToGregorian(nepaliDate);
+      
+      // Return formatted as YYYY-MM-DD
+      return gregorianDate.format('YYYY-MM-DD');
+    } catch (error) {
+      console.error('Error converting Nepali date to AD:', error);
+      return dayjs().format('YYYY-MM-DD'); // Return today as fallback
+    }
+  }
+
+  /**
    * Create a dual date object from a Gregorian date
    */
   static createDualDate(gregorianDate: Dayjs): DualDate {

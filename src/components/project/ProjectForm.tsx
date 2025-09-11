@@ -2,7 +2,7 @@ import { useCreateProject } from "@/hooks/project/useCreateProject";
 import { useEditProject } from "@/hooks/project/useEditProject";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
-import { Button, Col, DatePicker, Divider, Form, Row, Select } from "antd";
+import { Button, Col, Divider, Form, Row, Select } from "antd";
 import { useEffect, useState } from "react";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
@@ -13,16 +13,35 @@ import TextArea from "antd/es/input/TextArea";
 import { useClient } from "@/hooks/client/useClient";
 import { useBilling } from "@/hooks/billing/useBilling";
 import NepaliDatePicker, { NepaliDate } from "../NepaliDatePicker";
+import dayjs from "dayjs";
 
-// Minimal AD<->BS conversion for frontend (for demo, use backend for accuracy)
+// Improved AD<->BS conversion for frontend using the DualDateConverter
+import { DualDateConverter } from "@/utils/dateConverter";
+
 function adToBs(adDate: string): NepaliDate {
-  // Dummy conversion: just offset year by 57, month/day unchanged
-  const [year, month, day] = adDate.split("-").map(Number);
-  return { year: year + 57, month, day };
+  try {
+    const adDateObj = dayjs(adDate);
+    if (!adDateObj.isValid()) {
+      throw new Error('Invalid date format');
+    }
+    const dual = DualDateConverter.createDualDate(adDateObj);
+    return {
+      year: dual.nepali.getYear(),
+      month: dual.nepali.getMonth() + 1,
+      day: dual.nepali.getDate()
+    };
+  } catch (error) {
+    console.error('Error converting AD to BS:', error);
+    // Fallback to simple conversion
+    const [year, month, day] = adDate.split("-").map(Number);
+    return { year: year + 57, month, day };
+  }
 }
-function bsToAd(bs: NepaliDate): string {
-  // Dummy conversion: just offset year by -57
-  return `${bs.year - 57}-${String(bs.month).padStart(2, "0")}-${String(bs.day).padStart(2, "0")}`;
+
+function formatNepaliDateForForm(nepaliDate: NepaliDate | undefined): string | null {
+  if (!nepaliDate) return null;
+  // Format as YYYY-MM-DD
+  return `${nepaliDate.year}-${String(nepaliDate.month).padStart(2, '0')}-${String(nepaliDate.day).padStart(2, '0')}`;
 }
 
 interface ProjectFormProps {
@@ -45,10 +64,6 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   const [natureOfWorkOptions, setNatureOfWorkOptions] = useState<{ value: string; label: string; shortName: string }[]>([]);
   const [suggestedProjectName, setSuggestedProjectName] = useState("");
   
-  // Add separate date states for edit mode - using strings instead of moment
-  const [editStartDate, setEditStartDate] = useState<string | null>(null);
-  const [editEndDate, setEditEndDate] = useState<string | null>(null);
-
   // Add state for Nepali dates only
   const [nepaliStartDate, setNepaliStartDate] = useState<NepaliDate | undefined>(undefined);
   const [nepaliEndDate, setNepaliEndDate] = useState<NepaliDate | undefined>(undefined);
@@ -86,12 +101,100 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   };
 
   const onFinish = (values: any) => {
+    // Log all form values for debugging
+    console.log('Form values on submit:', values);
+    console.log('Current nepali dates state:', { 
+      nepaliStartDate, 
+      nepaliEndDate,
+      formattedNepaliStart: formatNepaliDateForForm(nepaliStartDate),
+      formattedNepaliEnd: formatNepaliDateForForm(nepaliEndDate)
+    });
+    
     // Ensure projectLead and projectManager are included in the users array
     const userIds = [values.projectLead, values.projectManager].filter(Boolean);
     
-    // For edit mode, use our separate date states; for create mode, use form values
-    const startDate = nepaliStartDate ? bsToAd(nepaliStartDate) : undefined;
-    const endDate = nepaliEndDate ? bsToAd(nepaliEndDate) : undefined;
+    // Get dates from either form values or component state
+    let startDate = values.startingDate;
+    let endDate = values.endingDate;
+    
+    // First priority: use explicit English date fields
+    if (values.startingDateEnglish) {
+      startDate = values.startingDateEnglish;
+      console.log('Using explicit English start date:', startDate);
+    }
+    // Second priority: convert from Nepali date in form values
+    else if (values.startingDateNepali) {
+      try {
+        // Check if it's already a string (from form) or an object (from state)
+        if (typeof values.startingDateNepali === 'string') {
+          startDate = DualDateConverter.convertToAD(values.startingDateNepali);
+        } else {
+          // Format the object to string first
+          const nepaliDateStr = formatNepaliDateForForm(values.startingDateNepali);
+          if (nepaliDateStr) {
+            startDate = DualDateConverter.convertToAD(nepaliDateStr);
+          }
+        }
+        console.log('Converted Nepali start date from form:', startDate);
+      } catch (error) {
+        console.error('Failed to convert start date from form:', error);
+      }
+    }
+    // Third priority: use state-based conversion
+    else if (nepaliStartDate) {
+      try {
+        const nepaliDateStr = formatNepaliDateForForm(nepaliStartDate);
+        if (nepaliDateStr) {
+          startDate = DualDateConverter.convertToAD(nepaliDateStr);
+          console.log('Using state-based start date conversion:', startDate);
+        }
+      } catch (error) {
+        console.error('Failed to convert start date from state:', error);
+      }
+    }
+    
+    // Similar approach for end date
+    if (values.endingDateEnglish) {
+      endDate = values.endingDateEnglish;
+      console.log('Using explicit English end date:', endDate);
+    }
+    else if (values.endingDateNepali) {
+      try {
+        if (typeof values.endingDateNepali === 'string') {
+          endDate = DualDateConverter.convertToAD(values.endingDateNepali);
+        } else {
+          const nepaliDateStr = formatNepaliDateForForm(values.endingDateNepali);
+          if (nepaliDateStr) {
+            endDate = DualDateConverter.convertToAD(nepaliDateStr);
+          }
+        }
+        console.log('Converted Nepali end date from form:', endDate);
+      } catch (error) {
+        console.error('Failed to convert end date from form:', error);
+      }
+    }
+    else if (nepaliEndDate) {
+      try {
+        const nepaliDateStr = formatNepaliDateForForm(nepaliEndDate);
+        if (nepaliDateStr) {
+          endDate = DualDateConverter.convertToAD(nepaliDateStr);
+          console.log('Using state-based end date conversion:', endDate);
+        }
+      } catch (error) {
+        console.error('Failed to convert end date from state:', error);
+      }
+    }
+    
+    // Final validation to ensure we have dates
+    if (!startDate || startDate === '') {
+      console.error('Missing starting date, form validation should catch this');
+      return; // Let the form validation handle this
+    }
+    
+    if (!endDate || endDate === '') {
+      console.error('Missing ending date, form validation should catch this');
+      return; // Let the form validation handle this
+    }
     
     // Transform dates to proper format for backend
     const transformedValues = {
@@ -102,6 +205,17 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         ? [...new Set([...values.users, ...userIds])]
         : userIds,
     };
+    
+    // Remove Nepali date fields before sending to backend
+    delete transformedValues.startingDateNepali;
+    delete transformedValues.endingDateNepali;
+    delete transformedValues.startingDateEnglish;
+    delete transformedValues.endingDateEnglish;
+
+    console.log('Submitting project with dates:', { 
+      startingDate: startDate, 
+      endingDate: endDate
+    });
 
     if (editProjectData?.id) {
       mutateEdit(
@@ -175,6 +289,38 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
 
       // Set form values with a delay to ensure form is ready
       setTimeout(() => {
+        // Parse dates for edit mode
+        const parsedStartDate = parseDate(editProjectData.startingDate);
+        const parsedEndDate = parseDate(editProjectData.endingDate);
+        
+        // Get the AD dates as strings for the form
+        const startDateAD = parsedStartDate ? parsedStartDate.format('YYYY-MM-DD') : '';
+        const endDateAD = parsedEndDate ? parsedEndDate.format('YYYY-MM-DD') : '';
+        
+        // Convert to Nepali dates if we have valid Gregorian dates
+        if (parsedStartDate) {
+          try {
+            const adDate = parsedStartDate.format('YYYY-MM-DD');
+            const bsDate = adToBs(adDate);
+            setNepaliStartDate(bsDate);
+            console.log('Setting Nepali start date in edit mode:', bsDate);
+          } catch (error) {
+            console.error('Error converting start date to BS in edit mode:', error);
+          }
+        }
+        
+        if (parsedEndDate) {
+          try {
+            const adDate = parsedEndDate.format('YYYY-MM-DD');
+            const bsDate = adToBs(adDate);
+            setNepaliEndDate(bsDate);
+            console.log('Setting Nepali end date in edit mode:', bsDate);
+          } catch (error) {
+            console.error('Error converting end date to BS in edit mode:', error);
+          }
+        }
+
+        // Create form data object
         const formData: any = {
           name: editProjectData.name || '',
           description: editProjectData.description || '',
@@ -186,29 +332,79 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           client: (editProjectData as any).client?.id || (editProjectData as any).customer?.id || (editProjectData as any).client || (editProjectData as any).customer,
           billing: (editProjectData as any).billing?.id || (editProjectData as any).billing,
           natureOfWork: typeof editProjectData.natureOfWork === "string" ? editProjectData.natureOfWork : (editProjectData.natureOfWork as any)?.id,
+          
+          // Set both date formats to ensure synchronization
+          startingDate: startDateAD,
+          endingDate: endDateAD,
+          
+          // Also set English date fields explicitly
+          startingDateEnglish: startDateAD,
+          endingDateEnglish: endDateAD
         };
-
-        // Parse dates for edit mode state (store as strings)
-        const parsedStartDate = parseDate(editProjectData.startingDate);
-        const parsedEndDate = parseDate(editProjectData.endingDate);
-        
-        // Set edit date states as strings
-        setEditStartDate(parsedStartDate ? parsedStartDate.format('YYYY-MM-DD') : null);
-        setEditEndDate(parsedEndDate ? parsedEndDate.format('YYYY-MM-DD') : null);
-
-        // DON'T add dates to form data in edit mode
-        // We'll handle them separately with defaultValue
 
         // Clear form first, then set values
         form.resetFields();
+        
         setTimeout(() => {
+          // Set the form values first
           form.setFieldsValue(formData);
-        }, 50);
-      }, 100);
+          
+          // Then update the Nepali date form fields
+          if (nepaliStartDate) {
+            form.setFieldsValue({ startingDateNepali: nepaliStartDate });
+            console.log('Set startingDateNepali in form:', nepaliStartDate);
+          }
+          
+          if (nepaliEndDate) {
+            form.setFieldsValue({ endingDateNepali: nepaliEndDate });
+            console.log('Set endingDateNepali in form:', nepaliEndDate);
+          }
+          
+          // Log the form values after setting them
+          console.log('Form values after initialization:', form.getFieldsValue());
+          
+          // Force form validation
+          form.validateFields(['startingDateNepali', 'endingDateNepali'])
+            .then(() => console.log('Initial validation passed'))
+            .catch(err => console.log('Initial validation error:', err));
+        }, 100);
+      }, 200);
     } else {
+      // For new project, reset form and initialize with today's date
       form.resetFields();
-      setEditStartDate(null);
-      setEditEndDate(null);
+      
+      // Get today's date in Nepali
+      const todayNepali = adToBs(new Date().toISOString().split('T')[0]);
+      setNepaliStartDate(todayNepali);
+      setNepaliEndDate(todayNepali);
+      
+      // Format the Nepali date for conversion
+      const nepaliDateStr = formatNepaliDateForForm(todayNepali);
+      
+      // Set the form values for new project
+      setTimeout(() => {
+        if (nepaliDateStr) {
+          try {
+            const adDate = DualDateConverter.convertToAD(nepaliDateStr);
+            form.setFieldsValue({ 
+              startingDateNepali: todayNepali,
+              startingDate: adDate,
+              startingDateEnglish: adDate,
+              endingDateNepali: todayNepali,
+              endingDate: adDate,
+              endingDateEnglish: adDate
+            });
+            console.log('Set default dates for new project:', { todayNepali, adDate });
+            
+            // Force form validation
+            form.validateFields(['startingDateNepali', 'endingDateNepali'])
+              .then(() => console.log('Initial validation passed'))
+              .catch(err => console.log('Initial validation error:', err));
+          } catch (error) {
+            console.error('Error setting default dates:', error);
+          }
+        }
+      }, 200);
     }
   }, [editProjectData, form]);
 
@@ -351,37 +547,152 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         <Col span={12}>
           <Form.Item
             label="Starting Date (BS)"
-            name={"startingDateNepali"}
+            name="startingDateNepali"
+            initialValue={nepaliStartDate}
             rules={[
-              { required: true, message: "Please select the starting date!" },
+              { 
+                required: true, 
+                message: "Please select the starting date!",
+                validator: (_, value) => {
+                  // Debug validation
+                  console.log("Validating startingDateNepali:", value, nepaliStartDate);
+                  if (value || nepaliStartDate) {
+                    // Add fallback synchronization when validation runs
+                    if (!value && nepaliStartDate) {
+                      // If form value is empty but we have state, update the form
+                      const formattedDate = formatNepaliDateForForm(nepaliStartDate);
+                      if (formattedDate) {
+                        // Schedule update for next tick to avoid validation cycle
+                        setTimeout(() => {
+                          form.setFieldsValue({ 
+                            startingDateNepali: nepaliStartDate,
+                            startingDate: DualDateConverter.convertToAD(formattedDate),
+                          });
+                        }, 0);
+                      }
+                    }
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Please select the starting date!"));
+                }
+              },
             ]}
           >
             <NepaliDatePicker
               value={nepaliStartDate}
               onChange={bs => {
                 setNepaliStartDate(bs);
-                const adDate = bsToAd(bs);
-                form.setFieldsValue({ startingDateNepali: bs, startingDate: adDate });
+                try {
+                  // Format the Nepali date for conversion
+                  const nepaliDateStr = formatNepaliDateForForm(bs);
+                  if (nepaliDateStr) {
+                    const adDate = DualDateConverter.convertToAD(nepaliDateStr);
+                    console.log("Converted starting date (AD):", adDate);
+                    // Set both form fields
+                    form.setFieldsValue({ 
+                      startingDateNepali: bs, 
+                      startingDate: adDate,
+                      startingDateEnglish: adDate  // Make sure the hidden English field is set
+                    });
+                    // Add a delay to allow form to update
+                    setTimeout(() => {
+                      console.log("Form values after date change:", form.getFieldsValue());
+                    }, 100);
+                  }
+                } catch (error) {
+                  console.error("Error converting start date to AD:", error);
+                }
               }}
             />
+          </Form.Item>
+          {/* Hidden field to store the AD date */}
+          <Form.Item
+            name="startingDate"
+            hidden={true}
+          >
+            <input type="hidden" />
+          </Form.Item>
+          {/* Additional hidden field for explicit English date */}
+          <Form.Item
+            name="startingDateEnglish"
+            hidden={true}
+          >
+            <input type="hidden" />
           </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item
             label="Ending Date (BS)"
-            name={"endingDateNepali"}
+            name="endingDateNepali"
+            initialValue={nepaliEndDate}
             rules={[
-              { required: true, message: "Please select the ending date!" },
+              { 
+                required: true, 
+                message: "Please select the ending date!",
+                validator: (_, value) => {
+                  console.log("Validating endingDateNepali:", value, nepaliEndDate);
+                  if (value || nepaliEndDate) {
+                    // Add fallback synchronization when validation runs
+                    if (!value && nepaliEndDate) {
+                      // If form value is empty but we have state, update the form
+                      const formattedDate = formatNepaliDateForForm(nepaliEndDate);
+                      if (formattedDate) {
+                        // Schedule update for next tick to avoid validation cycle
+                        setTimeout(() => {
+                          form.setFieldsValue({ 
+                            endingDateNepali: nepaliEndDate,
+                            endingDate: DualDateConverter.convertToAD(formattedDate),
+                          });
+                        }, 0);
+                      }
+                    }
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Please select the ending date!"));
+                }
+              },
             ]}
           >
             <NepaliDatePicker
               value={nepaliEndDate}
               onChange={bs => {
                 setNepaliEndDate(bs);
-                const adDate = bsToAd(bs);
-                form.setFieldsValue({ endingDateNepali: bs, endingDate: adDate });
+                try {
+                  // Format the Nepali date for conversion
+                  const nepaliDateStr = formatNepaliDateForForm(bs);
+                  if (nepaliDateStr) {
+                    const adDate = DualDateConverter.convertToAD(nepaliDateStr);
+                    console.log("Converted ending date (AD):", adDate);
+                    // Set both form fields
+                    form.setFieldsValue({ 
+                      endingDateNepali: bs, 
+                      endingDate: adDate,
+                      endingDateEnglish: adDate  // Make sure the hidden English field is set
+                    });
+                    // Add a delay to allow form to update
+                    setTimeout(() => {
+                      console.log("Form values after date change:", form.getFieldsValue());
+                    }, 100);
+                  }
+                } catch (error) {
+                  console.error("Error converting end date to AD:", error);
+                }
               }}
             />
+          </Form.Item>
+          {/* Hidden field to store the AD date */}
+          <Form.Item
+            name="endingDate"
+            hidden={true}
+          >
+            <input type="hidden" />
+          </Form.Item>
+          {/* Additional hidden field for explicit English date */}
+          <Form.Item
+            name="endingDateEnglish"
+            hidden={true}
+          >
+            <input type="hidden" />
           </Form.Item>
         </Col>
         <Col span={12}>

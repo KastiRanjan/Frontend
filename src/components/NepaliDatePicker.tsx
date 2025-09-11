@@ -1,34 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Select, Row, Col } from "antd";
 import dayjs from 'dayjs';
 import { DualDateConverter } from '../utils/dateConverter';
 
 // Picker value type (not the library class)
-export interface NepaliDateValue {
+export interface NepaliDate {
   year: number;
   month: number;
   day: number;
 }
 
 interface NepaliDatePickerProps {
-  value?: NepaliDateValue;
-  onChange?: (date: NepaliDateValue) => void;
+  value?: NepaliDate;
+  onChange?: (date: NepaliDate) => void;
   label?: string;
 }
 
 // Accurate AD to BS conversion for today's date
-function adToBs(adDate: Date): NepaliDateValue {
-  // Use DualDateConverter for accurate conversion
-  const dual = DualDateConverter.createDualDate(dayjs(adDate));
-  const nepali = dual.nepali;
-  return {
-    year: nepali.getYear(),
-    month: nepali.getMonth() + 1,
-    day: nepali.getDate() - 1, // Fix off-by-one: NepaliDate.getDate() returns next day
-  };
+function adToBs(adDate: Date): NepaliDate {
+  try {
+    // Use DualDateConverter for accurate conversion
+    const dual = DualDateConverter.createDualDate(dayjs(adDate));
+    const nepali = dual.nepali;
+    return {
+      year: nepali.getYear(),
+      month: nepali.getMonth() + 1,
+      day: nepali.getDate()
+    };
+  } catch (error) {
+    console.error('Error in adToBs conversion:', error);
+    // Fallback to current date
+    return {
+      year: 2080, // Example Nepali year (2023 AD ~ 2080 BS)
+      month: 1,
+      day: 1
+    };
+  }
 }
 
-function getTodayNepaliDate(): NepaliDateValue {
+function getTodayNepaliDate(): NepaliDate {
   return adToBs(new Date());
 }
 
@@ -40,23 +50,45 @@ const nepaliMonths = [
 const nepaliDays = Array.from({ length: 32 }, (_, i) => i + 1);
 
 const NepaliDatePicker: React.FC<NepaliDatePickerProps> = ({ value, onChange, label }) => {
-  const defaultNepaliDate = value || getTodayNepaliDate();
-  const [selectedYear, setSelectedYear] = useState<number>(defaultNepaliDate.year);
-  const [selectedMonth, setSelectedMonth] = useState<number>(defaultNepaliDate.month);
-  const [selectedDay, setSelectedDay] = useState<number>(defaultNepaliDate.day);
+  // Get today's Nepali date as default
+  const today = getTodayNepaliDate();
+  
+  // Use either the provided value or today's date as default
+  const defaultDate = value || today;
+  
+  // Initialize state with the default date
+  const [selectedYear, setSelectedYear] = useState<number>(defaultDate.year);
+  const [selectedMonth, setSelectedMonth] = useState<number>(defaultDate.month);
+  const [selectedDay, setSelectedDay] = useState<number>(defaultDate.day);
+  
+  // Update the component when the external value changes
+  useEffect(() => {
+    if (value) {
+      setSelectedYear(value.year);
+      setSelectedMonth(value.month);
+      setSelectedDay(value.day);
+      console.log('NepaliDatePicker received value:', value);
+    }
+  }, [value]);
 
   const handleChange = (type: "year" | "month" | "day", val: number) => {
     let newYear = selectedYear;
     let newMonth = selectedMonth;
     let newDay = selectedDay;
+    
     if (type === "year") newYear = val;
     if (type === "month") newMonth = val;
     if (type === "day") newDay = val;
+    
     setSelectedYear(newYear);
     setSelectedMonth(newMonth);
     setSelectedDay(newDay);
+    
+    // Trigger the onChange callback with the new date
     if (onChange) {
-      onChange({ year: newYear, month: newMonth, day: newDay });
+      const newDate = { year: newYear, month: newMonth, day: newDay };
+      console.log('NepaliDatePicker onChange:', newDate);
+      onChange(newDate);
     }
   };
 

@@ -38,10 +38,10 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
           {project.fiscalYear}/{(project.fiscalYear + 1).toString().slice(-2)}
         </Descriptions.Item>
         <Descriptions.Item label="Starting Date">
-          {moment(project.startingDate).format('YYYY-MM-DD')}
+          {moment(project.startingDate).format('MMM D, YYYY')}
         </Descriptions.Item>
         <Descriptions.Item label="Ending Date">
-          {moment(project.endingDate).format('YYYY-MM-DD')}
+          {moment(project.endingDate).format('MMM D, YYYY')}
         </Descriptions.Item>
         <Descriptions.Item label="Project Lead">
           {project.projectLead?.name || 'N/A'}
@@ -59,10 +59,10 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
           {project.description}
         </Descriptions.Item>
         <Descriptions.Item label="Created At">
-          {moment(project.createdAt).format('YYYY-MM-DD HH:mm')}
+          {moment(project.createdAt).format('MMM D, YYYY h:mm A')}
         </Descriptions.Item>
         <Descriptions.Item label="Updated At">
-          {moment(project.updatedAt).format('YYYY-MM-DD HH:mm')}
+          {moment(project.updatedAt).format('MMM D, YYYY h:mm A')}
         </Descriptions.Item>
       </Descriptions>
     </Card>
