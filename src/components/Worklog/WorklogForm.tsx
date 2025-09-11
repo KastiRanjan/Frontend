@@ -3,7 +3,7 @@ import {  useTasks } from "@/hooks/task/useTask";
 import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Col, DatePicker, Form, Input, Row, Select, message, Card } from "antd";
+import { Button, Col, DatePicker, Form, Input, Row, Select, message, Card, Modal } from "antd";
 import { useParams } from "react-router-dom";
 import moment from "moment";
 
@@ -13,19 +13,117 @@ const WorklogForm = () => {
   const { data: project } = useProjectById({ id });
   const { mutate: createWorklog } = useCreateWorklog();
 
+  // Function to check for overlapping time entries
+  const checkForOverlappingEntries = (entries: any[]): { hasOverlap: boolean, overlapDetails: string[] } => {
+    const overlapDetails: string[] = [];
+    
+    // Group entries by date
+    const entriesByDate = entries.reduce((acc: { [key: string]: any[] }, entry: any) => {
+      if (!entry.date || !entry.startTime || !entry.endTime) return acc;
+      
+      const dateKey = moment(entry.date).format('YYYY-MM-DD');
+      if (!acc[dateKey]) {
+        acc[dateKey] = [];
+      }
+      
+      acc[dateKey].push({
+        ...entry,
+        dateKey,
+      });
+      
+      return acc;
+    }, {});
+    
+    // Check for overlaps within each date group
+    Object.keys(entriesByDate).forEach(dateKey => {
+      const dateEntries = entriesByDate[dateKey];
+      
+      if (dateEntries.length > 1) {
+        // Compare each entry with all others for the same date
+        for (let i = 0; i < dateEntries.length; i++) {
+          const entry1 = dateEntries[i];
+          const start1 = moment(entry1.startTime);
+          const end1 = moment(entry1.endTime);
+          
+          for (let j = i + 1; j < dateEntries.length; j++) {
+            const entry2 = dateEntries[j];
+            const start2 = moment(entry2.startTime);
+            const end2 = moment(entry2.endTime);
+            
+            // Check if the time periods overlap
+            if (
+              (start1.isBefore(end2) && end1.isAfter(start2)) || 
+              (start2.isBefore(end1) && end2.isAfter(start1)) ||
+              (start1.isSame(start2) || end1.isSame(end2))
+            ) {
+              overlapDetails.push(
+                `Overlap on ${dateKey}: ${start1.format('HH:mm')} - ${end1.format('HH:mm')} overlaps with ${start2.format('HH:mm')} - ${end2.format('HH:mm')}`
+              );
+            }
+          }
+        }
+      }
+    });
+    
+    return {
+      hasOverlap: overlapDetails.length > 0,
+      overlapDetails
+    };
+  };
+
   const handleFinish = (values: any) => {
     console.log(values.timeEntries);
-    createWorklog(values.timeEntries, {
-      onSuccess: () => {
-        message.success("Worklog created successfully");
-      },
-      onError: (error: any) => {
-        const errorMessage =
-          error?.response?.data?.message ||
-          "Failed to create worklog";
-        message.error(errorMessage);
-      },
-    });
+    
+    // Check for overlapping time entries
+    const { hasOverlap, overlapDetails } = checkForOverlappingEntries(values.timeEntries);
+    
+    if (hasOverlap) {
+      // Display modal warning with details of overlaps
+      Modal.confirm({
+        title: 'Warning: Overlapping Worklogs Detected',
+        content: (
+          <div>
+            <p>The following worklogs overlap in time:</p>
+            <ul>
+              {overlapDetails.map((detail, index) => (
+                <li key={index} style={{ color: 'red' }}>{detail}</li>
+              ))}
+            </ul>
+            <p>Overlapping worklogs may cause time tracking issues. Do you want to proceed anyway?</p>
+          </div>
+        ),
+        okText: 'Proceed Anyway',
+        okButtonProps: { danger: true },
+        cancelText: 'Go Back and Fix',
+        onOk() {
+          // User chose to proceed despite overlaps
+          createWorklog(values.timeEntries, {
+            onSuccess: () => {
+              message.success("Worklog created successfully");
+            },
+            onError: (error: any) => {
+              const errorMessage =
+                error?.response?.data?.message ||
+                "Failed to create worklog";
+              message.error(errorMessage);
+            },
+          });
+        },
+      });
+    } else {
+      // No overlaps, proceed normally
+      createWorklog(values.timeEntries, {
+        onSuccess: () => {
+          message.success("Worklog created successfully");
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            "Failed to create worklog";
+          message.error(errorMessage);
+        },
+      });
+    }
   };
 
   return (
@@ -145,6 +243,25 @@ const WorklogForm = () => {
                             required: true,
                             message: "Required!",
                           },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const endTime = getFieldValue([
+                                "timeEntries",
+                                field.name,
+                                "endTime",
+                              ]);
+                              if (
+                                !value ||
+                                !endTime ||
+                                moment(value).isBefore(moment(endTime))
+                              ) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(
+                                new Error("Start time must be before end time!")
+                              );
+                            },
+                          }),
                         ]}
                         style={{ marginBottom: 8 }}
                       >
@@ -165,6 +282,25 @@ const WorklogForm = () => {
                             required: true,
                             message: "Required!",
                           },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const startTime = getFieldValue([
+                                "timeEntries",
+                                field.name,
+                                "startTime",
+                              ]);
+                              if (
+                                !value ||
+                                !startTime ||
+                                moment(value).isAfter(moment(startTime))
+                              ) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(
+                                new Error("End time must be after start time!")
+                              );
+                            },
+                          }),
                         ]}
                         style={{ marginBottom: 8 }}
                       >

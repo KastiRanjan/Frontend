@@ -8,6 +8,7 @@ import {
   Card,
   Col,
   Form,
+  Modal,
   Row,
   Select,
   TimePicker,
@@ -63,24 +64,121 @@ const OWorklogForm = () => {
     roleName === "admin" ||
     roleName === "superuser";
 
+  // Function to check for overlapping time entries
+  const checkForOverlappingEntries = (entries: any[]): { hasOverlap: boolean, overlapDetails: string[] } => {
+    const overlapDetails: string[] = [];
+    
+    // Group entries by date
+    const entriesByDate = entries.reduce((acc: { [key: string]: any[] }, entry: any) => {
+      if (!entry.date || !entry.startTime || !entry.endTime) return acc;
+      
+      const dateKey = entry.date.format('YYYY-MM-DD');
+      if (!acc[dateKey]) {
+        acc[dateKey] = [];
+      }
+      
+      acc[dateKey].push({
+        ...entry,
+        dateKey,
+      });
+      
+      return acc;
+    }, {});
+    
+    // Check for overlaps within each date group
+    Object.keys(entriesByDate).forEach(dateKey => {
+      const dateEntries = entriesByDate[dateKey];
+      
+      if (dateEntries.length > 1) {
+        // Compare each entry with all others for the same date
+        for (let i = 0; i < dateEntries.length; i++) {
+          const entry1 = dateEntries[i];
+          const start1 = entry1.startTime;
+          const end1 = entry1.endTime;
+          
+          for (let j = i + 1; j < dateEntries.length; j++) {
+            const entry2 = dateEntries[j];
+            const start2 = entry2.startTime;
+            const end2 = entry2.endTime;
+            
+            // Check if the time periods overlap
+            if (
+              (start1.isBefore(end2) && end1.isAfter(start2)) || 
+              (start2.isBefore(end1) && end2.isAfter(start1)) ||
+              (start1.isSame(start2) || end1.isSame(end2))
+            ) {
+              overlapDetails.push(
+                `Overlap on ${dateKey}: ${start1.format('HH:mm')} - ${end1.format('HH:mm')} overlaps with ${start2.format('HH:mm')} - ${end2.format('HH:mm')}`
+              );
+            }
+          }
+        }
+      }
+    });
+    
+    return {
+      hasOverlap: overlapDetails.length > 0,
+      overlapDetails
+    };
+  };
+
   // Handle the form submission
   const handleFinish = (values: any) => {
     const updatedTimeEntries = values.timeEntries.map((entry: any) => ({
       ...entry,
       status: "requested",
     }));
-
-    createWorklog(updatedTimeEntries, {
-      onSuccess: () => {
-        navigate("/worklogs-all");
-      },
-      onError: (error: any) => {
-        const errorMessage =
-          error?.response?.data?.message ||
-          "An error occurred while creating the worklog";
-        message.error(errorMessage);
-      },
-    });
+    
+    // Check for overlapping time entries
+    const { hasOverlap, overlapDetails } = checkForOverlappingEntries(values.timeEntries);
+    
+    if (hasOverlap) {
+      // Display modal warning with details of overlaps
+      Modal.confirm({
+        title: 'Warning: Overlapping Worklogs Detected',
+        content: (
+          <div>
+            <p>The following worklogs overlap in time:</p>
+            <ul>
+              {overlapDetails.map((detail, index) => (
+                <li key={index} style={{ color: 'red' }}>{detail}</li>
+              ))}
+            </ul>
+            <p>Overlapping worklogs may cause time tracking issues. Do you want to proceed anyway?</p>
+          </div>
+        ),
+        okText: 'Proceed Anyway',
+        okButtonProps: { danger: true },
+        cancelText: 'Go Back and Fix',
+        onOk() {
+          // User chose to proceed despite overlaps
+          createWorklog(updatedTimeEntries, {
+            onSuccess: () => {
+              navigate("/worklogs-all");
+            },
+            onError: (error: any) => {
+              const errorMessage =
+                error?.response?.data?.message ||
+                "An error occurred while creating the worklog";
+              message.error(errorMessage);
+            },
+          });
+        },
+      });
+    } else {
+      // No overlaps, proceed normally
+      createWorklog(updatedTimeEntries, {
+        onSuccess: () => {
+          navigate("/worklogs-all");
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            "An error occurred while creating the worklog";
+          message.error(errorMessage);
+        },
+      });
+    }
   };
 
   const timeFormat = "HH:mm";
