@@ -1,20 +1,22 @@
 import { useState } from 'react';
-import { Form, Input, Button, message, Grid } from 'antd';
+import { Form, Input, Button, message, Result } from 'antd';
 import { useResetPassword } from '@/hooks/auth/useResetPassword';
 import Title from 'antd/es/typography/Title';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 
 const ResetPasswordForm = () => {
     const [form] = Form.useForm();
-    const { token } = useParams()
+    const { token } = useParams();
     const { mutate: resetPassword } = useResetPassword();
     const [loading, setLoading] = useState(false);
+    const [resetSuccess, setResetSuccess] = useState(false);
 
     const onFinish = async (values: any) => {
         setLoading(true);
         try {
             await resetPassword({ ...values, token });
             message.success('Password reset successfully!');
+            setResetSuccess(true);
             form.resetFields();
         } catch (error) {
             message.error('Failed to reset password!');
@@ -22,6 +24,23 @@ const ResetPasswordForm = () => {
             setLoading(false);
         }
     };
+
+    if (resetSuccess) {
+        return (
+            <div style={{ display: 'grid', placeItems: 'center', height: '100vh' }}>
+                <Result
+                    status="success"
+                    title="Password Reset Successful!"
+                    subTitle="Your password has been changed successfully."
+                    extra={[
+                        <Button type="primary" key="login">
+                            <Link to="/login">Go to Login</Link>
+                        </Button>
+                    ]}
+                />
+            </div>
+        );
+    }
 
     return (
         <div style={{ display: 'grid', placeItems: 'center', height: '100vh' }}>
@@ -34,7 +53,6 @@ const ResetPasswordForm = () => {
                     layout="vertical"
                     requiredMark={false}
                 >
-
                     <Form.Item
                         label="New Password"
                         name="password"
