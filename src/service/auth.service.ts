@@ -24,9 +24,13 @@ export const logout = async () => {
 };
 
 export const resetPassword = async (resetPasswordDto: { token: string; password: string }) => {
-  const response = await axios.put(`${backendURI}/auth/reset-password`, resetPasswordDto, {
-    withCredentials: true,
-  });
-
-  return response.data;
+  try {
+    const response = await axios.put(`${backendURI}/auth/reset-password`, resetPasswordDto, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    // Let the error propagate to be handled by the calling component
+    throw error;
+  }
 };
