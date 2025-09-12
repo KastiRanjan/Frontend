@@ -10,7 +10,7 @@ import { TaskType } from "@/types/task";
 import Highlighter from 'react-highlight-words';
 import MoveTemplateModal from "./MoveTemplateModal";
 
-const column = ({ showModal, handleDelete, sortedInfo, getColumnSearchProps }: any): TableProps<TaskTemplateType>["columns"] => [
+const column = ({ showModal, handleDelete, sortedInfo, getColumnSearchProps, searchText, searchedColumn, globalSearchText }: any): TableProps<TaskTemplateType>["columns"] => [
   {
     title: "Name",
     dataIndex: "name",
@@ -18,17 +18,36 @@ const column = ({ showModal, handleDelete, sortedInfo, getColumnSearchProps }: a
     sorter: (a: TaskTemplateType, b: TaskTemplateType) => a.name.localeCompare(b.name),
     sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
     ...getColumnSearchProps('name', 'Name'),
-    render: (text: string, record: any) => (
-      <span style={{ 
-        fontWeight: record.isSubTask ? 'normal' : '500',
-        fontSize: record.isSubTask ? '0.9em' : '1em',
-        color: record.isSubTask ? '#666' : '#000',
-        paddingLeft: record.isSubTask ? '16px' : '0'
-      }}>
-        {record.isSubTask && <span style={{ color: '#999', marginRight: '4px' }}>↳</span>}
-        {text}
-      </span>
-    ),
+    render: (text: string, record: any) => {
+      const searchWords = [];
+      if (searchedColumn === 'name' && searchText) {
+        searchWords.push(searchText);
+      }
+      if (globalSearchText) {
+        searchWords.push(globalSearchText);
+      }
+
+      const content = searchWords.length > 0 ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={searchWords}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : text;
+
+      return (
+        <span style={{ 
+          fontWeight: record.isSubTask ? 'normal' : '500',
+          fontSize: record.isSubTask ? '0.9em' : '1em',
+          color: record.isSubTask ? '#666' : '#000',
+          paddingLeft: record.isSubTask ? '16px' : '0'
+        }}>
+          {record.isSubTask && <span style={{ color: '#999', marginRight: '4px' }}>↳</span>}
+          {content}
+        </span>
+      );
+    },
   },
   {
     title: "Task Type",
@@ -47,10 +66,27 @@ const column = ({ showModal, handleDelete, sortedInfo, getColumnSearchProps }: a
       const badgeColor = record?.taskType === 'story' ? 'blue' : 'green';
       const badgeText = record?.taskType === 'story' ? 'T' : 'S';
       
+      const searchWords = [];
+      if (searchedColumn === 'taskType' && searchText) {
+        searchWords.push(searchText);
+      }
+      if (globalSearchText) {
+        searchWords.push(globalSearchText);
+      }
+
+      const content = searchWords.length > 0 ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={searchWords}
+          autoEscape
+          textToHighlight={displayType}
+        />
+      ) : displayType;
+      
       return (
         <>
           <Badge color={badgeColor} count={badgeText} /> &nbsp;
-          {displayType}
+          {content}
         </>
       );
     },
@@ -103,6 +139,7 @@ const TaskTemplateTable = ({
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({});
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+  const [globalSearchText, setGlobalSearchText] = useState('');
   const searchInput = useRef<any>(null);
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
@@ -110,7 +147,12 @@ const TaskTemplateTable = ({
     setSearchText(selectedKeys[0]);
     setSearchedColumn(dataIndex);
     
-    // Auto-expand rows that have matching children
+    // Clear global search when using column-specific search
+    if (selectedKeys[0] && selectedKeys[0].trim()) {
+      setGlobalSearchText('');
+    }
+    
+    // Auto-expand rows that have matching children OR matching names
     if (selectedKeys[0]) {
       const searchValue = selectedKeys[0].toLowerCase();
       const keysToExpand: string[] = [];
@@ -119,6 +161,24 @@ const TaskTemplateTable = ({
       const currentData = [...expandedData, ...standaloneTasks];
       
       currentData.forEach((record: any) => {
+        let shouldExpand = false;
+        
+        // Check if the parent task itself matches the search
+        if (dataIndex.includes('.')) {
+          const keys = dataIndex.split('.');
+          let val = record;
+          for (const key of keys) {
+            if (!val) break;
+            val = val[key];
+          }
+          if (val && val.toString().toLowerCase().includes(searchValue)) {
+            shouldExpand = true;
+          }
+        } else if (record[dataIndex] && record[dataIndex].toString().toLowerCase().includes(searchValue)) {
+          shouldExpand = true;
+        }
+        
+        // Also check if any child matches (existing logic)
         if (record.children && Array.isArray(record.children)) {
           const hasMatchingChild = record.children.some((child: any) => {
             if (dataIndex.includes('.')) {
@@ -136,8 +196,13 @@ const TaskTemplateTable = ({
           });
           
           if (hasMatchingChild) {
-            keysToExpand.push(record.key.toString());
+            shouldExpand = true;
           }
+        }
+        
+        // If parent matches or has matching children, expand it
+        if (shouldExpand && record.children && record.children.length > 0) {
+          keysToExpand.push(record.key.toString());
         }
       });
       
@@ -150,7 +215,69 @@ const TaskTemplateTable = ({
   const handleReset = (clearFilters: () => void) => {
     clearFilters();
     setSearchText('');
+    setSearchedColumn('');
     setExpandedRowKeys([]);
+  };
+
+  const handleGlobalSearch = (value: string) => {
+    setGlobalSearchText(value);
+    
+    // Clear column-specific search when using global search
+    if (value && value.trim()) {
+      setSearchText('');
+      setSearchedColumn('');
+    }
+    
+    if (value && value.trim()) {
+      const searchValue = value.toLowerCase();
+      const keysToExpand: string[] = [];
+      
+      // Use the computed finalData for search expansion
+      const currentData = [...expandedData, ...standaloneTasks];
+      
+      currentData.forEach((record: any) => {
+        let shouldExpand = false;
+        
+        // Check if the parent task matches in any searchable field
+        const fieldsToSearch = ['name', 'description'];
+        const parentMatches = fieldsToSearch.some(field => 
+          record[field] && record[field].toString().toLowerCase().includes(searchValue)
+        );
+        
+        // Also check task type display value
+        const taskTypeDisplay = record?.taskType === 'story' ? 'Task' : 'Subtask';
+        const taskTypeMatches = taskTypeDisplay.toLowerCase().includes(searchValue);
+        
+        if (parentMatches || taskTypeMatches) {
+          shouldExpand = true;
+        }
+        
+        // Check if any child matches
+        if (record.children && Array.isArray(record.children)) {
+          const hasMatchingChild = record.children.some((child: any) => {
+            const childMatches = fieldsToSearch.some(field => 
+              child[field] && child[field].toString().toLowerCase().includes(searchValue)
+            );
+            const childTaskTypeDisplay = child?.taskType === 'story' ? 'Task' : 'Subtask';
+            const childTaskTypeMatches = childTaskTypeDisplay.toLowerCase().includes(searchValue);
+            return childMatches || childTaskTypeMatches;
+          });
+          
+          if (hasMatchingChild) {
+            shouldExpand = true;
+          }
+        }
+        
+        // If parent matches or has matching children, expand it
+        if (shouldExpand && record.children && record.children.length > 0) {
+          keysToExpand.push(record.key.toString());
+        }
+      });
+      
+      setExpandedRowKeys(keysToExpand);
+    } else {
+      setExpandedRowKeys([]);
+    }
   };
 
   const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
@@ -205,19 +332,39 @@ const TaskTemplateTable = ({
           }
           return val ? val.toString().toLowerCase().includes(searchValue) : false;
         }
+        
+        // Special handling for taskType - search the display value instead of stored value
+        if (dataIndex === 'taskType') {
+          const displayType = rec?.taskType === 'story' ? 'Task' : 'Subtask';
+          return displayType.toLowerCase().includes(searchValue);
+        }
+        
         return rec[dataIndex]
           ? rec[dataIndex].toString().toLowerCase().includes(searchValue)
           : false;
       };
 
-      // Check if the current record matches
-      if (recordMatches(record)) {
+      // Check if the current record (parent) matches the search
+      const parentMatches = recordMatches(record);
+      
+      // If parent matches, show the entire row (parent + all children)
+      if (parentMatches) {
         return true;
       }
 
       // Check if any child/subtask matches (for parent tasks)
       if (record.children && Array.isArray(record.children)) {
-        return record.children.some((child: any) => recordMatches(child));
+        const hasMatchingChild = record.children.some((child: any) => recordMatches(child));
+        // If any child matches, show the parent row (which includes all children)
+        if (hasMatchingChild) {
+          return true;
+        }
+      }
+
+      // For child/subtask rows, check if they match individually
+      // This handles the case where we're filtering subtask rows directly
+      if (record.isSubTask) {
+        return recordMatches(record);
       }
 
       return false;
@@ -227,17 +374,26 @@ const TaskTemplateTable = ({
         setTimeout(() => searchInput.current?.select(), 100);
       }
     },
-    render: (text: string) =>
-      searchedColumn === dataIndex ? (
+    render: (text: string) => {
+      const searchWords = [];
+      if (searchedColumn === dataIndex && searchText) {
+        searchWords.push(searchText);
+      }
+      if (globalSearchText && (dataIndex === 'name' || dataIndex === 'description')) {
+        searchWords.push(globalSearchText);
+      }
+
+      return searchWords.length > 0 ? (
         <Highlighter
           highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-          searchWords={[searchText]}
+          searchWords={searchWords}
           autoEscape
           textToHighlight={text ? text.toString() : ''}
         />
       ) : (
         text
-      ),
+      );
+    },
   });
 
   // Transform the data to have proper parent-child relationships
@@ -299,7 +455,43 @@ const TaskTemplateTable = ({
   // Combine stories with their subtasks and standalone tasks
   const finalData = [...expandedData, ...standaloneTasks];
   
-  console.log('Final processed data:', finalData);
+  // Apply global search filter
+  const filteredData = globalSearchText ? 
+    finalData.filter((record: any) => {
+      const searchValue = globalSearchText.toLowerCase();
+      
+      // Check parent task fields
+      const fieldsToSearch = ['name', 'description'];
+      const parentMatches = fieldsToSearch.some(field => 
+        record[field] && record[field].toString().toLowerCase().includes(searchValue)
+      );
+      
+      // Check task type display value
+      const taskTypeDisplay = record?.taskType === 'story' ? 'Task' : 'Subtask';
+      const taskTypeMatches = taskTypeDisplay.toLowerCase().includes(searchValue);
+      
+      if (parentMatches || taskTypeMatches) {
+        return true;
+      }
+      
+      // If parent doesn't match, check if any children match
+      if (record.children && Array.isArray(record.children)) {
+        const hasMatchingChild = record.children.some((child: any) => {
+          const childMatches = fieldsToSearch.some(field => 
+            child[field] && child[field].toString().toLowerCase().includes(searchValue)
+          );
+          const childTaskTypeDisplay = child?.taskType === 'story' ? 'Task' : 'Subtask';
+          const childTaskTypeMatches = childTaskTypeDisplay.toLowerCase().includes(searchValue);
+          return childMatches || childTaskTypeMatches;
+        });
+        
+        return hasMatchingChild;
+      }
+      
+      return false;
+    }) : finalData;
+  
+  console.log('Final processed data:', filteredData);
 
   const rowSelection: TableProps<TaskTemplateType>["rowSelection"] = {
     onChange: (selectedRowKeys, selectedRows) => {
@@ -378,12 +570,44 @@ const TaskTemplateTable = ({
     <>
       <Card>
         <TableToolbar>
-          <Button
-            type="primary"
-            onClick={() => showModal && showModal()}
-          >
-            Add Task
-          </Button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Button
+                type="primary"
+                onClick={() => showModal && showModal()}
+              >
+                Add Task
+              </Button>
+              <Input.Search
+                placeholder="🔍 Search all fields (name, description, type)..."
+                allowClear
+                value={globalSearchText}
+                onChange={(e) => handleGlobalSearch(e.target.value)}
+                onSearch={(value) => handleGlobalSearch(value)}
+                style={{ width: 350 }}
+                size="middle"
+              />
+            </div>
+            {(searchText || globalSearchText) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#1890ff', fontSize: '14px' }}>
+                  🔍 {globalSearchText ? 'Global search' : 'Column search'}: "{searchText || globalSearchText}"
+                  {globalSearchText && <span style={{ fontSize: '12px', color: '#999' }}> (auto-expanded matching parents)</span>}
+                </span>
+                <Button 
+                  size="small" 
+                  onClick={() => {
+                    setSearchText('');
+                    setSearchedColumn('');
+                    setGlobalSearchText('');
+                    setExpandedRowKeys([]);
+                  }}
+                >
+                  Clear Search
+                </Button>
+              </div>
+            )}
+          </div>
         </TableToolbar>
         <Table
           loading={isPending}
@@ -392,9 +616,12 @@ const TaskTemplateTable = ({
             showModal, 
             handleDelete, 
             sortedInfo, 
-            getColumnSearchProps 
+            getColumnSearchProps,
+            searchText,
+            searchedColumn,
+            globalSearchText
           })}
-          dataSource={finalData || []}
+          dataSource={filteredData || []}
           expandable={{
             defaultExpandAllRows: false,
             expandRowByClick: false,
@@ -412,6 +639,9 @@ const TaskTemplateTable = ({
             showQuickJumper: true,
             pageSizeOptions: [5, 10, 20, 50],
             showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+            ...(searchText && { 
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items (filtered)` 
+            })
           }}
         />
       </Card>
