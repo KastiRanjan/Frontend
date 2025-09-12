@@ -2,8 +2,8 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
-export const fetchUsers = async ({ satus, limit, page, keywords }: { satus: string, limit: number, page: number, keywords: string }) => {
-  const response = await axios.get(`${backendURI}/users?status=${satus}&limit=${limit}&page=${page}&keywords=${keywords}`, {});
+export const fetchUsers = async ({ status, limit, page, keywords }: { status: string, limit: number, page: number, keywords: string }) => {
+  const response = await axios.get(`${backendURI}/users?status=${status}&limit=${limit}&page=${page}&keywords=${keywords}`, {});
   return response.data;
 };
 

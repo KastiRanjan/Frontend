@@ -17,6 +17,7 @@ export default defineConfig({
       "@/service": "/src/service",
       "@/pages": "/src/pages",
       "@/context": "/src/context",
+      "@/types": "/src/types",
     },
   },
   server: {

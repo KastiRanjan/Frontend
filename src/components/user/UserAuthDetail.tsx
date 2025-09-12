@@ -1,30 +1,15 @@
 import { Role } from "@/pages/Role/type";
-import { Col, Row, Select as AntSelect, Form } from "antd";
+import { Col, Row } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import { useRole } from "../../hooks/role/useRole";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { UserType } from "@/types/user";
-import { useState } from "react";
-import { 
-  countries, 
-  getStateOptions, 
-  getDistrictOptions, 
-  getLocalJurisdictionOptions 
-} from "@/utils/locationData";
+import { UserStatus } from "@/types/userStatus";
 
 
 const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
   const { data: roles } = useRole({ page: 1, limit: 100 });
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(
-    initialValues?.country || null
-  );
-  const [selectedState, setSelectedState] = useState<string | null>(
-    initialValues?.state || null
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(
-    initialValues?.district || null
-  );
 
   return (
     <>
@@ -77,9 +62,9 @@ const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
             required
             rules={[{ required: true, message: "Please select the status!" }]}
             options={[
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-              { value: "suspended", label: "Suspended" },
+              { value: UserStatus.ACTIVE, label: "Active" },
+              { value: UserStatus.INACTIVE, label: "Inactive" },
+              { value: UserStatus.BLOCKED, label: "Blocked" },
             ]}
           />
         </Col>

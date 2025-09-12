@@ -1,6 +1,7 @@
 import PageTitle from "@/components/PageTitle";
 import UserForm from "@/components/user/UserForm";
 import UserTable from "@/components/user/UserTable";
+import { UserStatus } from "@/types/userStatus";
 import { Modal, Tabs } from "antd";
 import React, { useCallback } from "react";
 
@@ -28,15 +29,19 @@ const User: React.FC = () => {
           {
             label: "Active",
             key: "1",
-            children: <UserTable status="active"  showModal={showModal}/>,
+            children: <UserTable status={UserStatus.ACTIVE} showModal={showModal}/>,
+          },
+          {
+            label: "Inactive",
+            key: "2",
+            children: <UserTable status={UserStatus.INACTIVE} showModal={showModal}/>,
           },
           {
             label: "Blocked",
-            key: "2",
-            children: <UserTable status="blocked" showModal={showModal}/>,
+            key: "3",
+            children: <UserTable status={UserStatus.BLOCKED} showModal={showModal}/>,
           },
         ]}
-
       />
 
       {open && (
