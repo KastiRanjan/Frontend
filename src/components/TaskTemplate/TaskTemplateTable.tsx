@@ -103,17 +103,55 @@ const TaskTemplateTable = ({
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({});
+  const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
   const searchInput = useRef<any>(null);
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
     confirm();
     setSearchText(selectedKeys[0]);
     setSearchedColumn(dataIndex);
+    
+    // Auto-expand rows that have matching children
+    if (selectedKeys[0]) {
+      const searchValue = selectedKeys[0].toLowerCase();
+      const keysToExpand: string[] = [];
+      
+      // Use the computed finalData for search expansion
+      const currentData = [...expandedData, ...standaloneTasks];
+      
+      currentData.forEach((record: any) => {
+        if (record.children && Array.isArray(record.children)) {
+          const hasMatchingChild = record.children.some((child: any) => {
+            if (dataIndex.includes('.')) {
+              const keys = dataIndex.split('.');
+              let val = child;
+              for (const key of keys) {
+                if (!val) return false;
+                val = val[key];
+              }
+              return val ? val.toString().toLowerCase().includes(searchValue) : false;
+            }
+            return child[dataIndex]
+              ? child[dataIndex].toString().toLowerCase().includes(searchValue)
+              : false;
+          });
+          
+          if (hasMatchingChild) {
+            keysToExpand.push(record.key.toString());
+          }
+        }
+      });
+      
+      setExpandedRowKeys(keysToExpand);
+    } else {
+      setExpandedRowKeys([]);
+    }
   };
 
   const handleReset = (clearFilters: () => void) => {
     clearFilters();
     setSearchText('');
+    setExpandedRowKeys([]);
   };
 
   const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
@@ -155,18 +193,35 @@ const TaskTemplateTable = ({
       <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
     ),
     onFilter: (value: string, record: any) => {
-      if (dataIndex.includes('.')) {
-        const keys = dataIndex.split('.');
-        let val = record;
-        for (const key of keys) {
-          if (!val) return false;
-          val = val[key];
+      const searchValue = value.toLowerCase();
+      
+      // Helper function to check if a record matches the search
+      const recordMatches = (rec: any) => {
+        if (dataIndex.includes('.')) {
+          const keys = dataIndex.split('.');
+          let val = rec;
+          for (const key of keys) {
+            if (!val) return false;
+            val = val[key];
+          }
+          return val ? val.toString().toLowerCase().includes(searchValue) : false;
         }
-        return val ? val.toString().toLowerCase().includes(value.toLowerCase()) : false;
+        return rec[dataIndex]
+          ? rec[dataIndex].toString().toLowerCase().includes(searchValue)
+          : false;
+      };
+
+      // Check if the current record matches
+      if (recordMatches(record)) {
+        return true;
       }
-      return record[dataIndex]
-        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
-        : '';
+
+      // Check if any child/subtask matches (for parent tasks)
+      if (record.children && Array.isArray(record.children)) {
+        return record.children.some((child: any) => recordMatches(child));
+      }
+
+      return false;
     },
     onFilterDropdownVisibleChange: (visible: boolean) => {
       if (visible) {
@@ -345,6 +400,8 @@ const TaskTemplateTable = ({
             defaultExpandAllRows: false,
             expandRowByClick: false,
             indentSize: 20,
+            expandedRowKeys: expandedRowKeys,
+            onExpandedRowsChange: (expandedKeys) => setExpandedRowKeys(expandedKeys as string[]),
             // Only show expandable icon for rows that have children
             rowExpandable: (record: any) => Array.isArray(record.children) && record.children.length > 0
           }}
