@@ -9,7 +9,7 @@ export const useBulkUpdateTasks = () => {
       return bulkUpdateTasks(payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project", "project_task"] });
+      queryClient.invalidateQueries({ queryKey: ["project_task"] }); // This will match all project_task queries
     },
     onError: (error) => {
       console.error("Bulk update failed:", error);

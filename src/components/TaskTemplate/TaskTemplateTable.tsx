@@ -1,7 +1,7 @@
 
 import { useDeleteTaskTemplate } from "@/hooks/taskTemplate/useTaskTemplateDelete";
 import { DeleteOutlined, EditOutlined, SearchOutlined } from "@ant-design/icons";
-import { Badge, Button, Card, Modal, Table, TableProps, Input, Space } from "antd";
+import { Badge, Button, Card, Modal, Table, TableProps, Input, Space, message } from "antd";
 import _ from "lodash";
 import { useState, useRef } from "react";
 import TableToolbar from "../Table/TableToolbar";
@@ -21,10 +21,12 @@ const column = ({ showModal, handleDelete, sortedInfo, searchText, searchedColum
     ...getColumnSearchProps('name', 'Name'),
     render: (text: string, record: any) => (
       <span style={{ 
-        fontWeight: 'normal',
+        fontWeight: record.isSubTask ? 'normal' : '500',
         fontSize: record.isSubTask ? '0.9em' : '1em',
-        color: record.isSubTask ? '#666' : '#000'
+        color: record.isSubTask ? '#666' : '#000',
+        paddingLeft: record.isSubTask ? '16px' : '0'
       }}>
+        {record.isSubTask && <span style={{ color: '#999', marginRight: '4px' }}>↳</span>}
         {text}
       </span>
     ),
@@ -246,9 +248,50 @@ const TaskTemplateTable = ({
   const rowSelection: TableProps<TaskTemplateType>["rowSelection"] = {
     onChange: (selectedRowKeys, selectedRows) => {
       console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-      setSelectedRow(selectedRows);
-      setIsRowSelected(true);
-      setCheckedRows(selectedRowKeys.map(key => key.toString()));
+      
+      // Validate parent-child selection consistency
+      const validatedKeys: React.Key[] = [];
+      const validatedRows: any[] = [];
+      let hasConflicts = false;
+      
+      selectedRowKeys.forEach((key, index) => {
+        const row = selectedRows[index];
+        const keyStr = key.toString();
+        
+        // Check if this is a child key (contains parent-child format)
+        if (keyStr.includes('-')) {
+          const [parentId] = keyStr.split('-');
+          
+          // If parent is also selected, skip the child
+          if (selectedRowKeys.some(k => k.toString() === parentId)) {
+            console.warn(`Skipping child task "${row.name}" because parent is already selected`);
+            hasConflicts = true;
+            return;
+          }
+        } else {
+          // This is a parent key, check if any children are selected
+          const hasSelectedChildren = selectedRowKeys.some(k => 
+            k.toString().startsWith(`${keyStr}-`)
+          );
+          
+          if (hasSelectedChildren) {
+            console.warn(`Skipping parent task "${row.name}" because children are already selected`);
+            hasConflicts = true;
+            return;
+          }
+        }
+        
+        validatedKeys.push(key);
+        validatedRows.push(row);
+      });
+      
+      if (hasConflicts) {
+        message.warning('Cannot select both parent and child tasks. Only individual tasks or their subtasks can be selected.');
+      }
+      
+      setSelectedRow(validatedRows);
+      setIsRowSelected(validatedKeys.length > 0);
+      setCheckedRows(validatedKeys.map(key => key.toString()));
     },
     onSelect: (record, selected, selectedRows) => {
       console.log(record, selected, selectedRows);
@@ -256,6 +299,10 @@ const TaskTemplateTable = ({
     onSelectAll: (selected, selectedRows, changeRows) => {
       console.log(selected, selectedRows, changeRows);
     },
+    getCheckboxProps: () => ({
+      // Disable checkbox if parent or child is already selected
+      disabled: false, // We'll handle this in onChange instead for better UX
+    }),
   };
 
   const handleDelete = (id: string) => {

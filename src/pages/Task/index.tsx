@@ -15,7 +15,7 @@ const Task = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { permissions } = useSession()
-  const { data, isPending } = useProjectTask({ id });
+  const { data, isPending, refetch } = useProjectTask({ id });
   const { data: project } = useProjectById({ id })
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [open, setOpen] = React.useState(false);
@@ -41,7 +41,7 @@ const Task = () => {
       
       />
 
-      <TaskTable data={data} showModal={showModal} project={project} />
+      <TaskTable data={data} showModal={showModal} project={project} onRefresh={refetch} />
 
       {open && (
         <Modal title="Add Task" footer={null} open={open} onCancel={handleCancel}>
