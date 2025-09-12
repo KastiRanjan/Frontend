@@ -7,6 +7,7 @@ import { useParams } from "react-router-dom";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 interface TaskTemplateFormProps {
   editTaskTemplateData?: any;
@@ -24,11 +25,26 @@ const TaskTemplateForm = ({
   const { mutate } = useCreateTaskTemplate();
   const { mutate: mutateEdit } = useEditTaskTemplate();
 
+  // Watch for changes to taskType
+  const taskType = Form.useWatch('taskType', form);
+  
+  // Reset parentTaskId if taskType is "story"
+  useEffect(() => {
+    if (taskType === "story") {
+      form.setFieldValue("parentTaskId", undefined);
+    }
+  }, [taskType, form]);
+
   const handleFinish = (values: any) => {
     const payload = {
       ...values,
       groupId: gid,
+      // Ensure parentTaskId is set correctly for tasks
+      parentTaskId: values.taskType === 'task' ? values.parentTaskId : undefined
     };
+    
+    console.log('Submitting task template:', payload);
+    
     if (editTaskTemplateData?.id) {
       mutateEdit(
         { id: editTaskTemplateData?.id, payload: payload },
@@ -75,27 +91,23 @@ const TaskTemplateForm = ({
           <FormSelectWrapper
             id="taskType"
             name="taskType"
-            label="Epic"
-            rules={[{ required: true, message: "Please select the group ID" }]}
-            options={
-              [
-                { value: "story", label: "Story" },
-                { value: "task", label: "Task" },
-              ]?.map((group) => ({
-                value: group.value,
-                label: group.label,
-              })) || []
-            }
+            label="Task Type"
+            rules={[{ required: true, message: "Please select the task type" }]}
+            options={[
+              { value: "story", label: "Task" },
+              { value: "task", label: "Subtask" },
+            ]}
           />
 
           <FormSelectWrapper
             id="parentId"
             name="parentTaskId"
             label="Parent Task"
-            disabled={form.getFieldValue("taskType") == "Story"}
+            disabled={taskType === "story"}
+            rules={taskType === "task" ? [{ required: true, message: "Please select a parent task for this subtask" }] : []}
             options={
               taskgroup?.tasktemplate
-                ?.filter((task: TaskTemplate) => task.taskType == "story")
+                ?.filter((task: TaskTemplate) => task.taskType === "story")
                 ?.map((template: TaskTemplate) => ({
                   value: template.id,
                   label: template.name,

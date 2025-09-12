@@ -19,23 +19,40 @@ const column = ({ showModal, handleDelete, sortedInfo, searchText, searchedColum
     sorter: (a: TaskTemplateType, b: TaskTemplateType) => a.name.localeCompare(b.name),
     sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
     ...getColumnSearchProps('name', 'Name'),
+    render: (text: string, record: any) => (
+      <span style={{ 
+        fontWeight: 'normal',
+        fontSize: record.isSubTask ? '0.9em' : '1em',
+        color: record.isSubTask ? '#666' : '#000'
+      }}>
+        {text}
+      </span>
+    ),
   },
   {
-    title: "Epic",
-    dataIndex: "epic",
+    title: "Task Type",
+    dataIndex: "taskType",
     key: "taskType",
-    sorter: (a: TaskTemplateType, b: TaskTemplateType) => {
+    sorter: (a: any, b: any) => {
       const typeA = a.taskType || '';
       const typeB = b.taskType || '';
       return typeA.localeCompare(typeB);
     },
     sortOrder: sortedInfo.columnKey === 'taskType' && sortedInfo.order,
-    ...getColumnSearchProps('taskType', 'Epic'),
-    render: (_: any, record: any) =>
-      <>
-        <Badge color={record?.taskType === 'story' ? 'gray' : 'green'} count={record?.taskType[0]} /> &nbsp;
-        {record?.taskType}
-      </>,
+    ...getColumnSearchProps('taskType', 'Task Type'),
+    render: (_: any, record: any) => {
+      // Display mapping: story -> Task, task -> Subtask
+      const displayType = record?.taskType === 'story' ? 'Task' : 'Subtask';
+      const badgeColor = record?.taskType === 'story' ? 'blue' : 'green';
+      const badgeText = record?.taskType === 'story' ? 'T' : 'S';
+      
+      return (
+        <>
+          <Badge color={badgeColor} count={badgeText} /> &nbsp;
+          {displayType}
+        </>
+      );
+    },
   },
   {
     title: "Description",
@@ -43,7 +60,6 @@ const column = ({ showModal, handleDelete, sortedInfo, searchText, searchedColum
     key: "description",
     ...getColumnSearchProps('description', 'Description'),
   },
-
   {
     title: "Action",
     key: "action",
@@ -67,7 +83,6 @@ interface TaskTemplateTableProps {
   setCheckedRows: (value: string[]) => void
   taskList?: any
   isPending?: boolean;
-  taskGroup?: any;
   showModal?: (task?: TaskType) => void
 }
 
@@ -75,7 +90,6 @@ const TaskTemplateTable = ({
   handleCancel,
   isModalOpen,
   setCheckedRows,
-  taskGroup,
   setIsRowSelected,
   taskList = [],
   isPending,
@@ -100,7 +114,7 @@ const TaskTemplateTable = ({
     setSearchText('');
   };
 
-  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+  const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
     setSortedInfo(sorter);
   };
 
@@ -170,12 +184,64 @@ const TaskTemplateTable = ({
       ),
   });
 
-  const expandedData: any = _.map(taskList, (task) => {
-    const nestedTasks = _.map(task.subTasks || [], (subTask) => {
-      return _.omit({ ...subTask, key: subTask.id, parentTask: subTask.parentTask, children: subTask.subTasks }, 'subTasks'); // Rename and omit the old 'subTask' key
+  // Transform the data to have proper parent-child relationships
+  // Stories are main tasks, tasks are subtasks
+  console.log('Original taskList:', taskList);
+  
+  // First, let's see what each task looks like
+  taskList?.forEach((task: any, index: number) => {
+    console.log(`Task ${index}:`, {
+      id: task.id,
+      name: task.name,
+      taskType: task.taskType,
+      parentTask: task.parentTask,
+      subTasks: task.subTasks,
+      // Log all keys to see what fields are available
+      allKeys: Object.keys(task)
     });
-    return _.omit({ ...task, key: task.id, parentTask: task.parentTask, children: nestedTasks }, 'subTasks'); // Rename and omit the old 'subTask' key
   });
+  
+  const expandedData: any = _.chain(taskList)
+    .filter((task: any) => task.taskType === 'story') // Only get stories (which display as Tasks) as main tasks
+    .map((story: any) => {
+      // Use the subTasks relation directly from backend
+      const subTasks = story.subTasks || [];
+      
+      console.log(`Task "${story.name}" has ${subTasks.length} subtasks:`, subTasks);
+      
+      // Map subtasks to proper format
+      const children = subTasks.map((subTask: any) => ({
+        ...subTask,
+        key: `${story.id}-${subTask.id}`, // Unique key for subtask
+        isSubTask: true
+      }));
+      
+      // Return task (story type) with its subtasks as children
+      return {
+        ...story,
+        key: story.id,
+        children: children.length > 0 ? children : undefined
+      };
+    })
+    .value();
+  
+  // Also add any standalone tasks (tasks without parentTask)
+  const standaloneTasks = taskList
+    .filter((task: any) => 
+      task.taskType === 'task' && !task.parentTask
+    )
+    .map((task: any) => ({
+      ...task,
+      key: task.id,
+      isStandalone: true
+    }));
+  
+  console.log('Standalone tasks:', standaloneTasks);
+  
+  // Combine stories with their subtasks and standalone tasks
+  const finalData = [...expandedData, ...standaloneTasks];
+  
+  console.log('Final processed data:', finalData);
 
   const rowSelection: TableProps<TaskTemplateType>["rowSelection"] = {
     onChange: (selectedRowKeys, selectedRows) => {
@@ -227,7 +293,14 @@ const TaskTemplateTable = ({
             searchedColumn, 
             getColumnSearchProps 
           })}
-          dataSource={expandedData || []}
+          dataSource={finalData || []}
+          expandable={{
+            defaultExpandAllRows: false,
+            expandRowByClick: false,
+            indentSize: 20,
+            // Only show expandable icon for rows that have children
+            rowExpandable: (record: any) => Array.isArray(record.children) && record.children.length > 0
+          }}
           size="small"
           bordered
           onChange={handleTableChange}
