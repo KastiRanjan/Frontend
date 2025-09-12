@@ -299,11 +299,11 @@ const OWorklogForm = () => {
               {/* Fixed header for the form items */}
               <Row className="bg-gray-100 p-2 mb-2 font-semibold rounded">
                 <Col span={3}>Date</Col>
-                <Col span={4}>Project</Col>
-                <Col span={4}>Task</Col>
-                <Col span={3}>Start Time</Col>
-                <Col span={3}>End Time</Col>
-                <Col span={6}>Request To</Col>
+                <Col span={6}>Project</Col>
+                <Col span={6}>Task</Col>
+                <Col span={2}>Start Time</Col>
+                <Col span={2}>End Time</Col>
+                <Col span={3}>Request To</Col>
                 <Col span={1} className="text-right">Action</Col>
               </Row>
               
@@ -343,7 +343,7 @@ const OWorklogForm = () => {
                       </Col>
 
                       {/* Project Dropdown */}
-                      <Col span={4}>
+                      <Col span={6}>
                         <Form.Item
                           name={[field.name, "projectId"]}
                           rules={[{ required: true, message: "Required!" }]}
@@ -366,7 +366,7 @@ const OWorklogForm = () => {
                       </Col>
 
                       {/* Task Dropdown */}
-                      <Col span={4}>
+                      <Col span={6}>
                         <Form.Item
                           name={[field.name, "taskId"]}
                           rules={[{ required: true, message: "Required!" }]}
@@ -375,12 +375,43 @@ const OWorklogForm = () => {
                           <Select
                             placeholder="Select task"
                             loading={loadingTasks[field.name]}
-                            options={filteredTasks[field.name]?.map(
-                              (t: TaskTemplateType) => ({
-                                label: t.name,
-                                value: t.id,
+                            options={filteredTasks[field.name]
+                              ?.map((currentTask: TaskTemplateType) => {
+                                // If it's a story type (parent task) with subtasks, don't allow selection
+                                if (currentTask.taskType === 'story' && currentTask.subTasks && currentTask.subTasks.length > 0) {
+                                  return null; // Don't allow parent tasks with subtasks to be selected
+                                }
+                                
+                                // If it's a story type without subtasks, show it normally
+                                if (currentTask.taskType === 'story') {
+                                  return {
+                                    label: currentTask.name,
+                                    value: currentTask.id,
+                                  };
+                                }
+                                
+                                // If it's a subtask (task type), find its parent and format accordingly
+                                if (currentTask.taskType === 'task') {
+                                  // Find the parent task from the filtered tasks list
+                                  const parentTask = filteredTasks[field.name]?.find((t: TaskTemplateType) => 
+                                    t.subTasks && t.subTasks.some((sub: TaskTemplateType) => sub.id === currentTask.id)
+                                  );
+                                  
+                                  const parentName = currentTask.parentTask?.name || parentTask?.name || 'Unknown Parent';
+                                  return {
+                                    label: `${parentName} (${currentTask.name})`,
+                                    value: currentTask.id,
+                                  };
+                                }
+                                
+                                // Fallback for any other cases
+                                return {
+                                  label: currentTask.name,
+                                  value: currentTask.id,
+                                };
                               })
-                            )}
+                              .filter((option): option is { label: string; value: string | number } => option !== null) // Remove null entries with type guard
+                            }
                             disabled={loadingTasks[field.name] || !filteredTasks[field.name]?.length}
                             showSearch
                             optionFilterProp="label"
@@ -390,7 +421,7 @@ const OWorklogForm = () => {
                       </Col>
 
                       {/* Start Time Field */}
-                      <Col span={3}>
+                      <Col span={2}>
                         <Form.Item
                           name={[field.name, "startTime"]}
                           rules={[
@@ -446,7 +477,7 @@ const OWorklogForm = () => {
                       </Col>
 
                       {/* End Time Field */}
-                      <Col span={3}>
+                      <Col span={2}>
                         <Form.Item
                           name={[field.name, "endTime"]}
                           rules={[
@@ -500,7 +531,7 @@ const OWorklogForm = () => {
                       </Col>
 
                       {/* Request To Field */}
-                      <Col span={6}>
+                      <Col span={3}>
                         <Form.Item
                           name={[field.name, "approvedBy"]}
                           rules={[{ required: true, message: "Required!" }]}

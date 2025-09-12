@@ -24,9 +24,9 @@ const EWorklogForm = () => {
   const [users, setUsers] = useState<UserType[]>([]);
 
   const isManagerOrAdmin =
-    user?.role?.name === "manager" ||
-    user?.role?.name === "admin" ||
-    user?.role?.name === "superuser";
+    (user as any)?.role?.name === "manager" ||
+    (user as any)?.role?.name === "admin" ||
+    (user as any)?.role?.name === "superuser";
 
   useEffect(() => {
     if (worklog) {
@@ -103,7 +103,7 @@ const EWorklogForm = () => {
     <Card title="Edit Worklog">
       <Form form={form} onFinish={handleFinish} layout="vertical">
         <Row gutter={16}>
-          <Col span={6}>
+          <Col span={3}>
             <Form.Item
               label="Date"
               name="date"
@@ -150,7 +150,7 @@ const EWorklogForm = () => {
             </Form.Item>
           </Col>
 
-          <Col span={6}>
+          <Col span={3}>
             <Form.Item
               label="Request To"
               name="approvedBy"
@@ -169,7 +169,7 @@ const EWorklogForm = () => {
             </Form.Item>
           </Col>
 
-          <Col span={6}>
+          <Col span={3}>
             <Form.Item
               label="Start Time"
               name="startTime"
@@ -196,7 +196,7 @@ const EWorklogForm = () => {
             </Form.Item>
           </Col>
 
-          <Col span={6}>
+          <Col span={3}>
             <Form.Item
               label="End Time"
               name="endTime"

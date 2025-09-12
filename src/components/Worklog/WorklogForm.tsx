@@ -137,12 +137,12 @@ const WorklogForm = () => {
       >
         {/* Fixed header for the form */}
         <Row className="bg-gray-100 p-2 mb-2 font-semibold rounded">
-          <Col span={4}>Task</Col>
-          <Col span={4}>Approver</Col>
-          <Col span={4}>Date</Col>
-          <Col span={3}>Start Time</Col>
-          <Col span={3}>End Time</Col>
-          <Col span={5}>Description</Col>
+          <Col span={6}>Task</Col>
+          <Col span={3}>Approver</Col>
+          <Col span={3}>Date</Col>
+          <Col span={2}>Start Time</Col>
+          <Col span={2}>End Time</Col>
+          <Col span={7}>Description</Col>
           <Col span={1}></Col>
         </Row>
 
@@ -160,7 +160,7 @@ const WorklogForm = () => {
                   bodyStyle={{ padding: "12px" }}
                 >
                   <Row gutter={12} align="middle">
-                    <Col span={4}>
+                    <Col span={6}>
                       <Form.Item
                         name={[field.name, "taskId"]}
                         rules={[
@@ -178,16 +178,49 @@ const WorklogForm = () => {
                           filterOption={(input, option: any) =>
                             (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                           }
-                          options={task?.map((task: TaskTemplateType) => ({
-                            label: task.name,
-                            value: task.id,
-                          }))}
+                          options={task
+                            ?.map((currentTask: TaskTemplateType) => {
+                              // If it's a story type (parent task) with subtasks, don't allow selection
+                              if (currentTask.taskType === 'story' && currentTask.subTasks && currentTask.subTasks.length > 0) {
+                                return null; // Don't allow parent tasks with subtasks to be selected
+                              }
+                              
+                              // If it's a story type without subtasks, show it normally
+                              if (currentTask.taskType === 'story') {
+                                return {
+                                  label: currentTask.name,
+                                  value: currentTask.id,
+                                };
+                              }
+                              
+                              // If it's a subtask (task type), find its parent and format accordingly
+                              if (currentTask.taskType === 'task') {
+                                // Find the parent task from the task list
+                                const parentTask = task?.find((t: TaskTemplateType) => 
+                                  t.subTasks && t.subTasks.some((sub: TaskTemplateType) => sub.id === currentTask.id)
+                                );
+                                
+                                const parentName = currentTask.parentTask?.name || parentTask?.name || 'Unknown Parent';
+                                return {
+                                  label: `${parentName} (${currentTask.name})`,
+                                  value: currentTask.id,
+                                };
+                              }
+                              
+                              // Fallback for any other cases
+                              return {
+                                label: currentTask.name,
+                                value: currentTask.id,
+                              };
+                            })
+                            .filter((option: any): option is { label: string; value: string | number } => option !== null) // Remove null entries with type guard
+                          }
                           style={{ width: '100%' }}
                         />
                       </Form.Item>
                     </Col>
                     
-                    <Col span={4}>
+                    <Col span={3}>
                       <Form.Item
                         name={[field.name, "userId"]}
                         rules={[
@@ -215,7 +248,7 @@ const WorklogForm = () => {
                     </Col>
                     
                     {/* Date field - shown for all entries */}
-                    <Col span={4}>
+                    <Col span={3}>
                       <Form.Item
                         name={[field.name, "date"]}
                         rules={[
@@ -235,7 +268,7 @@ const WorklogForm = () => {
                       </Form.Item>
                     </Col>
                     
-                    <Col span={3}>
+                    <Col span={2}>
                       <Form.Item
                         name={[field.name, "startTime"]}
                         rules={[
@@ -274,7 +307,7 @@ const WorklogForm = () => {
                       </Form.Item>
                     </Col>
                     
-                    <Col span={3}>
+                    <Col span={2}>
                       <Form.Item
                         name={[field.name, "endTime"]}
                         rules={[
@@ -313,7 +346,7 @@ const WorklogForm = () => {
                       </Form.Item>
                     </Col>
                     
-                    <Col span={5}>
+                    <Col span={7}>
                       <Form.Item
                         name={[field.name, "description"]}
                         rules={[

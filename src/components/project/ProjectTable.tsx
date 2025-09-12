@@ -116,44 +116,6 @@ const ProjectTable = ({ showModal, status }: any) => {
 
   const columns = (): TableProps<ProjectType>["columns"] => [
     {
-      title: "Date",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      sorter: (a, b) => moment(a.createdAt).unix() - moment(b.createdAt).unix(),
-      sortOrder: sortedInfo.columnKey === 'createdAt' && sortedInfo.order,
-      render: (_: any, record: any) => {
-        if (record.createdAt) {
-          const date = new Date(record.createdAt);
-          return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short', 
-            day: 'numeric'
-          });
-        }
-        return '';
-      },
-      ...getColumnSearchProps('createdAt', 'Date'),
-    },
-    {
-      title: "Fiscal Year",
-      dataIndex: "fiscalYear",
-      key: "fiscalYear",
-      sorter: (a, b) => (a.fiscalYear || 0) - (b.fiscalYear || 0),
-      sortOrder: sortedInfo.columnKey === 'fiscalYear' && sortedInfo.order,
-      filters: Array.from(new Set(project?.map((p: any) => p.fiscalYear)))
-        .filter(Boolean)
-        .map((fy: any) => {
-          const endYear = (fy + 1).toString().slice(-2);
-          return { text: `${fy}/${endYear}`, value: fy };
-        }),
-      onFilter: (value: any, record: any) => record.fiscalYear === value,
-      render: (fiscalYear: number) => {
-        if (!fiscalYear) return null;
-        const endYear = (fiscalYear + 1).toString().slice(-2);
-        return `${fiscalYear}/${endYear}`;
-      },
-    },
-    {
       title: "Project Name",
       dataIndex: "name",
       key: "name",
@@ -165,20 +127,6 @@ const ProjectTable = ({ showModal, status }: any) => {
           {record.name}
         </Link>
       ),
-    },
-    {
-      title: "Project Client",
-      dataIndex: ["customer", "name"],
-      key: "client",
-      sorter: (a, b) => (a.customer?.name || '').localeCompare(b.customer?.name || ''),
-      sortOrder: sortedInfo.columnKey === 'client' && sortedInfo.order,
-      filters: Array.from(
-        new Set(project?.map((p: any) => p.customer?.name))
-      )
-        .filter(Boolean)
-        .map((name: any) => ({ text: name, value: name })),
-      onFilter: (value: any, record: any) => record.customer?.name === value,
-      render: (_: any, record: any) => <>{record?.customer?.name}</>,
     },
     {
       title: "Nature Of Project",
@@ -207,34 +155,21 @@ const ProjectTable = ({ showModal, status }: any) => {
       }
     },
     {
-      title: "Project Lead",
-      dataIndex: ["projectLead", "name"],
-      key: "projectLead",
-      sorter: (a, b) => (a.projectLead?.name || '').localeCompare(b.projectLead?.name || ''),
-      sortOrder: sortedInfo.columnKey === 'projectLead' && sortedInfo.order,
+      title: "Client",
+      dataIndex: ["customer", "name"],
+      key: "client",
+      sorter: (a, b) => (a.customer?.name || '').localeCompare(b.customer?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'client' && sortedInfo.order,
       filters: Array.from(
-        new Set(project?.map((p: any) => p.projectLead?.name))
+        new Set(project?.map((p: any) => p.customer?.name))
       )
         .filter(Boolean)
         .map((name: any) => ({ text: name, value: name })),
-      onFilter: (value: any, record: any) => record.projectLead?.name === value,
-      render: (_: any, record: any) => (
-        record?.projectLead ? (
-          <>
-            <Avatar
-              size={"small"}
-              className="bg-zinc-500"
-              src={` ${import.meta.env.VITE_BACKEND_URI}/document/${record?.projectLead?.avatar}`}
-            >
-              {record?.projectLead?.name?.[0]}
-            </Avatar>{" "}
-            {record?.projectLead?.name}
-          </>
-        ) : null
-      ),
+      onFilter: (value: any, record: any) => record.customer?.name === value,
+      render: (_: any, record: any) => <>{record?.customer?.name}</>,
     },
     {
-      title: "Project Manager",
+      title: "Manager",
       dataIndex: ["projectManager", "name"],
       key: "projectManager",
       sorter: (a, b) => (a.projectManager?.name || '').localeCompare(b.projectManager?.name || ''),
@@ -261,6 +196,25 @@ const ProjectTable = ({ showModal, status }: any) => {
       ),
     },
     {
+      title: "Start Date",
+      dataIndex: "startingDate",
+      key: "startingDate",
+      sorter: (a: any, b: any) => moment(a.startingDate).unix() - moment(b.startingDate).unix(),
+      sortOrder: sortedInfo.columnKey === 'startingDate' && sortedInfo.order,
+      ...getColumnSearchProps('startingDate', 'Start Date'),
+      render: (_: any, record: any) => {
+        if (record.startingDate) {
+          const date = new Date(record.startingDate);
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+        }
+        return '';
+      }
+    },
+    {
       title: "End Date",
       dataIndex: "endingDate",
       key: "endingDate",
@@ -269,7 +223,6 @@ const ProjectTable = ({ showModal, status }: any) => {
       ...getColumnSearchProps('endingDate', 'End Date'),
       render: (_: any, record: any) => {
         if (record.endingDate) {
-          // Format the date in a clear English format
           const date = new Date(record.endingDate);
           return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -281,26 +234,50 @@ const ProjectTable = ({ showModal, status }: any) => {
       }
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      filters: [
-        { text: "Active", value: "active" },
-        { text: "Suspended", value: "suspended" },
-        { text: "Archived", value: "archived" },
-        { text: "Signed Off", value: "signed_off" },
-      ],
-      onFilter: (value: any, record: any) => record.status === value,
-      render: (status: string) => (
-        <span className={`px-2 py-1 rounded text-xs ${
-          status === 'active' ? 'bg-green-100 text-green-800' :
-          status === 'suspended' ? 'bg-yellow-100 text-yellow-800' :
-          status === 'archived' ? 'bg-gray-100 text-gray-800' :
-          'bg-blue-100 text-blue-800'
-        }`}>
-          {status?.charAt(0).toUpperCase() + status?.slice(1).replace('_', ' ')}
-        </span>
+      title: "Lead",
+      dataIndex: ["projectLead", "name"],
+      key: "projectLead",
+      sorter: (a, b) => (a.projectLead?.name || '').localeCompare(b.projectLead?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'projectLead' && sortedInfo.order,
+      filters: Array.from(
+        new Set(project?.map((p: any) => p.projectLead?.name))
       )
+        .filter(Boolean)
+        .map((name: any) => ({ text: name, value: name })),
+      onFilter: (value: any, record: any) => record.projectLead?.name === value,
+      render: (_: any, record: any) => (
+        record?.projectLead ? (
+          <>
+            <Avatar
+              size={"small"}
+              className="bg-zinc-500"
+              src={` ${import.meta.env.VITE_BACKEND_URI}/document/${record?.projectLead?.avatar}`}
+            >
+              {record?.projectLead?.name?.[0]}
+            </Avatar>{" "}
+            {record?.projectLead?.name}
+          </>
+        ) : null
+      ),
+    },
+    {
+      title: "Fiscal Year",
+      dataIndex: "fiscalYear",
+      key: "fiscalYear",
+      sorter: (a, b) => (a.fiscalYear || 0) - (b.fiscalYear || 0),
+      sortOrder: sortedInfo.columnKey === 'fiscalYear' && sortedInfo.order,
+      filters: Array.from(new Set(project?.map((p: any) => p.fiscalYear)))
+        .filter(Boolean)
+        .map((fy: any) => {
+          const endYear = (fy + 1).toString().slice(-2);
+          return { text: `${fy}/${endYear}`, value: fy };
+        }),
+      onFilter: (value: any, record: any) => record.fiscalYear === value,
+      render: (fiscalYear: number) => {
+        if (!fiscalYear) return null;
+        const endYear = (fiscalYear + 1).toString().slice(-2);
+        return `${fiscalYear}/${endYear}`;
+      },
     },
     {
       title: "Action",

@@ -86,9 +86,12 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         const billingObj = billingId && billings ? billings.find((b: any) => b.id === billingId) : null;
         
         if (clientObj && natureObj) {
-          // Include billing short name if available
-          const billingPrefix = billingObj?.shortName ? `${billingObj.shortName}-` : '';
-          const suggested = `${billingPrefix}${clientObj.shortName}-${natureObj.shortName}-${fiscalYear}`;
+          // Format fiscal year as full format (e.g., 2082/83)
+          const formattedFiscalYear = `${fiscalYear}/${(fiscalYear + 1).toString().slice(-2)}`;
+          
+          // Include billing short name at the end if available
+          const billingSuffix = billingObj?.shortName ? `-${billingObj.shortName}` : '';
+          const suggested = `${clientObj.shortName}-${natureObj.shortName}-${formattedFiscalYear}${billingSuffix}`;
           setSuggestedProjectName(suggested);
           // Only set if name field is empty or contains the old suggested name
           const currentName = form.getFieldValue("name");

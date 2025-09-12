@@ -10,7 +10,10 @@ export const useDeleteTaskTemplate = () => {
             return deleteTaskTemplate({ id });
         },
         onSuccess: () => {
+            // Invalidate all task template and task group related queries
             queryClient.invalidateQueries({ queryKey: ["taskGroup", id] });
+            queryClient.invalidateQueries({ queryKey: ["taskTemplate"] });
+            queryClient.invalidateQueries({ queryKey: ["taskGroup"] }); // Invalidate all task groups
         },
     });
 };
