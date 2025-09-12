@@ -1,7 +1,7 @@
 import { useTaskGroupById } from "@/hooks/taskGroup/useTaskGroupById";
 import { useCreateTaskTemplate } from "@/hooks/taskTemplate/useCreateTaskTemplate";
 import { useEditTaskTemplate } from "@/hooks/taskTemplate/useEditTaskTemplate";
-import TaskTemplate from "@/pages/TaskTemplate";
+import { TaskTemplateType } from "@/types/taskTemplate";
 import { Button, Col, Form, Input, Row } from "antd";
 import { useParams } from "react-router-dom";
 import FormInputWrapper from "../FormInputWrapper";
@@ -74,7 +74,14 @@ const TaskTemplateForm = ({
             id="name"
             name="name"
             label="Name"
-            rules={[{ required: true, message: "Please input the name" }]}
+            showCount={true}
+            maxLength={100}
+            placeholder="Enter task template name (max 100 characters)"
+            rules={[
+              { required: true, message: "Task template name is required" },
+              { min: 1, message: "Task template name cannot be empty" },
+              { max: 100, message: "Task template name cannot exceed 100 characters" }
+            ]}
           />
 
           {/* Description (Optional) */}
@@ -104,11 +111,17 @@ const TaskTemplateForm = ({
             name="parentTaskId"
             label="Parent Task"
             disabled={taskType === "story"}
+            showSearch={true}
+            filterOption={(input: string, option: any) => 
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            placeholder={taskType === "story" ? "Not applicable for main tasks" : "Search and select a parent task"}
             rules={taskType === "task" ? [{ required: true, message: "Please select a parent task for this subtask" }] : []}
             options={
               taskgroup?.tasktemplate
-                ?.filter((task: TaskTemplate) => task.taskType === "story")
-                ?.map((template: TaskTemplate) => ({
+                ?.filter((task: TaskTemplateType) => task.taskType === "story")
+                ?.sort((a: TaskTemplateType, b: TaskTemplateType) => a.name.localeCompare(b.name))
+                ?.map((template: TaskTemplateType) => ({
                   value: template.id,
                   label: template.name,
                 })) || []

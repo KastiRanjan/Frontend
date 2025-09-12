@@ -18,6 +18,8 @@ interface FormSelectWrapperProps {
   placeholder?: string;
   required?: boolean;
   mode?: "multiple" | "tags";
+  showSearch?: boolean;
+  filterOption?: boolean | ((input: string, option: any) => boolean);
 }
 
 const FormSelectWrapper = (props: FormSelectWrapperProps) => {
@@ -38,6 +40,8 @@ const FormSelectWrapper = (props: FormSelectWrapperProps) => {
     error,
     mode,
     defaultValue,
+    showSearch = false,
+    filterOption = true,
     ...rest
   } = props;
 
@@ -63,6 +67,8 @@ const FormSelectWrapper = (props: FormSelectWrapperProps) => {
           allowClear={allowClear}
           mode={mode}
           defaultValue={defaultValue}
+          showSearch={showSearch}
+          filterOption={filterOption}
           {...rest}
         />
       </Form.Item>

@@ -8,10 +8,9 @@ import TableToolbar from "../Table/TableToolbar";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { TaskType } from "@/types/task";
 import Highlighter from 'react-highlight-words';
-import MoveTemplateModalList from "./MoveTemplateModalList";
 import MoveTemplateModal from "./MoveTemplateModal";
 
-const column = ({ showModal, handleDelete, sortedInfo, searchText, searchedColumn, getColumnSearchProps }: any): TableProps<TaskTemplateType>["columns"] => [
+const column = ({ showModal, handleDelete, sortedInfo, getColumnSearchProps }: any): TableProps<TaskTemplateType>["columns"] => [
   {
     title: "Name",
     dataIndex: "name",
@@ -266,12 +265,14 @@ const TaskTemplateTable = ({
       
       console.log(`Task "${story.name}" has ${subTasks.length} subtasks:`, subTasks);
       
-      // Map subtasks to proper format
-      const children = subTasks.map((subTask: any) => ({
-        ...subTask,
-        key: `${story.id}-${subTask.id}`, // Unique key for subtask
-        isSubTask: true
-      }));
+      // Sort subtasks alphabetically by name and map to proper format
+      const children = subTasks
+        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+        .map((subTask: any) => ({
+          ...subTask,
+          key: `${story.id}-${subTask.id}`, // Unique key for subtask
+          isSubTask: true
+        }));
       
       // Return task (story type) with its subtasks as children
       return {
@@ -391,8 +392,6 @@ const TaskTemplateTable = ({
             showModal, 
             handleDelete, 
             sortedInfo, 
-            searchText, 
-            searchedColumn, 
             getColumnSearchProps 
           })}
           dataSource={finalData || []}

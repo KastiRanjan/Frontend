@@ -21,6 +21,8 @@ interface FormInputWrapperProps {
   required?: boolean;
   icon?: React.ReactNode;
   autoComplete?: string;
+  showCount?: boolean;
+  maxLength?: number;
 }
 
 const FormInputWrapper = (props: FormInputWrapperProps) => {
@@ -44,6 +46,8 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
     max = 0,
     error,
     autoComplete,
+    showCount = false,
+    maxLength,
   } = props;
 
   return (
@@ -90,6 +94,8 @@ const FormInputWrapper = (props: FormInputWrapperProps) => {
             onChange={changeHandler}
             disabled={disabled}
             autoComplete={autoComplete || "on"}
+            showCount={showCount}
+            maxLength={maxLength}
           />
         )}
       </Form.Item>
