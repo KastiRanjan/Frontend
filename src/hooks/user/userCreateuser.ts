@@ -1,17 +1,16 @@
 import { createUser } from "@/service/user.service";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   return useMutation({
     mutationFn: (payload) => {
       return createUser(payload);
     },
     onSuccess: () => {
+      // Invalidate all user-related queries to ensure table refresh
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      navigate("/users");
+      // Remove automatic navigation to allow modal usage
     },
   });
 };

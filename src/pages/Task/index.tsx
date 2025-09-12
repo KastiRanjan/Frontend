@@ -14,9 +14,9 @@ import { useNavigate, useParams } from "react-router-dom";
 const Task = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { permissions } = useSession()
+  const { permissions } = useSession();
   const { data, isPending, refetch } = useProjectTask({ id });
-  const { data: project } = useProjectById({ id })
+  const { data: project } = useProjectById({ id });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [open, setOpen] = React.useState(false);
   const [editTaskData, setEditTaskData] = React.useState<TaskType | undefined>(undefined);
@@ -31,27 +31,31 @@ const Task = () => {
     setOpen(false);
   }, []);
 
-  if (isPending) return <Spin />
+  if (isPending) return <Spin />;
 
   return (
     <div>
       <PageTitle
         title={project?.name}
         description="Add, search, and manage your tasks all in one place."
-      
       />
 
       <TaskTable data={data} showModal={showModal} project={project} onRefresh={refetch} />
 
       {open && (
-        <Modal title="Add Task" footer={null} open={open} onCancel={handleCancel}>
+        <Modal title={editTaskData ? "Edit Task" : "Add Task"} footer={null} open={open} onCancel={handleCancel}>
           <div className="max-h-[70vh] overflow-y-scroll">
-            <TaskForm editTaskData={editTaskData} users={project?.users} tasks={project?.tasks} handleCancel={handleCancel} />
+            <TaskForm 
+              editTaskData={editTaskData} 
+              users={project?.users} 
+              tasks={project?.tasks} 
+              handleCancel={handleCancel} 
+              projectId={id}
+            />
           </div>
         </Modal>
       )}
-
-    </div >
+    </div>
   );
 };
 

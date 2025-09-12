@@ -4,6 +4,7 @@ import { useProfile } from "@/hooks/user/useProfile";
 
 type Profile = {
   role?: { permission: string[] };
+  status?: string;
   // Add other profile fields as needed
 };
 
@@ -49,6 +50,15 @@ export const SessionProvider = ({
       setLoading(false);
     }
   }, [error]);
+
+  // Check user status and automatically log out blocked/suspended users
+  useEffect(() => {
+    if (profile && profile.status && ['suspended', 'inactive', 'blocked'].includes(profile.status)) {
+      setIsAuthenticated(false);
+      setLoading(false);
+      // You might want to show a message here about account status
+    }
+  }, [profile]);
 
   return (
     <SessionContext.Provider

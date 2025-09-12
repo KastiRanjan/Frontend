@@ -29,8 +29,12 @@ const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
   return (
     <>
       <div>
-        <Paragraph>These field are use for authentication and all the field  are required.</Paragraph>
-
+        <Paragraph>
+          These fields are used for authentication and all the fields are required.
+          {initialValues?.id && (
+            <><br/><strong>Note:</strong> Email and username cannot be changed after user creation.</>
+          )}
+        </Paragraph>
       </div>
       <Row gutter={10}>
         <Col span={12}>
@@ -44,11 +48,12 @@ const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
         </Col>
         <Col span={12}>
           <FormInputWrapper
+            disabled={!!initialValues?.id}
             id="username"
             name="username"
             label="Username"
             required
-            rules={[{ required: true, message: "Please input the name!" }]}
+            rules={[{ required: true, message: "Please input the username!" }]}
           />
         </Col>
         <Col span={12}>

@@ -40,7 +40,7 @@ const User: React.FC = () => {
       />
 
       {open && (
-        <Modal title="Add User" footer={null} open={open} onCancel={handleCancel}>
+        <Modal title={editUserData ? "Edit User" : "Add User"} footer={null} open={open} onCancel={handleCancel}>
           <UserForm initialValues={editUserData} handleCancel={handleCancel} />
         </Modal>
       )}
