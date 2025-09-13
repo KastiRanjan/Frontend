@@ -40,7 +40,7 @@ const Task = () => {
         description="Add, search, and manage your tasks all in one place."
       />
 
-      <TaskTable data={data} showModal={showModal} project={project} onRefresh={refetch} />
+      <TaskTable data={data} showModal={showModal} project={project} onRefresh={refetch} loading={isPending} />
 
       {open && (
         <Modal title={editTaskData ? "Edit Task" : "Add Task"} footer={null} open={open} onCancel={handleCancel}>

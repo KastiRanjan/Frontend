@@ -7,13 +7,10 @@ const ProjectDetail = () => {
   const { id } = useParams();
 
   const { data, isPending } = useProjectById({ id: id?.toString() });
-  if (isPending) return <div>Loading...</div>
-  
-
 
   return (
     <>
-      <ProjectDetailComponent project={data}/>
+      <ProjectDetailComponent project={data} loading={isPending}/>
     </>
   );
 

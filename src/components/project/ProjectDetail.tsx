@@ -9,27 +9,50 @@ import ProjectSummary from './ProjectSummary';
 import ProjectUserCard from './ProjectUserCard';
 import ProjectTimeline from './ProjectTimeline';
 import ProjectDetails from './ProjectDetails';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 
 interface ProjectDetailProps {
   project: ProjectType;
+  loading?: boolean;
 }
 
 
-const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
+const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const { profile } = useSession();
+  const queryClient = useQueryClient();
+  
   // Support both { name } and { permission } in role
   const userRole = (profile?.role && 'name' in profile.role && typeof profile.role.name === 'string')
     ? profile.role.name.toLowerCase()
     : undefined;
   const hideAddTask = userRole === 'auditsenior' || userRole === 'auditjunior';
 
+  // Add null checks for project data
   const tasks = project?.tasks;
   const users = project?.users;
   const name = project?.name;
+
+  // Don't render if project is not loaded yet
+  if (!project && loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        Loading project details...
+      </div>
+    );
+  }
+
+  // If project is null and not loading, show error
+  if (!project) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        Project not found
+      </div>
+    );
+  }
 
   const handleCancel = () => {
     setIsModalOpen(false);
@@ -39,6 +62,24 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
   const showModal = (task?: any) => {
     setSelectedTask(task);
     setIsModalOpen(true);
+  };
+
+  const handleTaskFormSuccess = () => {
+    // Close modal and refresh data
+    setIsModalOpen(false);
+    setSelectedTask(null);
+    handleRefresh();
+  };
+
+  // Function to refresh project data after task operations
+  const handleRefresh = () => {
+    // Only invalidate if we have a project ID
+    if (project?.id) {
+      queryClient.invalidateQueries({ queryKey: ["project", project.id.toString()] });
+    }
+    // Also invalidate tasks queries if they exist
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    console.log("Refreshing project data...");
   };
 
   return (
@@ -56,7 +97,8 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
               tasks={project?.tasks ?? []}
               editTaskData={selectedTask}
               handleCancel={handleCancel}
-              projectId={project?.id?.toString?.() ?? String(project?.id)}
+              projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
+              onSuccess={handleRefresh}
             />
           </div>
         </Modal>
@@ -88,14 +130,12 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
                     data={tasks ?? []}
                     showModal={showModal}
                     project={{
-                      id: project.id?.toString?.() ?? String(project.id),
-                      users: project.users ?? [],
-                      projectLead: project.projectLead ?? { id: '', name: '' }
+                      id: project?.id?.toString?.() ?? String(project?.id ?? ''),
+                      users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
+                      projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
                     }}
-                    id={project.id?.toString?.() ?? String(project.id)}
-                    users={project.users ?? []}
-                    projectLead={project.projectLead ?? { id: '', name: '' }}
-                    onRefresh={() => {}}
+                    onRefresh={handleRefresh}
+                    loading={loading}
                   />
                 </>
               )
@@ -113,7 +153,7 @@ const ProjectDetailComponent = ({ project }: ProjectDetailProps) => {
             {
               label: 'Timeline',
               key: '5',
-              children: <ProjectTimeline projectId={project.id} />
+              children: <ProjectTimeline projectId={project?.id} />
             },
           ]} />
         </Card>

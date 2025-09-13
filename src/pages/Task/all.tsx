@@ -66,6 +66,15 @@ const AllTask = () => {
     setOpen(true);
   };
 
+  const handleTaskFormSuccess = () => {
+    // Refresh task data after successful operation
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    // Also invalidate projects in case task affected project data
+    queryClient.invalidateQueries({ queryKey: ["projects"] });
+    setOpen(false);
+    console.log("Refreshing task data...");
+  };
+
   return (
     <div>
       {!hideAddTask && <Button onClick={handleAdd}>Add Task</Button>}
@@ -113,6 +122,7 @@ const AllTask = () => {
           editTaskData={editTaskData}
           handleCancel={() => setOpen(false)}
           projectId={selectedProjectId}
+          onSuccess={handleTaskFormSuccess}
         />
       </Modal>
     </div>

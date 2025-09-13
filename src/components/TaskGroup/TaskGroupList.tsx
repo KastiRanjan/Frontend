@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MoveTemplateModal from "../TaskTemplate/MoveTemplateModal";
 import { TaskGroupType } from "@/types/taskGroup";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskGroupListProps {
   showModal: (group?: TaskGroupType) => void;
@@ -17,14 +18,25 @@ const TaskGroupList = ({  showModal }: TaskGroupListProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [checkedRows, setCheckedRows] = useState<string[]>([]);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: taskGroup, isPending } = useTaskGroup();
   const { mutate: deleteTaskGroup } = useDeleteTaskGroup();
+  
   const handleCheckboxChange = (id: string) => {
     if (checkedRows.includes(id)) {
       setCheckedRows(checkedRows.filter((rowId) => rowId !== id));
     } else {
       setCheckedRows([...checkedRows, id]);
     }
+  };
+
+  const handleTemplateAddSuccess = () => {
+    // Refresh task group data and close modal
+    queryClient.invalidateQueries({ queryKey: ["taskGroup"] });
+    queryClient.invalidateQueries({ queryKey: ["projects"] });
+    setIsModalOpen(false);
+    setCheckedRows([]); // Clear selected rows
+    console.log("Refreshing task group data after template add...");
   };
   const handleDelete = (id: string) => {
     modal.confirm({
@@ -85,6 +97,7 @@ const TaskGroupList = ({  showModal }: TaskGroupListProps) => {
           selectedRow={checkedRows}
           handleCancel={() => setIsModalOpen(false)}
           isModalOpen={isModalOpen}
+          onSuccess={handleTemplateAddSuccess}
         />
       )}
     </>

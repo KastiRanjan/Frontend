@@ -3,7 +3,14 @@ import { useAddTaskProject } from "@/hooks/task/useAddTaskProject";
 import { ProjectType } from "@/types/project";
 import { Button, Form, List, message, Modal, Radio } from "antd";
 
-const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow }: any) => {
+interface MoveTemplateModalProps {
+  handleCancel: () => void;
+  isModalOpen: boolean;
+  selectedRow: any;
+  onSuccess?: () => void;
+}
+
+const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow, onSuccess }: MoveTemplateModalProps) => {
   const { data: project, isPending } = useProject({ status: "active" });
 
   const { mutate } = useAddTaskProject();
@@ -12,7 +19,16 @@ const MoveTemplateModal = ({ handleCancel, isModalOpen, selectedRow }: any) => {
       ...values,
       tasks: selectedRow,
     };
-    await mutate(payload, { onSuccess: () => { handleCancel(), message.success("Task added successfully") } });
+    await mutate(payload, { 
+      onSuccess: () => { 
+        handleCancel();
+        message.success("Task added successfully");
+        // Call the onSuccess callback if provided to refresh parent data
+        if (onSuccess) {
+          onSuccess();
+        }
+      } 
+    });
   };
 
   return (

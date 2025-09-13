@@ -9,6 +9,7 @@ import { TaskTemplateType } from "@/types/taskTemplate";
 import { TaskType } from "@/types/task";
 import Highlighter from 'react-highlight-words';
 import MoveTemplateModal from "./MoveTemplateModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 const column = ({ showModal, handleDelete, sortedInfo, getColumnSearchProps, searchText, searchedColumn, globalSearchText }: any): TableProps<TaskTemplateType>["columns"] => [
   {
@@ -135,6 +136,7 @@ const TaskTemplateTable = ({
   const [modal, contextHolder] = Modal.useModal();
   const [selectedRow, setSelectedRow] = useState<TaskTemplateType[]>([]);
   const { mutate: mutateDelete } = useDeleteTaskTemplate();
+  const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({ 

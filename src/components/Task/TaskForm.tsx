@@ -16,9 +16,10 @@ interface TaskFormProps {
   editTaskData?: any;
   handleCancel: () => void;
   projectId?: string;
+  onSuccess?: () => void;
 }
 
-const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId }: TaskFormProps) => {
+const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSuccess }: TaskFormProps) => {
   const [form] = Form.useForm();
   const { mutate: createTask, isPending: isCreating } = useCreateTask();
   const { mutate: updateTask, isPending: isUpdating } = useEditTask();
@@ -79,6 +80,10 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId }: TaskF
           message.success(successMessage);
           handleCancel();
           form.resetFields();
+          // Call the onSuccess callback if provided to refresh parent data
+          if (onSuccess) {
+            onSuccess();
+          }
         },
         onError: (error: any) => {
           const errorMessage =
@@ -99,7 +104,13 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId }: TaskF
   };
 
   const filteredParentTasks =
-    tasks?.filter((task: any) => !selectedGroupId || task.groupId === selectedGroupId) || [];
+    tasks?.filter((task: any) => {
+      // Only show stories as potential parent tasks (no subtasks)
+      const isStory = task.taskType === 'story';
+      // Apply group filter if selected
+      const matchesGroup = !selectedGroupId || task.groupId === selectedGroupId;
+      return isStory && matchesGroup;
+    }) || [];
 
   const handleGroupChange = (value: string) => {
     setSelectedGroupId(value);
@@ -139,7 +150,7 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId }: TaskF
             name="group"
             label="Group"
             options={group?.map((g: any) => ({ value: g.id, label: g.name })) || []}
-            onChange={handleGroupChange}
+            changeHandler={handleGroupChange}
           />
         </Col>
 
