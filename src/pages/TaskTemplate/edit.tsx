@@ -19,7 +19,7 @@ const EditTaskTemplate = () => {
           </Button>
         }
       />
-      <TaskTemplateForm editTaskTemplateData={data} id={id} />
+      <TaskTemplateForm editTaskTemplateData={data} handleCancel={() => navigate(-1)} />
     </>
   );
 };

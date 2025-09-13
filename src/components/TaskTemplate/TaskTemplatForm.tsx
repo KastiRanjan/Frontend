@@ -28,12 +28,45 @@ const TaskTemplateForm = ({
   // Watch for changes to taskType
   const taskType = Form.useWatch('taskType', form);
   
-  // Reset parentTaskId if taskType is "story"
+  // Set initial values when editing
   useEffect(() => {
-    if (taskType === "story") {
+    if (editTaskTemplateData) {
+      console.log('Setting form values for edit:', editTaskTemplateData);
+      
+      // Handle different possible parent task field structures
+      let parentTaskId = null;
+      if (editTaskTemplateData.parentTask?.id) {
+        parentTaskId = editTaskTemplateData.parentTask.id;
+      } else if (editTaskTemplateData.parentTaskId) {
+        parentTaskId = editTaskTemplateData.parentTaskId;
+      } else if (editTaskTemplateData.parentId) {
+        parentTaskId = editTaskTemplateData.parentId;
+      }
+      
+      const formValues = {
+        name: editTaskTemplateData.name,
+        description: editTaskTemplateData.description,
+        taskType: editTaskTemplateData.taskType,
+        parentTaskId: parentTaskId
+      };
+      
+      console.log('Setting form values:', formValues);
+      form.setFieldsValue(formValues);
+    } else {
+      // Reset form for create mode
+      form.resetFields();
+    }
+  }, [editTaskTemplateData, form]);
+  
+  // Reset parentTaskId only when user manually changes taskType to "story" (not during initial load)
+  useEffect(() => {
+    // Only reset if this is not the initial load and taskType changed to "story"
+    const currentValues = form.getFieldsValue();
+    if (taskType === "story" && currentValues.parentTaskId) {
+      console.log('Clearing parentTaskId because taskType changed to story');
       form.setFieldValue("parentTaskId", undefined);
     }
-  }, [taskType, form]);
+  }, [taskType]);
 
   const handleFinish = (values: any) => {
     const payload = {
@@ -63,9 +96,9 @@ const TaskTemplateForm = ({
 
   return (
     <Form
+      key={editTaskTemplateData?.id || 'create'}
       form={form}
       onFinish={handleFinish}
-      initialValues={editTaskTemplateData}
       layout="vertical"
     >
       <Row gutter={16}>
@@ -119,7 +152,14 @@ const TaskTemplateForm = ({
             rules={taskType === "task" ? [{ required: true, message: "Please select a parent task for this subtask" }] : []}
             options={
               taskgroup?.tasktemplate
-                ?.filter((task: TaskTemplateType) => task.taskType === "story")
+                ?.filter((task: TaskTemplateType) => {
+                  // For editing, exclude the current task from parent options to prevent circular reference
+                  if (editTaskTemplateData?.id && task.id === editTaskTemplateData.id) {
+                    return false;
+                  }
+                  // Only show story type tasks as potential parents
+                  return task.taskType === "story";
+                })
                 ?.sort((a: TaskTemplateType, b: TaskTemplateType) => a.name.localeCompare(b.name))
                 ?.map((template: TaskTemplateType) => ({
                   value: template.id,
