@@ -111,7 +111,7 @@ const EWorklogForm = () => {
             >
               <DatePicker
                 className="w-full py-2"
-                disabled={!isManagerOrAdmin}
+                disabled={false} // Temporarily enabled for all users
               />
             </Form.Item>
           </Col>

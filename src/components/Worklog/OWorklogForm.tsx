@@ -334,7 +334,7 @@ const OWorklogForm = () => {
                         >
                           <DatePicker
                             className="w-full"
-                            disabled={!isManagerOrAdmin}
+                            disabled={false} // Temporarily enabled for all users
                             format="YYYY-MM-DD"
                             placeholder="Select date"
                             style={{ width: '100%' }}
