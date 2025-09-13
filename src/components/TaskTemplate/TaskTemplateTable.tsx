@@ -3,7 +3,7 @@ import { useDeleteTaskTemplate } from "@/hooks/taskTemplate/useTaskTemplateDelet
 import { DeleteOutlined, EditOutlined, SearchOutlined } from "@ant-design/icons";
 import { Badge, Button, Card, Modal, Table, TableProps, Input, Space, message } from "antd";
 import _ from "lodash";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import TableToolbar from "../Table/TableToolbar";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { TaskType } from "@/types/task";
@@ -137,10 +137,126 @@ const TaskTemplateTable = ({
   const { mutate: mutateDelete } = useDeleteTaskTemplate();
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
-  const [sortedInfo, setSortedInfo] = useState<any>({});
+  const [sortedInfo, setSortedInfo] = useState<any>({ 
+    columnKey: 'name', 
+    order: 'ascend' 
+  });
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
   const [globalSearchText, setGlobalSearchText] = useState('');
   const searchInput = useRef<any>(null);
+
+  // Memoized data processing for better performance
+  const { processedData, filteredData } = useMemo(() => {
+    // Transform the data to have proper parent-child relationships
+    console.log('Original taskList:', taskList);
+    
+    const expandedData: any = _.chain(taskList)
+      .filter((task: any) => task.taskType === 'story') // Only get stories (which display as Tasks) as main tasks
+      .map((story: any) => {
+        // Use the subTasks relation directly from backend
+        const subTasks = story.subTasks || [];
+        
+        console.log(`Task "${story.name}" has ${subTasks.length} subtasks:`, subTasks);
+        
+        // Sort subtasks alphabetically by name and map to proper format
+        const children = subTasks
+          .sort((a: any, b: any) => a.name.localeCompare(b.name))
+          .map((subTask: any) => ({
+            ...subTask,
+            key: `${story.id}-${subTask.id}`, // Unique key for subtask
+            isSubTask: true
+          }));
+        
+        // Return task (story type) with its subtasks as children
+        return {
+          ...story,
+          key: story.id,
+          children: children.length > 0 ? children : undefined
+        };
+      })
+      .value();
+    
+    // Also add any standalone tasks (tasks without parentTask)
+    const standaloneTasks = taskList
+      .filter((task: any) => 
+        task.taskType === 'task' && !task.parentTask
+      )
+      .map((task: any) => ({
+        ...task,
+        key: task.id,
+        isStandalone: true
+      }));
+    
+    console.log('Standalone tasks:', standaloneTasks);
+    
+    // Combine stories with their subtasks and standalone tasks
+    const finalData = [...expandedData, ...standaloneTasks];
+    
+    // Apply default sorting by name (alphabetical) if no other sorting is applied
+    const sortedData = finalData.sort((a: any, b: any) => {
+      if (sortedInfo.columnKey === 'name') {
+        const nameA = a.name || '';
+        const nameB = b.name || '';
+        return sortedInfo.order === 'descend' 
+          ? nameB.localeCompare(nameA)
+          : nameA.localeCompare(nameB);
+      } else if (sortedInfo.columnKey === 'taskType') {
+        const typeA = a.taskType || '';
+        const typeB = b.taskType || '';
+        return sortedInfo.order === 'descend'
+          ? typeB.localeCompare(typeA)
+          : typeA.localeCompare(typeB);
+      }
+      // Default to name sorting if no specific sort is applied
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+      return nameA.localeCompare(nameB);
+    });
+    
+    // Apply global search filter
+    const filtered = globalSearchText ? 
+      sortedData.filter((record: any) => {
+        const searchValue = globalSearchText.toLowerCase();
+        
+        // Check parent task fields
+        const fieldsToSearch = ['name', 'description'];
+        const parentMatches = fieldsToSearch.some(field => 
+          record[field] && record[field].toString().toLowerCase().includes(searchValue)
+        );
+        
+        // Check task type display value
+        const taskTypeDisplay = record?.taskType === 'story' ? 'Task' : 'Subtask';
+        const taskTypeMatches = taskTypeDisplay.toLowerCase().includes(searchValue);
+        
+        if (parentMatches || taskTypeMatches) {
+          return true;
+        }
+        
+        // If parent doesn't match, check if any children match
+        if (record.children && Array.isArray(record.children)) {
+          const hasMatchingChild = record.children.some((child: any) => {
+            const childMatches = fieldsToSearch.some(field => 
+              child[field] && child[field].toString().toLowerCase().includes(searchValue)
+            );
+            const childTaskTypeDisplay = child?.taskType === 'story' ? 'Task' : 'Subtask';
+            const childTaskTypeMatches = childTaskTypeDisplay.toLowerCase().includes(searchValue);
+            return childMatches || childTaskTypeMatches;
+          });
+          
+          return hasMatchingChild;
+        }
+        
+        return false;
+      }) : sortedData;
+    
+    console.log('Final processed data:', filtered);
+    console.log('Default sorting applied (columnKey:', sortedInfo.columnKey, ', order:', sortedInfo.order, ')');
+    
+    return {
+      processedData: sortedData,
+      filteredData: filtered
+    };
+  }, [taskList, sortedInfo, globalSearchText]);
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
     confirm();
@@ -157,8 +273,8 @@ const TaskTemplateTable = ({
       const searchValue = selectedKeys[0].toLowerCase();
       const keysToExpand: string[] = [];
       
-      // Use the computed finalData for search expansion
-      const currentData = [...expandedData, ...standaloneTasks];
+      // Use the memoized processed data for search expansion
+      const currentData = processedData;
       
       currentData.forEach((record: any) => {
         let shouldExpand = false;
@@ -232,8 +348,8 @@ const TaskTemplateTable = ({
       const searchValue = value.toLowerCase();
       const keysToExpand: string[] = [];
       
-      // Use the computed finalData for search expansion
-      const currentData = [...expandedData, ...standaloneTasks];
+      // Use the memoized processed data for search expansion
+      const currentData = processedData;
       
       currentData.forEach((record: any) => {
         let shouldExpand = false;
@@ -396,103 +512,6 @@ const TaskTemplateTable = ({
     },
   });
 
-  // Transform the data to have proper parent-child relationships
-  // Stories are main tasks, tasks are subtasks
-  console.log('Original taskList:', taskList);
-  
-  // First, let's see what each task looks like
-  taskList?.forEach((task: any, index: number) => {
-    console.log(`Task ${index}:`, {
-      id: task.id,
-      name: task.name,
-      taskType: task.taskType,
-      parentTask: task.parentTask,
-      subTasks: task.subTasks,
-      // Log all keys to see what fields are available
-      allKeys: Object.keys(task)
-    });
-  });
-  
-  const expandedData: any = _.chain(taskList)
-    .filter((task: any) => task.taskType === 'story') // Only get stories (which display as Tasks) as main tasks
-    .map((story: any) => {
-      // Use the subTasks relation directly from backend
-      const subTasks = story.subTasks || [];
-      
-      console.log(`Task "${story.name}" has ${subTasks.length} subtasks:`, subTasks);
-      
-      // Sort subtasks alphabetically by name and map to proper format
-      const children = subTasks
-        .sort((a: any, b: any) => a.name.localeCompare(b.name))
-        .map((subTask: any) => ({
-          ...subTask,
-          key: `${story.id}-${subTask.id}`, // Unique key for subtask
-          isSubTask: true
-        }));
-      
-      // Return task (story type) with its subtasks as children
-      return {
-        ...story,
-        key: story.id,
-        children: children.length > 0 ? children : undefined
-      };
-    })
-    .value();
-  
-  // Also add any standalone tasks (tasks without parentTask)
-  const standaloneTasks = taskList
-    .filter((task: any) => 
-      task.taskType === 'task' && !task.parentTask
-    )
-    .map((task: any) => ({
-      ...task,
-      key: task.id,
-      isStandalone: true
-    }));
-  
-  console.log('Standalone tasks:', standaloneTasks);
-  
-  // Combine stories with their subtasks and standalone tasks
-  const finalData = [...expandedData, ...standaloneTasks];
-  
-  // Apply global search filter
-  const filteredData = globalSearchText ? 
-    finalData.filter((record: any) => {
-      const searchValue = globalSearchText.toLowerCase();
-      
-      // Check parent task fields
-      const fieldsToSearch = ['name', 'description'];
-      const parentMatches = fieldsToSearch.some(field => 
-        record[field] && record[field].toString().toLowerCase().includes(searchValue)
-      );
-      
-      // Check task type display value
-      const taskTypeDisplay = record?.taskType === 'story' ? 'Task' : 'Subtask';
-      const taskTypeMatches = taskTypeDisplay.toLowerCase().includes(searchValue);
-      
-      if (parentMatches || taskTypeMatches) {
-        return true;
-      }
-      
-      // If parent doesn't match, check if any children match
-      if (record.children && Array.isArray(record.children)) {
-        const hasMatchingChild = record.children.some((child: any) => {
-          const childMatches = fieldsToSearch.some(field => 
-            child[field] && child[field].toString().toLowerCase().includes(searchValue)
-          );
-          const childTaskTypeDisplay = child?.taskType === 'story' ? 'Task' : 'Subtask';
-          const childTaskTypeMatches = childTaskTypeDisplay.toLowerCase().includes(searchValue);
-          return childMatches || childTaskTypeMatches;
-        });
-        
-        return hasMatchingChild;
-      }
-      
-      return false;
-    }) : finalData;
-  
-  console.log('Final processed data:', filteredData);
-
   const rowSelection: TableProps<TaskTemplateType>["rowSelection"] = {
     onChange: (selectedRowKeys, selectedRows) => {
       console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
@@ -637,7 +656,8 @@ const TaskTemplateTable = ({
           pagination={{
             showSizeChanger: true,
             showQuickJumper: true,
-            pageSizeOptions: [5, 10, 20, 50],
+            defaultPageSize: 30,
+            pageSizeOptions: [30, 50, 100, 200],
             showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
             ...(searchText && { 
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items (filtered)` 
