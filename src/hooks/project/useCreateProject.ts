@@ -10,7 +10,9 @@ export const useCreateProject = () => {
       return createProject(payload);
     },
     onSuccess: () => {
+      // Invalidate all project-related queries to ensure fresh data everywhere
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project"] });
       navigate("/projects");
     },
   });

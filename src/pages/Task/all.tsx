@@ -2,24 +2,34 @@
 import AllTaskTable from "@/components/Task/AllTaskTable";
 import TaskForm from "@/components/Task/TaskForm";
 import { Button, Modal, Tabs, Select } from "antd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { useProject } from "@/hooks/project/useProject";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 const AllTask = () => {
   const [open, setOpen] = useState(false);
   const { profile } = useSession();
+  const queryClient = useQueryClient();
   // Extract userRole and userId from profile (profile is UserType)
   const userRole = (profile as any)?.role?.name?.toLowerCase?.() || "";
   const userId = (profile as any)?.id;
   const hideAddTask = userRole === "auditsenior" || userRole === "auditjunior";
-  const { data: projects } = useProject({ status: "active" });
+  const { data: projects, refetch } = useProject({ status: "active" });
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
   const [editTaskData, setEditTaskData] = useState<any>(undefined);
   const [modalUsers, setModalUsers] = useState<any[]>([]);
   const [modalTasks, setModalTasks] = useState<any[]>([]);
+
+  // Refetch projects when modal opens to ensure we have the latest data
+  useEffect(() => {
+    if (open) {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      refetch();
+    }
+  }, [open, queryClient, refetch]);
 
   // Update users/tasks when project changes (for add)
   const handleProjectChange = (projectId: string) => {
