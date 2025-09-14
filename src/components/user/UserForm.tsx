@@ -38,15 +38,14 @@ const UserForm = ({ initialValues, handleCancel }: { initialValues?: UserType, h
       payload = {
         name: values.name,
         status: values.status,
-        role: values.roleId, // Convert roleId to role for backend
+        role: String(values.roleId), // Ensure role is string for update
       };
     } else {
-      // For creation, convert roleId to role as expected by users DTO
+      // For creation, send roleId as string as expected by backend
       payload = {
         ...values,
-        role: values.roleId,
+        roleId: String(values.roleId), // Ensure roleId is string
       };
-      delete payload.roleId;
     }
 
     mutation(

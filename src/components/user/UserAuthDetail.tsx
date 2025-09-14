@@ -79,7 +79,7 @@ const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
             rules={[{ required: true, message: "Please select the role!" }]}
             options={
               roles?.results?.map((role: Role) => ({
-                value: role.id,
+                value: String(role.id), // Ensure value is always a string
                 label: role.name,
               })) || []
             }
