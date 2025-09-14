@@ -8,7 +8,8 @@ import {
   CalendarOutlined,
   SettingOutlined,
   SafetyOutlined,
-  TeamOutlined
+  TeamOutlined,
+  ClockCircleOutlined
 } from "@ant-design/icons";
 import { MenuProps } from "antd";
 import _ from "lodash";
@@ -87,8 +88,8 @@ export const MenuItems = (): MenuProps[] => {
     {
       key: "/attendance",
       label: "Attendance",
-      resource: "attendance",
-      icon: React.createElement(UserOutlined),
+      resource: "default", // Make attendance available to all authenticated users
+      icon: React.createElement(ClockCircleOutlined),
     },
     {
       key: "/role",
@@ -116,9 +117,14 @@ export const MenuItems = (): MenuProps[] => {
     // },
   ]
 
-  const filteredItems = _.filter(items, item =>
-    _.some(permissions, { resource: item.resource })
-  );
+  const filteredItems = _.filter(items, item => {
+    // Always show attendance for authenticated users
+    if (item.resource === "default") {
+      return true;
+    }
+    // For other items, use the original logic
+    return _.some(permissions, { resource: item.resource });
+  });
 
   return filteredItems
 };

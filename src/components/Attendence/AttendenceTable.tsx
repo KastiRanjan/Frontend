@@ -1,11 +1,22 @@
 import { useAttendence } from "@/hooks/attendence/useAttendence";
+import { useAllUsersAttendence } from "@/hooks/attendence/useAllUsersAttendence";
+import { useTodayAllUsersAttendence } from "@/hooks/attendence/useTodayAllUsersAttendence";
+import { useAttendenceById } from "@/hooks/attendence/useAttendenceById";
 import { Table, Button, Input, Space, Tooltip } from "antd";
 import { SearchOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { useState, useRef } from "react";
 import Highlighter from 'react-highlight-words';
 
-const AttendenceTable = () => {
+interface AttendenceTableProps {
+  viewType?: 'my' | 'all-users' | 'today-all' | 'by-user';
+  selectedUserId?: string;
+}
+
+const AttendenceTable = ({ 
+  viewType = 'my', 
+  selectedUserId 
+}: AttendenceTableProps) => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({
@@ -14,8 +25,34 @@ const AttendenceTable = () => {
   });
   const searchInput = useRef<any>(null);
 
-  // Get attendance data and loading state from the custom hook
-  const { data: attendence, isPending } = useAttendence();
+  // Get attendance data and loading state from the custom hooks based on view type
+  const { data: myAttendence, isPending: myAttendencePending } = useAttendence();
+  const { data: allUsersAttendence, isPending: allUsersAttendencePending } = useAllUsersAttendence(
+    viewType === 'all-users'
+  );
+  const { data: todayAllUsersAttendence, isPending: todayAllUsersAttendencePending } = useTodayAllUsersAttendence(
+    viewType === 'today-all'
+  );
+  const { data: userAttendence, isPending: userAttendencePending } = useAttendenceById({
+    id: viewType === 'by-user' && selectedUserId ? selectedUserId : '',
+  });
+
+  // Determine which data and loading state to use based on viewType
+  const getAttendanceData = () => {
+    switch (viewType) {
+      case 'all-users':
+        return { data: allUsersAttendence, loading: allUsersAttendencePending };
+      case 'today-all':
+        return { data: todayAllUsersAttendence, loading: todayAllUsersAttendencePending };
+      case 'by-user':
+        return { data: userAttendence, loading: userAttendencePending };
+      case 'my':
+      default:
+        return { data: myAttendence, loading: myAttendencePending };
+    }
+  };
+
+  const { data: attendence, loading: isPending } = getAttendanceData();
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
     confirm();
@@ -28,7 +65,7 @@ const AttendenceTable = () => {
     setSearchText('');
   };
 
-  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+  const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
     setSortedInfo(sorter);
   };
 
@@ -100,6 +137,8 @@ const AttendenceTable = () => {
     onFilter: (value: string, record: any) =>
       record[dataIndex]
         ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : dataIndex === 'userName' && record.user
+        ? (record.user.name || record.user.email || '').toLowerCase().includes(value.toLowerCase())
         : '',
     onFilterDropdownVisibleChange: (visible: boolean) => {
       if (visible) {
@@ -120,6 +159,14 @@ const AttendenceTable = () => {
   });
 
   const columns = [
+    // Conditionally show user column for all-users and today-all views
+    ...(viewType === 'all-users' || viewType === 'today-all' ? [{
+      title: "User",
+      dataIndex: ["user", "name"],
+      key: "userName",
+      ...getColumnSearchProps('userName', 'User'),
+      render: (_text: string, record: any) => record.user?.name || record.user?.email || "N/A",
+    }] : []),
     {
       title: "Date",
       dataIndex: "date",

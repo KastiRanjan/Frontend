@@ -7,6 +7,16 @@ export const fetchAttendences = async () => {
   const response = await axios.get(`${backendURI}/attendance`);
   return response.data;
 };
+
+export const fetchAllUsersAttendences = async () => {
+  const response = await axios.get(`${backendURI}/attendance/all-users`);
+  return response.data;
+};
+
+export const fetchTodayAllUsersAttendences = async () => {
+  const response = await axios.get(`${backendURI}/attendance/today-all-users`);
+  return response.data;
+};
 export const fetchAttendenceById = async ({ id }: { id: string }) => {
   const response = await axios.get(`${backendURI}/attendance/user/${id}`);
 
