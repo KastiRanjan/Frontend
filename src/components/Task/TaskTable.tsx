@@ -78,10 +78,25 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
   }, [permissions]);
 
   // Check if user has permission for first verification
-  const hasFirstVerifyPermission = (profile as any)?.role?.permission?.includes("first-verify-task");
+  const permissionsArr = (profile as any)?.role?.permission;
+  const hasFirstVerifyPermission = Array.isArray(permissionsArr) &&
+    permissionsArr.some(
+      (perm: any) =>
+        perm.resource === "tasks" &&
+        perm.path === "/tasks/first-verify" &&
+        perm.method?.toLowerCase() === "patch"
+    );
+  console.log("Has first-verify permission (object):", hasFirstVerifyPermission);
 
   // Check if user has permission for second verification
-  const hasSecondVerifyPermission = (profile as any)?.role?.permission?.includes("second-verify-task");
+  const hasSecondVerifyPermission = Array.isArray(permissionsArr) &&
+    permissionsArr.some(
+      (perm: any) =>
+        perm.resource === "tasks" &&
+        perm.path === "/tasks/second-verify" &&
+        perm.method?.toLowerCase() === "patch"
+    );
+  console.log("Has second-verify permission (object):", hasSecondVerifyPermission);
 
   // Check if user is project lead
   const isProjectLead = useMemo(() => {
@@ -90,7 +105,18 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
 
   // Check if user can mark tasks complete (has permission OR is project lead)
   const canMarkComplete = useMemo(() => {
-    const hasMarkCompletePermission = (profile as any)?.role?.permission?.includes("mark-complete-task");
+    const permissionsArr = (profile as any)?.role?.permission;
+    // Check for object-based permission
+    const hasMarkCompletePermission = Array.isArray(permissionsArr) &&
+      permissionsArr.some(
+        (perm: any) =>
+          perm.resource === "tasks" &&
+          perm.path === "/tasks/mark-complete" &&
+          perm.method?.toLowerCase() === "patch"
+      );
+    console.log("User permissions:", permissionsArr);
+    console.log("Has mark-complete permission (object):", hasMarkCompletePermission);
+    console.log("Is project lead:", isProjectLead);
     return hasMarkCompletePermission || isProjectLead;
   }, [profile, isProjectLead]);
 
@@ -685,59 +711,67 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
       message.info(`Only ${eligibleCount} out of ${totalSelected} selected tasks are eligible to be marked complete`);
     }
 
-    markTasksComplete({
-      taskIds: eligibleTasks.map(task => task.id),
-      completedBy: userId
-    }, {
-      onSuccess: (data) => {
-        console.log("Mark complete response:", data);
-        
-        // Handle success cases
-        if (data?.success && data.success.length > 0) {
-          message.success(`${data.success.length} task(s) marked as complete`);
-        }
-        
-        // Handle errors - these are validation errors, not API errors
-        if (data?.errors && data.errors.length > 0) {
-          console.log("Validation errors found:", data.errors);
-          
-          // Show a notification for multiple errors or use individual messages for single errors
-          if (data.errors.length > 1) {
-            notification.error({
-              message: `${data.errors.length} Task(s) Failed to Complete`,
-              description: (
-                <div>
-                  {data.errors.map((error: any, index: number) => (
-                    <div key={index} style={{ marginBottom: '4px' }}>
-                      <strong>{error.taskName}:</strong> {error.error}
+    Modal.confirm({
+      title: `Mark ${eligibleTasks.length} task(s) as complete?`,
+      content: 'Are you sure you want to mark the selected tasks as complete?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        markTasksComplete({
+          taskIds: eligibleTasks.map(task => task.id),
+          completedBy: userId
+        }, {
+          onSuccess: (data) => {
+            console.log("Mark complete response:", data);
+            
+            // Handle success cases
+            if (data?.success && data.success.length > 0) {
+              message.success(`${data.success.length} task(s) marked as complete`);
+            }
+            
+            // Handle errors - these are validation errors, not API errors
+            if (data?.errors && data.errors.length > 0) {
+              console.log("Validation errors found:", data.errors);
+              
+              // Show a notification for multiple errors or use individual messages for single errors
+              if (data.errors.length > 1) {
+                notification.error({
+                  message: `${data.errors.length} Task(s) Failed to Complete`,
+                  description: (
+                    <div>
+                      {data.errors.map((error: any, index: number) => (
+                        <div key={index} style={{ marginBottom: '4px' }}>
+                          <strong>{error.taskName}:</strong> {error.error}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ),
-              duration: 8,
-              placement: 'topRight',
-            });
-          } else {
-            // Single error - use message for simpler display
-            const error = data.errors[0];
-            message.error(`${error.taskName}: ${error.error}`, 6);
-          }
-        }
-        
-        // Show summary if no success but also no errors (edge case)
-        if (!data?.success?.length && !data?.errors?.length) {
-          message.info("No tasks were processed");
-        }
-        
-        setSelectedRowKeys([]);
-        if (onRefresh) onRefresh();
-      },
-      onError: (error: any) => {
-        console.error("Mark complete API error:", error);
-        // This handles actual HTTP/network errors
-        const errorMessage = error.response?.data?.message || "Failed to mark tasks as complete";
-        message.error(errorMessage);
-      },
+                  ),
+                  duration: 8,
+                  placement: 'topRight',
+                });
+              } else {
+                // Single error - use message for simpler display
+                const error = data.errors[0];
+                message.error(`${error.taskName}: ${error.error}`, 6);
+              }
+            }
+            
+            // Show summary if no success but also no errors (edge case)
+            if (!data?.success?.length && !data?.errors?.length) {
+              message.info("No tasks were processed");
+            }
+            
+            setSelectedRowKeys([]);
+            if (onRefresh) onRefresh();
+          },
+          onError: (error: any) => {
+            console.error("Mark complete API error:", error);
+            // This handles actual HTTP/network errors
+            const errorMessage = error.response?.data?.message || "Failed to mark tasks as complete";
+            message.error(errorMessage);
+          },
+        });
+      }
     });
   };
 
@@ -759,42 +793,50 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
       return;
     }
 
-    markTasksComplete({
-      taskIds: [task.id],
-      completedBy: userId
-    }, {
-      onSuccess: (data) => {
-        console.log("Single mark complete response:", data);
-        
-        // Handle success cases
-        if (data?.success && data.success.length > 0) {
-          message.success(`Task "${task.name}" marked as complete`);
-        }
-        
-        // Handle validation errors
-        if (data?.errors && data.errors.length > 0) {
-          console.log("Single task validation errors:", data.errors);
-          const error = data.errors[0];
-          notification.error({
-            message: 'Task Completion Failed',
-            description: `${error.taskName}: ${error.error}`,
-            duration: 6,
-            placement: 'topRight',
-          });
-        }
-        
-        // Show info if no processing occurred
-        if (!data?.success?.length && !data?.errors?.length) {
-          message.info("Task was not processed");
-        }
-        
-        if (onRefresh) onRefresh();
-      },
-      onError: (error: any) => {
-        console.error("Single mark complete API error:", error);
-        const errorMessage = error.response?.data?.message || "Failed to mark task as complete";
-        message.error(errorMessage);
-      },
+    Modal.confirm({
+      title: `Mark task "${task.name}" as complete?`,
+      content: 'Are you sure you want to mark this task as complete?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        markTasksComplete({
+          taskIds: [task.id],
+          completedBy: userId
+        }, {
+          onSuccess: (data) => {
+            console.log("Single mark complete response:", data);
+            
+            // Handle success cases
+            if (data?.success && data.success.length > 0) {
+              message.success(`Task "${task.name}" marked as complete`);
+            }
+            
+            // Handle validation errors
+            if (data?.errors && data.errors.length > 0) {
+              console.log("Single task validation errors:", data.errors);
+              const error = data.errors[0];
+              notification.error({
+                message: 'Task Completion Failed',
+                description: `${error.taskName}: ${error.error}`,
+                duration: 6,
+                placement: 'topRight',
+              });
+            }
+            
+            // Show info if no processing occurred
+            if (!data?.success?.length && !data?.errors?.length) {
+              message.info("Task was not processed");
+            }
+            
+            if (onRefresh) onRefresh();
+          },
+          onError: (error: any) => {
+            console.error("Single mark complete API error:", error);
+            const errorMessage = error.response?.data?.message || "Failed to mark task as complete";
+            message.error(errorMessage);
+          },
+        });
+      }
     });
   };
 

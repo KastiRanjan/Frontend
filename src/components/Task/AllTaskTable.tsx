@@ -18,7 +18,8 @@ import {
   notification,
   TableProps,
   Tooltip,
-  Tag
+  Tag,
+  Modal
 } from "antd";
 import { useMemo, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
@@ -109,43 +110,51 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
       message.info(`Only ${eligibleCount} out of ${totalSelected} selected tasks are eligible to be marked complete`);
     }
 
-    markTasksComplete({
-      taskIds: eligibleTasks.map((task: any) => task.id),
-      completedBy: userIdForComplete
-    }, {
-      onSuccess: (data) => {
-        if (data?.success && data.success.length > 0) {
-          message.success(`${data.success.length} task(s) marked as complete`);
-        }
-        
-        if (data?.errors && data.errors.length > 0) {
-          if (data.errors.length > 1) {
-            notification.error({
-              message: `${data.errors.length} Task(s) Failed to Complete`,
-              description: (
-                <div>
-                  {data.errors.map((error: any, index: number) => (
-                    <div key={index} style={{ marginBottom: '4px' }}>
-                      <strong>{error.taskName}:</strong> {error.error}
+    Modal.confirm({
+      title: `Mark ${eligibleTasks.length} task(s) as complete?`,
+      content: 'Are you sure you want to mark the selected tasks as complete?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        markTasksComplete({
+          taskIds: eligibleTasks.map((task: any) => task.id),
+          completedBy: userIdForComplete
+        }, {
+          onSuccess: (data) => {
+            if (data?.success && data.success.length > 0) {
+              message.success(`${data.success.length} task(s) marked as complete`);
+            }
+            
+            if (data?.errors && data.errors.length > 0) {
+              if (data.errors.length > 1) {
+                notification.error({
+                  message: `${data.errors.length} Task(s) Failed to Complete`,
+                  description: (
+                    <div>
+                      {data.errors.map((error: any, index: number) => (
+                        <div key={index} style={{ marginBottom: '4px' }}>
+                          <strong>{error.taskName}:</strong> {error.error}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ),
-              duration: 8,
-              placement: 'topRight',
-            });
-          } else {
-            const error = data.errors[0];
-            message.error(`${error.taskName}: ${error.error}`, 6);
-          }
-        }
-        
-        setSelectedRowKeys([]);
-      },
-      onError: (error: any) => {
-        const errorMessage = error.response?.data?.message || "Failed to mark tasks as complete";
-        message.error(errorMessage);
-      },
+                  ),
+                  duration: 8,
+                  placement: 'topRight',
+                });
+              } else {
+                const error = data.errors[0];
+                message.error(`${error.taskName}: ${error.error}`, 6);
+              }
+            }
+            
+            setSelectedRowKeys([]);
+          },
+          onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || "Failed to mark tasks as complete";
+            message.error(errorMessage);
+          },
+        });
+      }
     });
   };
 
@@ -161,43 +170,51 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
       return;
     }
 
-    firstVerifyTasks({
-      taskIds: selectedRowKeys.map(key => Number(key)),
-      firstVerifiedBy: userIdForVerify
-    }, {
-      onSuccess: (data) => {
-        if (data?.success && data.success.length > 0) {
-          message.success(`${data.success.length} task(s) first verified`);
-        }
-        
-        if (data?.errors && data.errors.length > 0) {
-          if (data.errors.length > 1) {
-            notification.error({
-              message: `${data.errors.length} Task(s) Failed First Verification`,
-              description: (
-                <div>
-                  {data.errors.map((error: any, index: number) => (
-                    <div key={index} style={{ marginBottom: '4px' }}>
-                      <strong>{error.taskName}:</strong> {error.error}
+    Modal.confirm({
+      title: `First verify ${selectedRowKeys.length} task(s)?`,
+      content: 'Are you sure you want to first verify the selected tasks?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        firstVerifyTasks({
+          taskIds: selectedRowKeys.map(key => Number(key)),
+          firstVerifiedBy: userIdForVerify
+        }, {
+          onSuccess: (data) => {
+            if (data?.success && data.success.length > 0) {
+              message.success(`${data.success.length} task(s) first verified`);
+            }
+            
+            if (data?.errors && data.errors.length > 0) {
+              if (data.errors.length > 1) {
+                notification.error({
+                  message: `${data.errors.length} Task(s) Failed First Verification`,
+                  description: (
+                    <div>
+                      {data.errors.map((error: any, index: number) => (
+                        <div key={index} style={{ marginBottom: '4px' }}>
+                          <strong>{error.taskName}:</strong> {error.error}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ),
-              duration: 8,
-              placement: 'topRight',
-            });
-          } else {
-            const error = data.errors[0];
-            message.error(`${error.taskName}: ${error.error}`, 6);
-          }
-        }
-        
-        setSelectedRowKeys([]);
-      },
-      onError: (error: any) => {
-        const errorMessage = error.response?.data?.message || "Failed to verify tasks";
-        message.error(errorMessage);
-      },
+                  ),
+                  duration: 8,
+                  placement: 'topRight',
+                });
+              } else {
+                const error = data.errors[0];
+                message.error(`${error.taskName}: ${error.error}`, 6);
+              }
+            }
+            
+            setSelectedRowKeys([]);
+          },
+          onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || "Failed to verify tasks";
+            message.error(errorMessage);
+          },
+        });
+      }
     });
   };
 
@@ -213,56 +230,90 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
       return;
     }
 
-    secondVerifyTasks({
-      taskIds: selectedRowKeys.map(key => Number(key)),
-      secondVerifiedBy: userIdForVerify
-    }, {
-      onSuccess: (data) => {
-        if (data?.success && data.success.length > 0) {
-          message.success(`${data.success.length} task(s) second verified`);
-        }
-        
-        if (data?.errors && data.errors.length > 0) {
-          if (data.errors.length > 1) {
-            notification.error({
-              message: `${data.errors.length} Task(s) Failed Second Verification`,
-              description: (
-                <div>
-                  {data.errors.map((error: any, index: number) => (
-                    <div key={index} style={{ marginBottom: '4px' }}>
-                      <strong>{error.taskName}:</strong> {error.error}
+    Modal.confirm({
+      title: `Second verify ${selectedRowKeys.length} task(s)?`,
+      content: 'Are you sure you want to second verify the selected tasks?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        secondVerifyTasks({
+          taskIds: selectedRowKeys.map(key => Number(key)),
+          secondVerifiedBy: userIdForVerify
+        }, {
+          onSuccess: (data) => {
+            if (data?.success && data.success.length > 0) {
+              message.success(`${data.success.length} task(s) second verified`);
+            }
+            
+            if (data?.errors && data.errors.length > 0) {
+              if (data.errors.length > 1) {
+                notification.error({
+                  message: `${data.errors.length} Task(s) Failed Second Verification`,
+                  description: (
+                    <div>
+                      {data.errors.map((error: any, index: number) => (
+                        <div key={index} style={{ marginBottom: '4px' }}>
+                          <strong>{error.taskName}:</strong> {error.error}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ),
-              duration: 8,
-              placement: 'topRight',
-            });
-          } else {
-            const error = data.errors[0];
-            message.error(`${error.taskName}: ${error.error}`, 6);
-          }
-        }
-        
-        setSelectedRowKeys([]);
-      },
-      onError: (error: any) => {
-        const errorMessage = error.response?.data?.message || "Failed to verify tasks";
-        message.error(errorMessage);
-      },
+                  ),
+                  duration: 8,
+                  placement: 'topRight',
+                });
+              } else {
+                const error = data.errors[0];
+                message.error(`${error.taskName}: ${error.error}`, 6);
+              }
+            }
+            
+            setSelectedRowKeys([]);
+          },
+          onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || "Failed to verify tasks";
+            message.error(errorMessage);
+          },
+        });
+      }
     });
   };
 
   // Check if user has permission for first verification
-  const hasFirstVerifyPermission = (profile as any)?.role?.permission?.includes("first-verify-task");
+  const permissionsArr = (profile as any)?.role?.permission;
+  const hasFirstVerifyPermission = Array.isArray(permissionsArr) &&
+    permissionsArr.some(
+      (perm: any) =>
+        perm.resource === "tasks" &&
+        perm.path === "/tasks/first-verify" &&
+        perm.method?.toLowerCase() === "patch"
+    );
+  console.log("Has first-verify permission (object):", hasFirstVerifyPermission);
 
   // Check if user has permission for second verification
-  const hasSecondVerifyPermission = (profile as any)?.role?.permission?.includes("second-verify-task");
+  const hasSecondVerifyPermission = Array.isArray(permissionsArr) &&
+    permissionsArr.some(
+      (perm: any) =>
+        perm.resource === "tasks" &&
+        perm.path === "/tasks/second-verify" &&
+        perm.method?.toLowerCase() === "patch"
+    );
+  console.log("Has second-verify permission (object):", hasSecondVerifyPermission);
 
   // Check if user can mark complete for a specific task (has permission OR is project lead)
   const getCanMarkCompleteForTask = useCallback((task: any) => {
-    const hasMarkCompletePermission = (profile as any)?.role?.permission?.includes("mark-complete-task");
+    const permissionsArr = (profile as any)?.role?.permission;
+    // Check for object-based permission
+    const hasMarkCompletePermission = Array.isArray(permissionsArr) &&
+      permissionsArr.some(
+        (perm: any) =>
+          perm.resource === "tasks" &&
+          perm.path === "/tasks/mark-complete" &&
+          perm.method?.toLowerCase() === "patch"
+      );
     const isProjectLead = (profile as any)?.id === task.project?.projectLead?.id;
+    console.log("User permissions:", permissionsArr);
+    console.log("Has mark-complete permission (object):", hasMarkCompletePermission);
+    console.log("Is project lead:", isProjectLead);
     return hasMarkCompletePermission || isProjectLead;
   }, [profile]);
 
@@ -284,24 +335,32 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
       return;
     }
 
-    markTasksComplete({
-      taskIds: [task.id],
-      completedBy: userIdForComplete
-    }, {
-      onSuccess: (data) => {
-        if (data?.success && data.success.length > 0) {
-          message.success("Task marked as complete successfully!");
-        }
-        
-        if (data?.errors && data.errors.length > 0) {
-          const error = data.errors[0];
-          message.error(`${error.taskName}: ${error.error}`, 6);
-        }
-      },
-      onError: (error: any) => {
-        const errorMessage = error.response?.data?.message || "Failed to mark task as complete";
-        message.error(errorMessage);
-      },
+    Modal.confirm({
+      title: `Mark task "${task.name}" as complete?`,
+      content: 'Are you sure you want to mark this task as complete?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        markTasksComplete({
+          taskIds: [task.id],
+          completedBy: userIdForComplete
+        }, {
+          onSuccess: (data) => {
+            if (data?.success && data.success.length > 0) {
+              message.success("Task marked as complete successfully!");
+            }
+            
+            if (data?.errors && data.errors.length > 0) {
+              const error = data.errors[0];
+              message.error(`${error.taskName}: ${error.error}`, 6);
+            }
+          },
+          onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || "Failed to mark task as complete";
+            message.error(errorMessage);
+          },
+        });
+      }
     });
   };
 
@@ -328,23 +387,31 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
       return;
     }
 
-    firstVerifyTasks({
-      taskIds: [task.id],
-      firstVerifiedBy: userId
-    }, {
-      onSuccess: (data: any) => {
-        if (data?.success && data.success.length > 0) {
-          message.success("Task first verified successfully!");
-        }
-        
-        if (data?.errors && data.errors.length > 0) {
-          const error = data.errors[0];
-          message.error(`${error.taskName}: ${error.error}`, 6);
-        }
-      },
-      onError: (error: any) => {
-        const errorMessage = error.response?.data?.message || "Failed to verify task";
-        message.error(errorMessage);
+    Modal.confirm({
+      title: `First verify task "${task.name}"?`,
+      content: 'Are you sure you want to first verify this task?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        firstVerifyTasks({
+          taskIds: [task.id],
+          firstVerifiedBy: userId
+        }, {
+          onSuccess: (data: any) => {
+            if (data?.success && data.success.length > 0) {
+              message.success("Task first verified successfully!");
+            }
+            
+            if (data?.errors && data.errors.length > 0) {
+              const error = data.errors[0];
+              message.error(`${error.taskName}: ${error.error}`, 6);
+            }
+          },
+          onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || "Failed to verify task";
+            message.error(errorMessage);
+          }
+        });
       }
     });
   };
@@ -377,23 +444,31 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
       return;
     }
 
-    secondVerifyTasks({
-      taskIds: [task.id],
-      secondVerifiedBy: userId
-    }, {
-      onSuccess: (data: any) => {
-        if (data?.success && data.success.length > 0) {
-          message.success("Task second verified successfully!");
-        }
-        
-        if (data?.errors && data.errors.length > 0) {
-          const error = data.errors[0];
-          message.error(`${error.taskName}: ${error.error}`, 6);
-        }
-      },
-      onError: (error: any) => {
-        const errorMessage = error.response?.data?.message || "Failed to verify task";
-        message.error(errorMessage);
+    Modal.confirm({
+      title: `Second verify task "${task.name}"?`,
+      content: 'Are you sure you want to second verify this task?',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: () => {
+        secondVerifyTasks({
+          taskIds: [task.id],
+          secondVerifiedBy: userId
+        }, {
+          onSuccess: (data: any) => {
+            if (data?.success && data.success.length > 0) {
+              message.success("Task second verified successfully!");
+            }
+            
+            if (data?.errors && data.errors.length > 0) {
+              const error = data.errors[0];
+              message.error(`${error.taskName}: ${error.error}`, 6);
+            }
+          },
+          onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || "Failed to verify task";
+            message.error(errorMessage);
+          }
+        });
       }
     });
   };
