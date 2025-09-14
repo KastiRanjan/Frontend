@@ -1,7 +1,10 @@
 import { useEditTask } from "@/hooks/task/useEditTask";
+import { useMarkTasksComplete } from "@/hooks/task/useMarkTasksComplete";
+import { useFirstVerifyTasks, useSecondVerifyTasks } from "@/hooks/task/useVerifyTasks";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
 import { TaskType } from "@/types/task";
+import { useSession } from "@/context/SessionContext";
 import { EditOutlined, SearchOutlined } from "@ant-design/icons";
 import {
   Avatar,
@@ -12,7 +15,10 @@ import {
   TableProps,
   Tooltip,
   Input,
-  Space
+  Space,
+  message,
+  notification,
+  Tag
 } from "antd";
 import { useMemo, useState, useRef } from "react";
 import Highlighter from 'react-highlight-words';
@@ -27,6 +33,13 @@ const RequestTaskTable = () => {
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({});
   const searchInput = useRef<any>(null);
+  
+  // Mark complete functionality
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const { mutate: markTasksComplete, isPending: isMarkingComplete } = useMarkTasksComplete();
+  const { mutate: firstVerifyTasks, isPending: isFirstVerifying } = useFirstVerifyTasks();
+  const { mutate: secondVerifyTasks, isPending: isSecondVerifying } = useSecondVerifyTasks();
+  const { profile } = useSession();
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
     confirm();
@@ -41,6 +54,293 @@ const RequestTaskTable = () => {
 
   const handleTableChange = (pagination: any, filters: any, sorter: any) => {
     setSortedInfo(sorter);
+  };
+
+  const handleMarkComplete = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one task to mark as complete");
+      return;
+    }
+
+    const userIdForComplete = (profile as any)?.id;
+    if (!userIdForComplete) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    markTasksComplete({
+      taskIds: selectedRowKeys.map(key => Number(key)),
+      completedBy: userIdForComplete
+    }, {
+      onSuccess: (data) => {
+        console.log("Mark complete response:", data);
+        
+        if (data?.success && data.success.length > 0) {
+          message.success(`${data.success.length} task(s) marked as complete`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          console.log("Validation errors found:", data.errors);
+          
+          if (data.errors.length > 1) {
+            notification.error({
+              message: `${data.errors.length} Task(s) Failed to Complete`,
+              description: (
+                <div>
+                  {data.errors.map((error: any, index: number) => (
+                    <div key={index} style={{ marginBottom: '4px' }}>
+                      <strong>{error.taskName}:</strong> {error.error}
+                    </div>
+                  ))}
+                </div>
+              ),
+              duration: 8,
+              placement: 'topRight',
+            });
+          } else {
+            const error = data.errors[0];
+            message.error(`${error.taskName}: ${error.error}`, 6);
+          }
+        }
+        
+        if (!data?.success?.length && !data?.errors?.length) {
+          message.info("No tasks were processed");
+        }
+        
+        setSelectedRowKeys([]);
+      },
+      onError: (error: any) => {
+        console.error("Mark complete API error:", error);
+        const errorMessage = error.response?.data?.message || "Failed to mark tasks as complete";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleSingleMarkComplete = (task: any) => {
+    const userIdForComplete = (profile as any)?.id;
+    if (!userIdForComplete) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    if (task.status !== 'in_progress') {
+      message.warning("Only tasks that are in progress can be marked as complete");
+      return;
+    }
+
+    markTasksComplete({
+      taskIds: [task.id],
+      completedBy: userIdForComplete
+    }, {
+      onSuccess: (data) => {
+        console.log("Single mark complete response:", data);
+        
+        if (data?.success && data.success.length > 0) {
+          message.success(`Task "${task.name}" marked as complete`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          console.log("Single task validation errors:", data.errors);
+          const error = data.errors[0];
+          notification.error({
+            message: 'Task Completion Failed',
+            description: `${error.taskName}: ${error.error}`,
+            duration: 6,
+            placement: 'topRight',
+          });
+        }
+        
+        if (!data?.success?.length && !data?.errors?.length) {
+          message.info("Task was not processed");
+        }
+      },
+      onError: (error: any) => {
+        console.error("Single mark complete API error:", error);
+        const errorMessage = error.response?.data?.message || "Failed to mark task as complete";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleFirstVerify = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one task to verify");
+      return;
+    }
+
+    const userIdForVerify = (profile as any)?.id;
+    if (!userIdForVerify) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    firstVerifyTasks({
+      taskIds: selectedRowKeys.map(key => Number(key)),
+      firstVerifiedBy: userIdForVerify
+    }, {
+      onSuccess: (data) => {
+        if (data?.success && data.success.length > 0) {
+          message.success(`${data.success.length} task(s) first verified`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          if (data.errors.length > 1) {
+            notification.error({
+              message: `${data.errors.length} Task(s) Failed First Verification`,
+              description: (
+                <div>
+                  {data.errors.map((error: any, index: number) => (
+                    <div key={index} style={{ marginBottom: '4px' }}>
+                      <strong>{error.taskName}:</strong> {error.error}
+                    </div>
+                  ))}
+                </div>
+              ),
+              duration: 8,
+              placement: 'topRight',
+            });
+          } else {
+            const error = data.errors[0];
+            message.error(`${error.taskName}: ${error.error}`, 6);
+          }
+        }
+        
+        setSelectedRowKeys([]);
+      },
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || "Failed to verify tasks";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleSecondVerify = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one task for second verification");
+      return;
+    }
+
+    const userIdForVerify = (profile as any)?.id;
+    if (!userIdForVerify) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    secondVerifyTasks({
+      taskIds: selectedRowKeys.map(key => Number(key)),
+      secondVerifiedBy: userIdForVerify
+    }, {
+      onSuccess: (data) => {
+        if (data?.success && data.success.length > 0) {
+          message.success(`${data.success.length} task(s) second verified`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          if (data.errors.length > 1) {
+            notification.error({
+              message: `${data.errors.length} Task(s) Failed Second Verification`,
+              description: (
+                <div>
+                  {data.errors.map((error: any, index: number) => (
+                    <div key={index} style={{ marginBottom: '4px' }}>
+                      <strong>{error.taskName}:</strong> {error.error}
+                    </div>
+                  ))}
+                </div>
+              ),
+              duration: 8,
+              placement: 'topRight',
+            });
+          } else {
+            const error = data.errors[0];
+            message.error(`${error.taskName}: ${error.error}`, 6);
+          }
+        }
+        
+        setSelectedRowKeys([]);
+      },
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || "Failed to verify tasks";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleSingleFirstVerify = (task: any) => {
+    const userIdForVerify = (profile as any)?.id;
+    if (!userIdForVerify) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    if (task.status !== 'done' || task.firstVerifiedAt) {
+      message.warning("Only completed tasks that haven't been verified yet can be first verified");
+      return;
+    }
+
+    firstVerifyTasks({
+      taskIds: [task.id],
+      firstVerifiedBy: userIdForVerify
+    }, {
+      onSuccess: (data) => {
+        if (data?.success && data.success.length > 0) {
+          message.success(`Task "${task.name}" first verified`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          const error = data.errors[0];
+          notification.error({
+            message: 'Task First Verification Failed',
+            description: `${error.taskName}: ${error.error}`,
+            duration: 6,
+            placement: 'topRight',
+          });
+        }
+      },
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || "Failed to verify task";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleSingleSecondVerify = (task: any) => {
+    const userIdForVerify = (profile as any)?.id;
+    if (!userIdForVerify) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    if (!task.firstVerifiedAt || task.secondVerifiedAt) {
+      message.warning("Only first verified tasks that haven't been second verified yet can be second verified");
+      return;
+    }
+
+    secondVerifyTasks({
+      taskIds: [task.id],
+      secondVerifiedBy: userIdForVerify
+    }, {
+      onSuccess: (data) => {
+        if (data?.success && data.success.length > 0) {
+          message.success(`Task "${task.name}" second verified`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          const error = data.errors[0];
+          notification.error({
+            message: 'Task Second Verification Failed',
+            description: `${error.taskName}: ${error.error}`,
+            duration: 6,
+            placement: 'topRight',
+          });
+        }
+      },
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || "Failed to verify task";
+        message.error(errorMessage);
+      },
+    });
   };
 
   const getColumnSearchProps = (dataIndex: string, title: string): any => ({
@@ -225,6 +525,162 @@ const RequestTaskTable = () => {
         sortOrder: sortedInfo.columnKey === 'priority' && sortedInfo.order,
         ...getColumnSearchProps('priority', 'Priority'),
       },
+      // Mark Complete column
+      {
+        title: "Complete",
+        key: "markComplete",
+        render: (_: any, record: TaskType) => {
+          // Don't show mark complete for TODO (open) status
+          if (record.status === 'open') {
+            return null;
+          }
+          
+          const isEligible = record.status === 'in_progress';
+          const isCompleted = record.status === 'done';
+          
+          if (isCompleted) {
+            return (
+              <Tag color="green" style={{ fontSize: '11px' }}>
+                ✓ Completed
+              </Tag>
+            );
+          }
+          
+          if (!isEligible) {
+            return (
+              <Tag color="default" style={{ fontSize: '11px' }}>
+                Not Eligible
+              </Tag>
+            );
+          }
+
+          return (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => handleSingleMarkComplete(record)}
+              disabled={isMarkingComplete}
+              style={{ 
+                color: '#52c41a', 
+                padding: '0 4px',
+                fontSize: '12px',
+                height: 'auto'
+              }}
+            >
+              ✓ Complete
+            </Button>
+          );
+        },
+      },
+      // First Verification column
+      {
+        title: "1st Verify",
+        key: "firstVerify",
+        render: (_: any, record: TaskType) => {
+          // Don't show verification for TODO (open) or Doing (in_progress) status
+          if (record.status === 'open' || record.status === 'in_progress') {
+            return null;
+          }
+          
+          const canFirstVerify = record.status === 'done' && !record.firstVerifiedAt;
+          const isFirstVerified = record.firstVerifiedAt;
+          const isSecondVerified = record.secondVerifiedAt;
+          
+          if (isSecondVerified) {
+            return (
+              <Tooltip title={`First verified at ${record.firstVerifiedAt ? new Date(record.firstVerifiedAt).toLocaleString() : 'Unknown time'}, Second verified at ${record.secondVerifiedAt ? new Date(record.secondVerifiedAt).toLocaleString() : 'Unknown time'}`}>
+                <Tag color="blue" style={{ fontSize: '11px' }}>
+                  ✓✓ 2nd Done
+                </Tag>
+              </Tooltip>
+            );
+          }
+          
+          if (isFirstVerified) {
+            return (
+              <Tooltip title={`First verified at ${record.firstVerifiedAt ? new Date(record.firstVerifiedAt).toLocaleString() : 'Unknown time'}`}>
+                <Tag color="blue" style={{ fontSize: '11px' }}>
+                  ✓ 1st Done
+                </Tag>
+              </Tooltip>
+            );
+          }
+          
+          if (!canFirstVerify) {
+            return (
+              <Tag color="default" style={{ fontSize: '11px' }}>
+                Not Ready
+              </Tag>
+            );
+          }
+
+          return (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => handleSingleFirstVerify(record)}
+              disabled={isFirstVerifying}
+              style={{ 
+                color: '#1890ff', 
+                padding: '0 4px',
+                fontSize: '12px',
+                height: 'auto'
+              }}
+            >
+              ✓ 1st Verify
+            </Button>
+          );
+        },
+      },
+      // Second Verification column
+      {
+        title: "2nd Verify",
+        key: "secondVerify",
+        render: (_: any, record: TaskType) => {
+          // Don't show verification for TODO (open) or Doing (in_progress) status
+          if (record.status === 'open' || record.status === 'in_progress') {
+            return null;
+          }
+          
+          const canSecondVerify = record.firstVerifiedAt && !record.secondVerifiedAt;
+          const isSecondVerified = record.secondVerifiedAt;
+          
+          if (isSecondVerified) {
+            return (
+              <Tooltip title={`Second verified at ${record.secondVerifiedAt ? new Date(record.secondVerifiedAt).toLocaleString() : 'Unknown time'}`}>
+                <Tag color="green" style={{ fontSize: '11px' }}>
+                  ✓ 2nd Done
+                </Tag>
+              </Tooltip>
+            );
+          }
+          
+          if (!canSecondVerify) {
+            return (
+              <Tag color="default" style={{ fontSize: '11px' }}>
+                Not Ready
+              </Tag>
+            );
+          }
+
+          return (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => handleSingleSecondVerify(record)}
+              disabled={isSecondVerifying}
+              style={{ 
+                color: '#722ed1', 
+                padding: '0 4px',
+                fontSize: '12px',
+                height: 'auto'
+              }}
+            >
+              ✓ 2nd Verify
+            </Button>
+          );
+        },
+      },
       {
         title: "",
         key: "action",
@@ -245,8 +701,10 @@ const RequestTaskTable = () => {
   };
 
   const rowSelection: TableProps<TaskType>["rowSelection"] = {
-    onChange: (_selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
-      console.log(_selectedRowKeys, selectedRows);
+    selectedRowKeys,
+    onChange: (selectedRowKeys: React.Key[], selectedRows: TaskType[]) => {
+      console.log('Selected row keys:', selectedRowKeys, selectedRows);
+      setSelectedRowKeys(selectedRowKeys);
     },
     getCheckboxProps: (record: TaskType) => ({
       name: record.name,
@@ -255,6 +713,40 @@ const RequestTaskTable = () => {
 
   return (
     <>
+      {selectedRowKeys.length > 0 && (
+        <div style={{ marginBottom: 16, display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Button
+            type="primary"
+            onClick={handleMarkComplete}
+            disabled={isMarkingComplete}
+            loading={isMarkingComplete}
+            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+          >
+            Mark {selectedRowKeys.length} Task{selectedRowKeys.length > 1 ? 's' : ''} Complete
+          </Button>
+          <Button
+            type="primary"
+            onClick={handleFirstVerify}
+            disabled={isFirstVerifying}
+            loading={isFirstVerifying}
+            style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+          >
+            1st Verify {selectedRowKeys.length} Task{selectedRowKeys.length > 1 ? 's' : ''}
+          </Button>
+          <Button
+            type="primary"
+            onClick={handleSecondVerify}
+            disabled={isSecondVerifying}
+            loading={isSecondVerifying}
+            style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
+          >
+            2nd Verify {selectedRowKeys.length} Task{selectedRowKeys.length > 1 ? 's' : ''}
+          </Button>
+          <span style={{ color: '#666', fontSize: '14px' }}>
+            {selectedRowKeys.length} task{selectedRowKeys.length > 1 ? 's' : ''} selected
+          </span>
+        </div>
+      )}
       <Table
         columns={columns}
         dataSource={[]}

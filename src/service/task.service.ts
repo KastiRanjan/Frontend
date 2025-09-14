@@ -52,6 +52,27 @@ export const bulkUpdateTasks = async (payload:any) => {
   return response.data;
 };
 
+export const markTasksComplete = async (payload: any) => {
+  console.log("Sending mark complete request:", payload);
+  const response = await axios.patch(`${backendURI}/tasks/mark-complete`, payload);
+  console.log("Mark complete response:", response.data);
+  return response.data;
+};
+
+export const firstVerifyTasks = async (payload: any) => {
+  console.log("Sending first verify request:", payload);
+  const response = await axios.patch(`${backendURI}/tasks/first-verify`, payload);
+  console.log("First verify response:", response.data);
+  return response.data;
+};
+
+export const secondVerifyTasks = async (payload: any) => {
+  console.log("Sending second verify request:", payload);
+  const response = await axios.patch(`${backendURI}/tasks/second-verify`, payload);
+  console.log("Second verify response:", response.data);
+  return response.data;
+};
+
 export const deleteTask = async ({ id }: { id: string }) => {
   const response = await axios.delete(`${backendURI}/tasks/${id}`);
   return response.data;

@@ -126,16 +126,62 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
                       Add Task
                     </Button>
                   )}
-                  <TaskTable 
-                    data={tasks ?? []}
-                    showModal={showModal}
-                    project={{
-                      id: project?.id?.toString?.() ?? String(project?.id ?? ''),
-                      users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
-                      projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
-                    }}
-                    onRefresh={handleRefresh}
-                    loading={loading}
+                  <Tabs 
+                    type="card" 
+                    size="small"
+                    items={[
+                      {
+                        label: 'To Do',
+                        key: 'todo',
+                        children: (
+                          <TaskTable 
+                            data={(tasks ?? []).filter(task => task.status === 'open')}
+                            showModal={showModal}
+                            project={{
+                              id: project?.id?.toString?.() ?? String(project?.id ?? ''),
+                              users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
+                              projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
+                            }}
+                            onRefresh={handleRefresh}
+                            loading={loading}
+                          />
+                        )
+                      },
+                      {
+                        label: 'Doing',
+                        key: 'doing',
+                        children: (
+                          <TaskTable 
+                            data={(tasks ?? []).filter(task => task.status === 'in_progress')}
+                            showModal={showModal}
+                            project={{
+                              id: project?.id?.toString?.() ?? String(project?.id ?? ''),
+                              users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
+                              projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
+                            }}
+                            onRefresh={handleRefresh}
+                            loading={loading}
+                          />
+                        )
+                      },
+                      {
+                        label: 'Completed',
+                        key: 'completed',
+                        children: (
+                          <TaskTable 
+                            data={(tasks ?? []).filter(task => task.status === 'done')}
+                            showModal={showModal}
+                            project={{
+                              id: project?.id?.toString?.() ?? String(project?.id ?? ''),
+                              users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
+                              projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
+                            }}
+                            onRefresh={handleRefresh}
+                            loading={loading}
+                          />
+                        )
+                      }
+                    ]}
                   />
                 </>
               )

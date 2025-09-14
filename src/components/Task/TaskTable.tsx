@@ -1,10 +1,12 @@
 import { useEditTask } from "@/hooks/task/useEditTask";
 import { useDeleteTask } from "@/hooks/task/useDeleteTask";
 import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
+import { useMarkTasksComplete } from "@/hooks/task/useMarkTasksComplete";
+import { useFirstVerifyTasks, useSecondVerifyTasks } from "@/hooks/task/useVerifyTasks";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
-import { EditOutlined, DeleteOutlined, SearchOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Switch, Modal, message, Popconfirm, Space, Input, Card } from "antd";
+import { EditOutlined, DeleteOutlined, SearchOutlined, CheckOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Modal, message, Popconfirm, Space, Input, Card, notification, Tag } from "antd";
 import { useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
@@ -41,10 +43,13 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
   const { mutate: editTask, isPending: isUpdating } = useEditTask();
   const { mutate: deleteTask } = useDeleteTask();
   const { mutate: bulkUpdateTasks } = useBulkUpdateTasks();
+  const { mutate: markTasksComplete, isPending: isMarkingComplete } = useMarkTasksComplete();
+  const { mutate: firstVerifyTasks, isPending: isFirstVerifying } = useFirstVerifyTasks();
+  const { mutate: secondVerifyTasks, isPending: isSecondVerifying } = useSecondVerifyTasks();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [isDueDateModalVisible, setIsDueDateModalVisible] = useState(false);
   const [isAssigneeModalVisible, setIsAssigneeModalVisible] = useState(false);
-  const { permissions } = useSession(); // Get permissions from session context
+  const { permissions, profile } = useSession(); // Get permissions and profile from session context
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({ 
@@ -71,6 +76,23 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
     }
     return false;
   }, [permissions]);
+
+  // Check if user has permission for first verification
+  const hasFirstVerifyPermission = (profile as any)?.role?.permission?.includes("first-verify-task");
+
+  // Check if user has permission for second verification
+  const hasSecondVerifyPermission = (profile as any)?.role?.permission?.includes("second-verify-task");
+
+  // Check if user is project lead
+  const isProjectLead = useMemo(() => {
+    return (profile as any)?.id === project?.projectLead?.id;
+  }, [(profile as any)?.id, project?.projectLead?.id]);
+
+  // Check if user can mark tasks complete (has permission OR is project lead)
+  const canMarkComplete = useMemo(() => {
+    const hasMarkCompletePermission = (profile as any)?.role?.permission?.includes("mark-complete-task");
+    return hasMarkCompletePermission || isProjectLead;
+  }, [profile, isProjectLead]);
 
   // Memoized data processing for hierarchical structure
   const { processedData, filteredData } = useMemo(() => {
@@ -209,6 +231,31 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
   const enhancedData: ExtendedTaskType[] = useMemo(
     () => filteredData,
     [filteredData]
+  );
+
+  // Get selected tasks data for conditional rendering of bulk actions
+  const selectedTasks = enhancedData.filter((task: ExtendedTaskType) => 
+    selectedRowKeys.includes(task.id)
+  );
+
+  // Check if any selected tasks are open (hide bulk actions for open status)
+  const hasOpenTasks = selectedTasks.some((task: ExtendedTaskType) => 
+    task.status === 'open'
+  );
+
+  // Check if any selected tasks are in_progress (show only mark complete for these)
+  const hasInProgressTasks = selectedTasks.some((task: ExtendedTaskType) => 
+    task.status === 'in_progress'
+  );
+
+  // Check if any selected tasks are done (show verification options for these)
+  const hasDoneTasks = selectedTasks.some((task: ExtendedTaskType) => 
+    task.status === 'done'
+  );
+
+  // Check if current data contains any done tasks (for column visibility)
+  const dataHasDoneTasks = enhancedData.some((task: ExtendedTaskType) => 
+    task.status === 'done'
   );
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
@@ -600,6 +647,418 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
     }
   };
 
+  const handleMarkComplete = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one task to mark as complete");
+      return;
+    }
+
+    const userId = (profile as any)?.id;
+    if (!userId) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    // Check if user can mark complete (has permission OR is project lead)
+    if (!canMarkComplete) {
+      message.error("You don't have permission to mark tasks as complete");
+      return;
+    }
+
+    // Filter selected tasks to only include those that are in_progress
+    const selectedTasks = enhancedData.filter(task => 
+      selectedRowKeys.includes(task.id)
+    );
+
+    const eligibleTasks = selectedTasks.filter(task => 
+      task.status === 'in_progress'
+    );
+
+    if (eligibleTasks.length === 0) {
+      message.warning("No eligible tasks selected. Tasks must be in progress status to be marked complete.");
+      return;
+    }
+
+    if (eligibleTasks.length < selectedTasks.length) {
+      const eligibleCount = eligibleTasks.length;
+      const totalSelected = selectedTasks.length;
+      message.info(`Only ${eligibleCount} out of ${totalSelected} selected tasks are eligible to be marked complete`);
+    }
+
+    markTasksComplete({
+      taskIds: eligibleTasks.map(task => task.id),
+      completedBy: userId
+    }, {
+      onSuccess: (data) => {
+        console.log("Mark complete response:", data);
+        
+        // Handle success cases
+        if (data?.success && data.success.length > 0) {
+          message.success(`${data.success.length} task(s) marked as complete`);
+        }
+        
+        // Handle errors - these are validation errors, not API errors
+        if (data?.errors && data.errors.length > 0) {
+          console.log("Validation errors found:", data.errors);
+          
+          // Show a notification for multiple errors or use individual messages for single errors
+          if (data.errors.length > 1) {
+            notification.error({
+              message: `${data.errors.length} Task(s) Failed to Complete`,
+              description: (
+                <div>
+                  {data.errors.map((error: any, index: number) => (
+                    <div key={index} style={{ marginBottom: '4px' }}>
+                      <strong>{error.taskName}:</strong> {error.error}
+                    </div>
+                  ))}
+                </div>
+              ),
+              duration: 8,
+              placement: 'topRight',
+            });
+          } else {
+            // Single error - use message for simpler display
+            const error = data.errors[0];
+            message.error(`${error.taskName}: ${error.error}`, 6);
+          }
+        }
+        
+        // Show summary if no success but also no errors (edge case)
+        if (!data?.success?.length && !data?.errors?.length) {
+          message.info("No tasks were processed");
+        }
+        
+        setSelectedRowKeys([]);
+        if (onRefresh) onRefresh();
+      },
+      onError: (error: any) => {
+        console.error("Mark complete API error:", error);
+        // This handles actual HTTP/network errors
+        const errorMessage = error.response?.data?.message || "Failed to mark tasks as complete";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleSingleMarkComplete = (task: ExtendedTaskType) => {
+    const userId = (profile as any)?.id;
+    if (!userId) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    if (task.status !== 'in_progress') {
+      message.warning("Only tasks that are in progress can be marked as complete");
+      return;
+    }
+
+    // Check if user can mark complete (has permission OR is project lead)
+    if (!canMarkComplete) {
+      message.error("You don't have permission to mark tasks as complete");
+      return;
+    }
+
+    markTasksComplete({
+      taskIds: [task.id],
+      completedBy: userId
+    }, {
+      onSuccess: (data) => {
+        console.log("Single mark complete response:", data);
+        
+        // Handle success cases
+        if (data?.success && data.success.length > 0) {
+          message.success(`Task "${task.name}" marked as complete`);
+        }
+        
+        // Handle validation errors
+        if (data?.errors && data.errors.length > 0) {
+          console.log("Single task validation errors:", data.errors);
+          const error = data.errors[0];
+          notification.error({
+            message: 'Task Completion Failed',
+            description: `${error.taskName}: ${error.error}`,
+            duration: 6,
+            placement: 'topRight',
+          });
+        }
+        
+        // Show info if no processing occurred
+        if (!data?.success?.length && !data?.errors?.length) {
+          message.info("Task was not processed");
+        }
+        
+        if (onRefresh) onRefresh();
+      },
+      onError: (error: any) => {
+        console.error("Single mark complete API error:", error);
+        const errorMessage = error.response?.data?.message || "Failed to mark task as complete";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleFirstVerify = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one task to verify");
+      return;
+    }
+
+    const userId = (profile as any)?.id;
+    if (!userId) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    const selectedTasks = enhancedData.filter(task => 
+      selectedRowKeys.includes(task.id)
+    );
+
+    const eligibleTasks = selectedTasks.filter(task => 
+      task.status === 'done' && !task.firstVerifiedBy
+    );
+
+    if (eligibleTasks.length === 0) {
+      message.warning("No eligible tasks selected. Tasks must be completed and not already verified.");
+      return;
+    }
+
+    if (eligibleTasks.length < selectedTasks.length) {
+      const eligibleCount = eligibleTasks.length;
+      const totalSelected = selectedTasks.length;
+      message.info(`Only ${eligibleCount} out of ${totalSelected} selected tasks are eligible for first verification`);
+    }
+
+    firstVerifyTasks({
+      taskIds: eligibleTasks.map(task => task.id),
+      firstVerifiedBy: userId
+    }, {
+      onSuccess: (data) => {
+        if (data?.success && data.success.length > 0) {
+          message.success(`${data.success.length} task(s) first verified`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          if (data.errors.length > 1) {
+            notification.error({
+              message: `${data.errors.length} Task(s) Failed First Verification`,
+              description: (
+                <div>
+                  {data.errors.map((error: any, index: number) => (
+                    <div key={index} style={{ marginBottom: '4px' }}>
+                      <strong>{error.taskName}:</strong> {error.error}
+                    </div>
+                  ))}
+                </div>
+              ),
+              duration: 8,
+              placement: 'topRight',
+            });
+          } else {
+            const error = data.errors[0];
+            message.error(`${error.taskName}: ${error.error}`, 6);
+          }
+        }
+        
+        setSelectedRowKeys([]);
+        if (onRefresh) onRefresh();
+      },
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || "Failed to verify tasks";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleSecondVerify = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one task for second verification");
+      return;
+    }
+
+    const userId = (profile as any)?.id;
+    if (!userId) {
+      message.error("Unable to identify current user");
+      return;
+    }
+
+    const selectedTasks = enhancedData.filter(task => 
+      selectedRowKeys.includes(task.id)
+    );
+
+    const eligibleTasks = selectedTasks.filter(task => 
+      task.firstVerifiedBy && !task.secondVerifiedBy
+    );
+
+    if (eligibleTasks.length === 0) {
+      message.warning("No eligible tasks selected. Tasks must be first verified and not already second verified.");
+      return;
+    }
+
+    if (eligibleTasks.length < selectedTasks.length) {
+      const eligibleCount = eligibleTasks.length;
+      const totalSelected = selectedTasks.length;
+      message.info(`Only ${eligibleCount} out of ${totalSelected} selected tasks are eligible for second verification`);
+    }
+
+    secondVerifyTasks({
+      taskIds: eligibleTasks.map(task => task.id),
+      secondVerifiedBy: userId
+    }, {
+      onSuccess: (data) => {
+        if (data?.success && data.success.length > 0) {
+          message.success(`${data.success.length} task(s) second verified`);
+        }
+        
+        if (data?.errors && data.errors.length > 0) {
+          if (data.errors.length > 1) {
+            notification.error({
+              message: `${data.errors.length} Task(s) Failed Second Verification`,
+              description: (
+                <div>
+                  {data.errors.map((error: any, index: number) => (
+                    <div key={index} style={{ marginBottom: '4px' }}>
+                      <strong>{error.taskName}:</strong> {error.error}
+                    </div>
+                  ))}
+                </div>
+              ),
+              duration: 8,
+              placement: 'topRight',
+            });
+          } else {
+            const error = data.errors[0];
+            message.error(`${error.taskName}: ${error.error}`, 6);
+          }
+        }
+        
+        setSelectedRowKeys([]);
+        if (onRefresh) onRefresh();
+      },
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || "Failed to verify tasks";
+        message.error(errorMessage);
+      },
+    });
+  };
+
+  const handleSingleFirstVerify = (task: ExtendedTaskType) => {
+    const userId = (profile as any)?.id;
+    if (!task.id || !userId) {
+      message.error("Missing task ID or user ID");
+      return;
+    }
+
+    if (task.status !== 'done') {
+      message.warning("Only completed tasks can be first verified");
+      return;
+    }
+
+    if (task.firstVerifiedBy) {
+      message.warning("Task is already first verified");
+      return;
+    }
+
+    if (!hasFirstVerifyPermission) {
+      message.error("You don't have permission to verify tasks");
+      return;
+    }
+
+    firstVerifyTasks({
+      taskIds: [task.id],
+      firstVerifiedBy: userId
+    }, {
+      onSuccess: (data: any) => {
+        console.log("First verify response:", data);
+        
+        if (data && data.success && data.success.length > 0) {
+          message.success(`Task first verified successfully`);
+        }
+        
+        if (data && data.errors && data.errors.length > 0) {
+          data.errors.forEach((error: any) => {
+            notification.error({
+              message: "First Verification Failed",
+              description: error.error,
+              duration: 5
+            });
+          });
+        }
+      },
+      onError: (error: any) => {
+        console.error("First verify API error:", error);
+        
+        const errorMessage = error.response?.data?.message || "Failed to first verify task";
+        notification.error({
+          message: "First Verification Failed",
+          description: errorMessage,
+          duration: 5
+        });
+      }
+    });
+  };
+
+  const handleSingleSecondVerify = (task: ExtendedTaskType) => {
+    const userId = (profile as any)?.id;
+    if (!task.id || !userId) {
+      message.error("Missing task ID or user ID");
+      return;
+    }
+
+    if (task.status !== 'done') {
+      message.warning("Only completed tasks can be second verified");
+      return;
+    }
+
+    if (!task.firstVerifiedBy) {
+      message.warning("Task must be first verified before second verification");
+      return;
+    }
+
+    if (task.secondVerifiedBy) {
+      message.warning("Task is already second verified");
+      return;
+    }
+
+    if (!hasSecondVerifyPermission) {
+      message.error("You don't have permission to second verify tasks");
+      return;
+    }
+
+    secondVerifyTasks({
+      taskIds: [task.id],
+      secondVerifiedBy: userId
+    }, {
+      onSuccess: (data: any) => {
+        console.log("Second verify response:", data);
+        
+        if (data && data.success && data.success.length > 0) {
+          message.success(`Task second verified successfully`);
+        }
+        
+        if (data && data.errors && data.errors.length > 0) {
+          data.errors.forEach((error: any) => {
+            notification.error({
+              message: "Second Verification Failed",
+              description: error.error,
+              duration: 5
+            });
+          });
+        }
+      },
+      onError: (error: any) => {
+        console.error("Second verify API error:", error);
+        
+        const errorMessage = error.response?.data?.message || "Failed to second verify task";
+        notification.error({
+          message: "Second Verification Failed",
+          description: errorMessage,
+          duration: 5
+        });
+      }
+    });
+  };
+
   const columns = useMemo(
     () => [
       { 
@@ -797,56 +1256,136 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
           );
         },
       },
-      {
-        title: "1st Verification",
-        dataIndex: "first",
-        key: "first",
-        width: 120,
-        editable: true,
-        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
-          const aValue = a.first ? 1 : 0;
-          const bValue = b.first ? 1 : 0;
-          return aValue - bValue;
+      // Conditionally include verification columns only when data has done tasks
+      ...(dataHasDoneTasks ? [
+        // First Verification column  
+        {
+          title: "1st Verify",
+          key: "firstVerify",
+          render: (_: any, record: ExtendedTaskType) => {
+            // Don't show verification for TODO (open) or Doing (in_progress) status
+            if (record.status === 'open' || record.status === 'in_progress') {
+              return null;
+            }
+            
+            const canFirstVerify = record.status === 'done' && !record.firstVerifiedBy;
+            const isFirstVerified = record.firstVerifiedBy;
+            const isSecondVerified = record.secondVerifiedBy;
+            
+            if (isSecondVerified) {
+              return (
+                <Tooltip title={`First verified by ${record.firstVerifiedBy || 'Unknown'} at ${record.firstVerifiedAt ? new Date(record.firstVerifiedAt).toLocaleString() : 'Unknown time'}, Second verified by ${record.secondVerifiedBy || 'Unknown'} at ${record.secondVerifiedAt ? new Date(record.secondVerifiedAt).toLocaleString() : 'Unknown time'}`}>
+                  <Tag color="blue" style={{ fontSize: '11px' }}>
+                    ✓✓ 2nd Done
+                  </Tag>
+                </Tooltip>
+              );
+            }
+            
+            if (isFirstVerified) {
+              return (
+                <Tooltip title={`First verified by ${record.firstVerifiedBy || 'Unknown'} at ${record.firstVerifiedAt ? new Date(record.firstVerifiedAt).toLocaleString() : 'Unknown time'}`}>
+                  <Tag color="blue" style={{ fontSize: '11px' }}>
+                    ✓ 1st Done
+                  </Tag>
+                </Tooltip>
+              );
+            }
+            
+            if (!canFirstVerify) {
+              return (
+                <Tag color="default" style={{ fontSize: '11px' }}>
+                  Not Ready
+                </Tag>
+              );
+            }
+
+            // Only show verify button for users with permission
+            if (!hasFirstVerifyPermission) {
+              return (
+                <Tag color="orange" style={{ fontSize: '11px' }}>
+                  No Permission
+                </Tag>
+              );
+            }
+
+            return (
+              <Button
+                type="link"
+                size="small"
+                onClick={() => handleSingleFirstVerify(record)}
+                disabled={isFirstVerifying}
+                style={{ 
+                  color: '#1890ff', 
+                  padding: '0 4px',
+                  fontSize: '12px',
+                  height: 'auto'
+                }}
+              >
+                ✓ 1st Verify
+              </Button>
+            );
+          },
         },
-        sortOrder: sortedInfo.columnKey === 'first' && sortedInfo.order,
-        render: (firstVerification: boolean | undefined, record: ExtendedTaskType) => {
-          const editable = isEditing(record);
-          return editable ? (
-            <Form.Item name="first" style={{ margin: 0 }} valuePropName="checked">
-              <Switch />
-            </Form.Item>
-          ) : (
-            <span style={{ color: firstVerification ? "#52c41a" : "#ff4d4f" }}>
-              {firstVerification ? "✓" : "✗"}
-            </span>
-          );
-        },
-      },
-      {
-        title: "2nd Verification",
-        dataIndex: "last",
-        key: "last",
-        width: 120,
-        editable: true,
-        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
-          const aValue = a.last ? 1 : 0;
-          const bValue = b.last ? 1 : 0;
-          return aValue - bValue;
-        },
-        sortOrder: sortedInfo.columnKey === 'last' && sortedInfo.order,
-        render: (secondVerification: boolean | undefined, record: ExtendedTaskType) => {
-          const editable = isEditing(record);
-          return editable ? (
-            <Form.Item name="last" style={{ margin: 0 }} valuePropName="checked">
-              <Switch />
-            </Form.Item>
-          ) : (
-            <span style={{ color: secondVerification ? "#52c41a" : "#ff4d4f" }}>
-              {secondVerification ? "✓" : "✗"}
-            </span>
-          );
-        },
-      },
+        // Second Verification column
+        {
+          title: "2nd Verify",
+          key: "secondVerify",
+          render: (_: any, record: ExtendedTaskType) => {
+            // Don't show verification for TODO (open) or Doing (in_progress) status
+            if (record.status === 'open' || record.status === 'in_progress') {
+              return null;
+            }
+            
+            const canSecondVerify = record.firstVerifiedBy && !record.secondVerifiedBy;
+            const isSecondVerified = record.secondVerifiedBy;
+            
+            if (isSecondVerified) {
+              return (
+                <Tooltip title={`Second verified by ${record.secondVerifiedBy || 'Unknown'} at ${record.secondVerifiedAt ? new Date(record.secondVerifiedAt).toLocaleString() : 'Unknown time'}`}>
+                  <Tag color="green" style={{ fontSize: '11px' }}>
+                    ✓ 2nd Done
+                  </Tag>
+                </Tooltip>
+              );
+            }
+            
+            if (!canSecondVerify) {
+              return (
+                <Tag color="default" style={{ fontSize: '11px' }}>
+                  Not Ready
+                </Tag>
+              );
+            }
+
+            // Only show verify button for users with permission
+            if (!hasSecondVerifyPermission) {
+              return (
+                <Tag color="orange" style={{ fontSize: '11px' }}>
+                  No Permission
+                </Tag>
+              );
+            }
+
+            return (
+              <Button
+                type="link"
+                size="small"
+                onClick={() => handleSingleSecondVerify(record)}
+                disabled={isSecondVerifying}
+                style={{ 
+                  color: '#722ed1', 
+                  padding: '0 4px',
+                  fontSize: '12px',
+                  height: 'auto'
+                }}
+              >
+                ✓ 2nd Verify
+              </Button>
+            );
+          },
+        }
+      ] : []),
       {
         title: "",
         key: "action",
@@ -875,6 +1414,23 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
                 onClick={() => handleEditClick(record)}
                 icon={<EditOutlined />}
               />
+              {record.status === 'in_progress' && canMarkComplete && (
+                <Popconfirm
+                  title="Mark Task Complete"
+                  description="Are you sure you want to mark this task as complete? This action will validate worklog and subtask requirements."
+                  onConfirm={() => handleSingleMarkComplete(record)}
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ style: { backgroundColor: "#52c41a", borderColor: "#52c41a" } }}
+                >
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+                    loading={isMarkingComplete}
+                  />
+                </Popconfirm>
+              )}
               {canDeleteTask && (
                 <Popconfirm
                   title="Delete Task"
@@ -896,7 +1452,7 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
         },
       },
     ],
-    [editingKey, project.users, project.id, isUpdating, canDeleteTask, sortedInfo, searchText, searchedColumn]
+    [editingKey, project.users, project.id, isUpdating, canDeleteTask, sortedInfo, searchText, searchedColumn, isFirstVerifying, isSecondVerifying, isMarkingComplete, globalSearchText, dataHasDoneTasks, hasFirstVerifyPermission, hasSecondVerifyPermission, canMarkComplete]
   );
 
   const mergedColumns = columns.map(col => {
@@ -984,6 +1540,45 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             >
               Assign
             </Button>
+            
+            {/* Show Mark Complete only for in_progress tasks and only when no open tasks are selected */}
+            {hasInProgressTasks && !hasOpenTasks && canMarkComplete && (
+              <Button
+                type="primary"
+                onClick={handleMarkComplete}
+                disabled={selectedRowKeys.length === 0}
+                loading={isMarkingComplete}
+                icon={<CheckOutlined />}
+                style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+              >
+                Mark Complete
+              </Button>
+            )}
+            
+            {/* Show verification options only for done tasks and only when no open tasks are selected */}
+            {hasDoneTasks && !hasOpenTasks && (
+              <>
+                <Button
+                  onClick={handleFirstVerify}
+                  disabled={selectedRowKeys.length === 0}
+                  loading={isFirstVerifying}
+                  icon={<CheckCircleOutlined />}
+                  style={{ backgroundColor: "#1890ff", borderColor: "#1890ff", color: "white" }}
+                >
+                  First Verify
+                </Button>
+                <Button
+                  onClick={handleSecondVerify}
+                  disabled={selectedRowKeys.length === 0}
+                  loading={isSecondVerifying}
+                  icon={<CheckCircleOutlined />}
+                  style={{ backgroundColor: "#722ed1", borderColor: "#722ed1", color: "white" }}
+                >
+                  Second Verify
+                </Button>
+              </>
+            )}
+            
             <Input.Search
               placeholder="🔍 Search all fields (name, type, group, status)..."
               allowClear
