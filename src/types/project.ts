@@ -23,6 +23,7 @@ export interface ProjectType {
     endingDateNepali?: string; // YYYY-MM-DD in BS
     startingDateFormatted?: string; // Human-readable nepali date
     endingDateFormatted?: string; // Human-readable nepali date
+    allowSubtaskWorklog?: boolean;
     projectLead?: UserType;
     projectManager?: UserType;
     users?: UserType[];

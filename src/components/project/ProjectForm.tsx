@@ -2,7 +2,7 @@ import { useCreateProject } from "@/hooks/project/useCreateProject";
 import { useEditProject } from "@/hooks/project/useEditProject";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
-import { Button, Col, Divider, Form, Row, Select } from "antd";
+import { Button, Col, Divider, Form, Row, Select, Switch } from "antd";
 import { useEffect, useState } from "react";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
@@ -334,6 +334,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           projectManager: editProjectData.projectManager?.id,
           client: (editProjectData as any).client?.id || (editProjectData as any).customer?.id || (editProjectData as any).client || (editProjectData as any).customer,
           billing: (editProjectData as any).billing?.id || (editProjectData as any).billing,
+          allowSubtaskWorklog: editProjectData.allowSubtaskWorklog !== undefined ? editProjectData.allowSubtaskWorklog : true,
           natureOfWork: typeof editProjectData.natureOfWork === "string" ? editProjectData.natureOfWork : (editProjectData.natureOfWork as any)?.id,
           
           // Set both date formats to ensure synchronization
@@ -395,7 +396,8 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               startingDateEnglish: adDate,
               endingDateNepali: todayNepali,
               endingDate: adDate,
-              endingDateEnglish: adDate
+              endingDateEnglish: adDate,
+              allowSubtaskWorklog: true
             });
             console.log('Set default dates for new project:', { todayNepali, adDate });
             
@@ -444,6 +446,20 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             rules={[{ required: false, message: "Please select the billing entity!" }]}
             changeHandler={handleFieldChange}
           />
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label="Allow Subtask Worklog"
+            name="allowSubtaskWorklog"
+            valuePropName="checked"
+            initialValue={true}
+          >
+            <Switch 
+              checkedChildren="Yes" 
+              unCheckedChildren="No" 
+              defaultChecked={true}
+            />
+          </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item

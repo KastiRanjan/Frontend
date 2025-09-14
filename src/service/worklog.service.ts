@@ -33,6 +33,11 @@ export const fetchWorklogById = async ({ id }: { id: string | undefined }) => {
   return response.data;
 };
 
+export const checkWorklogAllowed = async ({ taskId }: { taskId: string }) => {
+  const response = await axios.get(`${backendURI}/worklogs/task/${taskId}/allowed`);
+  return response.data;
+};
+
 export const createWorklog = async (payload: any) => {
   const response = await axios.post(`${backendURI}/worklogs`, payload);
   return response.data;

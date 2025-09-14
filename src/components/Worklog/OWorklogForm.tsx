@@ -192,7 +192,13 @@ const OWorklogForm = () => {
     try {
       // Import the service function directly
       const { fetchProjectTasks } = await import("@/service/task.service");
-      const tasksData = await fetchProjectTasks({ id: projectId });
+      const { fetchProject } = await import("@/service/project.service");
+      
+      // Fetch both tasks and project details
+      const [tasksData, projectData] = await Promise.all([
+        fetchProjectTasks({ id: projectId }),
+        fetchProject({ id: projectId })
+      ]);
       
       const userId = (user as any)?.id;
       let tasksList = tasksData || [];
@@ -204,6 +210,20 @@ const OWorklogForm = () => {
           assignee?.id?.toString() === userId?.toString()
         );
       });
+      
+      // Filter tasks based on project's allowSubtaskWorklog setting
+      if (projectData && !projectData.allowSubtaskWorklog) {
+        // If project doesn't allow subtask worklog, only show main tasks (stories) regardless of whether they have subtasks
+        tasksList = tasksList.filter((task: any) => task.taskType === 'story');
+      } else {
+        // If project allows subtask worklog, show all tasks except parent tasks that have subtasks
+        tasksList = tasksList.filter((task: any) => {
+          if (task.taskType === 'story' && task.subTasks && task.subTasks.length > 0) {
+            return false; // Don't show parent tasks that have subtasks
+          }
+          return true;
+        });
+      }
       
       setFilteredTasks(prev => ({
         ...prev,
@@ -377,12 +397,7 @@ const OWorklogForm = () => {
                             loading={loadingTasks[field.name]}
                             options={filteredTasks[field.name]
                               ?.map((currentTask: TaskTemplateType) => {
-                                // If it's a story type (parent task) with subtasks, don't allow selection
-                                if (currentTask.taskType === 'story' && currentTask.subTasks && currentTask.subTasks.length > 0) {
-                                  return null; // Don't allow parent tasks with subtasks to be selected
-                                }
-                                
-                                // If it's a story type without subtasks, show it normally
+                                // For stories without subtasks, show normally
                                 if (currentTask.taskType === 'story') {
                                   return {
                                     label: currentTask.name,
@@ -390,9 +405,8 @@ const OWorklogForm = () => {
                                   };
                                 }
                                 
-                                // If it's a subtask (task type), find its parent and format accordingly
+                                // For subtasks, show with parent name
                                 if (currentTask.taskType === 'task') {
-                                  // Find the parent task from the filtered tasks list
                                   const parentTask = filteredTasks[field.name]?.find((t: TaskTemplateType) => 
                                     t.subTasks && t.subTasks.some((sub: TaskTemplateType) => sub.id === currentTask.id)
                                   );
@@ -404,13 +418,12 @@ const OWorklogForm = () => {
                                   };
                                 }
                                 
-                                // Fallback for any other cases
+                                // Fallback
                                 return {
                                   label: currentTask.name,
                                   value: currentTask.id,
                                 };
                               })
-                              .filter((option): option is { label: string; value: string | number } => option !== null) // Remove null entries with type guard
                             }
                             disabled={loadingTasks[field.name] || !filteredTasks[field.name]?.length}
                             showSearch

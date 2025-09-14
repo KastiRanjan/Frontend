@@ -1,17 +1,42 @@
 import { useProjectById } from "@/hooks/project/useProjectById";
 import {  useTasks } from "@/hooks/task/useTask";
 import { useCreateWorklog } from "@/hooks/worklog/useCreateWorklog";
+import { useWorklogAllowed } from "@/hooks/worklog/useWorklogAllowed";
+import { useFilteredTasksForWorklog } from "@/hooks/worklog/useFilteredTasksForWorklog";
 import { TaskTemplateType } from "@/types/taskTemplate";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Col, DatePicker, Form, Input, Row, Select, message, Card, Modal } from "antd";
+import { Button, Col, DatePicker, Form, Input, Row, Select, message, Card, Modal, Alert } from "antd";
 import { useParams } from "react-router-dom";
 import moment from "moment";
+import { useState, useEffect } from "react";
+
+// Component to show worklog permission status for selected task
+const TaskWorklogStatus = ({ taskId }: { taskId?: string }) => {
+  const { data: worklogAllowed, isLoading } = useWorklogAllowed(taskId);
+  
+  if (!taskId || isLoading) return null;
+  
+  if (worklogAllowed && !worklogAllowed.allowed) {
+    return (
+      <Alert
+        type="warning"
+        message="Worklog Not Allowed"
+        description={worklogAllowed.reason}
+        style={{ marginTop: 8, marginBottom: 8 }}
+        showIcon
+      />
+    );
+  }
+  
+  return null;
+};
 
 const WorklogForm = () => {
   const { id } = useParams();
   const { data: task } = useTasks({ status: "active" });
   const { data: project } = useProjectById({ id });
   const { mutate: createWorklog } = useCreateWorklog();
+  const filteredTaskOptions = useFilteredTasksForWorklog();
 
   // Function to check for overlapping time entries
   const checkForOverlappingEntries = (entries: any[]): { hasOverlap: boolean, overlapDetails: string[] } => {
@@ -71,11 +96,56 @@ const WorklogForm = () => {
     };
   };
 
-  const handleFinish = (values: any) => {
+  const handleFinish = async (values: any) => {
     console.log(values.timeEntries);
     
     // Check for overlapping time entries
     const { hasOverlap, overlapDetails } = checkForOverlappingEntries(values.timeEntries);
+    
+    // Check worklog permissions for all tasks
+    const worklogPermissionChecks = await Promise.all(
+      values.timeEntries.map(async (entry: any) => {
+        if (!entry.taskId) return { allowed: true, taskId: entry.taskId };
+        
+        try {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/worklogs/task/${entry.taskId}/allowed`, {
+            credentials: 'include'
+          });
+          const permissionData = await response.json();
+          return { 
+            allowed: permissionData.allowed, 
+            reason: permissionData.reason,
+            taskId: entry.taskId,
+            taskName: task?.find((t: TaskTemplateType) => t.id === entry.taskId)?.name || 'Unknown Task'
+          };
+        } catch (error) {
+          console.error('Error checking worklog permission:', error);
+          return { allowed: false, reason: 'Failed to check permissions', taskId: entry.taskId };
+        }
+      })
+    );
+    
+    const disallowedTasks = worklogPermissionChecks.filter(check => !check.allowed);
+    
+    if (disallowedTasks.length > 0) {
+      Modal.error({
+        title: 'Worklog Not Allowed',
+        content: (
+          <div>
+            <p>Worklog is not allowed for the following tasks:</p>
+            <ul>
+              {disallowedTasks.map((task, index) => (
+                <li key={index} style={{ color: 'red' }}>
+                  <strong>{task.taskName}</strong>: {task.reason}
+                </li>
+              ))}
+            </ul>
+            <p>Please remove these tasks from your worklog entries or select different tasks.</p>
+          </div>
+        ),
+      });
+      return;
+    }
     
     if (hasOverlap) {
       // Display modal warning with details of overlaps
@@ -178,45 +248,15 @@ const WorklogForm = () => {
                           filterOption={(input, option: any) =>
                             (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                           }
-                          options={task
-                            ?.map((currentTask: TaskTemplateType) => {
-                              // If it's a story type (parent task) with subtasks, don't allow selection
-                              if (currentTask.taskType === 'story' && currentTask.subTasks && currentTask.subTasks.length > 0) {
-                                return null; // Don't allow parent tasks with subtasks to be selected
-                              }
-                              
-                              // If it's a story type without subtasks, show it normally
-                              if (currentTask.taskType === 'story') {
-                                return {
-                                  label: currentTask.name,
-                                  value: currentTask.id,
-                                };
-                              }
-                              
-                              // If it's a subtask (task type), find its parent and format accordingly
-                              if (currentTask.taskType === 'task') {
-                                // Find the parent task from the task list
-                                const parentTask = task?.find((t: TaskTemplateType) => 
-                                  t.subTasks && t.subTasks.some((sub: TaskTemplateType) => sub.id === currentTask.id)
-                                );
-                                
-                                const parentName = currentTask.parentTask?.name || parentTask?.name || 'Unknown Parent';
-                                return {
-                                  label: `${parentName} (${currentTask.name})`,
-                                  value: currentTask.id,
-                                };
-                              }
-                              
-                              // Fallback for any other cases
-                              return {
-                                label: currentTask.name,
-                                value: currentTask.id,
-                              };
-                            })
-                            .filter((option: any): option is { label: string; value: string | number } => option !== null) // Remove null entries with type guard
-                          }
+                          options={filteredTaskOptions}
                           style={{ width: '100%' }}
                         />
+                      </Form.Item>
+                      <Form.Item dependencies={[['timeEntries', field.name, 'taskId']]} noStyle>
+                        {({ getFieldValue }) => {
+                          const selectedTaskId = getFieldValue(['timeEntries', field.name, 'taskId']);
+                          return <TaskWorklogStatus taskId={selectedTaskId} />;
+                        }}
                       </Form.Item>
                     </Col>
                     
