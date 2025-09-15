@@ -2,6 +2,7 @@ import AttendenceTable from "@/components/Attendence/AttendenceTable";
 import PageTitle from "@/components/PageTitle";
 import { useSession } from "@/context/SessionContext";
 import { useUser } from "@/hooks/user/useUser";
+import { useDateWiseAllUsersAttendence } from "@/hooks/attendence/useDateWiseAllUsersAttendence";
 import "./Attendence.css";
 import { 
     Card, 
@@ -10,12 +11,14 @@ import {
     Typography, 
     Badge,
     Button,
-    Alert
+    Alert,
+    DatePicker
 } from "antd";
 import { 
     ClockCircleOutlined
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
+import moment from "moment";
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -23,6 +26,7 @@ const { Title } = Typography;
 const Attendence = () => {
     const { profile } = useSession();
     const [personalViewUserId, setPersonalViewUserId] = useState<string>(""); // For the personal section
+    const [selectedDate, setSelectedDate] = useState<string>(""); // For date-wise view
     
     // Fetch users for the dropdown (only if super user)
     const { data: usersData } = useUser({
@@ -31,6 +35,12 @@ const Attendence = () => {
         page: 1,
         keywords: ""
     });
+
+    // Fetch date-wise attendance data
+    const { data: dateWiseAttendance, isPending: dateWisePending } = useDateWiseAllUsersAttendence(
+        selectedDate,
+        !!selectedDate && personalViewUserId === "date-wise"
+    );
 
     // Get permissions and role info
     const permissions = profile?.role?.permission || [];
@@ -72,8 +82,14 @@ const Attendence = () => {
     const getSelectedUserName = (userId: string) => {
         if (!userId) return null;
         if (userId === "all-today") return "All Users Today";
+        if (userId === "date-wise") return `All Users - ${selectedDate || "Select Date"}`;
         const user = usersData?.results?.find((u: any) => u.id === userId);
         return user ? user.name : "Unknown User";
+    };
+
+    const handleDateChange = (date: any, dateString: string | string[]) => {
+        const dateStr = Array.isArray(dateString) ? dateString[0] : dateString;
+        setSelectedDate(dateStr || "");
     };
 
     return (
@@ -105,16 +121,14 @@ const Attendence = () => {
                                     onChange={setPersonalViewUserId}
                                     allowClear
                                     size="small"
-                                    showSearch
-                                    filterOption={(input, option) =>
-                                        (option?.children as unknown as string)
-                                            ?.toLowerCase()
-                                            ?.includes(input.toLowerCase())
-                                    }
+                                    showSearch={false}
                                 >
                                     {/* Special option for all users today */}
                                     <Option key="all-today" value="all-today">
                                         📅 All Users Today
+                                    </Option>
+                                    <Option key="date-wise" value="date-wise">
+                                        📅 All Users - Choose Date
                                     </Option>
                                     <Option key="divider" disabled style={{ borderBottom: '1px solid #d9d9d9' }}>
                                         ──── Individual Users ────
@@ -153,6 +167,36 @@ const Attendence = () => {
                                 style={{ marginBottom: 16 }}
                             />
                             <AttendenceTable viewType="today-all" />
+                        </Space>
+                    ) : personalViewUserId === "date-wise" && isSuperUser ? (
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            <Alert
+                                message="Choose a date to view all users attendance"
+                                type="info"
+                                showIcon
+                                action={
+                                    <Button size="small" type="link" onClick={handleClearPersonalSelection}>
+                                        Back to My Attendance
+                                    </Button>
+                                }
+                                style={{ marginBottom: 16 }}
+                            />
+                            <Space style={{ marginBottom: 16 }}>
+                                <DatePicker 
+                                    onChange={handleDateChange}
+                                    placeholder="Select date"
+                                    format="YYYY-MM-DD"
+                                    allowClear
+                                />
+                            </Space>
+                            {selectedDate && (
+                                <AttendenceTable 
+                                    viewType="date-wise" 
+                                    selectedDate={selectedDate}
+                                    dateWiseData={dateWiseAttendance}
+                                    isPending={dateWisePending}
+                                />
+                            )}
                         </Space>
                     ) : isSuperUser && personalViewUserId ? (
                         <Space direction="vertical" style={{ width: '100%' }}>

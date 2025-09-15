@@ -17,6 +17,11 @@ export const fetchTodayAllUsersAttendences = async () => {
   const response = await axios.get(`${backendURI}/attendance/today-all-users`);
   return response.data;
 };
+
+export const fetchDateWiseAllUsersAttendences = async (date: string) => {
+  const response = await axios.get(`${backendURI}/attendance/date-wise-all-users?date=${date}`);
+  return response.data;
+};
 export const fetchAttendenceById = async ({ id }: { id: string }) => {
   const response = await axios.get(`${backendURI}/attendance/user/${id}`);
 

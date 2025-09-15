@@ -9,13 +9,19 @@ import { useState, useRef } from "react";
 import Highlighter from 'react-highlight-words';
 
 interface AttendenceTableProps {
-  viewType?: 'my' | 'all-users' | 'today-all' | 'by-user';
+  viewType?: 'my' | 'all-users' | 'today-all' | 'by-user' | 'date-wise';
   selectedUserId?: string;
+  selectedDate?: string;
+  dateWiseData?: any[];
+  isPending?: boolean;
 }
 
 const AttendenceTable = ({ 
   viewType = 'my', 
-  selectedUserId 
+  selectedUserId,
+  selectedDate,
+  dateWiseData,
+  isPending: externalPending
 }: AttendenceTableProps) => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
@@ -44,6 +50,8 @@ const AttendenceTable = ({
         return { data: allUsersAttendence, loading: allUsersAttendencePending };
       case 'today-all':
         return { data: todayAllUsersAttendence, loading: todayAllUsersAttendencePending };
+      case 'date-wise':
+        return { data: dateWiseData, loading: externalPending || false };
       case 'by-user':
         return { data: userAttendence, loading: userAttendencePending };
       case 'my':
@@ -159,8 +167,8 @@ const AttendenceTable = ({
   });
 
   const columns = [
-    // Conditionally show user column for all-users and today-all views
-    ...(viewType === 'all-users' || viewType === 'today-all' ? [{
+    // Conditionally show user column for all-users, today-all, and date-wise views
+    ...(viewType === 'all-users' || viewType === 'today-all' || viewType === 'date-wise' ? [{
       title: "User",
       dataIndex: ["user", "name"],
       key: "userName",
@@ -227,24 +235,52 @@ const AttendenceTable = ({
       sortOrder: sortedInfo.columnKey === 'duration' && sortedInfo.order,
     },
     {
-      title: "Location",
-      dataIndex: "landmarkName",
-      key: "landmarkName",
-      ...getColumnSearchProps('landmarkName', 'Location'),
-      render: (text: string, record: any) => text || `${record.latitude}, ${record.longitude}`,
+      title: "Worklogs",
+      key: "worklogs",
+      render: (_: any, record: any) => {
+        const worklogs = record.worklogs;
+        if (!worklogs) return "No data";
+        
+        return (
+          <div style={{ fontSize: '12px' }}>
+            <div style={{ color: '#1890ff' }}>
+              📋 Requested: {worklogs.requested?.hours || '0h 0m'}
+            </div>
+            <div style={{ color: '#52c41a' }}>
+              ✅ Approved: {worklogs.approved?.hours || '0h 0m'}
+            </div>
+            <div style={{ color: '#ff4d4f' }}>
+              ❌ Rejected: {worklogs.rejected?.hours || '0h 0m'}
+            </div>
+          </div>
+        );
+      },
     },
     {
-      title: "Action",
-      key: "action",
-      render: (_: any, record: any) => (
-        <Tooltip title="View on Map">
-          <Button
-            type="primary"
-            icon={<EnvironmentOutlined />}
-            onClick={() => openLocationInMap(record.latitude, record.longitude)}
-          />
-        </Tooltip>
-      ),
+      title: "Location",
+      key: "location",
+      render: (_: any, record: any) => {
+        // Check if we have valid latitude and longitude
+        const hasLocation = record.latitude && record.longitude && 
+                           record.latitude !== 'null' && record.longitude !== 'null';
+        
+        if (!hasLocation) {
+          return <span style={{ color: '#999' }}>N/A</span>;
+        }
+
+        return (
+          <Tooltip title="View Clock-in Location on Map">
+            <Button
+              type="link"
+              icon={<EnvironmentOutlined />}
+              onClick={() => openLocationInMap(record.latitude, record.longitude)}
+              size="small"
+            >
+              Show on Map
+            </Button>
+          </Tooltip>
+        );
+      },
     },
   ];
 
@@ -256,20 +292,13 @@ const AttendenceTable = ({
     landmarkName: item.landmarkName || getLandmarkName(item.latitude, item.longitude),
   }));
 
-  // Expanded row render to show clock-out history
+  // Expanded row render to show clock-out history and worklog details
   const expandedRowRender = (record: any) => {
     const historyColumns = [
       {
         title: "Clock Out",
         dataIndex: "clockOut",
         key: "clockOut",
-      },
-      {
-        title: "Location",
-        dataIndex: "landmarkName",
-        key: "landmarkName",
-        render: (text: string, historyItem: any) => 
-          text || `${historyItem.latitude}, ${historyItem.longitude}`,
       },
       {
         title: "Remark",
@@ -280,15 +309,78 @@ const AttendenceTable = ({
       {
         title: "Action",
         key: "action",
-        render: (_: any, historyItem: any) => (
-          <Tooltip title="View on Map">
-            <Button
-              type="primary"
-              icon={<EnvironmentOutlined />}
-              onClick={() => openLocationInMap(historyItem.latitude, historyItem.longitude)}
-            />
-          </Tooltip>
-        ),
+        render: (_: any, historyItem: any) => {
+          // Check if we have valid latitude and longitude
+          const hasLocation = historyItem.latitude && historyItem.longitude && 
+                             historyItem.latitude !== 'null' && historyItem.longitude !== 'null';
+          
+          if (!hasLocation) {
+            return <span style={{ color: '#999' }}>No location</span>;
+          }
+
+          return (
+            <Tooltip title="View Clock-out Location on Map">
+              <Button
+                type="primary"
+                icon={<EnvironmentOutlined />}
+                onClick={() => openLocationInMap(historyItem.latitude, historyItem.longitude)}
+                size="small"
+              >
+                Show on Map
+              </Button>
+            </Tooltip>
+          );
+        },
+      },
+    ];
+
+    const worklogColumns = [
+      {
+        title: "Task",
+        dataIndex: ["task", "name"],
+        key: "taskName",
+        render: (_: string, worklog: any) => worklog.task?.name || "N/A",
+      },
+      {
+        title: "Start Time",
+        dataIndex: "startTime",
+        key: "startTime",
+        render: (text: string) => moment(text).format("HH:mm:ss a"),
+      },
+      {
+        title: "End Time",
+        dataIndex: "endTime",
+        key: "endTime",
+        render: (text: string) => moment(text).format("HH:mm:ss a"),
+      },
+      {
+        title: "Duration",
+        key: "worklogDuration",
+        render: (_: any, worklog: any) => {
+          const start = moment(worklog.startTime);
+          const end = moment(worklog.endTime);
+          const duration = moment.duration(end.diff(start));
+          const hours = Math.floor(duration.asHours());
+          const minutes = duration.minutes();
+          return `${hours}h ${minutes}m`;
+        },
+      },
+      {
+        title: "Status",
+        dataIndex: "status",
+        key: "status",
+        render: (status: string) => {
+          const colors: { [key: string]: string } = {
+            requested: '#1890ff',
+            approved: '#52c41a',
+            rejected: '#ff4d4f'
+          };
+          return (
+            <span style={{ color: colors[status] || '#666' }}>
+              {status?.charAt(0).toUpperCase() + status?.slice(1) || 'N/A'}
+            </span>
+          );
+        },
       },
     ];
 
@@ -298,14 +390,47 @@ const AttendenceTable = ({
       landmarkName: item.landmarkName || getLandmarkName(item.latitude, item.longitude),
     }));
 
+    // Get all worklogs for display
+    const allWorklogs = record.worklogs ? [
+      ...(record.worklogs.requested?.items || []),
+      ...(record.worklogs.approved?.items || []),
+      ...(record.worklogs.rejected?.items || [])
+    ] : [];
+
     return (
-      <Table
-        columns={historyColumns}
-        dataSource={updatedHistory}
-        pagination={false}
-        rowKey="id"
-        size="small"
-      />
+      <div>
+        {updatedHistory && updatedHistory.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <h4>Clock-out History</h4>
+            <Table
+              columns={historyColumns}
+              dataSource={updatedHistory}
+              pagination={false}
+              rowKey="id"
+              size="small"
+            />
+          </div>
+        )}
+        
+        {allWorklogs && allWorklogs.length > 0 && (
+          <div>
+            <h4>Worklog Details</h4>
+            <Table
+              columns={worklogColumns}
+              dataSource={allWorklogs}
+              pagination={false}
+              rowKey="id"
+              size="small"
+            />
+          </div>
+        )}
+        
+        {(!updatedHistory || updatedHistory.length === 0) && (!allWorklogs || allWorklogs.length === 0) && (
+          <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+            No additional details available
+          </div>
+        )}
+      </div>
     );
   };
 
