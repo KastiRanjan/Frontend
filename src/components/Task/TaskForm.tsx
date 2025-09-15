@@ -20,15 +20,15 @@ interface TaskFormProps {
 }
 
 const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSuccess }: TaskFormProps) => {
+
+  const [taskType, setTaskType] = useState<string>(editTaskData?.taskType || "story");
   const [form] = Form.useForm();
   const { mutate: createTask, isPending: isCreating } = useCreateTask();
   const { mutate: updateTask, isPending: isUpdating } = useEditTask();
   const { data: group } = useTaskGroup();
   const { id: paramId } = useParams();
   const { data: projects } = useProject({ status: "active" });
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
-    editTaskData?.groupId || null
-  );
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(editTaskData?.groupId || null);
 
   const isEditing = !!editTaskData;
   const isPending = isCreating || isUpdating;
@@ -45,26 +45,35 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
         assignees: editTaskData.assignees?.map((user: any) => user.id) || [],
         projectId: editTaskData.projectId,
         status: editTaskData.status,
+        taskType: editTaskData.taskType || "story"
       };
       form.setFieldsValue(initialData);
       setSelectedGroupId(editTaskData.groupId || null);
+      setTaskType(editTaskData.taskType || "story");
     } else {
-      // Reset form when not editing
       form.resetFields();
+      setTaskType("story");
     }
   }, [editTaskData, form, isEditing]);
 
+  // Reset parentTaskId when taskType changes to 'story'
+  useEffect(() => {
+    if (taskType === "story") {
+      form.setFieldsValue({ parentTaskId: undefined });
+    }
+  }, [taskType]);
+
   const onFinish = (values: any) => {
-    // Prepare task data with all fields, excluding id
     const taskData = {
       name: values.name,
       description: values.description,
       groupId: values.group,
-      parentTaskId: values.parentTaskId,
+      parentTaskId: values.taskType === "task" ? values.parentTaskId : undefined,
       dueDate: values.dueDate,
       assineeId: values.assignees,
       projectId: projectIdToUse || values.projectId?.[0],
       status: values.status,
+      taskType: values.taskType
     };
 
     console.log("Task data to submit:", taskData);
@@ -80,7 +89,6 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
           message.success(successMessage);
           handleCancel();
           form.resetFields();
-          // Call the onSuccess callback if provided to refresh parent data
           if (onSuccess) {
             onSuccess();
           }
@@ -105,11 +113,10 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
 
   const filteredParentTasks =
     tasks?.filter((task: any) => {
-      // Only show stories as potential parent tasks (no subtasks)
       const isStory = task.taskType === 'story';
-      // Apply group filter if selected
       const matchesGroup = !selectedGroupId || task.groupId === selectedGroupId;
-      return isStory && matchesGroup;
+      const notCompleted = task.status !== 'done';
+      return isStory && matchesGroup && notCompleted;
     }) || [];
 
   const handleGroupChange = (value: string) => {
@@ -125,6 +132,20 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
       <Row gutter={18}>
         <Divider />
         <Col span={24}>
+          <FormSelectWrapper
+            id="taskType"
+            name="taskType"
+            label="Task Type"
+            options={[
+              { value: "story", label: "Main Task" },
+              { value: "task", label: "Subtask" }
+            ]}
+            rules={[{ required: true, message: "Please select the task type!" }]}
+            value={taskType}
+            changeHandler={(value: string) => setTaskType(value)}
+          />
+        </Col>
+        <Col span={24}>
           <FormInputWrapper
             id="name"
             label="Task Name"
@@ -132,7 +153,6 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             rules={[{ required: true, message: "Please input the task name!" }]}
           />
         </Col>
-
         <Col span={24}>
           <Form.Item
             id="description"
@@ -143,7 +163,6 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             <TextArea rows={4} />
           </Form.Item>
         </Col>
-
         <Col span={12}>
           <FormSelectWrapper
             id="group"
@@ -153,16 +172,16 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             changeHandler={handleGroupChange}
           />
         </Col>
-
         <Col span={12}>
           <FormSelectWrapper
             id="parentTaskId"
             name="parentTaskId"
             label="Parent Task"
             options={filteredParentTasks.map((task: any) => ({ value: task.id, label: task.name })) || []}
+            disabled={taskType === "story"}
+            rules={taskType === "task" ? [{ required: true, message: "Please select a parent task for subtask!" }] : []}
           />
         </Col>
-
         <Col span={12}>
           <Form.Item
             name="dueDate"
@@ -172,7 +191,6 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             <DatePicker className="py-3 w-full" format="YYYY-MM-DD" />
           </Form.Item>
         </Col>
-
         <Col span={12}>
           <FormSelectWrapper
             id="assignees"
@@ -184,7 +202,6 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             rules={[{ required: true, message: "Please select at least one assignee!" }]}
           />
         </Col>
-
         {!projectIdToUse && (
           <Col span={12}>
             <FormSelectWrapper
@@ -196,7 +213,6 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             />
           </Col>
         )}
-
         <Col span={12}>
           <FormSelectWrapper
             id="status"
@@ -211,7 +227,6 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
           />
         </Col>
       </Row>
-
       <Form.Item>
         <Button type="primary" htmlType="submit" disabled={isPending} loading={isPending}>
           {isEditing ? "Update" : "Save"}

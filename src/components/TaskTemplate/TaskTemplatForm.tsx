@@ -63,7 +63,6 @@ const TaskTemplateForm = ({
     // Only reset if this is not the initial load and taskType changed to "story"
     const currentValues = form.getFieldsValue();
     if (taskType === "story" && currentValues.parentTaskId) {
-      console.log('Clearing parentTaskId because taskType changed to story');
       form.setFieldValue("parentTaskId", undefined);
     }
   }, [taskType]);
@@ -153,12 +152,13 @@ const TaskTemplateForm = ({
             options={
               taskgroup?.tasktemplate
                 ?.filter((task: TaskTemplateType) => {
-                  // For editing, exclude the current task from parent options to prevent circular reference
                   if (editTaskTemplateData?.id && task.id === editTaskTemplateData.id) {
                     return false;
                   }
-                  // Only show story type tasks as potential parents
-                  return task.taskType === "story";
+                  // Only show story type tasks as potential parents and not completed (if status exists)
+                  if (task.taskType !== "story") return false;
+                  if (typeof task.status !== "undefined" && task.status === "done") return false;
+                  return true;
                 })
                 ?.sort((a: TaskTemplateType, b: TaskTemplateType) => a.name.localeCompare(b.name))
                 ?.map((template: TaskTemplateType) => ({
