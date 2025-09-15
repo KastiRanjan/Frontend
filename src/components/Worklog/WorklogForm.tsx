@@ -7,8 +7,9 @@ import { TaskTemplateType } from "@/types/taskTemplate";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Col, DatePicker, Form, Input, Row, Select, message, Card, Modal, Alert } from "antd";
 import { useParams } from "react-router-dom";
+import { useSession } from "@/context/SessionContext";
 import moment from "moment";
-import { useState, useEffect } from "react";
+// ...existing code...
 
 // Component to show worklog permission status for selected task
 const TaskWorklogStatus = ({ taskId }: { taskId?: string }) => {
@@ -32,6 +33,16 @@ const TaskWorklogStatus = ({ taskId }: { taskId?: string }) => {
 };
 
 const WorklogForm = () => {
+  // Permission check for editing worklog date (object-based)
+  const { profile } = useSession();
+  const permissions = (profile?.role?.permission || []);
+  const canEditWorklogDate = Array.isArray(permissions) &&
+    permissions.some(
+      (perm: any) =>
+        perm.resource === "worklogs" &&
+        perm.path === "/worklogs/:id/date" &&
+        perm.method?.toLowerCase() === "patch"
+    );
   const { id } = useParams();
   const { data: task } = useTasks({ status: "active" });
   const { data: project } = useProjectById({ id });
@@ -304,6 +315,7 @@ const WorklogForm = () => {
                           placeholder="Select date"
                           style={{ width: '100%' }}
                           defaultValue={moment()}
+                          disabled={!canEditWorklogDate}
                         />
                       </Form.Item>
                     </Col>

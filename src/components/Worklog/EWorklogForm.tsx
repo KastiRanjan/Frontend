@@ -23,10 +23,15 @@ const EWorklogForm = () => {
   const [tasks, setTasks] = useState<TaskTemplateType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
 
-  const isManagerOrAdmin =
-    (user as any)?.role?.name === "manager" ||
-    (user as any)?.role?.name === "admin" ||
-    (user as any)?.role?.name === "superuser";
+  // Permission check for editing worklog date (object-based)
+  const permissions = (user as any)?.role?.permission || [];
+  const canEditWorklogDate = Array.isArray(permissions) &&
+    permissions.some(
+      (perm: any) =>
+        perm.resource === "worklogs" &&
+        perm.path === "/worklogs/:id/date" &&
+        perm.method?.toLowerCase() === "patch"
+    );
 
   useEffect(() => {
     if (worklog) {
@@ -111,7 +116,7 @@ const EWorklogForm = () => {
             >
               <DatePicker
                 className="w-full py-2"
-                disabled={false} // Temporarily enabled for all users
+                disabled={!canEditWorklogDate}
               />
             </Form.Item>
           </Col>

@@ -22,6 +22,18 @@ import { useSession } from "@/context/SessionContext";
 import moment from "moment";
 
 const OWorklogForm = () => {
+  // ...existing code...
+  const { profile } = useSession();
+  const user = profile;
+  // Permission check for editing worklog date (object-based)
+  const permissions = (user && user.role && user.role.permission) ? user.role.permission : [];
+  const canEditWorklogDate = Array.isArray(permissions) &&
+    permissions.some(
+      (perm: any) =>
+        perm.resource === "worklogs" &&
+        perm.path === "/worklogs/:id/date" &&
+        perm.method?.toLowerCase() === "patch"
+    );
   const [form] = Form.useForm();
   const [users, setUsers] = useState<{ [fieldName: string]: UserType[] }>({});
   const [filteredTasks, setFilteredTasks] = useState<{ [fieldName: string]: TaskTemplateType[] }>({});
@@ -32,8 +44,8 @@ const OWorklogForm = () => {
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile } = useSession();
-  const user = profile;
+  // ...existing code...
+  // user is already declared above
   
   // Get date from URL parameters if provided
   const urlParams = new URLSearchParams(location.search);
@@ -58,11 +70,7 @@ const OWorklogForm = () => {
   }, [dateParam, form]);
   
   // Check if user is manager or admin
-  const roleName = user?.role && (user.role as any).name ? (user.role as any).name.toLowerCase() : "";
-  const isManagerOrAdmin =
-    roleName === "projectmanager" ||
-    roleName === "admin" ||
-    roleName === "superuser";
+  // (removed unused isManagerOrAdmin)
 
   // Function to check for overlapping time entries
   const checkForOverlappingEntries = (entries: any[]): { hasOverlap: boolean, overlapDetails: string[] } => {
@@ -354,7 +362,7 @@ const OWorklogForm = () => {
                         >
                           <DatePicker
                             className="w-full"
-                            disabled={false} // Temporarily enabled for all users
+                            disabled={!canEditWorklogDate}
                             format="YYYY-MM-DD"
                             placeholder="Select date"
                             style={{ width: '100%' }}
