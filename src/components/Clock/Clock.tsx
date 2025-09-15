@@ -73,12 +73,13 @@ const Clock = () => {
 
   const handleClockIn = () => {
     if (isProcessingClockIn || createPending) return;
-    setIsProcessingClockIn(true);
     setIsClockInModalVisible(true);
   };
 
   const handleClockInConfirm = async () => {
-    if (createPending) return; // Prevent multiple clicks on confirm button
+    if (createPending || isProcessingClockIn) return; // Prevent multiple clicks on confirm button
+    
+    setIsProcessingClockIn(true); // Set processing state immediately
     
     try {
       const { latitude, longitude } = await getLocation();
@@ -126,13 +127,14 @@ const Clock = () => {
       });
     } else {
       if (isProcessingClockOut || createPending) return;
-      setIsProcessingClockOut(true);
       setIsClockOutModalVisible(true);
     }
   };
 
   const handleClockOutConfirm = async () => {
-    if (createPending) return; // Prevent multiple clicks on confirm button
+    if (createPending || isProcessingClockOut) return; // Prevent multiple clicks on confirm button
+    
+    setIsProcessingClockOut(true); // Set processing state immediately
     
     try {
       const { latitude, longitude } = await getLocation();
@@ -179,12 +181,13 @@ const Clock = () => {
       return;
     }
     if (isProcessingFinalClockOut || updatePending) return;
-    setIsProcessingFinalClockOut(true);
     setIsFinalClockOutModalVisible(true);
   };
 
   const handleFinalClockOutConfirm = async () => {
-    if (updatePending) return; // Prevent multiple clicks on confirm button
+    if (updatePending || isProcessingFinalClockOut) return; // Prevent multiple clicks on confirm button
+    
+    setIsProcessingFinalClockOut(true); // Set processing state immediately
     
     try {
       const { latitude, longitude } = await getLocation();
@@ -273,7 +276,6 @@ const Clock = () => {
         onCancel={() => {
           setIsClockInModalVisible(false);
           setClockInRemark("");
-          setIsProcessingClockIn(false);
         }}
         okText="Confirm"
         cancelText="Cancel"
@@ -302,7 +304,6 @@ const Clock = () => {
         onCancel={() => {
           setIsClockOutModalVisible(false);
           setHistoryRemark("");
-          setIsProcessingClockOut(false);
         }}
         okText="Confirm"
         cancelText="Cancel"
@@ -331,7 +332,6 @@ const Clock = () => {
         onCancel={() => {
           setIsFinalClockOutModalVisible(false);
           setClockOutRemark("");
-          setIsProcessingFinalClockOut(false);
         }}
         okText="Confirm"
         cancelText="Cancel"

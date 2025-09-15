@@ -275,9 +275,7 @@ const AttendenceTable = ({
               icon={<EnvironmentOutlined />}
               onClick={() => openLocationInMap(record.latitude, record.longitude)}
               size="small"
-            >
-              Show on Map
-            </Button>
+            />
           </Tooltip>
         );
       },
@@ -325,9 +323,7 @@ const AttendenceTable = ({
                 icon={<EnvironmentOutlined />}
                 onClick={() => openLocationInMap(historyItem.latitude, historyItem.longitude)}
                 size="small"
-              >
-                Show on Map
-              </Button>
+              />
             </Tooltip>
           );
         },
