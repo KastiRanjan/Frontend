@@ -9,6 +9,7 @@ import { Button, Col, DatePicker, Form, Input, Row, Select, message, Card, Modal
 import { useParams } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import moment from "moment";
+import { useState } from "react";
 // ...existing code...
 
 // Component to show worklog permission status for selected task
@@ -48,6 +49,7 @@ const WorklogForm = () => {
   const { data: project } = useProjectById({ id });
   const { mutate: createWorklog } = useCreateWorklog();
   const filteredTaskOptions = useFilteredTasksForWorklog();
+  const [submitting, setSubmitting] = useState(false);
 
   // Function to check for overlapping time entries
   const checkForOverlappingEntries = (entries: any[]): { hasOverlap: boolean, overlapDetails: string[] } => {
@@ -108,16 +110,13 @@ const WorklogForm = () => {
   };
 
   const handleFinish = async (values: any) => {
-    console.log(values.timeEntries);
-    
+    setSubmitting(true);
     // Check for overlapping time entries
     const { hasOverlap, overlapDetails } = checkForOverlappingEntries(values.timeEntries);
-    
     // Check worklog permissions for all tasks
     const worklogPermissionChecks = await Promise.all(
       values.timeEntries.map(async (entry: any) => {
         if (!entry.taskId) return { allowed: true, taskId: entry.taskId };
-        
         try {
           const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/worklogs/task/${entry.taskId}/allowed`, {
             credentials: 'include'
@@ -135,9 +134,7 @@ const WorklogForm = () => {
         }
       })
     );
-    
     const disallowedTasks = worklogPermissionChecks.filter(check => !check.allowed);
-    
     if (disallowedTasks.length > 0) {
       Modal.error({
         title: 'Worklog Not Allowed',
@@ -154,12 +151,31 @@ const WorklogForm = () => {
             <p>Please remove these tasks from your worklog entries or select different tasks.</p>
           </div>
         ),
+        onOk() {
+          setSubmitting(false);
+        },
+        onCancel() {
+          setSubmitting(false);
+        }
       });
       return;
     }
-    
+    const finishRequest = () => {
+      createWorklog(values.timeEntries, {
+        onSuccess: () => {
+          message.success("Worklog created successfully. Tasks are now marked as in progress.");
+          setSubmitting(false);
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            "Failed to create worklog";
+          message.error(errorMessage);
+          setSubmitting(false);
+        },
+      });
+    };
     if (hasOverlap) {
-      // Display modal warning with details of overlaps
       Modal.confirm({
         title: 'Warning: Overlapping Worklogs Detected',
         content: (
@@ -177,33 +193,14 @@ const WorklogForm = () => {
         okButtonProps: { danger: true },
         cancelText: 'Go Back and Fix',
         onOk() {
-          // User chose to proceed despite overlaps
-          createWorklog(values.timeEntries, {
-            onSuccess: () => {
-              message.success("Worklog created successfully. Tasks are now marked as in progress.");
-            },
-            onError: (error: any) => {
-              const errorMessage =
-                error?.response?.data?.message ||
-                "Failed to create worklog";
-              message.error(errorMessage);
-            },
-          });
+          finishRequest();
         },
+        onCancel() {
+          setSubmitting(false);
+        }
       });
     } else {
-      // No overlaps, proceed normally
-      createWorklog(values.timeEntries, {
-        onSuccess: () => {
-          message.success("Worklog created successfully. Tasks are now marked as in progress.");
-        },
-        onError: (error: any) => {
-          const errorMessage =
-            error?.response?.data?.message ||
-            "Failed to create worklog";
-          message.error(errorMessage);
-        },
-      });
+      finishRequest();
     }
   };
 
@@ -445,8 +442,8 @@ const WorklogForm = () => {
         </Form.List>
 
         <div className="flex justify-end">
-          <Button type="primary" htmlType="submit" size="large">
-            Submit All Entries
+          <Button type="primary" htmlType="submit" size="large" disabled={submitting}>
+            {submitting ? "Submitting..." : "Submit All Entries"}
           </Button>
         </div>
       </Form>

@@ -39,6 +39,7 @@ const OWorklogForm = () => {
   const [filteredTasks, setFilteredTasks] = useState<{ [fieldName: string]: TaskTemplateType[] }>({});
   const [loadingTasks, setLoadingTasks] = useState<{ [fieldName: string]: boolean }>({});
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const { data: projects } = useProject({ status: "active" });
   const { mutate: createWorklog } = useCreateWorklog();
@@ -132,16 +133,30 @@ const OWorklogForm = () => {
 
   // Handle the form submission
   const handleFinish = (values: any) => {
+    setSubmitting(true);
     const updatedTimeEntries = values.timeEntries.map((entry: any) => ({
       ...entry,
       status: "requested",
     }));
-    
     // Check for overlapping time entries
     const { hasOverlap, overlapDetails } = checkForOverlappingEntries(values.timeEntries);
-    
+    const finishRequest = () => {
+      createWorklog(updatedTimeEntries, {
+        onSuccess: () => {
+          message.success("Worklog added successfully. Tasks are now marked as in progress.");
+          setSubmitting(false);
+          navigate("/worklogs-all");
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            "An error occurred while creating the worklog";
+          message.error(errorMessage);
+          setSubmitting(false);
+        },
+      });
+    };
     if (hasOverlap) {
-      // Display modal warning with details of overlaps
       Modal.confirm({
         title: 'Warning: Overlapping Worklogs Detected',
         content: (
@@ -159,35 +174,14 @@ const OWorklogForm = () => {
         okButtonProps: { danger: true },
         cancelText: 'Go Back and Fix',
         onOk() {
-          // User chose to proceed despite overlaps
-          createWorklog(updatedTimeEntries, {
-            onSuccess: () => {
-              message.success("Worklog added successfully. Tasks are now marked as in progress.");
-              navigate("/worklogs-all");
-            },
-            onError: (error: any) => {
-              const errorMessage =
-                error?.response?.data?.message ||
-                "An error occurred while creating the worklog";
-              message.error(errorMessage);
-            },
-          });
+          finishRequest();
         },
+        onCancel() {
+          setSubmitting(false);
+        }
       });
     } else {
-      // No overlaps, proceed normally
-      createWorklog(updatedTimeEntries, {
-        onSuccess: () => {
-          message.success("Worklog added successfully. Tasks are now marked as in progress.");
-          navigate("/worklogs-all");
-        },
-        onError: (error: any) => {
-          const errorMessage =
-            error?.response?.data?.message ||
-            "An error occurred while creating the worklog";
-          message.error(errorMessage);
-        },
-      });
+      finishRequest();
     }
   };
 
@@ -673,8 +667,9 @@ const OWorklogForm = () => {
               padding: "0 24px",
               fontWeight: 500
             }}
+            disabled={submitting}
           >
-            Submit All Entries
+            {submitting ? "Submitting..." : "Submit All Entries"}
           </Button>
         </div>
       </Form>
