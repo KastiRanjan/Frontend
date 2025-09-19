@@ -9,6 +9,7 @@ export const useFirstVerifyTasks = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy"] }); // Invalidate our new query key
     },
     onError: (error) => {
       console.error("First verify tasks error:", error);
@@ -24,6 +25,7 @@ export const useSecondVerifyTasks = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy"] }); // Invalidate our new query key
     },
     onError: (error) => {
       console.error("Second verify tasks error:", error);

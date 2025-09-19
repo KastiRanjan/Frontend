@@ -3,9 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 
 export const useTaskTemplateById = ({ id }: { id: string | undefined }) => {
   return useQuery({
-    queryKey: ["taskGroup", id],
+    queryKey: ["taskTemplate", id], // Use "taskTemplate" as the key, not "taskGroup"
     queryFn: async () => {
-      return fetchTaskTemplateById({ id });
+      console.log("Fetching task template by ID:", id);
+      const result = await fetchTaskTemplateById({ id });
+      console.log("Task template fetch result:", result);
+      return result;
     },
     enabled: !!id,
   });

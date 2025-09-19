@@ -13,8 +13,10 @@ export const fetchProjects = async ({ status }: { status: string }) => {
   return response.data;
 };
 export const fetchProject = async ({ id }: { id: string | undefined }) => {
+  if (!id) {
+    throw new Error("Project ID is required");
+  }
   const response = await axios.get(`${backendURI}/projects/${id}`);
-
   return response.data;
 };
 

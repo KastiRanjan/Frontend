@@ -6,12 +6,22 @@ export const useCreateTaskGroup = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation({
-    mutationFn: (payload) => {
+    mutationFn: (payload: any) => {
       return createTaskGroup(payload);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidate general taskGroup query
       queryClient.invalidateQueries({ queryKey: ["taskGroup"] });
-      navigate("/task-template");
+      
+      // Invalidate specific taskGroups query for this taskSuperId
+      if (variables.taskSuperId) {
+        queryClient.invalidateQueries({ queryKey: ["taskGroups", variables.taskSuperId] });
+      }
+      
+      // Navigate only if not coming from a specific TaskSuper detail page
+      if (!variables.taskSuperId) {
+        navigate("/task-template");
+      }
     },
   });
 };

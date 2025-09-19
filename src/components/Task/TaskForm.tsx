@@ -2,7 +2,7 @@ import { useCreateTask } from "@/hooks/task/useCreateTask";
 import { useEditTask } from "@/hooks/task/useEditTask";
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
 import { useProject } from "@/hooks/project/useProject";
-import { Button, Col, DatePicker, Divider, Form, Row, message } from "antd";
+import { Button, Col, DatePicker, Divider, Form, Row, message, InputNumber } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import TextArea from "antd/es/input/TextArea";
@@ -45,7 +45,8 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
         assignees: editTaskData.assignees?.map((user: any) => user.id) || [],
         projectId: editTaskData.projectId,
         status: editTaskData.status,
-        taskType: editTaskData.taskType || "story"
+        taskType: editTaskData.taskType || "story",
+        budgetedHours: editTaskData.budgetedHours
       };
       form.setFieldsValue(initialData);
       setSelectedGroupId(editTaskData.groupId || null);
@@ -73,7 +74,8 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
       assineeId: values.assignees,
       projectId: projectIdToUse || values.projectId?.[0],
       status: values.status,
-      taskType: values.taskType
+      taskType: values.taskType,
+      budgetedHours: values.budgetedHours
     };
 
     console.log("Task data to submit:", taskData);
@@ -225,6 +227,26 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             ]}
             rules={[{ required: true, message: "Please select a status!" }]}
           />
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="budgetedHours"
+            label="Budgeted Hours"
+            rules={[
+              { 
+                type: 'number',
+                min: 0,
+                message: 'Budgeted hours cannot be negative!' 
+              }
+            ]}
+          >
+            <InputNumber 
+              min={0} 
+              step={0.5} 
+              placeholder="Enter budgeted hours"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
         </Col>
       </Row>
       <Form.Item>

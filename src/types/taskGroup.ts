@@ -1,10 +1,15 @@
 import { TaskTemplateType } from "./taskTemplate";
+import { TaskSuperType } from "./taskSuper";
 
 export interface TaskGroupType {
     id: string;
     name?: string;
     description?: string;
     tasktemplate?: TaskTemplateType[];
-    createdAt?: string
-    updatedAt?: string
+    taskTemplates?: TaskTemplateType[];
+    taskSuper?: TaskSuperType;
+    taskSuperId?: string;
+    rank?: number;
+    createdAt?: string;
+    updatedAt?: string;
 }

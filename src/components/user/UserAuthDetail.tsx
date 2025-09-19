@@ -6,6 +6,7 @@ import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { UserType } from "@/types/user";
 import { UserStatus } from "@/types/userStatus";
+import FormNumberWrapper from "../FormNumberWrapper";
 
 
 const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
@@ -85,8 +86,20 @@ const UserAuthDetail = ({ initialValues }: { initialValues?: UserType }) => {
             }
           />
         </Col>
+        
+        <Col span={12}>
+          <FormNumberWrapper
+            id="hourlyRate"
+            name="hourlyRate"
+            label="Hourly Rate (NPR)"
+            min={0}
+            placeholder="e.g. 500"
+            defaultValue={initialValues?.hourlyRate || 500}
+            addonAfter="NPR/hr"
+          />
+        </Col>
       </Row>
-      <Paragraph>Note:An email will be sent to the user to verify their account.</Paragraph>
+      <Paragraph>Note: An email will be sent to the user to verify their account.</Paragraph>
 
     </>
   );

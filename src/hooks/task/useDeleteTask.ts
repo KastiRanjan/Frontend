@@ -12,6 +12,7 @@ export const useDeleteTask = () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["project_task"] }); // This will match all project_task queries
       queryClient.invalidateQueries({ queryKey: ["project_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy"] }); // Invalidate our new query key
       
       // If we have project ID from the response, invalidate project-specific queries
       if (data?.projectId) {

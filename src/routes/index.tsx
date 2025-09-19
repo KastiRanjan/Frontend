@@ -21,6 +21,9 @@ import NewTask from "@/pages/Task/new";
 import TaskDetails from "@/pages/Task/task-details";
 import TaskGroups from "@/pages/TaskGroup";
 import EditTaskGroup from "@/pages/TaskGroup/edit";
+import TaskSuper from "@/pages/TaskSuper";
+import EditTaskSuper from "@/pages/TaskSuper/edit";
+import TaskSuperDetailsPage from "@/pages/TaskSuper/details";
 import TaskTemplate from "@/pages/TaskTemplate";
 import EditTaskTemplate from "@/pages/TaskTemplate/edit";
 import AccountDetails from "@/pages/User/AccountDetails";
@@ -134,8 +137,29 @@ const Router = [
         element: (
           <ProtectedRoute
             method="get"
-            resource="task-group"
-            component={<TaskGroups />}
+            resource="task-super"
+            component={<TaskSuper />}
+          />
+        ),
+      },
+      {
+        path: "/task-template/category/:id",
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="task-super"
+            component={<TaskSuperDetailsPage />}
+          />
+        ),
+      },
+      // Remove the direct path to TaskSuper but keep the edit route
+      {
+        path: "/tasksuper/edit/:id",
+        element: (
+          <ProtectedRoute
+            method="patch"
+            resource="task-super"
+            component={<EditTaskSuper />}
           />
         ),
       },

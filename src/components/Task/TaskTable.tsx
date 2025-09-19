@@ -3,16 +3,18 @@ import { useDeleteTask } from "@/hooks/task/useDeleteTask";
 import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { useMarkTasksComplete } from "@/hooks/task/useMarkTasksComplete";
 import { useFirstVerifyTasks, useSecondVerifyTasks } from "@/hooks/task/useVerifyTasks";
+import { useProjectTasksWithHierarchy } from "@/hooks/task/useProjectTasksWithHierarchy";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
 import { EditOutlined, DeleteOutlined, SearchOutlined, CheckOutlined, CheckCircleOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Modal, message, Popconfirm, Space, Input, Card, notification, Tag } from "antd";
-import { useMemo, useState, useRef } from "react";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Modal, message, Popconfirm, Space, Input, Card, notification, Tag, Typography } from "antd";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import { useSession } from "@/context/SessionContext";
 import Highlighter from 'react-highlight-words';
 import _ from "lodash";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ExtendedTaskType extends TaskType {
   first?: boolean;
@@ -22,6 +24,17 @@ interface ExtendedTaskType extends TaskType {
   children?: ExtendedTaskType[];
   isSubTask?: boolean;
   isStandalone?: boolean;
+  groupProject?: {
+    id: string;
+    name?: string;
+    rank?: number;
+    taskSuperId?: string;
+    taskSuper?: {
+      id: string;
+      name: string;
+      rank?: number;
+    };
+  };
 }
 
 interface TaskTableProps {
@@ -36,7 +49,15 @@ interface TaskTableProps {
   loading?: boolean;
 }
 
-const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTableProps) => {
+const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: externalLoading }: TaskTableProps) => {
+  console.log('TaskTable rendering - Project ID:', project.id);
+  console.log('Initial Data:', initialData);
+  console.log('Checking for hierarchy in data:', {
+    withGroupProject: initialData.filter(task => task.groupProject).length,
+    withGroupProjectTaskSuper: initialData.filter(task => task.groupProject?.taskSuper).length,
+    totalTasks: initialData.length
+  });
+  
   const [form] = Form.useForm();
   const [bulkForm] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -53,12 +74,29 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({ 
-    columnKey: 'name', 
+    columnKey: 'taskSuper', 
     order: 'ascend' 
   });
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
   const [globalSearchText, setGlobalSearchText] = useState('');
   const searchInput = useRef<any>(null);
+  const queryClient = useQueryClient();
+  
+  // Use the new hook to fetch tasks with complete hierarchy
+  const { 
+    data: hierarchyTasks,
+    isLoading: isHierarchyLoading
+  } = useProjectTasksWithHierarchy({
+    projectId: project.id,
+    // Filter by status based on the initial data's status
+    status: initialData.length > 0 ? initialData[0].status : undefined
+  });
+  
+  // Combine the loading states
+  const loading = externalLoading || isHierarchyLoading;
+  
+  // Use hierarchyTasks if available, fall back to initialData
+  const data = hierarchyTasks || initialData;
 
   // Check if user has task delete permission
   const canDeleteTask = useMemo(() => {
@@ -120,90 +158,97 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
     return hasMarkCompletePermission || isProjectLead;
   }, [profile, isProjectLead]);
 
-  // Memoized data processing for hierarchical structure
+    // Memoized data processing for hierarchical structure
   const { processedData, filteredData } = useMemo(() => {
     // Transform the data to have proper parent-child relationships
     console.log('Original taskList:', data);
     
-    // Transform the data to have proper parent-child relationships using actual parentTask relations
-    console.log('Original taskList:', data);
+    // First, organize tasks by their relationships
+    // 1. First level: TaskSuperProject
+    // 2. Second level: TaskGroupProject related to the TaskSuperProject
+    // 3. Third level: Tasks (type story) related to the TaskGroupProject
+    // 4. Fourth level: Subtasks (type task) related to parent Tasks
     
-    const expandedData: any = _.chain(data)
-      .filter((task: any) => task.taskType === 'story') // Only get stories (which display as Tasks) as main tasks
-      .map((story: any) => {
-        // Use the subTasks relation directly from backend if available
-        const subTasks = story.subTasks || [];
-        
-        // If no subTasks relation, find child tasks manually using parentTask relationship
-        const manualSubTasks = subTasks.length === 0 
-          ? data.filter((task: any) => task.parentTask?.id === story.id)
-          : [];
-        
-        const allSubTasks = [...subTasks, ...manualSubTasks];
-        
-        console.log(`Task "${story.name}" has ${allSubTasks.length} subtasks:`, allSubTasks);
-        
-        // Sort subtasks alphabetically by name and map to proper format
-        const children = allSubTasks
-          .sort((a: any, b: any) => a.name.localeCompare(b.name))
-          .map((subTask: any) => ({
-            ...subTask,
-            key: `${story.id}-${subTask.id}`, // Unique key for subtask
-            isSubTask: true,
-            projectId: project.id
-          }));
-        
-        // Return task (story type) with its subtasks as children
-        return {
-          ...story,
-          key: story.id,
-          projectId: project.id,
-          children: children.length > 0 ? children : undefined
-        };
-      })
-      .value();
+    // Process subtasks
+    const subTasks = data.filter((task: any) => task.taskType === 'task' && task.parentTask);
     
-    // Also add any standalone tasks with taskType 'task' that have no parent
-    const standaloneTasks = data
-      .filter((task: any) => 
-        task.taskType === 'task' && !task.parentTask
-      )
-      .map((task: any) => ({
+    // Map for quick lookups
+    const taskMap = new Map();
+    data.forEach((task: any) => {
+      // Ensure we're passing the complete hierarchy information
+      taskMap.set(task.id, {
         ...task,
         key: task.id,
         projectId: project.id,
-        isStandalone: true
-      }));
-    
-    console.log('Standalone tasks:', standaloneTasks);
-    
-    // Combine stories with their subtasks and standalone tasks
-    const finalData = [...expandedData, ...standaloneTasks];
-    
-    // Apply sorting if specifically requested, otherwise maintain default order
-    const sortedData = finalData.sort((a: any, b: any) => {
-      if (sortedInfo.columnKey === 'name') {
-        const nameA = a.name || '';
-        const nameB = b.name || '';
-        return sortedInfo.order === 'descend' 
-          ? nameB.localeCompare(nameA)
-          : nameA.localeCompare(nameB);
-      } else if (sortedInfo.columnKey === 'taskType') {
-        const typeA = a.taskType || '';
-        const typeB = b.taskType || '';
-        return sortedInfo.order === 'descend'
-          ? typeB.localeCompare(typeA)
-          : typeA.localeCompare(typeB);
-      }
-      // Default to name sorting 
-      const nameA = a.name || '';
-      const nameB = b.name || '';
-      return nameA.localeCompare(nameB);
+        children: []
+      });
     });
     
-    // Apply global search filter
+    // Assign subtasks to their parent tasks
+    subTasks.forEach((subTask: any) => {
+      const parentId = subTask.parentTask?.id;
+      if (parentId && taskMap.has(parentId)) {
+        const parent = taskMap.get(parentId);
+        parent.children.push({
+          ...subTask,
+          key: `${parentId}-${subTask.id}`,
+          isSubTask: true,
+          projectId: project.id
+        });
+      }
+    });
+    
+    // Sort tasks by hierarchy rank
+    // The order is strictly based on:
+    // 1. TaskSuperProject rank (via groupProject.taskSuper.rank or group.taskSuper.rank)
+    // 2. TaskGroupProject rank (via groupProject.rank or group.rank)
+    // 3. Task's own rank
+    // 4. Subtask's rank within parent task
+    
+    const finalTasks = Array.from(taskMap.values())
+      .filter((task: any) => task.taskType === 'story' || (task.taskType === 'task' && !task.parentTask))
+      .sort((a: any, b: any) => {
+        // First compare by taskSuper rank (check both groupProject and group)
+        const aTaskSuperRank = a.groupProject?.taskSuper?.rank || a.group?.taskSuper?.rank || 0;
+        const bTaskSuperRank = b.groupProject?.taskSuper?.rank || b.group?.taskSuper?.rank || 0;
+        if (aTaskSuperRank !== bTaskSuperRank) {
+          return aTaskSuperRank - bTaskSuperRank;
+        }
+        
+        // Then compare by taskGroup rank (check both groupProject and group)
+        const aGroupRank = a.groupProject?.rank || a.group?.rank || 0;
+        const bGroupRank = b.groupProject?.rank || b.group?.rank || 0;
+        if (aGroupRank !== bGroupRank) {
+          return aGroupRank - bGroupRank;
+        }
+        
+        // Then by task's own rank
+        const aRank = a.rank || 0;
+        const bRank = b.rank || 0;
+        if (aRank !== bRank) {
+          return aRank - bRank;
+        }
+        
+        // Finally sort alphabetically by name (for equal ranks)
+        return a.name.localeCompare(b.name);
+      });
+    
+    // Make sure each task's children (subtasks) are also sorted by rank
+    finalTasks.forEach((task: any) => {
+      if (task.children && task.children.length > 0) {
+        task.children.sort((a: any, b: any) => {
+          const aRank = a.rank || 0;
+          const bRank = b.rank || 0;
+          if (aRank !== bRank) {
+            return aRank - bRank;
+          }
+          // For equal ranks, sort by name
+          return a.name.localeCompare(b.name);
+        });
+      }
+    });    // Apply global search filter
     const filtered = globalSearchText ? 
-      sortedData.filter((record: any) => {
+      finalTasks.filter((record: any) => {
         const searchValue = globalSearchText.toLowerCase();
         
         // Check parent task fields
@@ -216,13 +261,25 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
         const taskTypeDisplay = record?.taskType === 'story' ? 'Task' : 'Subtask';
         const taskTypeMatches = taskTypeDisplay.toLowerCase().includes(searchValue);
         
-        // Check group name
-        const groupMatches = record.group?.name && record.group.name.toLowerCase().includes(searchValue);
+        // Check TaskSuperProject and TaskGroupProject names
+        const taskSuperMatches = record.groupProject?.taskSuper?.name && 
+          record.groupProject.taskSuper.name.toLowerCase().includes(searchValue);
+          
+        const taskGroupMatches = record.groupProject?.name && 
+          record.groupProject.name.toLowerCase().includes(searchValue);
+          
+        // Check rank numbers for both TaskSuperProject and TaskGroupProject
+        const superRankMatches = record.groupProject?.taskSuper?.rank && 
+          record.groupProject.taskSuper.rank.toString().includes(searchValue);
+        
+        const groupRankMatches = record.groupProject?.rank && 
+          record.groupProject.rank.toString().includes(searchValue);
         
         // Check status
         const statusMatches = record.status && record.status.toLowerCase().includes(searchValue);
         
-        if (parentMatches || taskTypeMatches || groupMatches || statusMatches) {
+        if (parentMatches || taskTypeMatches || taskGroupMatches || statusMatches || 
+            taskSuperMatches || superRankMatches || groupRankMatches) {
           return true;
         }
         
@@ -234,22 +291,86 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             );
             const childTaskTypeDisplay = child?.taskType === 'story' ? 'Task' : 'Subtask';
             const childTaskTypeMatches = childTaskTypeDisplay.toLowerCase().includes(searchValue);
-            const childGroupMatches = child.group?.name && child.group.name.toLowerCase().includes(searchValue);
-            const childStatusMatches = child.status && child.status.toLowerCase().includes(searchValue);
-            return childMatches || childTaskTypeMatches || childGroupMatches || childStatusMatches;
+            
+            // Check groupProject for hierarchy relationships
+            const childGroupMatches = child.groupProject?.name && 
+              child.groupProject.name.toLowerCase().includes(searchValue);
+              
+            const childSuperMatches = child.groupProject?.taskSuper?.name && 
+              child.groupProject.taskSuper.name.toLowerCase().includes(searchValue);
+              
+            // Include rank search
+            const childGroupRankMatches = child.groupProject?.rank && 
+              child.groupProject.rank.toString().includes(searchValue);
+              
+            const childSuperRankMatches = child.groupProject?.taskSuper?.rank && 
+              child.groupProject.taskSuper.rank.toString().includes(searchValue);
+              
+            const childStatusMatches = child.status && 
+              child.status.toLowerCase().includes(searchValue);
+              
+            return childMatches || childTaskTypeMatches || childGroupMatches || 
+                   childStatusMatches || childSuperMatches || childGroupRankMatches || 
+                   childSuperRankMatches;
           });
           
           return hasMatchingChild;
         }
         
         return false;
-      }) : sortedData;
+      }) : finalTasks;
     
     console.log('Final processed data:', filtered);
-    console.log('Data should show parent-child relationships based on parentTask relation');
+    console.log('Data organized by hierarchy: TaskSuper > TaskGroup > Task > Subtask');
+    
+    // Debug log to check groupProject
+    const groupStats = {
+      hasGroupProject: 0,
+      hasTaskSuper: 0,
+      neitherPresent: 0,
+      tasks: finalTasks.length
+    };
+    
+    finalTasks.forEach((task: any) => {
+      const hasGroupProject = task.groupProject && task.groupProject.id;
+      const hasTaskSuper = task.groupProject?.taskSuper && task.groupProject.taskSuper.id;
+      
+      if (hasGroupProject) {
+        groupStats.hasGroupProject++;
+        if (hasTaskSuper) {
+          groupStats.hasTaskSuper++;
+        }
+      } else {
+        groupStats.neitherPresent++;
+      }
+    });
+    
+    console.log('GroupProject stats:', groupStats);
+    
+    // Log a sample task with complete hierarchy to check field structure
+    const sampleWithHierarchy = finalTasks.find((task: any) => 
+      task.groupProject?.taskSuper?.id && task.groupProject?.id
+    );
+    
+    if (sampleWithHierarchy) {
+      console.log('Sample task with complete hierarchy:', {
+        id: sampleWithHierarchy.id,
+        name: sampleWithHierarchy.name,
+        groupProject: sampleWithHierarchy.groupProject ? {
+          id: sampleWithHierarchy.groupProject.id,
+          name: sampleWithHierarchy.groupProject.name,
+          taskSuper: sampleWithHierarchy.groupProject.taskSuper ? {
+            id: sampleWithHierarchy.groupProject.taskSuper.id,
+            name: sampleWithHierarchy.groupProject.taskSuper.name
+          } : null
+        } : null
+      });
+    } else {
+      console.log('No tasks with complete hierarchy found');
+    }
     
     return {
-      processedData: sortedData,
+      processedData: finalTasks,
       filteredData: filtered
     };
   }, [data, sortedInfo, globalSearchText, project.id]);
@@ -390,11 +511,19 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
         const taskTypeDisplay = record?.taskType === 'story' ? 'Task' : 'Subtask';
         const taskTypeMatches = taskTypeDisplay.toLowerCase().includes(searchValue);
         
-        // Check group and status
-        const groupMatches = record.group?.name && record.group.name.toLowerCase().includes(searchValue);
+        // Check groupProject and status
+        const groupMatches = record.groupProject?.name && record.groupProject.name.toLowerCase().includes(searchValue);
         const statusMatches = record.status && record.status.toLowerCase().includes(searchValue);
         
-        if (parentMatches || taskTypeMatches || groupMatches || statusMatches) {
+        // Check TaskSuperProject and TaskGroupProject
+        const taskSuperMatches = record.groupProject?.taskSuper?.name && 
+          record.groupProject.taskSuper.name.toLowerCase().includes(searchValue);
+        
+        const taskGroupMatches = record.groupProject?.name && 
+          record.groupProject.name.toLowerCase().includes(searchValue);
+        
+        if (parentMatches || taskTypeMatches || groupMatches || statusMatches || 
+            taskSuperMatches || taskGroupMatches) {
           shouldExpand = true;
         }
         
@@ -406,9 +535,22 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             );
             const childTaskTypeDisplay = child?.taskType === 'story' ? 'Task' : 'Subtask';
             const childTaskTypeMatches = childTaskTypeDisplay.toLowerCase().includes(searchValue);
-            const childGroupMatches = child.group?.name && child.group.name.toLowerCase().includes(searchValue);
+            const childGroupMatches = child.groupProject?.name && child.groupProject.name.toLowerCase().includes(searchValue);
             const childStatusMatches = child.status && child.status.toLowerCase().includes(searchValue);
-            return childMatches || childTaskTypeMatches || childGroupMatches || childStatusMatches;
+            
+            // Check child's TaskSuperProject and TaskGroupProject
+            const childTaskSuperMatches = (child.groupProject?.taskSuper?.name && 
+              child.groupProject.taskSuper.name.toLowerCase().includes(searchValue)) ||
+              (child.group?.taskSuper?.name && 
+              child.group.taskSuper.name.toLowerCase().includes(searchValue));
+            
+            const childTaskGroupMatches = (child.groupProject?.name && 
+              child.groupProject.name.toLowerCase().includes(searchValue)) ||
+              (child.group?.name && 
+              child.group.name.toLowerCase().includes(searchValue));
+            
+            return childMatches || childTaskTypeMatches || childGroupMatches || 
+                   childStatusMatches || childTaskSuperMatches || childTaskGroupMatches;
           });
           
           if (hasMatchingChild) {
@@ -487,6 +629,15 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
           return displayType.toLowerCase().includes(searchValue);
         }
         
+        // Special handling for taskSuper searches
+        if (dataIndex === 'groupProject.taskSuper.name') {
+          const taskSuper = rec.groupProject?.taskSuper?.name || '';
+          const taskSuperRank = rec.groupProject?.taskSuper?.rank?.toString() || '';
+          
+          return taskSuper.toLowerCase().includes(searchValue) || 
+                 taskSuperRank.includes(searchValue);
+        }
+        
         return rec[dataIndex]
           ? rec[dataIndex].toString().toLowerCase().includes(searchValue)
           : false;
@@ -527,7 +678,7 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
       if (searchedColumn === dataIndex && searchText) {
         searchWords.push(searchText);
       }
-      if (globalSearchText && (dataIndex === 'name' || dataIndex === 'description' || dataIndex === 'tcode')) {
+      if (globalSearchText && (dataIndex === 'name' || dataIndex === 'description' || dataIndex === 'tcode' || dataIndex === 'groupProject' || dataIndex === 'groupProject.taskSuper.name')) {
         searchWords.push(globalSearchText);
       }
 
@@ -578,7 +729,7 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
         projectId: project.id,
         name: enhancedData.find(item => String(item.id) === key)?.name,
         description: enhancedData.find(item => String(item.id) === key)?.description,
-        groupId: enhancedData.find(item => String(item.id) === key)?.group?.id,
+        groupId: enhancedData.find(item => String(item.id) === key)?.groupProject?.id,
         status: enhancedData.find(item => String(item.id) === key)?.status,
       };
 
@@ -622,6 +773,8 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
       {
         onSuccess: () => {
           message.success("Tasks updated successfully");
+          // Invalidate queries to refresh data
+          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
           if (onRefresh) onRefresh();
         },
         onError: (error: any) => {
@@ -641,6 +794,8 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
       {
         onSuccess: () => {
           message.success("Task deleted successfully");
+          // Invalidate the hierarchy query to refresh data
+          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
           if (onRefresh) onRefresh();
         },
         onError: (error: any) => {
@@ -660,6 +815,8 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
       {
         onSuccess: () => {
           message.success("Tasks assigned successfully");
+          // Invalidate queries to refresh data
+          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
           if (onRefresh) onRefresh();
         },
         onError: (error: any) => {
@@ -762,6 +919,8 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             }
             
             setSelectedRowKeys([]);
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
             if (onRefresh) onRefresh();
           },
           onError: (error: any) => {
@@ -828,6 +987,8 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
               message.info("Task was not processed");
             }
             
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
             if (onRefresh) onRefresh();
           },
           onError: (error: any) => {
@@ -1136,20 +1297,56 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             />
           ) : name;
 
+          // Get hierarchy information for prefix/indicator
+          const isSubTask = record.isSubTask;
+          const hasChildren = record.children && record.children.length > 0;
+          const hasTaskGroup = !!record.groupProject?.name;
+          const hasTaskSuper = !!record.groupProject?.taskSuper?.name;
+          
+          // Create prefix based on hierarchy
+          let prefix = '';
+          let tooltip = '';
+          
+          if (isSubTask) {
+            prefix = '↳ '; // Subtask indicator
+            tooltip = 'Subtask';
+          } else if (hasChildren) {
+            prefix = '📋 '; // Parent task with subtasks
+            tooltip = 'Task with subtasks';
+          } else if (hasTaskGroup && hasTaskSuper) {
+            prefix = '📝 '; // Task with complete hierarchy
+            tooltip = `Task in ${record.groupProject?.name} group under ${record.groupProject?.taskSuper?.name}`;
+          } else if (hasTaskGroup) {
+            prefix = '📝 '; // Task with group only
+            tooltip = `Task in ${record.groupProject?.name} group`;
+          } else {
+            prefix = '📄 '; // Standalone task
+            tooltip = 'Standalone task';
+          }
+
+          // Include rank info in the tooltip if available
+          if (hasTaskSuper && hasTaskGroup) {
+            const superRank = record.groupProject?.taskSuper?.rank;
+            const groupRank = record.groupProject?.rank;
+            tooltip += ` (Super #${superRank || '-'}, Group #${groupRank || '-'})`;  // Don't try to access rank that doesn't exist
+          }
+
           return (
             <div className="flex items-center justify-between gap-2">
               <span style={{ 
-                fontWeight: record.isSubTask ? 'normal' : '500',
-                fontSize: record.isSubTask ? '0.9em' : '1em',
-                color: record.isSubTask ? '#666' : '#000',
-                paddingLeft: record.isSubTask ? '16px' : '0'
+                fontWeight: isSubTask ? 'normal' : '500',
+                fontSize: isSubTask ? '0.9em' : '1em',
+                color: isSubTask ? '#666' : '#000',
+                paddingLeft: isSubTask ? '16px' : '0'
               }}>
-                {record.isSubTask && <span style={{ color: '#999', marginRight: '4px' }}>↳</span>}
+                <Tooltip title={tooltip} placement="topLeft">
+                  <span style={{ marginRight: '4px' }}>{prefix}</span>
+                </Tooltip>
                 <Link to={`/projects/${record.projectId}/tasks/${record.id}`} className="text-blue-600">
                   {content}
                 </Link>
               </span>
-              {record.subTasks?.length > 0 && (
+              {hasChildren && (
                 <span>
                   <svg fill="none" width={16} height={16} viewBox="0 0 16 16" role="presentation">
                     <path
@@ -1169,6 +1366,7 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
         title: "Task Type",
         dataIndex: "taskType",
         key: "taskType",
+        width: 100,
         sorter: (a: any, b: any) => {
           const typeA = a.taskType || '';
           const typeB = b.taskType || '';
@@ -1180,7 +1378,6 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
           // Display mapping: story -> Task, task -> Subtask
           const displayType = record?.taskType === 'story' ? 'Task' : 'Subtask';
           const badgeColor = record?.taskType === 'story' ? 'blue' : 'green';
-          const badgeText = record?.taskType === 'story' ? 'T' : 'S';
           
           const searchWords = [];
           if (searchedColumn === 'taskType' && searchText) {
@@ -1190,35 +1387,117 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             searchWords.push(globalSearchText);
           }
 
-          const content = searchWords.length > 0 ? (
-            <Highlighter
-              highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-              searchWords={searchWords}
-              autoEscape
-              textToHighlight={displayType}
-            />
-          ) : displayType;
-          
           return (
-            <>
-              <Badge color={badgeColor} count={badgeText} /> &nbsp;
-              {content}
-            </>
+            <Tag color={badgeColor} style={{ cursor: 'default' }}>
+              {displayType}
+            </Tag>
           );
         },
       },
       {
-        title: "Group",
-        dataIndex: "group",
-        key: "group",
+        title: "Task Super",
+        dataIndex: "taskSuper",
+        key: "taskSuper",
+        width: 180,
         sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
-          const groupNameA = a.group?.name || '';
-          const groupNameB = b.group?.name || '';
+          // Sort by rank if available
+          const rankA = a.groupProject?.taskSuper?.rank || 0;
+          const rankB = b.groupProject?.taskSuper?.rank || 0;
+          if (rankA !== rankB) {
+            return rankA - rankB;
+          }
+          // Then by name
+          const superNameA = a.groupProject?.taskSuper?.name || '';
+          const superNameB = b.groupProject?.taskSuper?.name || '';
+          return superNameA.localeCompare(superNameB);
+        },
+        sortOrder: sortedInfo.columnKey === 'taskSuper' && sortedInfo.order,
+        render: (_: any, record: ExtendedTaskType) => {
+          // Get TaskSuper information from groupProject
+          const taskGroupProject = record.groupProject;
+          
+          // Get taskSuper info
+          const taskSuper = taskGroupProject?.taskSuper;
+          const taskSuperName = taskSuper?.name;
+          const taskSuperRank = taskSuper?.rank;
+          
+          console.log('TaskSuper render:', { 
+            taskId: record.id, 
+            taskName: record.name, 
+            hasGroupProject: !!taskGroupProject,
+            hasGroupProjectTaskSuper: !!(taskGroupProject?.taskSuper),
+            taskSuper,
+            taskSuperName,
+            taskSuperRank
+          });
+          
+          // If the task has a TaskSuper (via groupProject or group), show it
+          if (taskSuperName) {
+            return (
+              <Tooltip title={`Rank: ${taskSuperRank || '-'}`} placement="topLeft">
+                <Tag color="blue" style={{ cursor: 'default' }}>
+                  {taskSuperName} <span style={{ color: '#999', fontSize: '12px' }}>#{taskSuperRank || '-'}</span>
+                </Tag>
+              </Tooltip>
+            );
+          }
+          
+          // No TaskSuper available
+          return <Typography.Text type="secondary">---</Typography.Text>;
+        },
+        ...getColumnSearchProps('groupProject.taskSuper.name', 'Task Super'),
+      },
+      {
+        title: "Group",
+        dataIndex: "groupProject",
+        key: "groupProject",
+        width: 180,
+        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
+          // First sort by rank if available
+          const rankA = a.groupProject?.rank || 0;
+          const rankB = b.groupProject?.rank || 0;
+          if (rankA !== rankB) {
+            return rankA - rankB;
+          }
+          // Then by name
+          const groupNameA = a.groupProject?.name || '';
+          const groupNameB = b.groupProject?.name || '';
           return groupNameA.localeCompare(groupNameB);
         },
-        sortOrder: sortedInfo.columnKey === 'group' && sortedInfo.order,
-        render: (group: ExtendedTaskType["group"]) => group?.name ?? "---",
-        ...getColumnSearchProps('group.name', 'Group'),
+        sortOrder: sortedInfo.columnKey === 'groupProject' && sortedInfo.order,
+        render: (_: any, record: ExtendedTaskType) => {
+          // Get TaskGroup information from groupProject
+          const taskGroupProject = record.groupProject;
+          
+          // Get group info
+          const taskGroupName = taskGroupProject?.name;
+          const taskGroupRank = taskGroupProject?.rank;
+          
+          console.log('Group render:', { 
+            taskId: record.id, 
+            taskName: record.name, 
+            hasGroupProject: !!taskGroupProject,
+            groupProjectName: taskGroupProject?.name,
+            groupProjectRank: taskGroupProject?.rank,
+            taskGroupName,
+            taskGroupRank
+          });
+          
+          // If there's a taskGroup info available, show it with rank
+          if (taskGroupName) {
+            return (
+              <Tooltip title={`Rank: ${taskGroupRank || '-'}`} placement="topLeft">
+                <Tag color="green" style={{ cursor: 'default' }}>
+                  {taskGroupName} <span style={{ color: '#999', fontSize: '12px' }}>#{taskGroupRank || '-'}</span>
+                </Tag>
+              </Tooltip>
+            );
+          }
+          
+          // No TaskGroup available
+          return <Typography.Text type="secondary">---</Typography.Text>;
+        },
+        ...getColumnSearchProps('groupProject.name', 'Group'),
       },
       {
         title: "Status",
@@ -1622,12 +1901,12 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             )}
             
             <Input.Search
-              placeholder="🔍 Search all fields (name, type, group, status)..."
+              placeholder="🔍 Search all fields (name, type, tasksuper, group, status)..."
               allowClear
               value={globalSearchText}
               onChange={(e) => handleGlobalSearch(e.target.value)}
               onSearch={(value) => handleGlobalSearch(value)}
-              style={{ width: 350 }}
+              style={{ width: 400 }}
               size="middle"
             />
           </div>
@@ -1651,6 +1930,7 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
             </div>
           )}
         </div>
+        
         <Form form={form} component={false}>
           <Table
             loading={loading}
@@ -1722,6 +2002,14 @@ const TaskTable = ({ data, showModal, project, onRefresh, loading }: TaskTablePr
       </Modal>
     </>
   );
+
+  // Debug column visibility
+  useEffect(() => {
+    console.log('TaskTable Rendering with columns:', 
+      mergedColumns.map(col => ({ title: col.title, key: col.key, dataIndex: col.dataIndex }))
+    );
+    console.log('First few rows of data:', enhancedData.slice(0, 3));
+  }, [mergedColumns, enhancedData]);
 };
 
 const EditableCell: React.FC<any> = ({

@@ -8,6 +8,8 @@ export interface TaskTemplateType {
     taskType?: "story" | "task";
     parentTask?: TaskTemplateType;
     subTasks?: TaskTemplateType[];
+    budgetedHours?: number;
+    status?: string;
     createdBy?: string | null;
     updatedBy?: string | null;
     createdAt?: string;

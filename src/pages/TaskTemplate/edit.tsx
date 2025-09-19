@@ -8,7 +8,11 @@ const EditTaskTemplate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { data } = useTaskTemplateById({ id});
+  const { data, isLoading } = useTaskTemplateById({ id });
+  
+  // Make sure to log data to see what we're getting
+  console.log("Edit TaskTemplate Data:", data);
+  
   return (
     <>
       <PageTitle
@@ -19,7 +23,16 @@ const EditTaskTemplate = () => {
           </Button>
         }
       />
-      <TaskTemplateForm editTaskTemplateData={data} handleCancel={() => navigate(-1)} />
+      {isLoading ? (
+        <div>Loading template data...</div>
+      ) : (
+        <TaskTemplateForm 
+          editTaskTemplateData={data} 
+          handleCancel={() => navigate(-1)}
+          // Explicitly pass the groupId from the template's group or groupId field
+          groupId={data?.group?.id || data?.groupId}
+        />
+      )}
     </>
   );
 };

@@ -10,6 +10,7 @@ export const useBulkUpdateTasks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_task"] }); // This will match all project_task queries
+      queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy"] }); // Invalidate our new query key
     },
     onError: (error) => {
       console.error("Bulk update failed:", error);

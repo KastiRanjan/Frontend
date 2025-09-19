@@ -1,5 +1,4 @@
 import { ProjectType } from "./project";
-import { TaskGroupType } from "./taskGroup";
 
 export interface TaskType {
     id: number;
@@ -10,7 +9,7 @@ export interface TaskType {
     subTasks:TaskType[];
     createdAt?: string;
     updatedAt?: string;
-    group: TaskGroupType;
+    groupProject?: any; // TaskGroupProject with taskSuper
     assignees?: string[];
     status?: "open" | "in_progress" | "done" | "first_verified" | "second_verified";
     priority?: "critical" | "high" | "medium" | "low";
@@ -22,4 +21,5 @@ export interface TaskType {
     firstVerifiedAt?: string;
     secondVerifiedBy?: string;
     secondVerifiedAt?: string;
+    budgetedHours?: number;
   }

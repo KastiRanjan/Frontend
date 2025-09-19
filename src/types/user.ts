@@ -15,4 +15,5 @@ export interface UserType {
     status?: string;
     isTwoFAEnabled?: boolean;
     role?: UserRoleType;
+    hourlyRate?: number;
 }

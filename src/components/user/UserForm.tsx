@@ -21,6 +21,7 @@ const UserForm = ({ initialValues, handleCancel }: { initialValues?: UserType, h
         email: initialValues.email,
         status: initialValues.status,
         roleId: initialValues.role?.id,
+        hourlyRate: initialValues.hourlyRate || 500,
       });
     } else {
       // Reset form when not editing
@@ -34,17 +35,19 @@ const UserForm = ({ initialValues, handleCancel }: { initialValues?: UserType, h
 
     let payload = values;
     if (isEditing) {
-      // For updates, send name, status, and role (backend now supports role updates)
+      // For updates, send all relevant fields including hourlyRate
       payload = {
         name: values.name,
         status: values.status,
         role: String(values.roleId), // Ensure role is string for update
+        hourlyRate: values.hourlyRate,
       };
     } else {
-      // For creation, send roleId as string as expected by backend
+      // For creation, send all relevant fields including hourlyRate
       payload = {
         ...values,
         roleId: String(values.roleId), // Ensure roleId is string
+        hourlyRate: values.hourlyRate,
       };
     }
 

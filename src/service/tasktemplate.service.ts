@@ -15,9 +15,17 @@ export const fetchTaskTemplateById = async ({ id }: { id: string | undefined }) 
 
 
 export const createTaskTemplate = async (payload: any) => {
-  const response = await axios.post(`${backendURI}/task-template`, payload);
-  return response.data;
+  console.log('Creating task template with payload:', payload);
+  try {
+    const response = await axios.post(`${backendURI}/task-template`, payload);
+    console.log('Create task template response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creating task template:', error.response?.data || error.message);
+    throw error;
+  }
 };
+
 export const editTaskTemplate = async ({
   payload,
   id,
@@ -25,11 +33,18 @@ export const editTaskTemplate = async ({
   payload: any;
   id: string;
 }) => {
-  const response = await axios.patch(
-    `${backendURI}/task-template/${id}`,
-    payload
-  );
-  return response.data;
+  console.log(`Editing task template ${id} with payload:`, payload);
+  try {
+    const response = await axios.patch(
+      `${backendURI}/task-template/${id}`,
+      payload
+    );
+    console.log('Edit task template response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error editing task template:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 
