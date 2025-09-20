@@ -1006,61 +1006,6 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
         },
       },
       {
-        title: "Hierarchy",
-        dataIndex: "hierarchy",
-        key: "hierarchy",
-        width: 200,
-        ...getColumnSearchProps('hierarchy', 'Hierarchy'),
-        render: (_: any, record: any) => {
-          // Determine the hierarchy path based on the task's position
-          let hierarchy = '';
-          let tooltipText = '';
-          
-          // Get TaskSuperProject information
-          const taskSuper = record.groupProject?.taskSuper;
-          const taskSuperName = taskSuper?.name;
-          const taskSuperRank = taskSuper?.rank;
-          
-          // Get TaskGroupProject information
-          const taskGroup = record.groupProject;
-          const taskGroupName = taskGroup?.name;
-          const taskGroupRank = taskGroup?.rank;
-          
-          // Build the hierarchy display
-          if (taskSuperName) {
-            hierarchy += `Super #${taskSuperRank || '-'}: ${taskSuperName}`;
-            tooltipText += `Super Project: ${taskSuperName} (Rank: ${taskSuperRank || '-'})`;
-            
-            if (taskGroupName) {
-              hierarchy += ` > Group #${taskGroupRank || '-'}: ${taskGroupName}`;
-              tooltipText += `\nGroup: ${taskGroupName} (Rank: ${taskGroupRank || '-'})`;
-            }
-          } else if (taskGroupName) {
-            hierarchy += `Group #${taskGroupRank || '-'}: ${taskGroupName}`;
-            tooltipText += `Group: ${taskGroupName} (Rank: ${taskGroupRank || '-'})`;
-          } else {
-            hierarchy = 'No hierarchy';
-            tooltipText = 'This task is not associated with any Task Super Project or Task Group';
-          }
-          
-          // If it's a subtask, we don't display the hierarchy directly but inherit from parent
-          if (record.isSubTask) {
-            return null;
-          }
-          
-          return (
-            <Tooltip title={tooltipText} placement="topLeft">
-              <Typography.Text
-                ellipsis={{ tooltip: tooltipText }}
-                style={{ maxWidth: 200, display: 'inline-block' }}
-              >
-                {hierarchy}
-              </Typography.Text>
-            </Tooltip>
-          );
-        },
-      },
-      {
         title: "Group",
         dataIndex: "groupProject",
         key: "groupProject",

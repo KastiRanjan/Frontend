@@ -1,5 +1,4 @@
 import AttendenceTable from "@/components/Attendence/AttendenceTable";
-import PageTitle from "@/components/PageTitle";
 import { useSession } from "@/context/SessionContext";
 import { useUser } from "@/hooks/user/useUser";
 import { useDateWiseAllUsersAttendence } from "@/hooks/attendence/useDateWiseAllUsersAttendence";
@@ -94,11 +93,6 @@ const Attendence = () => {
 
     return (
         <>
-            <PageTitle 
-                title="Attendance Management" 
-                description={isSuperUser ? "Manage attendance for all users" : "View and manage your attendance"} 
-            />
-            
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 {/* Personal Attendance Section - Always Visible */}
                 <Card 
