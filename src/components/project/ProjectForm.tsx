@@ -426,7 +426,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             id="Client"
             label="Client"
             name="client"
-            options={clients?.map((client: any) => ({
+            options={clients?.filter((client: any) => client.status === 'active').map((client: any) => ({
               value: client.id,
               label: `${client.name} (${client.shortName})`,
             }))}

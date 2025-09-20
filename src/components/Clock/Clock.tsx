@@ -272,16 +272,16 @@ const Clock = () => {
       <Modal
         title="Confirm Clock In"
         open={isClockInModalVisible}
-        onOk={handleClockInConfirm}
-        onCancel={() => {
-          setIsClockInModalVisible(false);
-          setClockInRemark("");
-        }}
-        okText="Confirm"
-        cancelText="Cancel"
-        confirmLoading={createPending}
-        okButtonProps={{ disabled: createPending }}
-        cancelButtonProps={{ disabled: createPending }}
+          onOk={handleClockInConfirm}
+          onCancel={() => {
+            setIsClockInModalVisible(false);
+            setClockInRemark("");
+          }}
+          okText="Confirm"
+          cancelText="Cancel"
+          confirmLoading={createPending || isProcessingClockIn}
+          okButtonProps={{ disabled: createPending || isProcessingClockIn }}
+          cancelButtonProps={{ disabled: createPending || isProcessingClockIn }}
       >
         <p>Are you sure you want to clock in now?</p>
         <Input
@@ -300,16 +300,16 @@ const Clock = () => {
       <Modal
         title="Confirm Clock Out"
         open={isClockOutModalVisible}
-        onOk={handleClockOutConfirm}
-        onCancel={() => {
-          setIsClockOutModalVisible(false);
-          setHistoryRemark("");
-        }}
-        okText="Confirm"
-        cancelText="Cancel"
-        confirmLoading={createPending}
-        okButtonProps={{ disabled: createPending }}
-        cancelButtonProps={{ disabled: createPending }}
+          onOk={handleClockOutConfirm}
+          onCancel={() => {
+            setIsClockOutModalVisible(false);
+            setHistoryRemark("");
+          }}
+          okText="Confirm"
+          cancelText="Cancel"
+          confirmLoading={createPending || isProcessingClockOut}
+          okButtonProps={{ disabled: createPending || isProcessingClockOut }}
+          cancelButtonProps={{ disabled: createPending || isProcessingClockOut }}
       >
         <p>Are you sure you want to clock out now?</p>
         <Input

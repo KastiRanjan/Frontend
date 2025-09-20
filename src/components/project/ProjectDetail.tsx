@@ -94,7 +94,7 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
     {
       label: 'Summary',
       key: '1',
-      children: <ProjectSummary />
+      children: <ProjectSummary project={project} />
     },
     {
       label: 'Details',
@@ -152,19 +152,23 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
               {
                 label: 'Completed',
                 key: 'completed',
-                children: (
-                  <TaskTable 
-                    data={(tasks ?? []).filter(task => task.status === 'done')}
-                    showModal={showModal}
-                    project={{
-                      id: project?.id?.toString?.() ?? String(project?.id ?? ''),
-                      users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
-                      projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
-                    }}
-                    onRefresh={handleRefresh}
-                    loading={loading}
-                  />
-                )
+                children: (() => {
+                  const completedTasks = (tasks ?? []).filter(task => task.status === 'done');
+                  console.log('Completed tasks:', completedTasks);
+                  return (
+                    <TaskTable 
+                      data={completedTasks}
+                      showModal={showModal}
+                      project={{
+                        id: project?.id?.toString?.() ?? String(project?.id ?? ''),
+                        users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
+                        projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
+                      }}
+                      onRefresh={handleRefresh}
+                      loading={loading}
+                    />
+                  );
+                })()
               }
             ]}
           />

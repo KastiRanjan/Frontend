@@ -35,6 +35,11 @@ const Attendence = () => {
         keywords: ""
     });
 
+    // Sort users alphabetically by name for dropdown
+    const sortedUsers = usersData?.results
+        ? [...usersData.results].sort((a, b) => a.name.localeCompare(b.name))
+        : [];
+
     // Fetch date-wise attendance data
     const { data: dateWiseAttendance, isPending: dateWisePending } = useDateWiseAllUsersAttendence(
         selectedDate,
@@ -127,7 +132,7 @@ const Attendence = () => {
                                     <Option key="divider" disabled style={{ borderBottom: '1px solid #d9d9d9' }}>
                                         ──── Individual Users ────
                                     </Option>
-                                    {usersData?.results?.map((user: any) => (
+                                    {sortedUsers.map((user: any) => (
                                         <Option key={user.id} value={user.id}>
                                             {user.name} ({user.email})
                                         </Option>
