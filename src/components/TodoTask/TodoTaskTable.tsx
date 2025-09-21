@@ -218,9 +218,6 @@ const TodoTaskTable = ({
                     >
                         {text}
                     </Text>
-                    {moment().diff(moment(record.createdTimestamp), 'days') < 3 && (
-                        <Badge count="New" style={{ backgroundColor: '#52c41a' }} />
-                    )}
                 </Space>
             ),
         },
