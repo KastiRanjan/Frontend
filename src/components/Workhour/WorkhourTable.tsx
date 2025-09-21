@@ -138,6 +138,24 @@ const WorkhourTable: React.FC<WorkhourTableProps> = ({ onEdit }) => {
 			sortOrder: sortedInfo.columnKey === 'endTime' && sortedInfo.order,
 		},
 		{
+			title: "Valid From",
+			dataIndex: "validFrom",
+			key: "validFrom",
+			...getColumnSearchProps('validFrom', 'Valid From'),
+			sorter: (a: WorkhourType, b: WorkhourType) => 
+				(a.validFrom || '').localeCompare(b.validFrom || ''),
+			sortOrder: sortedInfo.columnKey === 'validFrom' && sortedInfo.order,
+		},
+		{
+			title: "Valid To",
+			dataIndex: "validTo",
+			key: "validTo",
+			...getColumnSearchProps('validTo', 'Valid To'),
+			sorter: (a: WorkhourType, b: WorkhourType) => 
+				(a.validTo || '').localeCompare(b.validTo || ''),
+			sortOrder: sortedInfo.columnKey === 'validTo' && sortedInfo.order,
+		},
+		{
 			title: "Actions",
 			key: "actions",
 			render: (_: any, record: WorkhourType) => (

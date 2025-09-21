@@ -10,6 +10,7 @@ export interface TaskTemplateType {
     subTasks?: TaskTemplateType[];
     budgetedHours?: number;
     status?: string;
+    rank?: number;
     createdBy?: string | null;
     updatedBy?: string | null;
     createdAt?: string;

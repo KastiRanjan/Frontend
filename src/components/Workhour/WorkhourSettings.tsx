@@ -12,7 +12,8 @@ import {
   Popconfirm, 
   message, 
   Typography,
-  Tag
+  Tag,
+  DatePicker
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -29,6 +30,7 @@ import {
   useDeleteWorkhour 
 } from '../../hooks/workhour/useWorkhour';
 import { CreateWorkhourDto, UpdateWorkhourDto, WorkhourType } from '../../types/workhour';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -62,7 +64,9 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
       roleId: record.roleId,
       workHours: record.workHours,
       startTime: record.startTime,
-      endTime: record.endTime
+      endTime: record.endTime,
+      validFrom: record.validFrom ? dayjs(record.validFrom) : undefined,
+      validTo: record.validTo ? dayjs(record.validTo) : undefined
     });
     setIsModalVisible(true);
   };
@@ -84,7 +88,9 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
         roleId: values.roleId || undefined,
         workHours: values.workHours,
         startTime: values.startTime,
-        endTime: values.endTime
+        endTime: values.endTime,
+        validFrom: values.validFrom ? values.validFrom.format('YYYY-MM-DD') : undefined,
+        validTo: values.validTo ? values.validTo.format('YYYY-MM-DD') : undefined
       };
 
       if (editingRecord) {
@@ -167,6 +173,18 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
       dataIndex: 'endTime',
       key: 'endTime',
       render: (time: string) => time || 'Not set'
+    },
+    {
+      title: 'Valid From',
+      dataIndex: 'validFrom',
+      key: 'validFrom',
+      render: (date: string) => date ? new Date(date).toLocaleDateString() : 'Not set'
+    },
+    {
+      title: 'Valid To',
+      dataIndex: 'validTo',
+      key: 'validTo',
+      render: (date: string) => date ? new Date(date).toLocaleDateString() : 'Not set'
     },
     {
       title: 'Created',
@@ -333,7 +351,7 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
           <div style={{ display: 'flex', gap: '16px' }}>
             <Form.Item
               name="startTime"
-              label="Start Time (Optional)"
+              label="Start Time"
               style={{ flex: 1 }}
             >
               <Input placeholder="09:00" />
@@ -341,10 +359,28 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
 
             <Form.Item
               name="endTime"
-              label="End Time (Optional)"
+              label="End Time"
               style={{ flex: 1 }}
             >
               <Input placeholder="17:00" />
+            </Form.Item>
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <Form.Item
+              name="validFrom"
+              label="Valid From"
+              style={{ flex: 1 }}
+            >
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+
+            <Form.Item
+              name="validTo"
+              label="Valid To"
+              style={{ flex: 1 }}
+            >
+              <DatePicker style={{ width: '100%' }} />
             </Form.Item>
           </div>
 

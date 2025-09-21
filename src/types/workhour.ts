@@ -9,6 +9,8 @@ export interface WorkhourType {
 	workHours: number;
 	startTime?: string; // e.g. "09:00"
 	endTime?: string;   // e.g. "17:00"
+	validFrom?: string; // Date string in ISO format
+	validTo?: string;   // Date string in ISO format
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -19,10 +21,14 @@ export interface CreateWorkhourDto {
 	workHours: number;
 	startTime?: string;
 	endTime?: string;
+	validFrom?: string;
+	validTo?: string;
 }
 
 export interface UpdateWorkhourDto {
 	workHours?: number;
 	startTime?: string;
 	endTime?: string;
+	validFrom?: string;
+	validTo?: string;
 }

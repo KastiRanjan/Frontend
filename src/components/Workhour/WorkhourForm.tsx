@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { Form, InputNumber, TimePicker, Button, Select } from "antd";
+import { Form, InputNumber, TimePicker, Button, Select, DatePicker } from "antd";
 import dayjs from "dayjs";
 import { WorkhourType } from "../../types/workhour";
 
@@ -21,6 +21,8 @@ const WorkhourForm: React.FC<WorkhourFormProps> = ({ initialValues, onSubmit, on
 				...initialValues,
 				startTime: initialValues.startTime ? dayjs(initialValues.startTime, "HH:mm") : undefined,
 				endTime: initialValues.endTime ? dayjs(initialValues.endTime, "HH:mm") : undefined,
+				validFrom: initialValues.validFrom ? dayjs(initialValues.validFrom) : undefined,
+				validTo: initialValues.validTo ? dayjs(initialValues.validTo) : undefined,
 				userId: initialValues.user?.id,
 			});
 		} else {
@@ -31,8 +33,10 @@ const WorkhourForm: React.FC<WorkhourFormProps> = ({ initialValues, onSubmit, on
 	const handleFinish = (values: any) => {
 		onSubmit({
 			...values,
-			startTime: values.startTime.format("HH:mm"),
-			endTime: values.endTime.format("HH:mm"),
+			startTime: values.startTime ? values.startTime.format("HH:mm") : undefined,
+			endTime: values.endTime ? values.endTime.format("HH:mm") : undefined,
+			validFrom: values.validFrom ? values.validFrom.format("YYYY-MM-DD") : undefined,
+			validTo: values.validTo ? values.validTo.format("YYYY-MM-DD") : undefined,
 		});
 		form.resetFields();
 	};
@@ -50,6 +54,12 @@ const WorkhourForm: React.FC<WorkhourFormProps> = ({ initialValues, onSubmit, on
 			</Form.Item>
 			<Form.Item name="endTime" label="End Time" rules={[{ required: true, message: "End time required" }]}> 
 				<TimePicker format="HH:mm" style={{ width: "100%" }} />
+			</Form.Item>
+			<Form.Item name="validFrom" label="Valid From" rules={[{ required: false, message: "Valid from date" }]}> 
+				<DatePicker style={{ width: "100%" }} />
+			</Form.Item>
+			<Form.Item name="validTo" label="Valid To" rules={[{ required: false, message: "Valid to date" }]}> 
+				<DatePicker style={{ width: "100%" }} />
 			</Form.Item>
 			<Form.Item>
 				<Button type="primary" htmlType="submit" loading={loading}>
