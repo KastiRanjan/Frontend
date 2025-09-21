@@ -57,6 +57,8 @@ import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
 import PermissionAssignmentManager from "@/pages/Permission/AssignmentManager";
 import LeaveTypeManagementPage from "@/pages/LeaveTypeManagementPage";
+import TodoTaskPage from "@/pages/TodoTask";
+import TaskTypeSettings from "@/pages/TodoTask/TaskTypeSettings";
 
 const Router = [
   {
@@ -406,6 +408,26 @@ const Router = [
       method="get"
       resource="leave"
       component={<LeaveManagement />}
+    />
+  ),
+},
+{
+  path: "/todotask",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="todo-task"
+      component={<TodoTaskPage />}
+    />
+  ),
+},
+{
+  path: "/todotask/task-types",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="task-type"
+      component={<TaskTypeSettings />}
     />
   ),
 },

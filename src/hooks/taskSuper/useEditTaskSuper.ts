@@ -14,7 +14,7 @@ export const useEditTaskSuper = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskSuper"] });
       message.success("Task Super updated successfully");
-      navigate("/tasksuper");
+      navigate("/task-template");
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || "Failed to update Task Super";

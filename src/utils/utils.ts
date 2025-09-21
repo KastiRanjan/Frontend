@@ -3,9 +3,9 @@
  * @param permission Permission string to check
  * @returns Boolean indicating if user has permission
  */
-export const hasPermission = (permission: string): boolean => {
-  // TODO: Implement actual permission checking based on user roles
-  // For now, return true for development
+export const hasPermission = (_permission: string): boolean => {
+  // For development purposes, return true to allow all permissions
+  // This should be replaced with actual permission checking in production
   return true;
 };
 

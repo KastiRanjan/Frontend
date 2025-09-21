@@ -9,7 +9,8 @@ import {
   SettingOutlined,
   SafetyOutlined,
   TeamOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  CheckSquareOutlined
 } from "@ant-design/icons";
 import { MenuProps } from "antd";
 import _ from "lodash";
@@ -90,6 +91,12 @@ export const MenuItems = (): MenuProps[] => {
       label: "Attendance",
       resource: "default", // Make attendance available to all authenticated users
       icon: React.createElement(ClockCircleOutlined),
+    },
+    {
+      key: "/todotask",
+      label: "Todo Tasks",
+      resource: "todo-task",
+      icon: React.createElement(CheckSquareOutlined),
     },
     {
       key: "/role",

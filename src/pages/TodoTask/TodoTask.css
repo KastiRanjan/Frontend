@@ -1,0 +1,57 @@
+.todo-task-container {
+    padding: 1rem;
+}
+
+.todo-task-badge {
+    margin-left: 8px;
+}
+
+.todo-task-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.todo-task-filter-section {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.todo-status-open {
+    color: #1890ff;
+}
+
+.todo-status-acknowledged {
+    color: #722ed1;
+}
+
+.todo-status-pending {
+    color: #fa8c16;
+}
+
+.todo-status-completed {
+    color: #52c41a;
+}
+
+.todo-status-dropped {
+    color: #f5222d;
+}
+
+.todo-task-timeline {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.status-tabs .ant-tabs-nav {
+    margin-bottom: 16px;
+}
+
+.status-tabs .ant-tabs-tab {
+    padding: 8px 16px;
+}
+
+.status-tabs {
+    margin-bottom: 24px;
+}

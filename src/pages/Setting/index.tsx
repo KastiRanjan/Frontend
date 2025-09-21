@@ -68,6 +68,14 @@ const Setting = () => {
         </Card>
       </Col>
       <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/todotask/task-types")} hoverable>
+          <Title level={4}>Task Type Settings</Title>
+          <Paragraph>
+            Manage task types for the Todo Task module. Create, edit, and configure task types.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
         <Card className="h-full">
           <svg className="admin-icon-prop">
             <use></use>

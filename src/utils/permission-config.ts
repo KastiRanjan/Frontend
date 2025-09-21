@@ -23,6 +23,12 @@ export const permissionConfig = {
   DELETE_TASK: 'delete_task',
   READ_TASK: 'read_task',
   
+  // TaskType permissions
+  CREATE_TASK_TYPE: 'create_task_type',
+  UPDATE_TASK_TYPE: 'update_task_type',
+  DELETE_TASK_TYPE: 'delete_task_type',
+  READ_TASK_TYPE: 'read_task_type',
+  
   // Project ranking permissions
   MANAGE_PROJECT_RANKING: 'manage_project_ranking',
   VIEW_PROJECT_RANKING: 'view_project_ranking',

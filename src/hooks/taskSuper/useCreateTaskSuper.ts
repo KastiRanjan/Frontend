@@ -13,7 +13,7 @@ export const useCreateTaskSuper = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskSuper"] });
       message.success("Task Super created successfully");
-      navigate("/tasksuper");
+      navigate("/task-template");
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || "Failed to create Task Super";
