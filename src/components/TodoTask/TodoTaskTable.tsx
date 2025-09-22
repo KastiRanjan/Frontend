@@ -227,6 +227,12 @@ const TodoTaskTable = ({
             key: 'type',
             render: (text: string) => <Tag>{text}</Tag>,
         },
+            {
+                title: 'Due Date',
+                dataIndex: 'dueDate',
+                key: 'dueDate',
+                render: (date: string) => date ? moment(date).format('YYYY-MM-DD') : <Tag color="default">No Due Date</Tag>,
+            },
         {
             title: 'Assigned To',
             dataIndex: ['assignedTo', 'name'],

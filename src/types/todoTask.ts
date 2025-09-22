@@ -30,6 +30,7 @@ export interface TodoTask {
     createdById: string;
     createdByUser?: User;
     createdTimestamp: string;
+    dueDate?: string;
     assignedToId: string;
     assignedTo?: User;
     acknowledgedTimestamp?: string;

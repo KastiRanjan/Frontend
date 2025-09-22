@@ -281,6 +281,9 @@ const TodoTaskDetails = ({
                 <Descriptions.Item label="Created Date">
                     {moment(task.createdTimestamp).format('YYYY-MM-DD HH:mm')}
                 </Descriptions.Item>
+                    <Descriptions.Item label="Due Date">
+                        {task.dueDate ? moment(task.dueDate).format('YYYY-MM-DD') : <Tag color="default">No Due Date</Tag>}
+                    </Descriptions.Item>
                 <Descriptions.Item label="Assigned To" span={3}>
                     <Space>
                         <UserOutlined />
