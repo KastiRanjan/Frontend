@@ -59,6 +59,10 @@ import PermissionAssignmentManager from "@/pages/Permission/AssignmentManager";
 import LeaveTypeManagementPage from "@/pages/LeaveTypeManagementPage";
 import TodoTaskPage from "@/pages/TodoTask";
 import TaskTypeSettings from "@/pages/TodoTask/TaskTypeSettings";
+import NoticeBoardPage from "@/pages/NoticeBoard";
+import NoticeBoardAdmin from "@/pages/NoticeBoard/Admin";
+import CreateNoticePage from "@/pages/NoticeBoard/Create";
+import EditNoticePage from "@/pages/NoticeBoard/Edit";
 
 const Router = [
   {
@@ -430,6 +434,22 @@ const Router = [
       component={<TaskTypeSettings />}
     />
   ),
+},
+{
+  path: "/notice-board",
+  element: <NoticeBoardPage />,
+},
+{
+  path: "/notice-board/admin",
+  element: <NoticeBoardAdmin />,
+},
+{
+  path: "/notice-board/create",
+  element: <CreateNoticePage />,
+},
+{
+  path: "/notice-board/edit/:id",
+  element: <EditNoticePage />,
 },
     ],
     
