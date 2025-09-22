@@ -119,15 +119,8 @@ const TodoTaskForm = ({
                         >
                             <Select 
                                 placeholder={isUsersLoading ? "Loading users..." : "Select user"}
-                                showSearch
-                                optionFilterProp="children"
                                 loading={isUsersLoading}
                                 disabled={isUsersLoading}
-                                filterOption={(input, option) => 
-                                    (option?.children as unknown as string)
-                                        .toLowerCase()
-                                        .includes(input.toLowerCase())
-                                }
                                 notFoundContent={
                                     isUsersLoading ? 
                                     <div style={{ padding: '10px', textAlign: 'center' }}>
