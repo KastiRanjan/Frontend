@@ -1,16 +1,18 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
-import { Button, Card, Table, Popconfirm, Input, Space, DatePicker, Select, Modal, Form, Tooltip } from "antd";
+import { Button, Card, Table, Popconfirm, Input, Space, DatePicker, Select, Modal, Form, Tooltip, Tag } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
 import { useState, useRef, useEffect } from "react";
-import { SearchOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined, PlusOutlined, FilterOutlined, ClearOutlined } from "@ant-design/icons";
+import { SearchOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined, PlusOutlined, FilterOutlined, ClearOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 import { useAllWorklog, WorklogFilters } from "@/hooks/worklog/useAllWorklog";
 import { useUser } from "@/hooks/user/useUser";
 import { useProject } from "@/hooks/project/useProject";
 import { getProfile } from "@/service/auth.service";
+import { useActiveWorkhour } from "@/hooks/workhour/useActiveWorkhour";
+import { getWorklogType, getWorklogTypeColor, getWorklogTypeDescription, WorklogStatus } from "@/utils/worklogUtils";
 
 const { TextArea } = Input;
 
@@ -68,7 +70,12 @@ const AdminWorklogTable = () => {
     };
     
     fetchCurrentUser();
-  }, []);  const toggleDescription = (id: string) => {
+  }, []);  
+  
+  // Fetch active workhour for the current user's role
+  const { data: activeWorkhour } = useActiveWorkhour(
+    currentUser?.roleId
+  );  const toggleDescription = (id: string) => {
     setExpandedRows(prev =>
       prev.includes(id)
         ? prev.filter(rowId => rowId !== id)
@@ -283,11 +290,18 @@ const AdminWorklogTable = () => {
                                    moment.duration(moment(b.endTime).diff(moment(b.startTime))).asMinutes(),
         sortOrder: sortedInfo.columnKey === 'duration' && sortedInfo.order,
         render: (_: any, record: any) => {
+          // Determine worklog type and get color
+          const worklogType = getWorklogType(record, activeWorkhour);
+          const color = getWorklogTypeColor(worklogType);
+          const typeDesc = getWorklogTypeDescription(worklogType);
+          
           return (
-            <div className="text-xs" style={{ lineHeight: 1, fontSize: '10px' }}>
-              <div>{moment(record?.startTime).format("H:mm") + "-" + moment(record?.endTime).format("H:mm")}</div>
-              <small style={{ fontSize: '9px' }}>{`(${moment.duration(moment(record?.endTime).diff(moment(record?.startTime))).asMinutes()}m)`}</small>
-            </div>
+            <Tooltip title={typeDesc}>
+              <div className="text-xs" style={{ lineHeight: 1, fontSize: '10px', color: color, fontWeight: worklogType !== WorklogStatus.NORMAL ? 'bold' : 'normal' }}>
+                <div>{moment(record?.startTime).format("H:mm") + "-" + moment(record?.endTime).format("H:mm")}</div>
+                <small style={{ fontSize: '9px' }}>{`(${moment.duration(moment(record?.endTime).diff(moment(record?.startTime))).asMinutes()}m)`}</small>
+              </div>
+            </Tooltip>
           );
         }
       },
@@ -314,6 +328,7 @@ const AdminWorklogTable = () => {
           );
         }
       },
+
       {
         title: "Request To",
         dataIndex: "requestTo",
@@ -353,6 +368,7 @@ const AdminWorklogTable = () => {
                   icon={<EditOutlined />}
                   onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
                   style={{ padding: '0 2px', height: '20px', minWidth: '20px', marginRight: '2px' }}
+                  className="action-btn"
                 />
               </Tooltip>
               <Tooltip title="Delete">
@@ -365,7 +381,7 @@ const AdminWorklogTable = () => {
                   okText="Yes"
                   cancelText="No"
                 >
-                  <Button type="primary" danger size="small" icon={<DeleteOutlined />} style={{ padding: '0 2px', height: '20px', minWidth: '20px', marginRight: '2px' }} />
+                  <Button type="primary" danger size="small" icon={<DeleteOutlined />} style={{ padding: '0 2px', height: '20px', minWidth: '20px', marginRight: '2px' }} className="action-btn" />
                 </Popconfirm>
               </Tooltip>
               {record.status === "requested" && (
@@ -386,6 +402,7 @@ const AdminWorklogTable = () => {
                         }
                       }}
                       style={{ padding: '0 2px', height: '20px', minWidth: '20px', marginRight: '2px' }}
+                      className="action-btn"
                     />
                   </Tooltip>
                   <Tooltip title="Reject">
@@ -396,6 +413,7 @@ const AdminWorklogTable = () => {
                       icon={<CloseOutlined />}
                       onClick={() => showRejectModal(record?.id)}
                       style={{ padding: '0 2px', height: '20px', minWidth: '20px' }}
+                      className="action-btn"
                     />
                   </Tooltip>
                 </>
@@ -468,61 +486,62 @@ const AdminWorklogTable = () => {
     <Card className="text-xs" style={{ padding: '0' }} bodyStyle={{ padding: '8px' }}>
       <style>
         {`
-          .compact-table .ant-table-cell {
+          /* Scoped styles for admin worklog table only */
+          .admin-worklog-table .ant-table-cell {
             padding: 2px 4px !important;
             line-height: 1 !important;
             font-size: 10px !important;
           }
-          .compact-row td {
+          .admin-worklog-table .compact-row td {
             padding: 0px 4px !important;
             line-height: 1 !important;
             font-size: 10px !important;
           }
-          .ant-table-cell a {
+          .admin-worklog-table .ant-table-cell a {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             display: block;
             font-size: 10px;
           }
-          .ant-table-thead > tr > th {
+          .admin-worklog-table .ant-table-thead > tr > th {
             padding: 3px 4px !important;
             font-size: 10px !important;
           }
-          .ant-table-column-title {
+          .admin-worklog-table .ant-table-column-title {
             font-size: 10px !important;
           }
-          .ant-select-item {
+          .admin-worklog-table .ant-select-item {
             font-size: 10px !important;
             padding: 2px 8px !important;
           }
-          .ant-select-dropdown {
+          .admin-worklog-table .ant-select-dropdown {
             font-size: 10px !important;
           }
-          .ant-form-item-label > label {
+          .admin-worklog-table .ant-form-item-label > label {
             font-size: 10px !important;
             height: 16px !important;
           }
-          .ant-form-item {
+          .admin-worklog-table .ant-form-item {
             margin-bottom: 2px !important;
           }
-          .ant-btn-sm {
+          .admin-worklog-table .ant-btn-sm {
             font-size: 10px !important;
           }
-          .ant-table-pagination.ant-pagination {
+          .admin-worklog-table .ant-table-pagination.ant-pagination {
             margin: 8px 0 !important;
           }
-          .table-container {
+          .admin-worklog-table .table-container {
             overflow-x: auto;
             width: 100%;
           }
           /* Force action buttons to stay on a single line */
-          .flex-nowrap {
+          .admin-worklog-table .flex-nowrap {
             display: inline-flex !important;
             flex-wrap: nowrap !important;
             white-space: nowrap !important;
           }
-          .ant-btn {
+          .admin-worklog-table .action-btn {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -531,13 +550,73 @@ const AdminWorklogTable = () => {
             overflow: hidden !important;
           }
           /* Make sure the action column doesn't wrap */
-          .ant-table-cell:last-child {
+          .admin-worklog-table .ant-table-cell:last-child {
             white-space: nowrap !important;
             overflow: visible !important;
           }
+          /* Style for legend tags */
+          .admin-worklog-table .legend-tag {
+            font-size: 9px !important;
+            padding: 0 4px !important;
+            margin-right: 4px !important;
+          }
+          /* Colored row styles */
+          .admin-worklog-table .row-normal td {
+            background-color: rgba(24, 144, 255, 0.2) !important;
+            border-color: rgba(24, 144, 255, 0.3) !important;
+          }
+          .admin-worklog-table .row-early td {
+            background-color: rgba(82, 196, 26, 0.2) !important;
+            border-color: rgba(82, 196, 26, 0.3) !important;
+          }
+          .admin-worklog-table .row-late td {
+            background-color: rgba(250, 173, 20, 0.2) !important;
+            border-color: rgba(250, 173, 20, 0.3) !important;
+          }
+          .admin-worklog-table .row-late-approved td {
+            background-color: rgba(114, 46, 209, 0.2) !important;
+            border-color: rgba(114, 46, 209, 0.3) !important;
+          }
+          .admin-worklog-table .row-late-unapproved td {
+            background-color: rgba(245, 34, 45, 0.2) !important;
+            border-color: rgba(245, 34, 45, 0.3) !important;
+          }
+          .admin-worklog-table .row-rejected-approved td {
+            background-color: rgba(235, 47, 150, 0.2) !important;
+            border-color: rgba(235, 47, 150, 0.3) !important;
+          }
+          /* Override the hover effect */
+          .admin-worklog-table .ant-table-tbody > tr.ant-table-row:hover > td {
+            background: inherit !important;
+            filter: brightness(0.9) !important;
+          }
         `}
       </style>
-      <Form layout="vertical" className="mb-1 text-xs" style={{ fontSize: '10px' }}>
+      
+      {/* Worklog type legend */}
+      <div className="admin-worklog-table" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '8px', fontSize: '10px' }}>
+        <span>Worklog Types (rows are color coded): </span>
+        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.NORMAL)}>NORMAL</Tag>
+        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.EARLY)}>EARLY</Tag>
+        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE)}>LATE</Tag>
+        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE_APPROVED)}>LATE APPROVED</Tag>
+        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE_UNAPPROVED)}>LATE UNAPPROVED</Tag>
+        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.REJECTED_THEN_APPROVED)}>REJECTED THEN APPROVED</Tag>
+        <Tooltip title={
+          <div>
+            <p><strong>Normal:</strong> Regular worklog within work hours</p>
+            <p><strong>Early:</strong> Worklog that starts before set work hours</p>
+            <p><strong>Late:</strong> Worklog that starts after set work hours</p>
+            <p><strong>Late Approved:</strong> Worklog approved more than 12 hours after request</p>
+            <p><strong>Late Unapproved:</strong> Worklog requested but waiting for approval for more than 12 hours</p>
+            <p><strong>Rejected Then Approved:</strong> Worklog that was rejected and then approved</p>
+          </div>
+        }>
+          <QuestionCircleOutlined style={{ cursor: 'pointer', marginLeft: '4px' }} />
+        </Tooltip>
+      </div>
+      
+      <Form layout="vertical" className="mb-1 text-xs admin-worklog-table" style={{ fontSize: '10px' }}>
         <div className="flex flex-wrap items-end gap-1">
           <div style={{ width: '120px' }}>
             <Form.Item label="Status" style={{ marginBottom: '2px' }}>
@@ -614,25 +693,28 @@ const AdminWorklogTable = () => {
           
           <div className="flex gap-1">
             <Tooltip title="Clear Filters">
-              <Button type="default" size="small" icon={<ClearOutlined />} onClick={clearFilters} style={{ padding: '0 4px', height: '20px' }} />
+              <Button type="default" size="small" icon={<ClearOutlined />} onClick={clearFilters} style={{ padding: '0 4px', height: '20px' }} className="action-btn" />
             </Tooltip>
             <Tooltip title="Apply Filters">
-              <Button type="primary" size="small" icon={<FilterOutlined />} onClick={() => refetch()} style={{ padding: '0 4px', height: '20px' }} />
+              <Button type="primary" size="small" icon={<FilterOutlined />} onClick={() => refetch()} style={{ padding: '0 4px', height: '20px' }} className="action-btn" />
             </Tooltip>
           </div>
         </div>
       </Form>      
-      <div className="table-container" style={{ overflowX: 'auto', width: '100%' }}>
+      <div className="table-container admin-worklog-table" style={{ overflowX: 'auto', width: '100%' }}>
         <Table
           loading={isPending || isEditPending}
           dataSource={worklogs || []}
           columns={getColumns() as any}
           size="small"
-          className="text-xs compact-table"
+          className="text-xs compact-table admin-worklog-table"
           style={{ 
             fontSize: '10px'
           }}
-          rowClassName="compact-row"
+          rowClassName={(record) => {
+            const worklogType = getWorklogType(record, activeWorkhour);
+            return `compact-row row-${worklogType}`;
+          }}
           expandable={{
             expandedRowRender,
             expandedRowKeys: expandedRows,
@@ -665,6 +747,7 @@ const AdminWorklogTable = () => {
         okButtonProps={{ danger: true }}
         width={300}
         bodyStyle={{ padding: '12px' }}
+        wrapClassName="admin-worklog-table"
       >
         <TextArea
           rows={3}
