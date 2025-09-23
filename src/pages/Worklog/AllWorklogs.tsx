@@ -1,15 +1,24 @@
 import PageTitle from "@/components/PageTitle";
 import AllWorklogTable from "@/components/Worklog/AllWorklogTable";
 import IncomingWorklogTable from "@/components/Worklog/IncomingWorklogTable";
-import { Tabs } from "antd";
+import { Tabs, Button } from "antd";
 import { useSession } from "@/context/SessionContext";
+import { useNavigate } from "react-router-dom";
 
 const AllWorklogs = () => {
     const { profile } = useSession();
-        // Defensive: support both {name, permission} and {permission} role objects
-        const userRole = (profile?.role && (profile.role as any).name)
-            ? (profile.role as any).name.toLowerCase?.() || ""
-            : "";
+    const navigate = useNavigate();
+    
+    // Defensive: support both {name, permission} and {permission} role objects
+    const userRole = (profile?.role && (profile.role as any).name)
+        ? (profile.role as any).name.toLowerCase?.() || ""
+        : "";
+    
+    // Check if user has permission to access all worklog page
+    const hasAllWorklogPermission = profile?.role?.permission?.some(
+        (perm: any) => perm.path === '/worklogs/allworklog' && perm.method === 'get'
+    );
+    
     const tabItems = [
         {
             label: `Requested`,
@@ -27,6 +36,7 @@ const AllWorklogs = () => {
             children: <AllWorklogTable status="rejected" />,
         },
     ];
+    
     if (userRole !== "auditjunior") {
         tabItems.push(
             {
@@ -46,8 +56,20 @@ const AllWorklogs = () => {
             }
         );
     }
+    
     return (
         <>
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">My Worklogs</h1>
+                {hasAllWorklogPermission && (
+                    <Button 
+                        type="primary" 
+                        onClick={() => navigate("/worklog/allworklog")}
+                    >
+                        View All Worklogs
+                    </Button>
+                )}
+            </div>
             <Tabs defaultActiveKey="1" items={tabItems} />
         </>
     );

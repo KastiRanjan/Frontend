@@ -10,6 +10,11 @@ export const fetchWorkhours = async () => {
 	return response.data;
 };
 
+export const fetchWorkhourHistory = async (roleId: string) => {
+	const response = await axios.get(`${backendURI}/workhour/history/${roleId}`);
+	return response.data;
+};
+
 export const createWorkhour = async (payload: CreateWorkhourDto) => {
 	const response = await axios.post(`${backendURI}/workhour`, payload);
 	return response.data;
@@ -25,7 +30,7 @@ export const deleteWorkhour = async (id: string) => {
 	return response.data;
 };
 
-export const resolveWorkhour = async (userId: string) => {
-	const response = await axios.get(`${backendURI}/workhour/resolve/${userId}`);
+export const resolveWorkhour = async (roleId: string) => {
+	const response = await axios.get(`${backendURI}/workhour/resolve/${roleId}`);
 	return response.data;
 };

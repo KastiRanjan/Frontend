@@ -5,7 +5,6 @@ import {
   Button, 
   Modal, 
   Form, 
-  Input, 
   InputNumber, 
   Select, 
   Space, 
@@ -13,40 +12,46 @@ import {
   message, 
   Typography,
   Tag,
-  DatePicker
+  DatePicker,
+  Tabs,
+  TimePicker,
+  Row,
+  Col
 } from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
   DeleteOutlined, 
   SettingOutlined,
-  UserOutlined,
-  TeamOutlined
+  HistoryOutlined
 } from '@ant-design/icons';
 import { 
   useWorkhours, 
+  useWorkhourHistory,
   useCreateWorkhour, 
   useUpdateWorkhour, 
   useDeleteWorkhour 
 } from '../../hooks/workhour/useWorkhour';
-import { CreateWorkhourDto, UpdateWorkhourDto, WorkhourType } from '../../types/workhour';
+import { CreateWorkhourDto, UpdateWorkhourDto, WorkhourType, WorkhourHistoryType } from '../../types/workhour';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
 const { Option } = Select;
+const { TabPane } = Tabs;
 
 interface WorkhourSettingsProps {
-  users?: any[];
   roles?: any[];
 }
 
-const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles = [] }) => {
+const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ roles = [] }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<WorkhourType | null>(null);
   const [form] = Form.useForm();
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   // Hooks
   const { data: workhours = [], isLoading, refetch } = useWorkhours();
+  const { data: workhourHistory = [], isLoading: historyLoading } = useWorkhourHistory(selectedRole || '');
   const createWorkhour = useCreateWorkhour();
   const updateWorkhour = useUpdateWorkhour();
   const deleteWorkhour = useDeleteWorkhour();
@@ -60,13 +65,11 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
   const handleEdit = (record: WorkhourType) => {
     setEditingRecord(record);
     form.setFieldsValue({
-      userId: record.userId,
       roleId: record.roleId,
       workHours: record.workHours,
-      startTime: record.startTime,
-      endTime: record.endTime,
-      validFrom: record.validFrom ? dayjs(record.validFrom) : undefined,
-      validTo: record.validTo ? dayjs(record.validTo) : undefined
+      startTime: record.startTime ? dayjs(record.startTime, "HH:mm") : undefined,
+      endTime: record.endTime ? dayjs(record.endTime, "HH:mm") : undefined,
+      validFrom: record.validFrom ? dayjs(record.validFrom) : undefined
     });
     setIsModalVisible(true);
   };
@@ -84,13 +87,11 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
   const handleSubmit = async (values: any) => {
     try {
       const payload: CreateWorkhourDto | UpdateWorkhourDto = {
-        userId: values.userId || undefined,
-        roleId: values.roleId || undefined,
+        roleId: values.roleId,
         workHours: values.workHours,
-        startTime: values.startTime,
-        endTime: values.endTime,
-        validFrom: values.validFrom ? values.validFrom.format('YYYY-MM-DD') : undefined,
-        validTo: values.validTo ? values.validTo.format('YYYY-MM-DD') : undefined
+        startTime: values.startTime ? values.startTime.format("HH:mm") : undefined,
+        endTime: values.endTime ? values.endTime.format("HH:mm") : undefined,
+        validFrom: values.validFrom ? values.validFrom.format('YYYY-MM-DD') : undefined
       };
 
       if (editingRecord) {
@@ -112,49 +113,121 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
     }
   };
 
-  const getConfigurationType = (record: WorkhourType) => {
-    if (record.userId) {
-      const user = users.find(u => u.id === record.userId);
-      return {
-        type: 'User-specific',
-        name: user ? `${user.name} (${user.username})` : 'Unknown User',
-        color: '#52c41a',
-        icon: <UserOutlined />
-      };
-    } else if (record.roleId) {
-      const role = roles.find(r => r.id === record.roleId);
-      return {
-        type: 'Role-based',
-        name: role ? role.displayName : 'Unknown Role',
-        color: '#1890ff',
-        icon: <TeamOutlined />
-      };
-    }
-    return {
-      type: 'General',
-      name: 'Default',
-      color: '#faad14',
-      icon: <SettingOutlined />
-    };
+  const handleRoleSelect = (roleId: string) => {
+    setSelectedRole(roleId);
   };
 
-  const columns = [
-    {
-      title: 'Configuration Type',
-      key: 'type',
-      render: (_: any, record: WorkhourType) => {
-        const config = getConfigurationType(record);
-        return (
-          <Space>
-            {config.icon}
-            <div>
-              <Tag color={config.color}>{config.type}</Tag>
-              <br />
-              <span>{config.name}</span>
-            </div>
-          </Space>
-        );
+  // Calculate end time based on start time and work hours
+  const calculateEndTime = (startTime: dayjs.Dayjs, workHours: number) => {
+    if (!startTime || !workHours) return null;
+    
+    const hours = Math.floor(workHours);
+    const minutes = Math.round((workHours - hours) * 60);
+    
+    return startTime.add(hours, 'hour').add(minutes, 'minute');
+  };
+
+  // Calculate start time based on end time and work hours
+  const calculateStartTime = (endTime: dayjs.Dayjs, workHours: number) => {
+    if (!endTime || !workHours) return null;
+    
+    const hours = Math.floor(workHours);
+    const minutes = Math.round((workHours - hours) * 60);
+    
+    return endTime.subtract(hours, 'hour').subtract(minutes, 'minute');
+  };
+  
+  // Calculate work hours based on start time and end time
+  const calculateWorkHours = (startTime: dayjs.Dayjs, endTime: dayjs.Dayjs) => {
+    if (!startTime || !endTime) return null;
+    
+    const startMinutes = startTime.hour() * 60 + startTime.minute();
+    const endMinutes = endTime.hour() * 60 + endTime.minute();
+    
+    // Handle cases where end time is on the next day
+    let diffMinutes = endMinutes - startMinutes;
+    if (diffMinutes < 0) {
+      diffMinutes += 24 * 60; // Add 24 hours in minutes
+    }
+    
+    return Math.round((diffMinutes / 60) * 10) / 10; // Round to 1 decimal place
+  };
+
+  // Handle changes to form fields
+  const handleValuesChange = (changedValues: any) => {
+    const formValues = form.getFieldsValue();
+    
+    // Don't skip auto-calculation anymore, even when a field is being edited
+    // if (manuallyEditing) return;
+
+    // If work hours changed
+    if ('workHours' in changedValues) {
+      const workHours = changedValues.workHours;
+      
+      if (formValues.startTime) {
+        // Calculate end time based on start time and work hours
+        const endTime = calculateEndTime(formValues.startTime, workHours);
+        if (endTime) {
+          form.setFieldsValue({ endTime });
+        }
+      } else if (formValues.endTime) {
+        // Calculate start time based on end time and work hours
+        const startTime = calculateStartTime(formValues.endTime, workHours);
+        if (startTime) {
+          form.setFieldsValue({ startTime });
+        }
       }
+    }
+    
+    // If start time changed
+    if ('startTime' in changedValues) {
+      const startTime = changedValues.startTime;
+      
+      if (startTime && formValues.workHours) {
+        // Calculate end time based on start time and work hours
+        const endTime = calculateEndTime(startTime, formValues.workHours);
+        if (endTime) {
+          form.setFieldsValue({ endTime });
+        }
+      } else if (startTime && formValues.endTime) {
+        // Calculate work hours based on start and end time
+        const workHours = calculateWorkHours(startTime, formValues.endTime);
+        if (workHours) {
+          form.setFieldsValue({ workHours });
+        }
+      }
+    }
+    
+    // If end time changed
+    if ('endTime' in changedValues) {
+      const endTime = changedValues.endTime;
+      
+      if (endTime && formValues.workHours && !formValues.startTime) {
+        // Calculate start time based on end time and work hours
+        const startTime = calculateStartTime(endTime, formValues.workHours);
+        if (startTime) {
+          form.setFieldsValue({ startTime });
+        }
+      } else if (endTime && formValues.startTime) {
+        // Calculate work hours based on start and end time
+        const workHours = calculateWorkHours(formValues.startTime, endTime);
+        if (workHours) {
+          form.setFieldsValue({ workHours });
+        }
+      }
+    }
+  };
+
+  const getRoleName = (roleId: string) => {
+    const role = roles.find(r => r.id === roleId);
+    return role ? role.displayName : 'Unknown Role';
+  };
+
+  const activeColumns = [
+    {
+      title: 'Role',
+      key: 'role',
+      render: (_: any, record: WorkhourType) => getRoleName(record.roleId)
     },
     {
       title: 'Work Hours',
@@ -181,10 +254,13 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
       render: (date: string) => date ? new Date(date).toLocaleDateString() : 'Not set'
     },
     {
-      title: 'Valid To',
-      dataIndex: 'validTo',
-      key: 'validTo',
-      render: (date: string) => date ? new Date(date).toLocaleDateString() : 'Not set'
+      title: 'Status',
+      key: 'status',
+      render: (_: any, record: WorkhourType) => (
+        <Tag color={record.isActive ? 'green' : 'default'}>
+          {record.isActive ? 'Active' : 'Inactive'}
+        </Tag>
+      )
     },
     {
       title: 'Created',
@@ -204,6 +280,14 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
             size="small"
           >
             Edit
+          </Button>
+          <Button
+            type="link"
+            icon={<HistoryOutlined />}
+            onClick={() => handleRoleSelect(record.roleId)}
+            size="small"
+          >
+            History
           </Button>
           <Popconfirm
             title="Are you sure you want to delete this configuration?"
@@ -225,6 +309,50 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
     }
   ];
 
+  const historyColumns = [
+    {
+      title: 'Role',
+      key: 'role',
+      render: (_: any, record: WorkhourHistoryType) => getRoleName(record.roleId)
+    },
+    {
+      title: 'Work Hours',
+      dataIndex: 'workHours',
+      key: 'workHours',
+      render: (hours: number) => <strong>{hours}h</strong>
+    },
+    {
+      title: 'Start Time',
+      dataIndex: 'startTime',
+      key: 'startTime',
+      render: (time: string) => time || 'Not set'
+    },
+    {
+      title: 'End Time',
+      dataIndex: 'endTime',
+      key: 'endTime',
+      render: (time: string) => time || 'Not set'
+    },
+    {
+      title: 'Valid From',
+      dataIndex: 'validFrom',
+      key: 'validFrom',
+      render: (date: string) => date ? new Date(date).toLocaleDateString() : 'Not set'
+    },
+    {
+      title: 'Valid Until',
+      dataIndex: 'validUntil',
+      key: 'validUntil',
+      render: (date: string) => date ? new Date(date).toLocaleDateString() : 'Still Active'
+    },
+    {
+      title: 'Created',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => new Date(date).toLocaleDateString()
+    }
+  ];
+
   return (
     <Card
       title={
@@ -243,17 +371,36 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
         </div>
       }
     >
-      <Table
-        columns={columns}
-        dataSource={workhours}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total) => `Total ${total} configurations`
-        }}
-      />
+      <Tabs defaultActiveKey="active">
+        <TabPane tab="Active Workhours" key="active">
+          <Table
+            columns={activeColumns}
+            dataSource={workhours}
+            rowKey="id"
+            loading={isLoading}
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `Total ${total} configurations`
+            }}
+          />
+        </TabPane>
+        {selectedRole && (
+          <TabPane tab={`History for ${getRoleName(selectedRole)}`} key="history">
+            <Table
+              columns={historyColumns}
+              dataSource={workhourHistory}
+              rowKey="id"
+              loading={historyLoading}
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total) => `Total ${total} history records`
+              }}
+            />
+          </TabPane>
+        )}
+      </Tabs>
 
       <Modal
         title={editingRecord ? 'Edit Work Hour Configuration' : 'Add Work Hour Configuration'}
@@ -269,120 +416,77 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ users = [], roles =
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
+          onValuesChange={handleValuesChange}
         >
           <Form.Item
-            name="configurationType"
-            label="Configuration Type"
-            required
+            name="roleId"
+            label="Role"
+            rules={[{ required: true, message: 'Please select a role' }]}
           >
-            <Select placeholder="Select configuration type">
-              <Option value="user">User-specific</Option>
-              <Option value="role">Role-based</Option>
+            <Select placeholder="Select role">
+              {roles.map(role => (
+                <Option key={role.id} value={role.id}>
+                  {role.displayName}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) => 
-              prevValues.configurationType !== currentValues.configurationType
-            }
-          >
-            {({ getFieldValue }) => {
-              const configType = getFieldValue('configurationType');
-              
-              if (configType === 'user') {
-                return (
-                  <Form.Item
-                    name="userId"
-                    label="User"
-                    rules={[{ required: true, message: 'Please select a user' }]}
-                  >
-                    <Select placeholder="Select user" showSearch>
-                      {users.map(user => (
-                        <Option key={user.id} value={user.id}>
-                          {user.name} ({user.username}) - {user.email}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                );
-              }
-              
-              if (configType === 'role') {
-                return (
-                  <Form.Item
-                    name="roleId"
-                    label="Role"
-                    rules={[{ required: true, message: 'Please select a role' }]}
-                  >
-                    <Select placeholder="Select role">
-                      {roles.map(role => (
-                        <Option key={role.id} value={role.id}>
-                          {role.displayName}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                );
-              }
-              
-              return null;
-            }}
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="workHours"
+                label="Daily Work Hours"
+                rules={[
+                  { required: true, message: 'Please enter work hours' },
+                  { type: 'number', min: 0.5, max: 24, message: 'Work hours must be between 0.5 and 24' }
+                ]}
+              >
+                <InputNumber 
+                  placeholder="8" 
+                  style={{ width: '100%' }}
+                  min={0.5}
+                  max={24}
+                  step={0.5}
+                  addonAfter="hours"
+                />
+              </Form.Item>
+            </Col>
+            
+            <Col span={8}>
+              <Form.Item
+                name="startTime"
+                label="Start Time"
+                rules={[{ required: true, message: 'Please enter start time' }]}
+              >
+                <TimePicker 
+                  format="HH:mm" 
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+            
+            <Col span={8}>
+              <Form.Item
+                name="endTime"
+                label="End Time"
+                rules={[{ required: true, message: 'Please enter end time' }]}
+              >
+                <TimePicker 
+                  format="HH:mm" 
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
-            name="workHours"
-            label="Daily Work Hours"
-            rules={[
-              { required: true, message: 'Please enter work hours' },
-              { type: 'number', min: 1, max: 24, message: 'Work hours must be between 1 and 24' }
-            ]}
+            name="validFrom"
+            label="Valid From"
+            rules={[{ required: true, message: 'Please select valid from date' }]}
           >
-            <InputNumber 
-              placeholder="8" 
-              style={{ width: '100%' }}
-              min={1}
-              max={24}
-              step={0.5}
-              addonAfter="hours"
-            />
+            <DatePicker style={{ width: '100%' }} />
           </Form.Item>
-
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="startTime"
-              label="Start Time"
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="09:00" />
-            </Form.Item>
-
-            <Form.Item
-              name="endTime"
-              label="End Time"
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="17:00" />
-            </Form.Item>
-          </div>
-
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="validFrom"
-              label="Valid From"
-              style={{ flex: 1 }}
-            >
-              <DatePicker style={{ width: '100%' }} />
-            </Form.Item>
-
-            <Form.Item
-              name="validTo"
-              label="Valid To"
-              style={{ flex: 1 }}
-            >
-              <DatePicker style={{ width: '100%' }} />
-            </Form.Item>
-          </div>
 
           <Form.Item style={{ marginTop: '24px', textAlign: 'right' }}>
             <Space>

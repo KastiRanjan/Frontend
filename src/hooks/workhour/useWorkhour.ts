@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as workhourService from "../../service/workhour.service";
 import { CreateWorkhourDto, UpdateWorkhourDto } from "../../types/workhour";
 
-
 export function useWorkhours() {
 	return useQuery({
 		queryKey: ["workhours"],
@@ -12,6 +11,13 @@ export function useWorkhours() {
 	});
 }
 
+export function useWorkhourHistory(roleId: string) {
+	return useQuery({
+		queryKey: ["workhourHistory", roleId],
+		queryFn: () => workhourService.fetchWorkhourHistory(roleId),
+		enabled: !!roleId,
+	});
+}
 
 export function useCreateWorkhour() {
 	const queryClient = useQueryClient();
@@ -21,7 +27,6 @@ export function useCreateWorkhour() {
 	});
 }
 
-
 export function useUpdateWorkhour() {
 	const queryClient = useQueryClient();
 	return useMutation({
@@ -29,7 +34,6 @@ export function useUpdateWorkhour() {
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workhours"] }),
 	});
 }
-
 
 export function useDeleteWorkhour() {
 	const queryClient = useQueryClient();

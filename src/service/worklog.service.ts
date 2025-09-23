@@ -21,6 +21,34 @@ export const fetchWorklogsByUser = async (status?: string) => {
   return response.data;
 }
 
+export const fetchAllWorklogs = async (filters: { status?: string, date?: string, userId?: string, projectId?: string }) => {
+  let url = `${backendURI}/worklogs/allworklog`;
+  const queryParams = [];
+  
+  if (filters.status && filters.status !== 'all') {
+    queryParams.push(`status=${filters.status}`);
+  }
+  
+  if (filters.date) {
+    queryParams.push(`date=${filters.date}`);
+  }
+  
+  if (filters.userId) {
+    queryParams.push(`userId=${filters.userId}`);
+  }
+  
+  if (filters.projectId) {
+    queryParams.push(`projectId=${filters.projectId}`);
+  }
+  
+  if (queryParams.length > 0) {
+    url += `?${queryParams.join('&')}`;
+  }
+  
+  const response = await axios.get(url);
+  return response.data;
+};
+
 export const fetchWorklog = async ({ id }: { id: string }) => {
   const response = await axios.get(`${backendURI}/worklogs/${id}`);
 
@@ -45,13 +73,26 @@ export const createWorklog = async (payload: any) => {
 export const editWorklog = async ({
   remark,
   status,
+  rejectedRemark,
+  approvedBy,
+  rejectBy,
   id,
 }: {
-  remark: string;
-  status: any;
+  remark?: string;
+  status?: any;
+  rejectedRemark?: string;
+  approvedBy?: string;
+  rejectBy?: string;
   id: string;
 }) => {
-  const response = await axios.patch(`${backendURI}/worklogs/${id}`, {status, remark});
+  const payload: any = {};
+  if (status) payload.status = status;
+  if (remark) payload.remark = remark;
+  if (rejectedRemark) payload.rejectedRemark = rejectedRemark;
+  if (approvedBy) payload.approvedBy = approvedBy;
+  if (rejectBy) payload.rejectBy = rejectBy;
+  
+  const response = await axios.patch(`${backendURI}/worklogs/${id}`, payload);
   return response.data;
 };
 
@@ -61,6 +102,7 @@ export const editingWorklog = async ({
   endTime,
   description,
   approvedBy,
+  requestTo,
   status,
   id,
 }: {
@@ -68,15 +110,14 @@ export const editingWorklog = async ({
   startTime: string;
   endTime: string;
   description: string;
-  approvedBy: string;
-  status: any;
+  approvedBy?: string;
+  requestTo?: string;
+  status?: any;
   id: string;
 }) => {
-  const response = await axios.patch(`${backendURI}/worklogs/${id}`, {date, startTime, endTime, description, approvedBy, status});
+  const response = await axios.patch(`${backendURI}/worklogs/${id}`, {date, startTime, endTime, description, approvedBy, requestTo, status});
   return response.data;
 };
-
-
 
 export const deleteWorklog = async ({ id }: { id: string }) => {
   const response = await axios.delete(`${backendURI}/worklogs/${id}`);

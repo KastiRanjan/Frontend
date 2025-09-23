@@ -39,6 +39,7 @@ import LeaveManagement from "@/pages/Leave/LeaveManagement";
 import Worklog from "@/pages/Worklog";
 import AllWorklogs from "@/pages/Worklog/AllWorklogs";
 import NewWorklog from "@/pages/Worklog/new";
+import WorklogAdmin from "@/pages/Worklog/AdminWorklog";
 import CalendarPage from "@/pages/Calendar";
 import WorkhourSettingsPage from "@/pages/Workhour/settings";
 import HolidayPage from "@/pages/Holiday";
@@ -256,6 +257,17 @@ const Router = [
       {
         path: "worklogs-all",
         element: <AllWorklogs />,
+      },
+      {
+        path: "worklog/allworklog",
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="worklogs"
+            path="/worklogs/allworklog"
+            component={<WorklogAdmin />}
+          />
+        ),
       },
       {
         path: "worklogs/edit/:id",
