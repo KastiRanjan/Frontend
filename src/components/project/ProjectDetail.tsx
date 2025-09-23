@@ -1,6 +1,6 @@
 // src/ProjectDetail.tsx
 import { ProjectType } from '@/types/project';
-import { Button, Card, Col, Modal, Row, Space, Tabs, Typography } from 'antd';
+import { Button, Card, Col, Modal, Row, Tabs } from 'antd';
 import { useSession } from '@/context/SessionContext';
 import TaskTable from '../Task/TaskTable';
 import TaskForm from '../Task/TaskForm';
@@ -71,22 +71,21 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
     setIsModalOpen(true);
   };
 
-  const handleTaskFormSuccess = () => {
-    // Close modal and refresh data
-    setIsModalOpen(false);
-    setSelectedTask(null);
-    handleRefresh();
-  };
-
   // Function to refresh project data after task operations
   const handleRefresh = () => {
     // Only invalidate if we have a project ID
     if (project?.id) {
+      // Invalidate project query to refresh the entire project data
       queryClient.invalidateQueries({ queryKey: ["project", project.id.toString()] });
+      
+      // Invalidate the project tasks hierarchy query to ensure task tables refresh
+      queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id.toString()] });
     }
-    // Also invalidate tasks queries if they exist
+    
+    // Also invalidate general tasks queries if they exist
     queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    console.log("Refreshing project data...");
+    
+    console.log("Refreshing project data and task hierarchy...");
   };
 
   // Build tab items array
@@ -114,9 +113,10 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
           <Tabs 
             type="card" 
             size="small"
+            defaultActiveKey="todo"
             items={[
               {
-                label: 'To Do',
+                label: `To Do (${(tasks ?? []).filter(task => task.status === 'open').length})`,
                 key: 'todo',
                 children: (
                   <TaskTable 
@@ -133,7 +133,7 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
                 )
               },
               {
-                label: 'Doing',
+                label: `Doing (${(tasks ?? []).filter(task => task.status === 'in_progress').length})`,
                 key: 'doing',
                 children: (
                   <TaskTable 
@@ -150,7 +150,7 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
                 )
               },
               {
-                label: 'Completed',
+                label: `Completed (${(tasks ?? []).filter(task => task.status === 'done').length})`,
                 key: 'completed',
                 children: (() => {
                   const completedTasks = (tasks ?? []).filter(task => task.status === 'done');

@@ -85,12 +85,32 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
   // Use the new hook to fetch tasks with complete hierarchy
   const { 
     data: hierarchyTasks,
-    isLoading: isHierarchyLoading
+    isLoading: isHierarchyLoading,
+    refetch: refetchHierarchy
   } = useProjectTasksWithHierarchy({
     projectId: project.id,
     // Filter by status based on the initial data's status
     status: initialData.length > 0 ? initialData[0].status : undefined
   });
+  
+  // Run refetch when onRefresh is called
+  useEffect(() => {
+    // This effect will create a one-time refresh function when the component mounts
+    if (onRefresh) {
+      const originalRefresh = onRefresh;
+      onRefresh = () => {
+        // Call the original refresh function
+        originalRefresh();
+        // Then also refetch our hierarchy data
+        refetchHierarchy();
+        // Also invalidate the query cache for this specific hierarchy
+        queryClient.invalidateQueries({ 
+          queryKey: ["project-tasks-hierarchy", project.id, initialData.length > 0 ? initialData[0].status : undefined] 
+        });
+        console.log("TaskTable refreshing hierarchy data for status:", initialData.length > 0 ? initialData[0].status : 'all');
+      };
+    }
+  }, []);
   
   // Combine the loading states
   const loading = externalLoading || isHierarchyLoading;
