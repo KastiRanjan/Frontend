@@ -595,7 +595,6 @@ const AdminWorklogTable = () => {
       
       {/* Worklog type legend */}
       <div className="admin-worklog-table" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '8px', fontSize: '10px' }}>
-        <span>Worklog Types (rows are color coded): </span>
         <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.NORMAL)}>NORMAL</Tag>
         <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.EARLY)}>EARLY</Tag>
         <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE)}>LATE</Tag>
