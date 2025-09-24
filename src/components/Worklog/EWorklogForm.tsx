@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useWorklogSingle } from "@/hooks/worklog/useWorklogSingle";
 import { useEditingWorklog } from "@/hooks/worklog/useEditingWorklog";
 
@@ -35,17 +35,30 @@ const EWorklogForm = () => {
 
   useEffect(() => {
     if (worklog) {
-      const startMoment = moment(worklog.startTime);
-      const endMoment = moment(worklog.endTime);
-
+      let startDayjs = worklog.startTime;
+      let endDayjs = worklog.endTime;
+      // Defensive: ensure dayjs object
+      if (!dayjs.isDayjs?.(startDayjs)) startDayjs = dayjs(startDayjs);
+      if (!dayjs.isDayjs?.(endDayjs)) endDayjs = dayjs(endDayjs);
+      // Log for debugging
+      if (typeof startDayjs !== 'object' || !(dayjs.isDayjs?.(startDayjs))) {
+        // eslint-disable-next-line no-console
+        console.warn('startDayjs is not a dayjs object:', startDayjs, typeof startDayjs);
+      }
+      // Auto-set requestTo to the current value or first user if not set
+      let requestToValue = worklog.requestTo;
+      if (!requestToValue && worklog.task?.project?.users?.length) {
+        requestToValue = worklog.task.project.users[0].id;
+      }
       form.setFieldsValue({
-        date: startMoment,
+        date: startDayjs,
         projectId: worklog.task?.project?.id,
         taskId: worklog.task?.id,
-        startTime: startMoment,
-        endTime: endMoment,
+        startTime: startDayjs,
+        endTime: endDayjs,
         approvedBy: worklog.approvedBy,
         description: worklog.description,
+        requestTo: requestToValue,
       });
 
       if (worklog.task?.project) {
@@ -59,17 +72,13 @@ const EWorklogForm = () => {
   // Removed handleProjectChange as it's no longer needed since project and task are fixed
 
   const handleFinish = (values: any) => {
-    const startTime = moment(values.date)
-      .set({
-        hour: values.startTime.hour(),
-        minute: values.startTime.minute(),
-      })
+    const startTime = dayjs(values.date)
+      .set("hour", values.startTime.hour())
+      .set("minute", values.startTime.minute())
       .toISOString();
-    const endTime = moment(values.date)
-      .set({
-        hour: values.endTime.hour(),
-        minute: values.endTime.minute(),
-      })
+    const endTime = dayjs(values.date)
+      .set("hour", values.endTime.hour())
+      .set("minute", values.endTime.minute())
       .toISOString();
     const updatedWorklog = {
       id,
@@ -114,6 +123,7 @@ const EWorklogForm = () => {
               <DatePicker
                 className="w-full py-2"
                 disabled={!canEditWorklogDate}
+                allowClear={false}
               />
             </Form.Item>
           </Col>

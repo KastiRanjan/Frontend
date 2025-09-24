@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
-import moment from "moment";
+import dayjs from "dayjs";
 
 const OWorklogForm = () => {
   // ...existing code...
@@ -64,7 +64,7 @@ const OWorklogForm = () => {
   // Initialize form with date parameter if available
   useEffect(() => {
     // Initialize with multiple empty entries all with today's date
-    const today = dateParam ? moment(dateParam) : moment();
+    const today = dateParam ? dayjs(dateParam) : dayjs();
     form.setFieldsValue({
       timeEntries: [{ date: today }],
     });
@@ -313,7 +313,7 @@ const OWorklogForm = () => {
         onFinish={handleFinish}
         layout="vertical"
         initialValues={{
-          timeEntries: [{ date: dateParam ? moment(dateParam) : moment() }],
+          timeEntries: [{ date: dateParam ? dayjs(dateParam) : dayjs() }],
         }}
       >
         <Form.List name="timeEntries">
@@ -638,7 +638,7 @@ const OWorklogForm = () => {
                   type="dashed"
                   onClick={() => {
                     // Add a new entry with today's date pre-filled
-                    add({ date: moment() });
+                    add({ date: dayjs() });
                   }}
                   icon={<PlusOutlined />}
                   block
