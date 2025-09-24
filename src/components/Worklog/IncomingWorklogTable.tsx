@@ -115,7 +115,7 @@ const columns = (
         let user = null;
         let extra = null;
         if (status.toLowerCase() === 'requested') {
-          user = record?.requestToUser;
+          user = record?.user || record?.createdByUser;
           if (record?.requestedAt) {
             extra = <span>Requested At: {new Date(record.requestedAt).toLocaleString()}</span>;
           }
