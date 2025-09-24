@@ -87,6 +87,23 @@ const columns = (
         );
       }
     },
+       {
+      title: "Requested To",
+      dataIndex: "requestToUser",
+      key: "requestToUser",
+      ...getColumnSearchProps('requestToUser.name', 'Requested To'),
+      sorter: (a: any, b: any) => (a.requestToUser?.name || '').localeCompare(b.requestToUser?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'requestToUser' && sortedInfo.order,
+      render: (_: any, record: any) => {
+        const user = record?.requestToUser;
+        const requestedAt = record?.requestedAt ? new Date(record.requestedAt).toLocaleString() : null;
+        return user ? (
+          <Tooltip title={requestedAt ? <span>Requested At: {requestedAt}</span> : undefined}>
+            <span>{user.name}</span>
+          </Tooltip>
+        ) : "-";
+      }
+    },
     {
       title: getStatusTitle(status),
       dataIndex: "userId",
@@ -95,15 +112,28 @@ const columns = (
       sorter: (a: any, b: any) => (a.user?.name || '').localeCompare(b.user?.name || ''),
       sortOrder: sortedInfo.columnKey === 'userId' && sortedInfo.order,
       render: (_: any, record: any) => {
-        const user = record?.user;
-        // Show requestAt, approvedAt, rejectedAt based on status
+        let user = null;
         let extra = null;
-        if (status.toLowerCase() === 'requested' && record?.requestedAt) {
-          extra = <span>Requested At: {new Date(record.requestedAt).toLocaleString()}</span>;
-        } else if (status.toLowerCase() === 'approved' && record?.approvedAt) {
-          extra = <span>Approved At: {new Date(record.approvedAt).toLocaleString()}</span>;
-        } else if (status.toLowerCase() === 'rejected' && record?.rejectedAt) {
-          extra = <span>Rejected At: {new Date(record.rejectedAt).toLocaleString()}</span>;
+        if (status.toLowerCase() === 'requested') {
+          user = record?.requestToUser;
+          if (record?.requestedAt) {
+            extra = <span>Requested At: {new Date(record.requestedAt).toLocaleString()}</span>;
+          }
+        } else if (status.toLowerCase() === 'approved') {
+          user = record?.approvedByUser;
+          if (record?.approvedAt) {
+            extra = <span>Approved At: {new Date(record.approvedAt).toLocaleString()}</span>;
+          }
+        } else if (status.toLowerCase() === 'rejected') {
+          user = record?.rejectByUser;
+          let remark = record?.rejectedRemark;
+          let rejectedAt = record?.rejectedAt ? new Date(record.rejectedAt).toLocaleString() : null;
+          extra = (
+            <span>
+              {remark && <><b>Remark:</b> {remark}<br/></>}
+              {rejectedAt && <>Rejected At: {rejectedAt}</>}
+            </span>
+          );
         }
         return user ? (
           <Tooltip title={<span>{user.email || user.name}<br/>{extra}</span>}>
@@ -114,30 +144,7 @@ const columns = (
     },
   ];
 
-  if (status.toLowerCase() === "rejected") {
-    baseColumns.push({
-      title: "Rejection Remark",
-      dataIndex: "rejectedRemark",
-      key: "rejectedRemark",
-      ...getColumnSearchProps('rejectedRemark', 'Rejection Remark'),
-      sorter: (a: any, b: any) => (a.rejectedRemark || '').localeCompare(b.rejectedRemark || ''),
-      sortOrder: sortedInfo.columnKey === 'rejectedRemark' && sortedInfo.order,
-      render: (_: any, record: any) => {
-        const user = record?.rejectByUser;
-        const rejectedAt = record?.rejectedAt ? new Date(record.rejectedAt).toLocaleString() : null;
-        return (
-          <span>
-            {record?.rejectedRemark || "-"}
-            {user && (
-              <Tooltip title={<span>{user.email || user.name}<br/>{rejectedAt && <span>Rejected At: {rejectedAt}</span>}</span>}>
-                <span style={{ marginLeft: 8, color: '#fa541c' }}>(Rejected by: {user.name})</span>
-              </Tooltip>
-            )}
-          </span>
-        );
-      }
-    });
-  }
+  // Removed Rejection Remark column as remark is now shown in tooltip
 
   // Modified Action column to work with all statuses
   baseColumns.push({
@@ -349,11 +356,17 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
 
   // Only show worklogs where the current user is the approver (approvedBy)
   const filteredWorklogs = (worklogs || []).filter((w: any) => {
-    // For requested status, check approvedBy; for others, fallback to userId
+    const reqTo = w?.requestTo?.toString?.() === currentUserId?.toString();
     if (status.toLowerCase() === "requested") {
-      return w?.approvedBy?.toString() === currentUserId?.toString();
+      return reqTo;
     }
-    return w?.approvedBy?.toString() === currentUserId?.toString();
+    if (status.toLowerCase() === "approved") {
+      return reqTo && w?.approvedBy?.toString?.() === currentUserId?.toString();
+    }
+    if (status.toLowerCase() === "rejected") {
+      return reqTo && w?.rejectBy?.toString?.() === currentUserId?.toString();
+    }
+    return reqTo;
   });
 
   return (
