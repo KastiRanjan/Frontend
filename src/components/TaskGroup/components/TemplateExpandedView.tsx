@@ -163,21 +163,29 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
                 storyTemplates.some(t => t.id === id)
               ),
               onChange: (newSelectedRowKeys, selectedRows) => {
-                // Update selected template rows - only include story templates
-                setSelectedTemplateRows({
+                // Smart selection: selecting a template selects all its subtasks
+                const updatedTemplateRows = {
                   ...selectedTemplateRows,
                   [record.id]: newSelectedRowKeys
+                };
+                const updatedSubtaskRows = { ...selectedSubtaskRows };
+                // For each selected template, select all its subtasks
+                storyTemplates.forEach(template => {
+                  const subtaskKey = `${record.id}:${template.id}`;
+                  if (newSelectedRowKeys.includes(template.id)) {
+                    // Select all subtasks for this template
+                    if (template.subTasks && template.subTasks.length > 0) {
+                      updatedSubtaskRows[subtaskKey] = template.subTasks.map((s: any) => s.id);
+                    }
+                  } else {
+                    // Deselect all subtasks for this template
+                    if (template.subTasks && template.subTasks.length > 0) {
+                      updatedSubtaskRows[subtaskKey] = [];
+                    }
+                  }
                 });
-                
-                // REMOVED: Auto-selection of subtasks when parent template is selected
-                // Subtasks must now be explicitly selected by the user
-                console.log(`Template selection changed for group ${record.name} (${record.id}):`, {
-                  previousSelection: selectedRowKeys,
-                  newSelection: newSelectedRowKeys,
-                  selectedTemplateCount: selectedRows.length
-                });
-                
-                // Note: Subtasks now need to be explicitly selected/deselected by the user
+                setSelectedTemplateRows(updatedTemplateRows);
+                setSelectedSubtaskRows(updatedSubtaskRows);
               }
             }}
             dataSource={storyTemplates.sort((a, b) => {
@@ -226,19 +234,29 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
                     rowSelection={{
                       selectedRowKeys: subtaskSelectedKeys,
                       onChange: (selectedKeys) => {
-                        console.log(`Subtask selection changed for ${template.name} (${template.id}):`, {
-                          previousSelection: subtaskSelectedKeys,
-                          newSelection: selectedKeys,
-                          subtaskKey
-                        });
-                        
-                        setSelectedSubtaskRows({
+                        // Smart selection: selecting a subtask partially selects its parent template
+                        const updatedSubtaskRows = {
                           ...selectedSubtaskRows,
                           [subtaskKey]: selectedKeys
+                        };
+                        // If any subtask is selected, parent template should be partially selected
+                        const templateRowKeys = selectedTemplateRows[record.id] ? [...selectedTemplateRows[record.id]] : [];
+                        const templateIndex = templateRowKeys.indexOf(template.id);
+                        if (selectedKeys.length > 0) {
+                          if (templateIndex === -1) {
+                            templateRowKeys.push(template.id);
+                          }
+                        } else {
+                          // If no subtasks selected, remove parent template from selection
+                          if (templateIndex !== -1) {
+                            templateRowKeys.splice(templateIndex, 1);
+                          }
+                        }
+                        setSelectedSubtaskRows(updatedSubtaskRows);
+                        setSelectedTemplateRows({
+                          ...selectedTemplateRows,
+                          [record.id]: templateRowKeys
                         });
-                        
-                        // REMOVED AUTO-SELECTION: Allow subtasks to be selected independently
-                        // Parent templates must be explicitly selected by the user
                       }
                     }}
                     columns={templateColumns.map(col => {

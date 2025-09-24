@@ -59,7 +59,7 @@ export interface ProjectAssignmentModalProps {
   selectedTemplateRows: Record<string, React.Key[]>;
   selectedSubtaskRows: Record<string, React.Key[]>;
   taskGroups: TaskGroupType[];
-  onSuccess: () => void;
+  onSuccess: (projectId: string) => void;
 }
 
 // Props for review screen

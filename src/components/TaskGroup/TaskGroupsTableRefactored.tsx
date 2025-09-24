@@ -159,14 +159,16 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({ taskSuperId, onEdit, 
     });
   };
 
-  const handleProjectAssignmentSuccess = () => {
+  const handleProjectAssignmentSuccess = (projectId: string) => {
     // Clear selections
     setSelectedGroups([]);
     setSelectedTemplateRows({});
     setSelectedSubtaskRows({});
-    
     // Refresh data
     queryClient.invalidateQueries({ queryKey: ['taskGroups', taskSuperId] });
+    if (projectId) {
+      queryClient.invalidateQueries({ queryKey: ['project_task', projectId] });
+    }
   };
 
   const expandedRowRender = (record: TaskGroupType) => {
@@ -266,7 +268,48 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({ taskSuperId, onEdit, 
         rowSelection={{
           selectedRowKeys: selectedGroups,
           onChange: (selectedRowKeys) => {
+            // Smart selection: when a group is selected, select all its templates and subtasks
+            const newlySelected = selectedRowKeys.filter(key => !selectedGroups.includes(key));
+            const newlyDeselected = selectedGroups.filter(key => !selectedRowKeys.includes(key));
+
+            // Prepare new state for templates and subtasks
+            let newSelectedTemplateRows = { ...selectedTemplateRows };
+            let newSelectedSubtaskRows = { ...selectedSubtaskRows };
+
+            // Handle group selection
+            newlySelected.forEach(groupId => {
+              const groupIdStr = String(groupId);
+              const group = taskGroups.find(g => g.id === groupIdStr);
+              if (!group) return;
+              // Get templates (handle both tasktemplate and taskTemplates)
+              const templates = (group.tasktemplate || group.taskTemplates || []).filter((t: any) => t.taskType === 'story' || !t.taskType);
+              newSelectedTemplateRows[groupIdStr] = templates.map((t: any) => t.id);
+              // For each template, select all its subtasks
+              templates.forEach((template: any) => {
+                if (template.subTasks && template.subTasks.length > 0) {
+                  const subtaskKey = `${groupIdStr}:${template.id}`;
+                  newSelectedSubtaskRows[subtaskKey] = template.subTasks.map((s: any) => s.id);
+                }
+              });
+            });
+
+            // Handle group deselection
+            newlyDeselected.forEach(groupId => {
+              const groupIdStr = String(groupId);
+              delete newSelectedTemplateRows[groupIdStr];
+              // Remove all subtask selections for this group
+              const group = taskGroups.find(g => g.id === groupIdStr);
+              if (!group) return;
+              const templates = (group.tasktemplate || group.taskTemplates || []).filter((t: any) => t.taskType === 'story' || !t.taskType);
+              templates.forEach((template: any) => {
+                const subtaskKey = `${groupIdStr}:${template.id}`;
+                delete newSelectedSubtaskRows[subtaskKey];
+              });
+            });
+
             setSelectedGroups(selectedRowKeys);
+            setSelectedTemplateRows(newSelectedTemplateRows);
+            setSelectedSubtaskRows(newSelectedSubtaskRows);
           }
         }}
         expandable={{

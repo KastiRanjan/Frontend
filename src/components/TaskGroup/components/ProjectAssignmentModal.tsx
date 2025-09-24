@@ -7,7 +7,7 @@ import axios from 'axios';
 
 const { Step } = Steps;
 
-const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
+const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps & { onSuccess: (projectId: string) => void }> = ({
   visible,
   onCancel,
   taskSuperId,
@@ -300,7 +300,34 @@ const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
       });
     }
     
-    return { selectedTemplates, selectedSubtasks };
+    // Add any implicit parent groups for selected templates/subtasks
+    const implicitGroupMap = new Map<string, any>();
+    selectedTemplates.forEach(template => {
+      const groupId = template.groupId;
+      if (groupId && !selectedGroups.includes(groupId) && !implicitGroupMap.has(groupId)) {
+        const group = taskGroups.find(g => g.id === groupId);
+        if (group) {
+          implicitGroupMap.set(groupId, {
+            ...group,
+            isImplicitParent: true
+          });
+        }
+      }
+    });
+    selectedSubtasks.forEach(subtask => {
+      const groupId = subtask.groupId;
+      if (groupId && !selectedGroups.includes(groupId) && !implicitGroupMap.has(groupId)) {
+        const group = taskGroups.find(g => g.id === groupId);
+        if (group) {
+          implicitGroupMap.set(groupId, {
+            ...group,
+            isImplicitParent: true
+          });
+        }
+      }
+    });
+    const implicitGroups = Array.from(implicitGroupMap.values());
+    return { selectedTemplates, selectedSubtasks, implicitGroups };
   };
 
   // Helper function to find a template by ID
@@ -331,7 +358,7 @@ const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
       const values = await form.validateFields();
       
       // Prepare the preview data with selected items and applied suffixes
-      const { selectedTemplates, selectedSubtasks } = getAllSelectedItems();
+  const { selectedTemplates, selectedSubtasks, implicitGroups } = getAllSelectedItems();
       
       console.log('Processing selected items for review:', {
         templates: selectedTemplates.length,
@@ -370,6 +397,19 @@ const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
             });
           }
         }
+      });
+      // Add implicit groups (for partial selection)
+      implicitGroups.forEach(group => {
+        previewItems.push({
+          id: group.id,
+          type: 'taskGroup',
+          originalName: group.name,
+          name: `${group.name} ${values.suffixTaskGroup || ''}`.trim(),
+          budgetedHours: 0,
+          taskSuperId: taskSuperId,
+          parentId: taskSuperId,
+          isImplicitParent: true
+        });
       });
       
       // Add selected templates - ensure they have correct type (story)
@@ -914,22 +954,20 @@ const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
             ...sortedTemplates.map(template => ({
               id: template.id,
               type: 'template',
-              originalName: template.name,
-              name: template.name + (payload.suffixTaskTemplate ? ` ${payload.suffixTaskTemplate}` : ''),
+              originalName: template.originalName || template.name,
+              name: template.name, // Already has suffix from preview step
               budgetedHours: template.budgetedHours || 0,
               groupId: template.groupId,
-              // Only include parentId if it exists and is valid
               ...(template.parentId ? { parentId: template.parentId } : {})
             })),
             // Finally add all subtasks
             ...processedSubtasks.map(subtask => ({
               id: subtask.id,
               type: 'subtask',
-              originalName: subtask.name,
-              name: subtask.name + (payload.suffixTaskTemplate ? ` ${payload.suffixTaskTemplate}` : ''),
+              originalName: subtask.originalName || subtask.name,
+              name: subtask.name, // Already has suffix from preview step
               budgetedHours: subtask.budgetedHours || 0,
               groupId: subtask.groupId,
-              // Use the first non-null parent reference
               templateId: subtask.parentId || subtask.templateId || subtask.parentTaskId
             }))
           ]
@@ -981,8 +1019,8 @@ const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
         onCancel();
         setCurrentStep(0);
         
-        // Notify parent component of success
-        onSuccess();
+  // Notify parent component of success, pass projectId
+  onSuccess(projectAssignmentData.projectId);
       } catch (error: any) {
         console.error('Failed to add tasks to project:', error);
         
