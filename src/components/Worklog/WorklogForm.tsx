@@ -161,7 +161,12 @@ const WorklogForm = () => {
       return;
     }
     const finishRequest = () => {
-      createWorklog(values.timeEntries, {
+      // Map userId/approvedBy to requestTo for each entry
+      const entriesWithRequestTo = values.timeEntries.map((entry: any) => ({
+        ...entry,
+        requestTo: entry.requestTo || entry.userId || entry.approvedBy,
+      }));
+      createWorklog(entriesWithRequestTo, {
         onSuccess: () => {
           message.success("Worklog created successfully. Tasks are now marked as in progress.");
           setSubmitting(false);
@@ -216,7 +221,7 @@ const WorklogForm = () => {
         {/* Fixed header for the form */}
         <Row className="bg-gray-100 p-2 mb-2 font-semibold rounded">
           <Col span={6}>Task</Col>
-          <Col span={3}>Approver</Col>
+          <Col span={3}>Request To</Col>
           <Col span={3}>Date</Col>
           <Col span={2}>Start Time</Col>
           <Col span={2}>End Time</Col>
@@ -260,9 +265,9 @@ const WorklogForm = () => {
                           style={{ width: '100%' }}
                         />
                       </Form.Item>
-                      <Form.Item dependencies={[['timeEntries', field.name, 'taskId']]} noStyle>
+                      <Form.Item dependencies={[["timeEntries", field.name, "taskId"]]} noStyle>
                         {({ getFieldValue }) => {
-                          const selectedTaskId = getFieldValue(['timeEntries', field.name, 'taskId']);
+                          const selectedTaskId = getFieldValue(["timeEntries", field.name, "taskId"]);
                           return <TaskWorklogStatus taskId={selectedTaskId} />;
                         }}
                       </Form.Item>
@@ -270,7 +275,7 @@ const WorklogForm = () => {
                     
                     <Col span={3}>
                       <Form.Item
-                        name={[field.name, "userId"]}
+                        name={[field.name, "requestTo"]}
                         rules={[
                           {
                             required: true,

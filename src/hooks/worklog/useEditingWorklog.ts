@@ -4,8 +4,8 @@ import { editingWorklog } from "../../service/worklog.service";
 export const useEditingWorklog = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ date, startTime, endTime, description, approvedBy, status, id }: any) => {
-            return editingWorklog({ date, startTime, endTime, description, approvedBy, status, id });
+        mutationFn: ({ date, startTime, endTime, description, approvedBy, requestTo, status, id }: any) => {
+            return editingWorklog({ date, startTime, endTime, description, approvedBy, requestTo, status, id });
         },
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["worklog-all"] });

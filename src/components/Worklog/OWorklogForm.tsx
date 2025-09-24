@@ -136,6 +136,7 @@ const OWorklogForm = () => {
     setSubmitting(true);
     const updatedTimeEntries = values.timeEntries.map((entry: any) => ({
       ...entry,
+      requestTo: entry.requestTo,
       status: "requested",
     }));
     // Check for overlapping time entries
@@ -548,7 +549,7 @@ const OWorklogForm = () => {
                       {/* Request To Field */}
                       <Col span={3}>
                         <Form.Item
-                          name={[field.name, "approvedBy"]}
+                          name={[field.name, "requestTo"]}
                           rules={[{ required: true, message: "Required!" }]}
                           style={{ marginBottom: 8 }}
                         >

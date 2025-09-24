@@ -65,25 +65,22 @@ const EWorklogForm = () => {
         minute: values.startTime.minute(),
       })
       .toISOString();
-    
     const endTime = moment(values.date)
       .set({
         hour: values.endTime.hour(),
         minute: values.endTime.minute(),
       })
       .toISOString();
-
     const updatedWorklog = {
       id,
       description: values.description,
       startTime,
       endTime,
-      approvedBy: values.approvedBy, // Only this can be changed
+      requestTo: values.requestTo, // Use requestTo for approver
       projectId: worklog.task.project.id, // Fixed
       taskId: worklog.task.id, // Fixed
       status: "requested",
     };
-
     editingWorklog(updatedWorklog, {
       onSuccess: () => {
         message.success("Worklog updated successfully");
@@ -158,7 +155,7 @@ const EWorklogForm = () => {
           <Col span={3}>
             <Form.Item
               label="Request To"
-              name="approvedBy"
+              name="requestTo"
               rules={[
                 { required: true, message: "Please select an approver!" },
               ]}

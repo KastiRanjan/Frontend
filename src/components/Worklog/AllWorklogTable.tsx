@@ -1,6 +1,7 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
 import { useWorklog } from "@/hooks/worklog/useWorklog";
 import { Button, Card, Table, Popconfirm, Input, Space } from "antd";
+import { Tooltip } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
@@ -54,6 +55,21 @@ const columns = (
       }
     },
     {
+      title: "Request To",
+      dataIndex: "requestTo",
+      key: "requestTo",
+      ...getColumnSearchProps('requestTo', 'Request To'),
+      render: (_: any, record: any) => {
+        const user = record?.requestToUser;
+        const requestAt = record?.requestedAt ? new Date(record.requestedAt).toLocaleString() : null;
+        return user ? (
+          <Tooltip title={<span>{user.email || user.name}<br/>{requestAt && <span>Requested At: {requestAt}</span>}</span>}>
+            <span>{user.name}</span>
+          </Tooltip>
+        ) : "-";
+      }
+    },
+    {
       title: "Task",
       dataIndex: "Task",
       key: "task",
@@ -62,17 +78,6 @@ const columns = (
       sortOrder: sortedInfo.columnKey === 'task' && sortedInfo.order,
       render: (_: any, record: any) => {
         return <Link to={`/projects/${record?.task?.project?.id}/tasks/${record?.task?.id}`} className="text-blue-600">{record?.task?.name}</Link>
-      }
-    },
-    {
-      title: "Review Date",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      ...getColumnSearchProps('updatedAt', 'Review Date'),
-      sorter: (a: any, b: any) => moment(a.updatedAt).unix() - moment(b.updatedAt).unix(),
-      sortOrder: sortedInfo.columnKey === 'updatedAt' && sortedInfo.order,
-      render: (_: any, record: any) => {
-        return new Date(record?.updatedAt).toLocaleDateString();
       }
     },
     {
@@ -99,7 +104,13 @@ const columns = (
       sorter: (a: any, b: any) => (a.user?.name || '').localeCompare(b.user?.name || ''),
       sortOrder: sortedInfo.columnKey === 'approvedBy' && sortedInfo.order,
       render: (_: any, record: any) => {
-        return (record?.user?.name);
+        const user = record?.user;
+        const approvedAt = record?.approvedAt ? new Date(record.approvedAt).toLocaleString() : null;
+        return user ? (
+          <Tooltip title={<span>{user.email || user.name}<br/>{approvedAt && <span>Approved At: {approvedAt}</span>}</span>}>
+            <span>{user.name}</span>
+          </Tooltip>
+        ) : "-";
       }
     },
   ];
@@ -107,14 +118,25 @@ const columns = (
   // Add Remark column only for rejected status
   if (status.toLowerCase() === "rejected") {
     baseColumns.push({
-      title: "Remark",
-      dataIndex: "remark",
-      key: "remark",
-      ...getColumnSearchProps('remark', 'Remark'),
-      sorter: (a: any, b: any) => (a.remark || '').localeCompare(b.remark || ''),
-      sortOrder: sortedInfo.columnKey === 'remark' && sortedInfo.order,
+      title: "Rejection Remark",
+      dataIndex: "rejectedRemark",
+      key: "rejectedRemark",
+      ...getColumnSearchProps('rejectedRemark', 'Rejection Remark'),
+      sorter: (a: any, b: any) => (a.rejectedRemark || '').localeCompare(b.rejectedRemark || ''),
+      sortOrder: sortedInfo.columnKey === 'rejectedRemark' && sortedInfo.order,
       render: (_: any, record: any) => {
-        return record?.remark || "-";
+        const user = record?.rejectByUser;
+        const rejectedAt = record?.rejectedAt ? new Date(record.rejectedAt).toLocaleString() : null;
+        return (
+          <span>
+            {record?.rejectedRemark || "-"}
+            {user && (
+              <Tooltip title={<span>{user.email || user.name}<br/>{rejectedAt && <span>Rejected At: {rejectedAt}</span>}</span>}>
+                <span style={{ marginLeft: 8, color: '#fa541c' }}>(Rejected by: {user.name})</span>
+              </Tooltip>
+            )}
+          </span>
+        );
       }
     });
   }
@@ -159,7 +181,6 @@ const AllWorklogTable = ({ status }: { status: string }) => {
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
   const { mutate: deleteWorklog } = useDeleteWorklog();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
-  
   // For search
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');

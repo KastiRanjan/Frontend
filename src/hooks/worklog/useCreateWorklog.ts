@@ -171,8 +171,8 @@ export const useCreateWorklog = () => {
             startTime,
             endTime,
             status: worklog.status || "requested",
-            // Handle approver field
-            approvedBy: worklog.userId || worklog.approvedBy,
+            // Send requestTo for approver
+            requestTo: worklog.requestTo,
           };
           
           return transformed;

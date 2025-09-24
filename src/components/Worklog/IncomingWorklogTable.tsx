@@ -1,4 +1,5 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
+import { Tooltip } from "antd";
 import { Button, Card, Table, Modal, Input, Popconfirm, Space } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
@@ -69,17 +70,6 @@ const columns = (
       }
     },
     {
-      title: "Review Date",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      ...getColumnSearchProps('updatedAt', 'Review Date'),
-      sorter: (a: any, b: any) => moment(a.updatedAt).unix() - moment(b.updatedAt).unix(),
-      sortOrder: sortedInfo.columnKey === 'updatedAt' && sortedInfo.order,
-      render: (_: any, record: any) => {
-        return new Date(record?.updatedAt).toLocaleDateString();
-      }
-    },
-    {
       title: "Duration",
       dataIndex: "startTime",
       key: "startTime",
@@ -105,21 +95,46 @@ const columns = (
       sorter: (a: any, b: any) => (a.user?.name || '').localeCompare(b.user?.name || ''),
       sortOrder: sortedInfo.columnKey === 'userId' && sortedInfo.order,
       render: (_: any, record: any) => {
-        return record?.user?.name;
+        const user = record?.user;
+        // Show requestAt, approvedAt, rejectedAt based on status
+        let extra = null;
+        if (status.toLowerCase() === 'requested' && record?.requestedAt) {
+          extra = <span>Requested At: {new Date(record.requestedAt).toLocaleString()}</span>;
+        } else if (status.toLowerCase() === 'approved' && record?.approvedAt) {
+          extra = <span>Approved At: {new Date(record.approvedAt).toLocaleString()}</span>;
+        } else if (status.toLowerCase() === 'rejected' && record?.rejectedAt) {
+          extra = <span>Rejected At: {new Date(record.rejectedAt).toLocaleString()}</span>;
+        }
+        return user ? (
+          <Tooltip title={<span>{user.email || user.name}<br/>{extra}</span>}>
+            <span>{user.name}</span>
+          </Tooltip>
+        ) : "-";
       }
     },
   ];
 
   if (status.toLowerCase() === "rejected") {
     baseColumns.push({
-      title: "Remark",
-      dataIndex: "remark",
-      key: "remark",
-      ...getColumnSearchProps('remark', 'Remark'),
-      sorter: (a: any, b: any) => (a.remark || '').localeCompare(b.remark || ''),
-      sortOrder: sortedInfo.columnKey === 'remark' && sortedInfo.order,
+      title: "Rejection Remark",
+      dataIndex: "rejectedRemark",
+      key: "rejectedRemark",
+      ...getColumnSearchProps('rejectedRemark', 'Rejection Remark'),
+      sorter: (a: any, b: any) => (a.rejectedRemark || '').localeCompare(b.rejectedRemark || ''),
+      sortOrder: sortedInfo.columnKey === 'rejectedRemark' && sortedInfo.order,
       render: (_: any, record: any) => {
-        return record?.remark || "-";
+        const user = record?.rejectByUser;
+        const rejectedAt = record?.rejectedAt ? new Date(record.rejectedAt).toLocaleString() : null;
+        return (
+          <span>
+            {record?.rejectedRemark || "-"}
+            {user && (
+              <Tooltip title={<span>{user.email || user.name}<br/>{rejectedAt && <span>Rejected At: {rejectedAt}</span>}</span>}>
+                <span style={{ marginLeft: 8, color: '#fa541c' }}>(Rejected by: {user.name})</span>
+              </Tooltip>
+            )}
+          </span>
+        );
       }
     });
   }
@@ -318,7 +333,7 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
       editWorklog({ 
         id: currentRecordId, 
         status: "rejected",
-        remark: remark
+        rejectedRemark: remark
       });
     }
     setIsModalVisible(false);

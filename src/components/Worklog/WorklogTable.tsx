@@ -1,15 +1,35 @@
 
+
 import { Table, Space, Button, Input } from "antd";
 import moment from "moment";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SearchOutlined } from "@ant-design/icons";
 import Highlighter from 'react-highlight-words';
+import { fetchUsers } from "@/service/user.service";
+import { UserType } from "@/types/user";
+
 
 const WorklogTable = ({ data }: { data: any }) => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({});
   const searchInput = useRef<any>(null);
+  const [userMap, setUserMap] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    // Fetch all users (active, large limit, first page, no keywords)
+    fetchUsers({ status: "active", limit: 1000, page: 1, keywords: "" })
+      .then((res: any) => {
+        // If paginated, use res.results, else fallback to res
+        const users: UserType[] = res?.results || res || [];
+        const map: { [key: string]: string } = {};
+        users.forEach((u) => {
+          if (u.id) map[u.id.toString()] = u.name || u.username || u.email || u.id.toString();
+        });
+        setUserMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
     confirm();
@@ -102,6 +122,36 @@ const WorklogTable = ({ data }: { data: any }) => {
       sortOrder: sortedInfo.columnKey === 'description' && sortedInfo.order,
     },
     {
+      title: "Request To",
+      dataIndex: "requestTo",
+      key: "requestTo",
+      ...getColumnSearchProps('requestTo', 'Request To'),
+      render: (_: any, record: any) => {
+        if (!record?.requestTo) return "-";
+        return userMap[record.requestTo?.toString()] || record.requestTo;
+      },
+    },
+    {
+      title: "Approved By",
+      dataIndex: "approvedBy",
+      key: "approvedBy",
+      ...getColumnSearchProps('approvedBy', 'Approved By'),
+      render: (_: any, record: any) => {
+        if (!record?.approvedBy) return "-";
+        return userMap[record.approvedBy?.toString()] || record.approvedBy;
+      },
+    },
+    {
+      title: "Rejected By",
+      dataIndex: "rejectBy",
+      key: "rejectBy",
+      ...getColumnSearchProps('rejectBy', 'Rejected By'),
+      render: (_: any, record: any) => {
+        if (!record?.rejectBy) return "-";
+        return userMap[record.rejectBy?.toString()] || record.rejectBy;
+      },
+    },
+    {
       title: "Date",
       dataIndex: "date",
       key: "date",
@@ -143,6 +193,17 @@ const WorklogTable = ({ data }: { data: any }) => {
       }
     },
   ];
+
+  // Add Rejection Remark column if any worklog is rejected
+  if (Array.isArray(data) && data.some((w) => w.status === 'rejected')) {
+    columns.push({
+      title: "Rejection Remark",
+      dataIndex: "rejectedRemark",
+      key: "rejectedRemark",
+      ...getColumnSearchProps('rejectedRemark', 'Rejection Remark'),
+      render: (_: any, record: any) => record?.rejectedRemark || "-",
+    });
+  }
 
   return (
     <Table
