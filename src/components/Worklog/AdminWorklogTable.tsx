@@ -202,8 +202,7 @@ const AdminWorklogTable = () => {
         status: "rejected",
         rejectedRemark: rejectedRemark,
         rejectBy: currentUser.id
-      });
-      refetch();
+      }, { onSuccess: refetch });
     }
     setIsModalVisible(false);
     setCurrentRecordId(null);
@@ -375,8 +374,7 @@ const AdminWorklogTable = () => {
                 <Popconfirm
                   title={<span style={{ fontSize: '10px' }}>Delete this worklog?</span>}
                   onConfirm={() => {
-                    deleteWorklog({ id: record?.id });
-                    refetch();
+                    deleteWorklog({ id: record?.id }, { onSuccess: refetch });
                   }}
                   okText="Yes"
                   cancelText="No"
@@ -397,8 +395,7 @@ const AdminWorklogTable = () => {
                             id: record?.id, 
                             status: "approved",
                             approvedBy: currentUser.id 
-                          });
-                          refetch();
+                          }, { onSuccess: refetch });
                         }
                       }}
                       style={{ padding: '0 2px', height: '20px', minWidth: '20px', marginRight: '2px' }}

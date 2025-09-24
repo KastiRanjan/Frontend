@@ -361,10 +361,10 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
       return reqTo;
     }
     if (status.toLowerCase() === "approved") {
-      return reqTo && w?.approvedBy?.toString?.() === currentUserId?.toString();
+      return reqTo && !!w?.approvedBy;
     }
     if (status.toLowerCase() === "rejected") {
-      return reqTo && w?.rejectBy?.toString?.() === currentUserId?.toString();
+      return reqTo && !!w?.rejectBy;
     }
     return reqTo;
   });
