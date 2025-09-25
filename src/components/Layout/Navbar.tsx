@@ -1,23 +1,13 @@
 import { useSession } from "@/context/SessionContext";
 import { useLogout } from "@/hooks/auth/useLogout";
 import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
-import {
-  BellOutlined,
-  DownOutlined,
-  FileDoneOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
+import { BellOutlined, FileDoneOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SettingOutlined } from "@ant-design/icons";
 import {
   Avatar,
   Badge,
   Button,
   Drawer,
   Dropdown,
-  Popover,
-  Select,
-  Space,
 } from "antd";
 import { Header } from "antd/es/layout/layout";
 import Title from "antd/es/typography/Title";
@@ -45,7 +35,9 @@ const Navbar = ({
   const onClose = () => {
     setOpen(false);
   };
-  const { data: notification } = useMyNotifications();
+  // Get userId from profile for notifications
+  const userId = profile?.id ? String(profile.id) : '';
+  const { data: notification } = useMyNotifications(userId);
   const { mutate: logout } = useLogout();
   // const location = useGeoLocation()
 
@@ -100,7 +92,12 @@ const Navbar = ({
           }}
         />
         <Badge
-          count={notification?.length > 9 ? "9+" : notification?.length}
+          count={(() => {
+            const unread = Array.isArray(notification)
+              ? notification.filter((n: any) => !n.isRead)
+              : [];
+            return unread.length > 9 ? "9+" : unread.length;
+          })()}
           onClick={showDrawer}
         >
           <BellOutlined style={{ fontSize: "20px" }} />
@@ -128,7 +125,7 @@ const Navbar = ({
           menu={{
             items: [
               {
-                label: <div className="py-2 border-b">{profile?.email}</div>,
+                label: <div className="py-2 border-b">{profile?.email ?? "No email"}</div>,
                 key: "name",
               },
               {
@@ -157,12 +154,10 @@ const Navbar = ({
           <div>
             <Avatar
               // loading={isProfilePending}
-              src={`${import.meta.env.VITE_BACKEND_URI}/document/${
-                profile?.avatar
-              }`}
+              src={profile?.avatar ? `${import.meta.env.VITE_BACKEND_URI}/document/${profile.avatar}` : undefined}
               style={{ backgroundColor: "#0c66e4" }}
             >
-              {profile?.name[0]}
+              {profile?.name ? profile.name[0] : "U"}
             </Avatar>
           </div>
         </Dropdown>
@@ -173,33 +168,3 @@ const Navbar = ({
 
 export default React.memo(Navbar);
 
-const { Option } = Select;
-const selectAfter = (
-  <>
-    <Popover
-      content={
-        <>
-          <Space direction="vertical" style={{ display: "flex" }}>
-            <Select defaultValue=".com" style={{ width: "100%" }}>
-              <Option value=".com">.com</Option>
-              <Option value=".jp">.jp</Option>
-              <Option value=".cn">.cn</Option>
-              <Option value=".org">.org</Option>
-            </Select>
-            <Select defaultValue=".com" style={{ width: "100%" }}>
-              <Option value=".com">.com</Option>
-              <Option value=".jp">.jp</Option>
-              <Option value=".cn">.cn</Option>
-              <Option value=".org">.org</Option>
-            </Select>
-          </Space>
-        </>
-      }
-      trigger="click"
-    >
-      <a>
-        Click me <DownOutlined />
-      </a>
-    </Popover>
-  </>
-);

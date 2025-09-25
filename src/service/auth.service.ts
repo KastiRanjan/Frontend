@@ -3,9 +3,15 @@ import axios from "axios";
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
 export const login = async (payload: any) => {
-  return await axios.post(`${backendURI}/auth/login`, payload, {
+  const response = await axios.post(`${backendURI}/auth/login`, payload, {
     withCredentials: true,
   });
+  // Store token from response body in localStorage for Socket.io
+  if (response.data && response.data.token) {
+    localStorage.setItem('access_token', response.data.token);
+    console.log('[Auth] Stored access_token in localStorage:', response.data.token);
+  }
+  return response;
 };
 
 export const getProfile = async () => {

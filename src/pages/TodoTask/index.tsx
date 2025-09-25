@@ -291,10 +291,7 @@ const TodoTaskPage = () => {
     const hasManagePermission = permissions.some((permission: any) => 
         permission.method === 'manage' && permission.resource === 'todo-task'
     );
-    
-    // Add debug info
-    console.log('User permissions:', permissions);
-    console.log('Has view all permission:', hasViewAllPermission);
+
     
     // Before rendering, verify if user should see All Tasks tab
     const shouldShowAllTasksTab = hasViewAllPermission;

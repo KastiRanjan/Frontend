@@ -7,7 +7,9 @@ type Profile = {
   id?: string;
   role?: { permission: string[] };
   status?: string;
-  // Add other profile fields as needed
+  email?: string;
+  avatar?: string | null;
+  name?: string;
 };
 
 type SessionContextType = {
@@ -78,6 +80,13 @@ export const SessionProvider = ({
       setIsAuthenticated(false);
       setLoading(false);
       // You might want to show a message here about account status
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (profile && profile.id) {
+      localStorage.setItem('userId', profile.id);
+      console.log('SessionProvider: Stored userId in localStorage:', profile.id);
     }
   }, [profile]);
 

@@ -1,12 +1,12 @@
 import { fetchMyNotifications } from "@/service/notification.service";
 import { useQuery } from "@tanstack/react-query";
 
-export const useMyNotifications = () => {
+export const useMyNotifications = (userId: string) => {
   return useQuery({
-    queryKey: ["notifications"],
+    queryKey: ["notifications", userId],
     queryFn: async () => {
-      return fetchMyNotifications();
+      return fetchMyNotifications(userId);
     },
-    // enabled: !!page && !!limit,
+    enabled: !!userId,
   });
 };

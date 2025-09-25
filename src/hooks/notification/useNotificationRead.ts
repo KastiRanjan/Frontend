@@ -4,8 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 const useNotificationRead = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({id}:{id:string}) => {
-            return updateNotifications({id});
+        mutationFn: ({id, userId}:{id:string, userId:string}) => {
+            return updateNotifications({id, userId});
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
