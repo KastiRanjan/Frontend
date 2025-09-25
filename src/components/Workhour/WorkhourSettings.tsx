@@ -70,7 +70,7 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ roles = [] }) => {
       startTime: record.startTime ? dayjs(record.startTime, "HH:mm") : undefined,
       endTime: record.endTime ? dayjs(record.endTime, "HH:mm") : undefined,
       validFrom: record.validFrom ? dayjs(record.validFrom) : undefined
-    });
+    }); // Only set initial values, no auto-calculation
     setIsModalVisible(true);
   };
 
@@ -117,105 +117,9 @@ const WorkhourSettings: React.FC<WorkhourSettingsProps> = ({ roles = [] }) => {
     setSelectedRole(roleId);
   };
 
-  // Calculate end time based on start time and work hours
-  const calculateEndTime = (startTime: dayjs.Dayjs, workHours: number) => {
-    if (!startTime || !workHours) return null;
-    
-    const hours = Math.floor(workHours);
-    const minutes = Math.round((workHours - hours) * 60);
-    
-    return startTime.add(hours, 'hour').add(minutes, 'minute');
-  };
-
-  // Calculate start time based on end time and work hours
-  const calculateStartTime = (endTime: dayjs.Dayjs, workHours: number) => {
-    if (!endTime || !workHours) return null;
-    
-    const hours = Math.floor(workHours);
-    const minutes = Math.round((workHours - hours) * 60);
-    
-    return endTime.subtract(hours, 'hour').subtract(minutes, 'minute');
-  };
-  
-  // Calculate work hours based on start time and end time
-  const calculateWorkHours = (startTime: dayjs.Dayjs, endTime: dayjs.Dayjs) => {
-    if (!startTime || !endTime) return null;
-    
-    const startMinutes = startTime.hour() * 60 + startTime.minute();
-    const endMinutes = endTime.hour() * 60 + endTime.minute();
-    
-    // Handle cases where end time is on the next day
-    let diffMinutes = endMinutes - startMinutes;
-    if (diffMinutes < 0) {
-      diffMinutes += 24 * 60; // Add 24 hours in minutes
-    }
-    
-    return Math.round((diffMinutes / 60) * 10) / 10; // Round to 1 decimal place
-  };
-
   // Handle changes to form fields
-  const handleValuesChange = (changedValues: any) => {
-    const formValues = form.getFieldsValue();
-    
-    // Don't skip auto-calculation anymore, even when a field is being edited
-    // if (manuallyEditing) return;
-
-    // If work hours changed
-    if ('workHours' in changedValues) {
-      const workHours = changedValues.workHours;
-      
-      if (formValues.startTime) {
-        // Calculate end time based on start time and work hours
-        const endTime = calculateEndTime(formValues.startTime, workHours);
-        if (endTime) {
-          form.setFieldsValue({ endTime });
-        }
-      } else if (formValues.endTime) {
-        // Calculate start time based on end time and work hours
-        const startTime = calculateStartTime(formValues.endTime, workHours);
-        if (startTime) {
-          form.setFieldsValue({ startTime });
-        }
-      }
-    }
-    
-    // If start time changed
-    if ('startTime' in changedValues) {
-      const startTime = changedValues.startTime;
-      
-      if (startTime && formValues.workHours) {
-        // Calculate end time based on start time and work hours
-        const endTime = calculateEndTime(startTime, formValues.workHours);
-        if (endTime) {
-          form.setFieldsValue({ endTime });
-        }
-      } else if (startTime && formValues.endTime) {
-        // Calculate work hours based on start and end time
-        const workHours = calculateWorkHours(startTime, formValues.endTime);
-        if (workHours) {
-          form.setFieldsValue({ workHours });
-        }
-      }
-    }
-    
-    // If end time changed
-    if ('endTime' in changedValues) {
-      const endTime = changedValues.endTime;
-      
-      if (endTime && formValues.workHours && !formValues.startTime) {
-        // Calculate start time based on end time and work hours
-        const startTime = calculateStartTime(endTime, formValues.workHours);
-        if (startTime) {
-          form.setFieldsValue({ startTime });
-        }
-      } else if (endTime && formValues.startTime) {
-        // Calculate work hours based on start and end time
-        const workHours = calculateWorkHours(formValues.startTime, endTime);
-        if (workHours) {
-          form.setFieldsValue({ workHours });
-        }
-      }
-    }
+  const handleValuesChange = (_changedValues: any) => {
+    // All fields are independent. No auto-calculation or auto-setting of fields.
   };
 
   const getRoleName = (roleId: string) => {
