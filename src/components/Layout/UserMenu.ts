@@ -4,7 +4,8 @@ import {
   ProjectOutlined,
   UsergroupAddOutlined,
   ClockCircleOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  HistoryOutlined
 } from "@ant-design/icons";
 import React from "react";
 
@@ -33,7 +34,7 @@ export const UserMenu = (id: string | undefined) => {
     },
     {
       key: `/profile/${id}/training-detail`,
-      label: "Trainning Details",
+      label: "Training",
       icon: React.createElement(FileOutlined),
     },
     {
@@ -43,7 +44,7 @@ export const UserMenu = (id: string | undefined) => {
     },
     {
       key: `/profile/${id}/leave-detail`,
-      label: "Leave Management",
+      label: "Leave",
       icon: React.createElement(CalendarOutlined),
     },
     {
@@ -51,38 +52,16 @@ export const UserMenu = (id: string | undefined) => {
       label: "Contract Details",
       icon: React.createElement(FileOutlined),
     },
-
+    {
+      key: `/profile/${id}/document-detail`,
+      label: "Personal Documents",
+      icon: React.createElement(FileOutlined),
+    },
+    {
+      key: `/profile/${id}/history`,
+      label: "User History",
+      icon: React.createElement(HistoryOutlined),
+    },
   ]
 };
 
-
-// export const UserMenu = (id: string | undefined) => {
-//   return [
-//     {
-//       key: `/user/${id}/personal-detail`,
-//       label: "Personal Details",
-//       icon: React.createElement(DashboardOutlined),
-//     },
-//     {
-//       key: `/user/${id}/educational-detail`,
-//       label: "Educational Details",
-//       icon: React.createElement(UsergroupAddOutlined),
-//     },
-//     {
-//       key: `/user/${id}/bank-detail`,
-//       label: "Bank Details",
-//       icon: React.createElement(ProjectOutlined),
-//     },
-//     {
-//       key: `/user/${id}/training-detail`,
-//       label: "Trainning Details",
-//       icon: React.createElement(FileOutlined),
-//     },
-//     {
-//       key: `/user/${id}/contract-detail`,
-//       label: "Contract Details",
-//       icon: React.createElement(FileOutlined),
-//     },
-
-//   ]
-// };

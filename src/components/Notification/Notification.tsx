@@ -76,7 +76,6 @@ const Notification = () => {
         const handleNotificationRead = (data: any) => {
             antdNotification.success({
                 message: "Notification Read",
-                description: data?.message || "Notification marked as read.",
                 placement: "top",
             });
             refetch();

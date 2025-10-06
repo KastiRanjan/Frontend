@@ -43,13 +43,22 @@ export const createUser = async (payload: any) => {
   return response.data;
 };
 export const createUserDetail = async ({ id, payload, query }: any) => {
+  // Determine if payload contains a file
+  const hasFile = payload instanceof FormData && 
+    (payload.has('documentFile') || payload.get('documentFile'));
+  
+  // Use the upload endpoint if there's a file, otherwise use regular endpoint
+  const endpoint = hasFile 
+    ? `${backendURI}/users/${id}/upload?option=${query}`
+    : `${backendURI}/users/${id}?option=${query}`;
+  
   const response = await axios.post(
-    `${backendURI}/users/${id}?option=${query}`,
+    endpoint,
     payload,
     {
-      headers: {
+      headers: hasFile ? {
         "Content-Type": "multipart/form-data",
-      },
+      } : undefined,
     }
   );
   return response.data;

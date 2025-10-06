@@ -16,6 +16,7 @@ import ResetPasswordForm from "@/pages/ResetPassword";
 import Setting from "@/pages/Setting";
 import ProjectSetting from "@/pages/Setting/ProjectSetting";
 import CustomerSetting from "@/pages/Setting/CustomerSetting";
+import DepartmentSetting from "@/pages/Setting/DepartmentSetting";
 import AllTask from "@/pages/Task/all";
 import NewTask from "@/pages/Task/new";
 import TaskDetails from "@/pages/Task/task-details";
@@ -35,6 +36,8 @@ import PersonalDetails from "@/pages/User/PersonalDetails";
 import TrainingDetails from "@/pages/User/TrainingDetails";
 import ContractDetails from "@/pages/User/ContractDetails";
 import WorkHourDetails from "@/pages/User/WorkHourDetails";
+import PersonalDocumentsDetails from "@/pages/User/PersonalDocumentsDetails";
+import UserHistoryDetails from "@/pages/User/UserHistoryDetails";
 import LeaveManagement from "@/pages/Leave/LeaveManagement";
 import Worklog from "@/pages/Worklog";
 import AllWorklogs from "@/pages/Worklog/AllWorklogs";
@@ -342,6 +345,14 @@ const Router = [
         element: <Profile component={ContractDetails} />,
       },
       {
+        path: "profile/:id/document-detail",
+        element: <Profile component={PersonalDocumentsDetails} />,
+      },
+      {
+        path: "profile/:id/history",
+        element: <Profile component={UserHistoryDetails} />,
+      },
+      {
         path: "/calendar",
         element: <CalendarPage />,
       },
@@ -356,6 +367,10 @@ const Router = [
       {
         path: "/customer-setting",
         element: <CustomerSetting />,
+      },
+      {
+        path: "/department-setting",
+        element: <DepartmentSetting />,
       },
       {
         path: "/workhour-settings",

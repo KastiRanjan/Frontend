@@ -1,182 +1,281 @@
 import React, { useState } from 'react';
-import { Table, Input, Button, Popconfirm, message, Upload, Row, Col } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Table, Input, Button, Popconfirm, message, Upload, Row, Col, Modal } from 'antd';
+import { UploadOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { useCreateUserDetail } from '@/hooks/user/userCreateuserDetail';
 import { useParams } from 'react-router-dom';
+import type { UploadFile } from 'antd/es/upload/interface';
+
+interface BankDetail {
+  key: number;
+  id?: string;
+  bankName: string;
+  bankBranch: string;
+  accountNo: string;
+  documentFile?: string | UploadFile;
+}
 
 const BankDetailForm = ({ initialValues }: any) => {
-  const [dataSource, setDataSource] = useState<any[]>(initialValues);
-  const [count, setCount] = useState(initialValues.length); // Track number of rows
+  const [dataSource, setDataSource] = useState<BankDetail[]>(
+    initialValues && initialValues.length > 0 ? initialValues.map((item: any, index: number) => ({
+      ...item,
+      key: index
+    })) : []
+  );
+  const [count, setCount] = useState(initialValues?.length || 0);
+  const [editingKey, setEditingKey] = useState<number | null>(null);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
   const { mutate } = useCreateUserDetail();
   const { id } = useParams();
-
-  const uploadProps = {
-    name: 'file',
-    headers: {
-      authorization: 'authorization-text',
-    },
-    beforeUpload() {
-      return false; // To prevent automatic upload, we want manual control
-    },
-    onChange(info: any) {
-      if (info.file.status === 'done') {
-        message.success(`${info.file.name} file uploaded successfully`);
-      } else if (info.file.status === 'error') {
-        message.error(`${info.file.name} file upload failed.`);
-      }
-    },
-  };
 
   const handleDelete = (key: React.Key) => {
     const newData = dataSource.filter(item => item.key !== key);
     setDataSource(newData);
+    message.success('Record deleted');
   };
 
   const handleAdd = () => {
-    const newData = {
+    const newData: BankDetail = {
       key: count,
       bankName: '',
       bankBranch: '',
       accountNo: '',
-      documentFile: null,
     };
     setDataSource([...dataSource, newData]);
     setCount(count + 1);
+    setEditingKey(count);
   };
 
-  const handleSave = async (row: any) => {
-    const formData = new FormData();
-    formData.append('bankName', row.bankName);
-    formData.append('bankBranch', row.bankBranch);
-    formData.append('accountNo', row.accountNo);
-    formData.append('id', id);
-
-    if (row.documentFile) {
-      formData.append('documentFile', row.documentFile.originFileObj as File);
-    }
-
+  const handleSave = async (record: BankDetail) => {
     try {
-      await mutate({ id, payload: formData, query: 'bank' });
-      message.success('Record saved successfully');
+      const formData = new FormData();
+      formData.append('bankName', record.bankName || '');
+      formData.append('bankBranch', record.bankBranch || '');
+      formData.append('accountNo', record.accountNo || '');
+
+      if (record.id) {
+        formData.append('id', record.id);
+      }
+
+      // Handle file upload
+      if (record.documentFile && typeof record.documentFile === 'object' && 'originFileObj' in record.documentFile) {
+        formData.append('documentFile', record.documentFile.originFileObj as File);
+      }
+
+      await mutate(
+        { id, payload: formData, query: 'bank' },
+        {
+          onSuccess: () => {
+            message.success('Bank details saved successfully');
+            setEditingKey(null);
+          },
+          onError: (error: any) => {
+            message.error(error?.response?.data?.message || 'Failed to save bank details');
+          }
+        }
+      );
     } catch (error) {
       message.error('Failed to save record');
     }
   };
 
-  // Editable cell component
-  const EditableCell = ({
-    title,
-    editable,
-    children,
-    record,
-    columnKey,
-    ...restProps
-  }: any) => {
-    const [editing, setEditing] = useState(false);
-    const [value, setValue] = useState(children);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setValue(e.target.value);
-    };
-
-    const handleBlur = () => {
-      setEditing(false);
-      record[columnKey] = value; // Update record data
-    };
-
-    const handleSave = () => {
-      setEditing(false);
-      record[columnKey] = value;
-      handleSave(record); // Save the record after editing
-    };
-
-    return (
-      <td {...restProps}>
-        {editing ? (
-          columnKey === 'documentFile' ? (
-            <Upload {...uploadProps} fileList={record.documentFile ? [record.documentFile] : []} onChange={(info) => {
-              if (info.file.status === 'done') {
-                record.documentFile = info.file;
-              }
-            }}>
-              <Button icon={<UploadOutlined />}>Upload File</Button>
-            </Upload>
-          ) : (
-            <Input value={value} onChange={handleChange} onBlur={handleBlur} />
-          )
-        ) : (
-          <div
-            className="editable-cell-value"
-            onClick={() => setEditing(true)}
-          >
-            {children}
-          </div>
-        )}
-      </td>
-    );
+  const handleEdit = (key: number) => {
+    setEditingKey(key);
   };
 
-  const editableColumns = [
+  const handleCancel = () => {
+    setEditingKey(null);
+  };
+
+  const handleInputChange = (key: number, field: keyof BankDetail, value: any) => {
+    const newData = dataSource.map(item => {
+      if (item.key === key) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    });
+    setDataSource(newData);
+  };
+
+  const handlePreview = (fileUrl: string) => {
+    setPreviewFile(fileUrl);
+    setPreviewVisible(true);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewVisible(false);
+    setPreviewFile(null);
+  };
+
+  const columns = [
     {
       title: 'Bank Name',
-      editable: true,
       dataIndex: 'bankName',
       key: 'bankName',
+      render: (text: string, record: BankDetail) => {
+        if (editingKey === record.key) {
+          return (
+            <Input
+              value={text}
+              onChange={(e) => handleInputChange(record.key, 'bankName', e.target.value)}
+              placeholder="Enter bank name"
+            />
+          );
+        }
+        return text;
+      },
     },
     {
       title: 'Bank Branch',
-      editable: true,
       dataIndex: 'bankBranch',
       key: 'bankBranch',
+      render: (text: string, record: BankDetail) => {
+        if (editingKey === record.key) {
+          return (
+            <Input
+              value={text}
+              onChange={(e) => handleInputChange(record.key, 'bankBranch', e.target.value)}
+              placeholder="Enter bank branch"
+            />
+          );
+        }
+        return text;
+      },
     },
     {
       title: 'Account Number',
-      editable: true,
       dataIndex: 'accountNo',
       key: 'accountNo',
+      render: (text: string, record: BankDetail) => {
+        if (editingKey === record.key) {
+          return (
+            <Input
+              value={text}
+              onChange={(e) => handleInputChange(record.key, 'accountNo', e.target.value)}
+              placeholder="Enter account number"
+            />
+          );
+        }
+        return text;
+      },
     },
     {
-      title: 'Upload File',
-      editable: true,
+      title: 'Document',
       dataIndex: 'documentFile',
       key: 'documentFile',
+      render: (_: any, record: BankDetail) => {
+        if (editingKey === record.key) {
+          return (
+            <Upload
+              beforeUpload={() => false}
+              maxCount={1}
+              onChange={(info) => {
+                if (info.fileList.length > 0) {
+                  handleInputChange(record.key, 'documentFile', info.fileList[0]);
+                }
+              }}
+              fileList={record.documentFile && typeof record.documentFile === 'object' && 'originFileObj' in record.documentFile ? [record.documentFile as UploadFile] : []}
+            >
+              <Button icon={<UploadOutlined />} size="small">
+                Upload
+              </Button>
+            </Upload>
+          );
+        }
+        return record.documentFile && typeof record.documentFile === 'string' 
+          ? (
+            <Button 
+              type="link" 
+              icon={<EyeOutlined />}
+              onClick={() => handlePreview(`${import.meta.env.VITE_BACKEND_URI}${record.documentFile}`)}
+            >
+              View Document
+            </Button>
+          )
+          : 'No document';
+      },
     },
     {
       title: 'Action',
       key: 'action',
-      render: (_: any, record: any) => (
-        <span>
-          <a onClick={() => handleSave(record)} style={{ marginRight: 16 }}>Save</a>
-          <Popconfirm title="Are you sure?" onConfirm={() => handleDelete(record.key)}>
-            <a>Delete</a>
-          </Popconfirm>
-        </span>
-      ),
+      render: (_: any, record: BankDetail) => {
+        if (editingKey === record.key) {
+          return (
+            <span>
+              <Button type="link" onClick={() => handleSave(record)} style={{ marginRight: 8 }}>
+                Save
+              </Button>
+              <Button type="link" onClick={handleCancel}>
+                Cancel
+              </Button>
+            </span>
+          );
+        }
+        return (
+          <span>
+            <Button type="link" onClick={() => handleEdit(record.key)} style={{ marginRight: 8 }}>
+              Edit
+            </Button>
+            <Popconfirm title="Are you sure?" onConfirm={() => handleDelete(record.key)}>
+              <Button type="link" danger>
+                Delete
+              </Button>
+            </Popconfirm>
+          </span>
+        );
+      },
     },
   ];
 
   return (
     <>
       <Table
-        components={{
-          body: {
-            cell: EditableCell,
-          },
-        }}
         bordered
         dataSource={dataSource}
-        columns={editableColumns}
+        columns={columns}
         rowClassName="editable-row"
         pagination={false}
         rowKey="key"
       />
       <Row gutter={16} style={{ marginTop: 20 }}>
-        <Col span={12}>
-          <Button onClick={handleAdd} type="dashed" icon={<UploadOutlined />} block>
-            Add New Record
+        <Col span={24}>
+          <Button
+            onClick={handleAdd}
+            type="dashed"
+            icon={<PlusOutlined />}
+            block
+          >
+            Add Bank Detail
           </Button>
         </Col>
       </Row>
+
+      {/* Document Preview Modal */}
+      <Modal
+        open={previewVisible}
+        title="Document Preview"
+        footer={null}
+        onCancel={handleClosePreview}
+        width={800}
+      >
+        {previewFile && (
+          <div style={{ textAlign: 'center' }}>
+            {previewFile.toLowerCase().endsWith('.pdf') ? (
+              <iframe
+                src={previewFile}
+                style={{ width: '100%', height: '600px', border: 'none' }}
+                title="Document Preview"
+              />
+            ) : (
+              <img
+                src={previewFile}
+                alt="Document Preview"
+                style={{ maxWidth: '100%', maxHeight: '600px' }}
+              />
+            )}
+          </div>
+        )}
+      </Modal>
     </>
   );
 };

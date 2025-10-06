@@ -6,11 +6,23 @@ import { useParams } from "react-router-dom";
 const TrainingDetails = () => {
     const { id } = useParams();
     const { data: user } = useUserDetails(id);
+    
     return (
         <>
             <PageTitle title="Training and Other Certification" />
-            {user && <>{user?.trainning_detail?.map((trainning_detail: any) => <TrainingDetailForm initialValues={trainning_detail} />)}</>
-            }
+            {user && (
+                <>
+                    {/* If there are training details, map through them */}
+                    {user?.trainning_detail?.length > 0 ? (
+                        user.trainning_detail.map((trainning_detail: any) => (
+                            <TrainingDetailForm key={trainning_detail.id} initialValues={trainning_detail} />
+                        ))
+                    ) : (
+                        // If no training details exist, show an empty form
+                        <TrainingDetailForm initialValues={[]} />
+                    )}
+                </>
+            )}
         </>
     );
 };

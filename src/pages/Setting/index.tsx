@@ -68,6 +68,14 @@ const Setting = () => {
         </Card>
       </Col>
       <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/department-setting")} hoverable>
+          <Title level={4}>Department Management</Title>
+          <Paragraph>
+            Create and manage departments for organizing users and team structure.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
         <Card className="h-full" onClick={() => navigate("/todotask/task-types")} hoverable>
           <Title level={4}>Task Type Settings</Title>
           <Paragraph>

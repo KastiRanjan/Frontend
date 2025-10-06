@@ -1,11 +1,18 @@
-import { Card,Button, Checkbox, Col, Form, InputNumber, Row, Switch, message } from "antd";
+import { Card, Button, Checkbox, Col, Form, InputNumber, Row, Switch, message, Select, DatePicker } from "antd";
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { useCreateUserDetail } from "@/hooks/user/userCreateuserDetail";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { 
+  countries, 
+  getStateOptions, 
+  getDistrictOptions, 
+  getLocalJurisdictionOptions 
+} from "@/utils/locationData";
+import { fetchDepartments, Department } from "@/service/department.service";
 
 // Define TypeScript interface for form values
 interface PersonalDetailFormValues {
@@ -18,6 +25,7 @@ interface PersonalDetailFormValues {
   panNo?: string;
   contactNo?: string;
   personalEmail?: string;
+  dateOfBirth?: string;
   permanentAddressCountry?: string;
   permanentAddressState?: string;
   permanentAddressDistrict?: string;
@@ -34,12 +42,6 @@ interface PersonalDetailFormValues {
   guardianRelation?: string;
   guardianContact?: string;
   alternateContactNo?: string;
-  casualLeaves?: number;
-  examLeaves?: number;
-  maternityLeaves?: number;
-  paternityLeaves?: number;
-  otherLeaves?: number;
-  pf?: boolean;
   hourlyCostRate?: number;
   publicHolidayAllowance?: number;
 }
@@ -55,6 +57,43 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
   const queryClient = useQueryClient();
   const [sameAsPermanent, setSameAsPermanent] = useState(false);
   const { id } = useParams();
+  const [departments, setDepartments] = useState<Department[]>([]);
+  
+  // State for cascading address dropdowns
+  const [permanentCountry, setPermanentCountry] = useState<string | null>(
+    initialValues?.permanentAddressCountry || null
+  );
+  const [permanentState, setPermanentState] = useState<string | null>(
+    initialValues?.permanentAddressState || null
+  );
+  const [permanentDistrict, setPermanentDistrict] = useState<string | null>(
+    initialValues?.permanentAddressDistrict || null
+  );
+  
+  const [temporaryCountry, setTemporaryCountry] = useState<string | null>(
+    initialValues?.temporaryAddressCountry || null
+  );
+  const [temporaryState, setTemporaryState] = useState<string | null>(
+    initialValues?.temporaryAddressState || null
+  );
+  const [temporaryDistrict, setTemporaryDistrict] = useState<string | null>(
+    initialValues?.temporaryAddressDistrict || null
+  );
+  
+  // Fetch departments when component mounts
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const departmentData = await fetchDepartments();
+        setDepartments(departmentData);
+      } catch (error) {
+        console.error("Failed to fetch departments:", error);
+        message.error("Failed to load departments");
+      }
+    };
+    
+    loadDepartments();
+  }, []);
   // Handle form submission
   const onFinish = (values: PersonalDetailFormValues) => {
     // If "Same as Permanent Address" is checked, copy permanent address fields
@@ -119,7 +158,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
       onFinish={onFinish}
     >
       <Card style={{ marginBottom: "20px" }}>
-        <Title level={4}>Personal Details</Title>
         <Row gutter={16}>
           <Col span={8}>
             <FormSelectWrapper
@@ -127,11 +165,7 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
               name="department"
               label="Department"
               rules={[{ required: true, message: "Please select a department!" }]}
-              options={[
-                { value: "operations", label: "Operations" },
-                { value: "accounts", label: "Accounts" },
-                { value: "administration", label: "Administration" },
-              ]}
+              options={departments.map(dept => ({ value: dept.id, label: dept.name }))}
             />
           </Col>
           <Col span={8}>
@@ -226,6 +260,27 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
               ]}
             />
           </Col>
+          <Col span={8}>
+            <Form.Item
+              name="dateOfBirth"
+              label="Date of Birth"
+              rules={[
+                {message: "Please select date of birth!" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    const today = new Date();
+                    if (value && value > today) {
+                      return Promise.reject(new Error("Date of birth cannot be in the future!"));
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+            </Form.Item>
+          </Col>
         </Row>
       </Card>
 
@@ -233,34 +288,77 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
         <Title level={4}>Permanent Address Details</Title>
         <Row gutter={16}>
           <Col span={8}>
-            <FormInputWrapper
-              id="permanentAddressCountry"
+            <Form.Item
               name="permanentAddressCountry"
               label="Country"
-              rules={[{ required: true, message: "Please input country!" }]}
-            />
+              rules={[{ required: true, message: "Please select country!" }]}
+            >
+              <Select
+                placeholder="Select country"
+                options={countries}
+                onChange={(value) => {
+                  setPermanentCountry(value);
+                  form.setFieldsValue({ 
+                    permanentAddressState: undefined, 
+                    permanentAddressDistrict: undefined, 
+                    permanentAddressLocalJurisdiction: undefined 
+                  });
+                  setPermanentState(null);
+                  setPermanentDistrict(null);
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
-            <FormInputWrapper
-              id="permanentAddressState"
+            <Form.Item
               name="permanentAddressState"
-              label="State"
-              rules={[{ required: true, message: "Please input state!" }]}
-            />
+              label="State/Province"
+              rules={[{ required: true, message: "Please select state!" }]}
+            >
+              <Select
+                placeholder="Select state"
+                options={permanentCountry ? getStateOptions(permanentCountry) : []}
+                disabled={!permanentCountry}
+                onChange={(value) => {
+                  setPermanentState(value);
+                  form.setFieldsValue({ 
+                    permanentAddressDistrict: undefined, 
+                    permanentAddressLocalJurisdiction: undefined 
+                  });
+                  setPermanentDistrict(null);
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
-            <FormInputWrapper
-              id="permanentAddressDistrict"
+            <Form.Item
               name="permanentAddressDistrict"
               label="District"
-            />
+              rules={[{ required: true, message: "Please select district!" }]}
+            >
+              <Select
+                placeholder="Select district"
+                options={permanentState ? getDistrictOptions(permanentState) : []}
+                disabled={!permanentState}
+                onChange={(value) => {
+                  setPermanentDistrict(value);
+                  form.setFieldsValue({ permanentAddressLocalJurisdiction: undefined });
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
-            <FormInputWrapper
-              id="permanentAddressLocalJurisdiction"
+            <Form.Item
               name="permanentAddressLocalJurisdiction"
               label="Local Jurisdiction"
-            />
+              rules={[{ required: true, message: "Please select local jurisdiction!" }]}
+            >
+              <Select
+                placeholder="Select local jurisdiction"
+                options={permanentDistrict ? getLocalJurisdictionOptions(permanentDistrict) : []}
+                disabled={!permanentDistrict}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             <FormInputWrapper
@@ -294,36 +392,78 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
         </Row>
         <Row gutter={16}>
           <Col span={8}>
-            <FormInputWrapper
-              id="temporaryAddressCountry"
+            <Form.Item
               name="temporaryAddressCountry"
               label="Country"
-              disabled={sameAsPermanent}
-            />
+              rules={[{ required: !sameAsPermanent, message: "Please select country!" }]}
+            >
+              <Select
+                placeholder="Select country"
+                options={countries}
+                disabled={sameAsPermanent}
+                onChange={(value) => {
+                  setTemporaryCountry(value);
+                  form.setFieldsValue({ 
+                    temporaryAddressState: undefined, 
+                    temporaryAddressDistrict: undefined, 
+                    temporaryAddressLocalJurisdiction: undefined 
+                  });
+                  setTemporaryState(null);
+                  setTemporaryDistrict(null);
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
-            <FormInputWrapper
-              id="temporaryAddressState"
+            <Form.Item
               name="temporaryAddressState"
-              label="State"
-              disabled={sameAsPermanent}
-            />
+              label="State/Province"
+              rules={[{ required: !sameAsPermanent, message: "Please select state!" }]}
+            >
+              <Select
+                placeholder="Select state"
+                options={temporaryCountry ? getStateOptions(temporaryCountry) : []}
+                disabled={sameAsPermanent || !temporaryCountry}
+                onChange={(value) => {
+                  setTemporaryState(value);
+                  form.setFieldsValue({ 
+                    temporaryAddressDistrict: undefined, 
+                    temporaryAddressLocalJurisdiction: undefined 
+                  });
+                  setTemporaryDistrict(null);
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
-            <FormInputWrapper
-              id="temporaryAddressDistrict"
+            <Form.Item
               name="temporaryAddressDistrict"
               label="District"
-              disabled={sameAsPermanent}
-            />
+              rules={[{ required: !sameAsPermanent, message: "Please select district!" }]}
+            >
+              <Select
+                placeholder="Select district"
+                options={temporaryState ? getDistrictOptions(temporaryState) : []}
+                disabled={sameAsPermanent || !temporaryState}
+                onChange={(value) => {
+                  setTemporaryDistrict(value);
+                  form.setFieldsValue({ temporaryAddressLocalJurisdiction: undefined });
+                }}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
-            <FormInputWrapper
-              id="temporaryAddressLocalJurisdiction"
+            <Form.Item
               name="temporaryAddressLocalJurisdiction"
               label="Local Jurisdiction"
-              disabled={sameAsPermanent}
-            />
+              rules={[{ required: !sameAsPermanent, message: "Please select local jurisdiction!" }]}
+            >
+              <Select
+                placeholder="Select local jurisdiction"
+                options={temporaryDistrict ? getLocalJurisdictionOptions(temporaryDistrict) : []}
+                disabled={sameAsPermanent || !temporaryDistrict}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             <FormInputWrapper
@@ -390,41 +530,7 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
         </Row>
       </Card>
 
-      <Card style={{ marginBottom: "20px" }}>
-        <Title level={4}>Leave Details</Title>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item name="casualLeaves" label="Casual Leaves">
-              <InputNumber min={0} style={{ width: "100%" }} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="examLeaves" label="Exam Leaves">
-              <InputNumber min={0} style={{ width: "100%" }} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="maternityLeaves" label="Maternity Leaves">
-              <InputNumber min={0} style={{ width: "100%" }} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="paternityLeaves" label="Paternity Leaves">
-              <InputNumber min={0} style={{ width: "100%" }} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="otherLeaves" label="Other Leaves">
-              <InputNumber min={0} style={{ width: "100%" }} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="pf" label="Provident Fund" valuePropName="checked">
-              <Switch />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
+
 
       <Card style={{ marginBottom: "20px" }}>
         <Title level={4}>Salary & Allowance Section</Title>
