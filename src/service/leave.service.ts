@@ -3,39 +3,14 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
-export interface CreateLeaveDto {
-  startDate: string;
-  endDate: string;
-  type: string;
-  reason?: string;
-}
+// Import DTOs from types/leave.ts
+import { CreateLeaveDto as ImportedCreateLeaveDto, UpdateLeaveDto as ImportedUpdateLeaveDto } from '../types/leave';
+export type CreateLeaveDto = ImportedCreateLeaveDto;
+export type UpdateLeaveDto = ImportedUpdateLeaveDto;
 
-export interface UpdateLeaveDto {
-  startDate?: string;
-  endDate?: string;
-  type?: string;
-  reason?: string;
-}
-
-export interface LeaveType {
-  id: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  startDate: string;
-  endDate: string;
-  type: string;
-  reason?: string;
-  status: 'pending' | 'approved_by_lead' | 'approved_by_pm' | 'approved' | 'rejected';
-  leadApproverId?: string;
-  pmApproverId?: string;
-  adminApproverId?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Import types from types/leave.ts
+import { LeaveType as ImportedLeaveType } from '../types/leave';
+export type LeaveType = ImportedLeaveType;
 
 export const fetchLeaves = async (status?: string) => {
   const response = await axios.get(`${backendURI}/leave`, {
@@ -66,15 +41,41 @@ export const deleteLeave = async (id: string) => {
   return response.data;
 };
 
+/**
+ * @deprecated Team lead approval step has been removed from the system
+ * This function is kept for backward compatibility with existing code
+ */
 export const approveLeaveByLead = async (id: string, userId: string) => {
+  console.warn('approveLeaveByLead is deprecated - use approveLeaveByManager instead');
   const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
-  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/lead`, { userId });
+  // Redirect to manager approval endpoint for new backend compatibility
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/manager`, { userId });
   return response.data;
 };
 
-export const approveLeaveByPM = async (id: string, userId: string) => {
+/**
+ * Approve leave by manager - first step in the two-level approval process
+ * For users with manager/projectmanager role
+ */
+export const approveLeaveByManager = async (id: string, userId: string, notifyAdmins?: string[]) => {
   const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
-  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/pm`, { userId });
+  const body: { userId: string; notifyAdmins?: string[] } = { userId };
+  if (notifyAdmins && notifyAdmins.length > 0) {
+    body.notifyAdmins = notifyAdmins;
+  }
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/manager`, body);
+  return response.data;
+};
+
+/**
+ * @deprecated Project Manager approval is now merged with manager approval
+ * This function is kept for backward compatibility with existing code
+ */
+export const approveLeaveByPM = async (id: string, userId: string) => {
+  console.warn('approveLeaveByPM is deprecated - use approveLeaveByManager instead');
+  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
+  // Redirect to manager approval endpoint for new backend compatibility
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve/manager`, { userId });
   return response.data;
 };
 
@@ -90,20 +91,23 @@ export const rejectLeave = async (id: string, userId: string) => {
   return response.data;
 };
 
-// Generic approve function that determines the approval level based on user role
-export const approveLeave = async (id: string) => {
+/**
+ * Generic approve function that determines the approval level based on user's role
+ * This is the recommended function to use for new code as it handles role-based 
+ * approval levels automatically on the backend
+ */
+export const approveLeave = async (id: string, notifyAdmins?: string[]) => {
   // This will use the user's session to determine the appropriate approval level
   const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
-  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve`);
+  const body: { notifyAdmins?: string[] } = {};
+  if (notifyAdmins && notifyAdmins.length > 0) {
+    body.notifyAdmins = notifyAdmins;
+  }
+  const response = await axios.patch(`${backendURI}/leave/${cleanId}/approve`, body);
   return response.data;
 };
 
-// Override an approved leave (revert to pending or reject)
-export const overrideLeave = async (id: string, newStatus: 'pending' | 'rejected' = 'pending') => {
-  const cleanId = encodeURIComponent(String(id).trim().replace(/['"]/g, ''));
-  const response = await axios.patch(`${backendURI}/leave/${cleanId}/override`, { newStatus });
-  return response.data;
-};
+// Override functionality removed per requirements
 
 export const getLeaveCalendarView = async (from: string, to: string, projectId?: string) => {
   const response = await axios.get(`${backendURI}/leave/calendar/view`, {

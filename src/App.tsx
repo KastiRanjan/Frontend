@@ -5,12 +5,16 @@ import { useNavigate, useRoutes } from "react-router-dom";
 import Router from "./routes";
 import { useSession } from "./context/SessionContext";
 import { antTheme } from "./theme";
+import { useTrackUserActivity } from "./utils/userActivityTracker";
 import "react-quill/dist/quill.snow.css";
 
 const App: React.FC = () => {
   const routes = useRoutes(Router);
-  const { isAuthenticated } = useSession();
+  const { isAuthenticated, profile } = useSession();
   const navigate = useNavigate();
+  
+  // Track user activity if authenticated
+  useTrackUserActivity();
 
   useEffect(() => {
     if (isAuthenticated && window.location.pathname === "/login") {

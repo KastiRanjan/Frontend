@@ -14,6 +14,15 @@ import {
   Alert
 } from 'antd';
 import { 
+  hasAnyLeaveApprovalPermission 
+} from '../../utils/leavePermissions';
+import {
+  getLeaveStatusColor,
+  getLeaveStatusText,
+  handleLeaveApproval,
+  handleLeaveRejection
+} from '../../utils/leaveHelpers';
+import { 
   CalendarOutlined, 
   PlusOutlined, 
   // EyeOutlined,
@@ -22,16 +31,15 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import moment from 'moment';
 import { useSession } from '../../context/SessionContext';
+import { usePendingApprovals } from '../../hooks/leave';
 import { 
   fetchUserLeaveBalances, 
   fetchUserLeaves,
   approveLeave,
   rejectLeave,
-  overrideLeave,
-  fetchLeavesForUser,
-  getPendingApprovals
+  fetchLeavesForUser
 } from '../../service/leave.service';
-import { Modal, message } from 'antd';
+import { message } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import LeaveRequestModal from './LeaveRequestModal';
 // import LeaveDetailsModal from './LeaveDetailsModal';
@@ -69,33 +77,12 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
   });
 
   // Fetch pending approvals for current session user (not the profile user)
-  const { data: pendingApprovals = [], isLoading: approvalsLoading } = useQuery({
-    queryKey: ['pending-approvals'],
-    queryFn: () => getPendingApprovals(),
-    enabled: !!(permissions?.includes('leave:approve'))
-  });
+  // Use our custom hook for pending approvals that handles superuser permissions correctly
+  const { data: pendingApprovals = [], isLoading: approvalsLoading } = usePendingApprovals();
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'orange',
-      approved_by_lead: 'blue',
-      approved_by_pm: 'cyan',
-      approved: 'green',
-      rejected: 'red'
-    };
-    return colors[status] || 'default';
-  };
-
-  const getStatusText = (status: string) => {
-    const statusTexts: Record<string, string> = {
-      pending: 'Pending Review',
-      approved_by_lead: 'Approved by Lead',
-      approved_by_pm: 'Approved by PM',
-      approved: 'Approved',
-      rejected: 'Rejected'
-    };
-    return statusTexts[status] || status;
-  };
+  // Use shared helper functions
+  const getStatusColor = getLeaveStatusColor;
+  const getStatusText = getLeaveStatusText;
 
   const columns = [
     {
@@ -138,25 +125,14 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: LeaveType) => {
-        // Check if current user can approve based on role hierarchy
-        const currentUserRole = (profile as any)?.role?.name?.toLowerCase() || '';
-        const requesterRole = record.user?.role?.name?.toLowerCase() || '';
+        // Use utility functions from leavePermissions.ts for cleaner code
+        const isPending = record.status === 'pending' || record.status === 'approved_by_manager';
         
-        const canApprove = permissions?.includes('leave:approve') && 
-          ((requesterRole === 'auditjunior' && ['projectlead', 'manager', 'administrator', 'superuser'].includes(currentUserRole)) ||
-           (requesterRole === 'projectlead' && ['manager', 'administrator', 'superuser'].includes(currentUserRole)) ||
-           (requesterRole === 'manager' && ['administrator', 'superuser'].includes(currentUserRole)) ||
-           (requesterRole === 'administrator' && ['superuser'].includes(currentUserRole)) ||
-           (requesterRole === 'superuser' && ['superuser', 'administrator'].includes(currentUserRole)));
-           
-        const isPending = record.status === 'pending' || record.status === 'approved_by_lead' || record.status === 'approved_by_pm';
+        // Check if the current user has approval permission
+        const hasApprovalPermission = hasAnyLeaveApprovalPermission(permissions || []);
         
-        // Check if current user can override this approved leave
-        const canOverride = record.status === 'approved' && permissions?.includes('leave:approve') &&
-          ((currentUserRole === 'superuser') ||
-           (currentUserRole === 'administrator' && ['manager', 'projectlead', 'auditjunior'].includes(requesterRole)) ||
-           (currentUserRole === 'manager' && ['projectlead', 'auditjunior'].includes(requesterRole)) ||
-           (currentUserRole === 'projectlead' && requesterRole === 'auditjunior'));
+        // Determine if the user can approve this specific leave request
+        const canApprove = hasApprovalPermission && isPending;
         
         return (
           <Space direction="vertical" size="small">
@@ -166,64 +142,21 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
                 <Button
                   type="primary"
                   size="small"
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Approve Leave',
-                      content: 'Are you sure you want to approve this leave request?',
-                      onOk: () => approveMutation.mutate({ leaveId: record.id })
-                    });
-                  }}
+                  onClick={() => handleLeaveApproval(record.id, approveMutation)}
                 >
                   Approve
                 </Button>
                 <Button
                   danger
                   size="small"
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Reject Leave',
-                      content: 'Are you sure you want to reject this leave request?',
-                      onOk: () => rejectMutation.mutate({ leaveId: record.id })
-                    });
-                  }}
+                  onClick={() => handleLeaveRejection(record.id, (profile as any)?.id, rejectMutation)}
                 >
                   Reject
                 </Button>
               </Space>
             )}
             
-            {/* Already approved - show override options */}
-            {canOverride && (
-              <Space>
-                <Button
-                  type="default"
-                  size="small"
-                  style={{ color: '#fa8c16', borderColor: '#fa8c16' }}
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Override Approval',
-                      content: 'This will revert the leave back to pending status. Are you sure?',
-                      onOk: () => overrideMutation.mutate({ leaveId: record.id, newStatus: 'pending' })
-                    });
-                  }}
-                >
-                  Override → Pending
-                </Button>
-                <Button
-                  danger
-                  size="small"
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Override & Reject',
-                      content: 'This will override the approval and reject this leave. Are you sure?',
-                      onOk: () => overrideMutation.mutate({ leaveId: record.id, newStatus: 'rejected' })
-                    });
-                  }}
-                >
-                  Override → Reject
-                </Button>
-              </Space>
-            )}
+            {/* Removed override buttons */}
           </Space>
         );
       }
@@ -256,18 +189,7 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
     }
   });
 
-  const overrideMutation = useMutation({
-    mutationFn: ({ leaveId, newStatus }: { leaveId: string, newStatus?: 'pending' | 'rejected' }) => 
-      overrideLeave(leaveId, newStatus || 'pending'),
-    onSuccess: () => {
-      message.success('Leave approval overridden');
-      queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
-    },
-    onError: (err: any) => {
-      message.error(err?.response?.data?.message || 'Failed to override approval');
-    }
-  });
+  // Override functionality removed per requirements
 
   if (balancesLoading || leavesLoading) {
     return (
@@ -430,7 +352,7 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
                     title: 'Actions',
                     key: 'actions',
                     render: (_: any, record: LeaveType) => {
-                      const isPending = record.status === 'pending' || record.status === 'approved_by_lead' || record.status === 'approved_by_pm';
+                      const isPending = record.status === 'pending' || record.status === 'approved_by_manager';
                       return (
                         <Space>
                           {/*
@@ -451,11 +373,7 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
                                 type="primary"
                                 size="small"
                                 onClick={() => {
-                                  Modal.confirm({
-                                    title: 'Approve Leave',
-                                    content: 'Are you sure you want to approve this leave request?',
-                                    onOk: () => approveMutation.mutate({ leaveId: record.id })
-                                  });
+                                  handleLeaveApproval(record.id, approveMutation);
                                 }}
                               >
                                 Approve
@@ -464,11 +382,7 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
                                 danger
                                 size="small"
                                 onClick={() => {
-                                  Modal.confirm({
-                                    title: 'Reject Leave',
-                                    content: 'Are you sure you want to reject this leave request?',
-                                    onOk: () => rejectMutation.mutate({ leaveId: record.id })
-                                  });
+                                  handleLeaveRejection(record.id, (profile as any)?.id, rejectMutation);
                                 }}
                               >
                                 Reject

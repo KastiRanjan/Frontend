@@ -11,7 +11,6 @@ import {
   DocumentType,
   documentTypeLabels 
 } from "@/hooks/user/useUserDocuments";
-import DocumentVerificationStatus from "@/components/user/DocumentVerificationStatus";
 import dayjs from "dayjs";
 
 const { Title } = Typography;
@@ -184,9 +183,7 @@ const PersonalDocumentsDetails = () => {
 
   return (
     <div className="space-y-4">
-      {/* Document Verification Status Dashboard */}
-      {id && <DocumentVerificationStatus userId={id} />}
-      
+      {/* Document Verification Status Dashboard */}      
       <Card>
         <div className="flex justify-between items-center mb-4">
           <Title level={4}>Personal Documents</Title>

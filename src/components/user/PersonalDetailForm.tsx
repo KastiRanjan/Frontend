@@ -1,4 +1,5 @@
 import { Card, Button, Checkbox, Col, Form, InputNumber, Row, Switch, message, Select, DatePicker } from "antd";
+import dayjs from 'dayjs';
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
@@ -25,7 +26,7 @@ interface PersonalDetailFormValues {
   panNo?: string;
   contactNo?: string;
   personalEmail?: string;
-  dateOfBirth?: string;
+  dateOfBirth?: any; // Allow for either moment object or string
   permanentAddressCountry?: string;
   permanentAddressState?: string;
   permanentAddressDistrict?: string;
@@ -60,25 +61,52 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
   const [departments, setDepartments] = useState<Department[]>([]);
   
   // State for cascading address dropdowns
-  const [permanentCountry, setPermanentCountry] = useState<string | null>(
-    initialValues?.permanentAddressCountry || null
-  );
-  const [permanentState, setPermanentState] = useState<string | null>(
-    initialValues?.permanentAddressState || null
-  );
-  const [permanentDistrict, setPermanentDistrict] = useState<string | null>(
-    initialValues?.permanentAddressDistrict || null
-  );
+  const [permanentCountry, setPermanentCountry] = useState<string | null>(null);
+  const [permanentState, setPermanentState] = useState<string | null>(null);
+  const [permanentDistrict, setPermanentDistrict] = useState<string | null>(null);
   
-  const [temporaryCountry, setTemporaryCountry] = useState<string | null>(
-    initialValues?.temporaryAddressCountry || null
-  );
-  const [temporaryState, setTemporaryState] = useState<string | null>(
-    initialValues?.temporaryAddressState || null
-  );
-  const [temporaryDistrict, setTemporaryDistrict] = useState<string | null>(
-    initialValues?.temporaryAddressDistrict || null
-  );
+  const [temporaryCountry, setTemporaryCountry] = useState<string | null>(null);
+  const [temporaryState, setTemporaryState] = useState<string | null>(null);
+  const [temporaryDistrict, setTemporaryDistrict] = useState<string | null>(null);
+  
+  // Update local state when initialValues change
+  useEffect(() => {
+    console.log('PersonalDetailForm initialValues:', initialValues);
+    
+    if (initialValues) {
+      setPermanentCountry(initialValues.permanentAddressCountry || null);
+      setPermanentState(initialValues.permanentAddressState || null);
+      setPermanentDistrict(initialValues.permanentAddressDistrict || null);
+      
+      setTemporaryCountry(initialValues.temporaryAddressCountry || null);
+      setTemporaryState(initialValues.temporaryAddressState || null);
+      setTemporaryDistrict(initialValues.temporaryAddressDistrict || null);
+      
+      // Convert date string to dayjs object if it exists
+      const formValues = {...initialValues};
+      
+      if (formValues.dateOfBirth) {
+        try {
+          // Parse the string date into a dayjs object
+          const dateObj = dayjs(formValues.dateOfBirth);
+          // Check if the date is valid
+          if (dateObj.isValid()) {
+            formValues.dateOfBirth = dateObj;
+            console.log('Converted date of birth to dayjs object:', dateObj.format('YYYY-MM-DD'));
+          } else {
+            console.warn('Invalid date of birth format:', initialValues.dateOfBirth);
+            formValues.dateOfBirth = undefined;
+          }
+        } catch (error) {
+          console.error('Error parsing date of birth:', error);
+          formValues.dateOfBirth = undefined;
+        }
+      }
+      
+      // Initialize form fields with processed initial values
+      form.setFieldsValue(formValues);
+    }
+  }, [initialValues, form]);
   
   // Fetch departments when component mounts
   useEffect(() => {
@@ -96,27 +124,70 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
   }, []);
   // Handle form submission
   const onFinish = (values: PersonalDetailFormValues) => {
+    // Create a new object with only the non-empty/defined values
+    const cleanedValues: Record<string, any> = {};
+    
+    // Process each field, only including values that are not null/undefined/empty strings
+    Object.entries(values).forEach(([key, value]) => {
+      // Don't include empty values except for required fields
+      if (value !== null && value !== undefined && value !== '') {
+        cleanedValues[key] = value;
+      }
+    });
+
+    // Department is required, so ensure it's included
+    if (!cleanedValues.department && values.department) {
+      cleanedValues.department = values.department;
+    }
+    
     // If "Same as Permanent Address" is checked, copy permanent address fields
     if (sameAsPermanent) {
-      values = {
-        ...values,
-        temporaryAddressCountry: values.permanentAddressCountry,
-        temporaryAddressState: values.permanentAddressState,
-        temporaryAddressDistrict: values.permanentAddressDistrict,
-        temporaryAddressLocalJurisdiction: values.permanentAddressLocalJurisdiction,
-        temporaryAddressWardNo: values.permanentAddressWardNo,
-        temporaryAddressLocality: values.permanentAddressLocality,
-      };
+      cleanedValues.temporaryAddressCountry = cleanedValues.permanentAddressCountry;
+      cleanedValues.temporaryAddressState = cleanedValues.permanentAddressState;
+      cleanedValues.temporaryAddressDistrict = cleanedValues.permanentAddressDistrict;
+      cleanedValues.temporaryAddressLocalJurisdiction = cleanedValues.permanentAddressLocalJurisdiction;
+      cleanedValues.temporaryAddressWardNo = cleanedValues.permanentAddressWardNo;
+      cleanedValues.temporaryAddressLocality = cleanedValues.permanentAddressLocality;
     }
-    const payload = {...values}
 
-    mutate({id,payload,query:"profile"},{
+    // For dateOfBirth, ensure it's in the correct format if present
+    if (cleanedValues.dateOfBirth) {
+      try {
+        // Check if it's a dayjs object or has format method
+        if (cleanedValues.dateOfBirth && typeof cleanedValues.dateOfBirth === 'object' && typeof cleanedValues.dateOfBirth.format === 'function') {
+          console.log('Date appears to be a dayjs object');
+          cleanedValues.dateOfBirth = cleanedValues.dateOfBirth.format('YYYY-MM-DD');
+        } else if (typeof cleanedValues.dateOfBirth === 'string') {
+          // If it's already a string, validate it's a proper date string
+          const dateObj = dayjs(cleanedValues.dateOfBirth);
+          if (dateObj.isValid()) {
+            cleanedValues.dateOfBirth = dateObj.format('YYYY-MM-DD');
+          } else {
+            // Invalid date, remove it
+            console.warn('Invalid date string detected:', cleanedValues.dateOfBirth);
+            delete cleanedValues.dateOfBirth;
+          }
+        } else {
+          // Not a valid date format, remove it
+          console.warn('Unknown date format detected:', typeof cleanedValues.dateOfBirth);
+          delete cleanedValues.dateOfBirth;
+        }
+      } catch (error) {
+        console.error('Error processing date:', error);
+        delete cleanedValues.dateOfBirth;
+      }
+    }
+
+    console.log("Submitting profile data:", cleanedValues);
+    
+    mutate({id, payload: cleanedValues, query: "profile"}, {
       onSuccess: () => {
         message.success("User details saved successfully!");
         // Refetch user details so parent gets latest data
         queryClient.invalidateQueries({ queryKey: ["users", id] });
       },
       onError: (error: any) => {
+        console.error("Profile update error:", error);
         const errorMessage =
           error?.response?.data?.message ||
           "An error occurred while saving user details";
@@ -173,7 +244,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
               id="location"
               name="location"
               label="Location"
-              rules={[{ required: true, message: "Please input a location!" }]}
             />
           </Col>
           <Col span={8}>
@@ -230,9 +300,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
               id="panNo"
               name="panNo"
               label="PAN No"
-              rules={[
-                { required: true, message: "Please input PAN number!" },
-              ]}
             />
           </Col>
           <Col span={8}>
@@ -241,7 +308,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
               name="contactNo"
               label="Contact No"
               rules={[
-                { required: true, message: "Please input contact number!" },
                 {
                   pattern: /^[0-9]{10}$/,
                   message: "Contact number must be 10 digits!",
@@ -255,7 +321,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
               name="personalEmail"
               label="Personal Email"
               rules={[
-                { required: true, message: "Please input personal email!" },
                 { type: "email", message: "Please input a valid email!" },
               ]}
             />
@@ -265,20 +330,50 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
               name="dateOfBirth"
               label="Date of Birth"
               rules={[
-                {message: "Please select date of birth!" },
                 {
                   validator: (_, value) => {
                     if (!value) return Promise.resolve();
-                    const today = new Date();
-                    if (value && value > today) {
-                      return Promise.reject(new Error("Date of birth cannot be in the future!"));
+                    
+                    // For dayjs objects or values that can be converted to dayjs
+                    try {
+                      // Check if it's already a dayjs object
+                      const isValidDate = value && typeof value === 'object' && typeof value.isValid === 'function' ? 
+                        value.isValid() : dayjs(value).isValid();
+                      
+                      if (!isValidDate) {
+                        return Promise.reject(new Error("Please enter a valid date"));
+                      }
+                      
+                      // Get dayjs object
+                      const dateValue = value && typeof value === 'object' && typeof value.isValid === 'function' ? 
+                        value : dayjs(value);
+                      
+                      // Check if it's in the future
+                      const today = dayjs();
+                      if (dateValue.isAfter(today)) {
+                        return Promise.reject(new Error("Date of birth cannot be in the future!"));
+                      }
+                      
+                      return Promise.resolve();
+                    } catch (error) {
+                      console.error('Date validation error:', error);
+                      return Promise.reject(new Error("Invalid date format"));
                     }
-                    return Promise.resolve();
                   },
                 },
               ]}
             >
-              <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+              <DatePicker 
+                style={{ width: '100%' }} 
+                format="YYYY-MM-DD" 
+                placeholder="Select date of birth"
+                allowClear
+                onChange={(date) => {
+                  console.log('DatePicker onChange:', date);
+                }}
+                // Using strictMode to be more strict on date parsing
+                showToday={false}
+              />
             </Form.Item>
           </Col>
         </Row>
@@ -291,7 +386,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="permanentAddressCountry"
               label="Country"
-              rules={[{ required: true, message: "Please select country!" }]}
             >
               <Select
                 placeholder="Select country"
@@ -313,7 +407,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="permanentAddressState"
               label="State/Province"
-              rules={[{ required: true, message: "Please select state!" }]}
             >
               <Select
                 placeholder="Select state"
@@ -334,7 +427,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="permanentAddressDistrict"
               label="District"
-              rules={[{ required: true, message: "Please select district!" }]}
             >
               <Select
                 placeholder="Select district"
@@ -351,7 +443,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="permanentAddressLocalJurisdiction"
               label="Local Jurisdiction"
-              rules={[{ required: true, message: "Please select local jurisdiction!" }]}
             >
               <Select
                 placeholder="Select local jurisdiction"
@@ -395,7 +486,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="temporaryAddressCountry"
               label="Country"
-              rules={[{ required: !sameAsPermanent, message: "Please select country!" }]}
             >
               <Select
                 placeholder="Select country"
@@ -418,7 +508,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="temporaryAddressState"
               label="State/Province"
-              rules={[{ required: !sameAsPermanent, message: "Please select state!" }]}
             >
               <Select
                 placeholder="Select state"
@@ -439,7 +528,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="temporaryAddressDistrict"
               label="District"
-              rules={[{ required: !sameAsPermanent, message: "Please select district!" }]}
             >
               <Select
                 placeholder="Select district"
@@ -456,7 +544,6 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
             <Form.Item
               name="temporaryAddressLocalJurisdiction"
               label="Local Jurisdiction"
-              rules={[{ required: !sameAsPermanent, message: "Please select local jurisdiction!" }]}
             >
               <Select
                 placeholder="Select local jurisdiction"

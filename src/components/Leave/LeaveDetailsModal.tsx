@@ -37,21 +37,25 @@ const LeaveDetailsModal: React.FC<LeaveDetailsModalProps> = ({
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: 'orange',
-      approved_by_lead: 'blue',
-      approved_by_pm: 'cyan',
+      approved_by_manager: 'cyan',
       approved: 'green',
-      rejected: 'red'
+      rejected: 'red',
+      // Legacy status codes for backward compatibility
+      approved_by_lead: 'blue',
+      approved_by_pm: 'cyan'
     };
     return colors[status] || 'default';
   };
 
   const getStatusText = (status: string) => {
     const statusTexts: Record<string, string> = {
-      pending: 'Pending Review',
-      approved_by_lead: 'Approved by Lead',
-      approved_by_pm: 'Approved by PM',
-      approved: 'Approved',
-      rejected: 'Rejected'
+      pending: 'Pending Manager Review',
+      approved_by_manager: 'Approved by Manager',
+      approved: 'Fully Approved',
+      rejected: 'Rejected',
+      // Legacy status codes for backward compatibility
+      approved_by_lead: 'Approved by Lead (Legacy)',
+      approved_by_pm: 'Approved by Manager (Legacy)'
     };
     return statusTexts[status] || status;
   };
@@ -61,6 +65,7 @@ const LeaveDetailsModal: React.FC<LeaveDetailsModalProps> = ({
     status: "error" | "finish" | "process" | "wait";
     icon: JSX.Element;
   }> => {
+    // New simplified two-level approval process: Manager → Admin
     const steps = [
       {
         title: 'Applied',
@@ -68,21 +73,14 @@ const LeaveDetailsModal: React.FC<LeaveDetailsModalProps> = ({
         icon: <UserOutlined />
       },
       {
-        title: 'Team Lead Review',
+        title: 'Manager Review',
         status: leave.status === 'pending' ? 'process' as "process" : 
                leave.status === 'rejected' ? 'error' as "error" : 'finish' as "finish",
         icon: leave.status === 'rejected' ? <CloseCircleOutlined /> : <CheckCircleOutlined />
       },
       {
-        title: 'Project Manager Review',
-        status: leave.status === 'approved_by_lead' ? 'process' as "process" : 
-               ['approved_by_pm', 'approved'].includes(leave.status) ? 'finish' as "finish" :
-               leave.status === 'rejected' ? 'error' as "error" : 'wait' as "wait",
-        icon: leave.status === 'rejected' ? <CloseCircleOutlined /> : <CheckCircleOutlined />
-      },
-      {
-        title: 'Admin Approval',
-        status: leave.status === 'approved_by_pm' ? 'process' as "process" :
+        title: 'Admin/Superuser Approval',
+        status: leave.status === 'approved_by_manager' ? 'process' as "process" :
                leave.status === 'approved' ? 'finish' as "finish" :
                leave.status === 'rejected' ? 'error' as "error" : 'wait' as "wait",
         icon: leave.status === 'rejected' ? <CloseCircleOutlined /> : <CheckCircleOutlined />
@@ -184,7 +182,6 @@ const LeaveDetailsModal: React.FC<LeaveDetailsModalProps> = ({
       {leave.status === 'approved' && (
         <Alert
           message="Leave Approved"
-          description="This leave has been fully approved and will be reflected in the calendar."
           type="success"
           style={{ marginTop: '16px' }}
           showIcon

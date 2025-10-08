@@ -132,8 +132,19 @@ export const useVerifyUserDocument = () => {
       });
     },
     onSuccess: (_, variables) => {
+      // Invalidate document-specific queries
       queryClient.invalidateQueries({ queryKey: ["userDocuments", variables.userId] });
+      
+      // Invalidate all user-related queries to ensure profile and dashboard reflect changes
       queryClient.invalidateQueries({ queryKey: ["users", variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ["user", variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ["profile", variables.userId] });
+      
+      // Invalidate any potential document verification status displays
+      queryClient.invalidateQueries({ queryKey: ["documentVerificationStatus"] });
+      
+      // Also invalidate dashboard since it might show verification statistics
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     }
   });
 };

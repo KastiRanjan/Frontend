@@ -1215,14 +1215,14 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
           },
         }
       ] : []),
-      // Edit button column (only for non-auditjunior/auditsenior)
-      ...(userRole !== "auditjunior" && userRole !== "auditsenior"
-        ? [{
+{
             title: "Actions",
             key: "actions",
             render: (_: any, record: TaskType) => (
               <Space>
-                <Button icon={<EditOutlined />} onClick={() => onEdit && onEdit(record)} />
+      {(userRole !== "auditjunior" && userRole !== "auditsenior") && (
+        <Button icon={<EditOutlined />} onClick={() => onEdit && onEdit(record)} />
+      )}
                 {record.status === 'in_progress' && (
                   <Button
                     type="primary"
@@ -1235,8 +1235,7 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
                 )}
               </Space>
             ),
-          }]
-        : []),
+          }
     ],
     [sortedInfo, searchText, searchedColumn, onEdit, userRole, globalSearchText, dataHasDoneTasks, hasFirstVerifyPermission, hasSecondVerifyPermission, isFirstVerifying, isSecondVerifying]
   );

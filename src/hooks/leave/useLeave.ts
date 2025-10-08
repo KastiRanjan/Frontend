@@ -14,9 +14,15 @@ export function useCreateLeave() {
   return useMutation({
     mutationFn: leaveService.createLeave,
     onSuccess: () => {
+      // Invalidate all leave-related queries
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
       queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
       queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate user profile data as leave status affects profile
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -27,7 +33,15 @@ export function useUpdateLeave() {
     mutationFn: ({ id, payload }: { id: string; payload: UpdateLeaveDto }) =>
       leaveService.updateLeave(id, payload),
     onSuccess: () => {
+      // Invalidate leave data
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate profile data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -37,18 +51,62 @@ export function useDeleteLeave() {
   return useMutation({
     mutationFn: leaveService.deleteLeave,
     onSuccess: () => {
+      // Invalidate leave data
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate profile data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
 
+/**
+ * @deprecated Team lead approval step has been removed
+ * Use useApproveLeaveByManager instead
+ */
 export function useApproveLeaveByLead() {
+  console.warn('useApproveLeaveByLead is deprecated - use useApproveLeaveByManager instead');
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, userId }: { id: string; userId: string }) =>
       leaveService.approveLeaveByLead(id, userId),
     onSuccess: () => {
+      // Invalidate leave data
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate profile data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+/**
+ * Hook for manager approval of leave requests
+ * First level of approval in the two-level process
+ */
+export function useApproveLeaveByManager() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, userId }: { id: string; userId: string }) =>
+      leaveService.approveLeaveByManager(id, userId),
+    onSuccess: () => {
+      // Invalidate leave data
+      queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate profile data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -59,7 +117,15 @@ export function useApproveLeaveByPM() {
     mutationFn: ({ id, userId }: { id: string; userId: string }) =>
       leaveService.approveLeaveByPM(id, userId),
     onSuccess: () => {
+      // Invalidate leave data
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate profile data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -70,7 +136,15 @@ export function useApproveLeaveByAdmin() {
     mutationFn: ({ id, userId }: { id: string; userId: string }) =>
       leaveService.approveLeaveByAdmin(id, userId),
     onSuccess: () => {
+      // Invalidate leave data
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate profile data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -81,7 +155,15 @@ export function useRejectLeave() {
     mutationFn: ({ id, userId }: { id: string; userId: string }) =>
       leaveService.rejectLeave(id, userId),
     onSuccess: () => {
+      // Invalidate leave data
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["user-leaves"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      // Also invalidate profile data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
