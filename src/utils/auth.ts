@@ -43,9 +43,23 @@ export const getAuthToken = (): string | null => {
 };
 
 /**
- * Clears all auth-related data from localStorage
+ * Clears all auth-related data from localStorage and cookies
  */
 export const clearAuth = (): void => {
   localStorage.removeItem('access_token');
   localStorage.removeItem('userId');
+  
+  // Note: HttpOnly cookies (Authentication, Refresh) can only be cleared by the backend
+  // But we can clear non-HttpOnly cookies like ExpiresIn from frontend
+  const nonHttpOnlyCookies = ['ExpiresIn'];
+  const domains = ['', '.sarojkasti.com.np', 'backend.sarojkasti.com.np'];
+  
+  nonHttpOnlyCookies.forEach(cookieName => {
+    domains.forEach(domain => {
+      const domainPart = domain ? `; domain=${domain}` : '';
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/${domainPart}`;
+    });
+  });
+  
+  console.log('🧹 Auth cleanup: Cleared localStorage and non-HttpOnly cookies');
 };
