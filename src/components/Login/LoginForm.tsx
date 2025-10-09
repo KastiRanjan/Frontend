@@ -10,7 +10,12 @@ export const LoginForm = () => {
   const login = useLogin();
 
   const onFinish = (values: any) => {
-    login.mutate(values, {
+    // Always lowercase the username before submitting
+    const payload = {
+      ...values,
+      username: values.username ? values.username.toLowerCase() : values.username,
+    };
+    login.mutate(payload, {
       onSuccess: () => {
         message.success("Login successful!");
       },
