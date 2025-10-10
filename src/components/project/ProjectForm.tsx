@@ -5,7 +5,6 @@ import { useUser } from "@/hooks/user/useUser";
 import { Button, Col, Divider, Form, Row, Select, Switch } from "antd";
 import { useEffect, useState } from "react";
 import FormInputWrapper from "../FormInputWrapper";
-import FormSelectWrapper from "../FormSelectWrapper";
 import { fetchNatureOfWorks, NatureOfWork } from "@/service/natureOfWork.service";
 import moment from "moment";
 import { ProjectType } from "@/types/project";
@@ -422,30 +421,52 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
       <Row gutter={18}>
         <Divider />
         <Col span={12}>
-          <FormSelectWrapper
-            id="Client"
+          <Form.Item
             label="Client"
             name="client"
-            options={clients?.filter((client: any) => client.status === 'active').map((client: any) => ({
-              value: client.id,
-              label: `${client.name} (${client.shortName})`,
-            }))}
             rules={[{ required: true, message: "Please select the client!" }]}
-            changeHandler={handleFieldChange}
-          />
+          >
+            <Select
+              className="h-[48px] w-full"
+              placeholder="Select client"
+              onChange={handleFieldChange}
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={clients?.filter((client: any) => client.status === 'active').map((client: any) => ({
+                value: client.id,
+                label: `${client.name} (${client.shortName})`,
+              }))}
+            />
+          </Form.Item>
         </Col>
         <Col span={12}>
-          <FormSelectWrapper
-            id="Billing"
+          <Form.Item
             label="Billing Entity"
             name="billing"
-            options={billings?.map((billing: any) => ({
-              value: billing.id,
-              label: `${billing.name}${billing.shortName ? ` (${billing.shortName})` : ''}`,
-            }))}
             rules={[{ required: false, message: "Please select the billing entity!" }]}
-            changeHandler={handleFieldChange}
-          />
+          >
+            <Select
+              className="h-[48px] w-full"
+              placeholder="Select billing entity"
+              onChange={handleFieldChange}
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={billings?.map((billing: any) => ({
+                value: billing.id,
+                label: `${billing.name}${billing.shortName ? ` (${billing.shortName})` : ''}`,
+              }))}
+            />
+          </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item
@@ -471,7 +492,15 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           >
             <Select
               className="h-[48px] w-full"
+              placeholder="Select fiscal year"
               onChange={handleFieldChange}
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
               options={(() => {
                 // Get current Nepali year (roughly, adjust as needed)
                 const today = new Date();
@@ -492,35 +521,55 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         </Col>
   {/* Project Name will be moved to the bottom */}
         <Col span={12}>
-          <FormSelectWrapper
-            id="projectLead"
+          <Form.Item
             name="projectLead"
             label="Project Lead"
-            placeholder="Select users"
-            options={
-              isPendingUser
-                ? []
-                : users?.results?.map((user: UserType) => ({
-                    value: user.id,
-                    label: user.name,
-                  }))
-            }
             rules={[
               { required: true, message: "Please select a project lead!" },
             ]}
-          />
+          >
+            <Select
+              className="h-[48px] w-full"
+              placeholder="Select project lead"
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={
+                isPendingUser
+                  ? []
+                  : users?.results?.map((user: UserType) => ({
+                      value: user.id,
+                      label: user.name,
+                    }))
+              }
+            />
+          </Form.Item>
         </Col>
         <Col span={12}>
-          <FormSelectWrapper
-            id="projectManager"
+          <Form.Item
             name="projectManager"
             label="Project Manager"
-            placeholder="Select project manager"
-            options={managerOptions}
             rules={[
               { required: true, message: "Please select a project manager!" },
             ]}
-          />
+          >
+            <Select
+              className="h-[48px] w-full"
+              placeholder="Select project manager"
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={managerOptions}
+            />
+          </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item
@@ -549,19 +598,30 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
 
         {/* Rest of the form fields remain unchanged */}
         <Col span={12}>
-          <FormSelectWrapper
-            id="Nature of Work"
+          <Form.Item
             label="Nature of Work"
             name="natureOfWork"
-            options={natureOfWorkOptions}
             rules={[
               {
                 required: true,
                 message: "Please select the nature of work!",
               },
             ]}
-            changeHandler={handleFieldChange}
-          />
+          >
+            <Select
+              className="h-[48px] w-full"
+              placeholder="Select nature of work"
+              onChange={handleFieldChange}
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={natureOfWorkOptions}
+            />
+          </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item
@@ -715,18 +775,29 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           </Form.Item>
         </Col>
         <Col span={12}>
-          <FormSelectWrapper
-            id="Status"
+          <Form.Item
             label="Status"
             name="status"
-            options={[
-              { value: "active", label: "Active" },
-              { value: "suspended", label: "Suspended" },
-              { value: "archived", label: "Archived" },
-              { value: "signed_off", label: "Signed Off" },
-            ]}
             rules={[{ required: true, message: "Please select the status!" }]}
-          />
+          >
+            <Select
+              className="h-[48px] w-full"
+              placeholder="Select status"
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string' 
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={[
+                { value: "active", label: "Active" },
+                { value: "suspended", label: "Suspended" },
+                { value: "archived", label: "Archived" },
+                { value: "signed_off", label: "Signed Off" },
+              ]}
+            />
+          </Form.Item>
         </Col>
         <Col span={24}>
           <Form.Item
