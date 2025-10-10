@@ -215,8 +215,8 @@ const AttendanceDashboard: React.FC = () => {
       </div>
 
       {/* Summary Statistics Row */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
+      <Row gutter={[8, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={8} lg={Math.floor(24/5)} xl={Math.floor(24/5)}>
           <Card 
             hoverable 
             onClick={() => setShowTotalDetails(!showTotalDetails)}
@@ -227,16 +227,16 @@ const AttendanceDashboard: React.FC = () => {
             }}
           >
             <Statistic
-              title={<Text type="secondary">Total Employees</Text>}
+              title={<Text type="secondary" style={{ fontSize: 12 }}>Total Employees</Text>}
               value={summary.totalUsers}
-              prefix={<UserOutlined style={{ color: '#1890ff' }} />}
-              valueStyle={{ color: '#1890ff', fontSize: 28 }}
+              prefix={<UserOutlined style={{ color: '#1890ff', fontSize: 20 }} />}
+              valueStyle={{ color: '#1890ff', fontSize: 24 }}
             />
-            <Text type="secondary" style={{ fontSize: 11 }}>Click to view details</Text>
+            <Text type="secondary" style={{ fontSize: 10 }}>Click to view details</Text>
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
+        <Col xs={24} sm={12} md={8} lg={Math.floor(24/5)} xl={Math.floor(24/5)}>
           <Card 
             hoverable
             onClick={() => setShowClockedInDetails(!showClockedInDetails)}
@@ -247,17 +247,17 @@ const AttendanceDashboard: React.FC = () => {
             }}
           >
             <Statistic
-              title={<Text type="secondary">Clocked In</Text>}
+              title={<Text type="secondary" style={{ fontSize: 12 }}>Clocked In</Text>}
               value={summary.usersWithClockIn}
-              prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={{ color: '#52c41a', fontSize: 28 }}
-              suffix={<Text type="secondary" style={{ fontSize: 16 }}>/ {summary.totalUsers}</Text>}
+              prefix={<CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} />}
+              valueStyle={{ color: '#52c41a', fontSize: 24 }}
+              suffix={<Text type="secondary" style={{ fontSize: 14 }}>/ {summary.totalUsers}</Text>}
             />
-            <Text type="secondary" style={{ fontSize: 11 }}>Click to view details</Text>
+            <Text type="secondary" style={{ fontSize: 10 }}>Click to view details</Text>
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
+        <Col xs={24} sm={12} md={8} lg={Math.floor(24/5)} xl={Math.floor(24/5)}>
           <Card 
             hoverable
             onClick={() => setShowClockedOutDetails(!showClockedOutDetails)}
@@ -268,16 +268,16 @@ const AttendanceDashboard: React.FC = () => {
             }}
           >
             <Statistic
-              title={<Text type="secondary">Clocked Out</Text>}
+              title={<Text type="secondary" style={{ fontSize: 12 }}>Clocked Out</Text>}
               value={clockedOutUsers.length}
-              prefix={<LogoutOutlined style={{ color: '#13c2c2' }} />}
-              valueStyle={{ color: '#13c2c2', fontSize: 28 }}
+              prefix={<LogoutOutlined style={{ color: '#13c2c2', fontSize: 20 }} />}
+              valueStyle={{ color: '#13c2c2', fontSize: 24 }}
             />
-            <Text type="secondary" style={{ fontSize: 11 }}>Click to view details</Text>
+            <Text type="secondary" style={{ fontSize: 10 }}>Click to view details</Text>
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
+        <Col xs={24} sm={12} md={8} lg={Math.floor(24/5)} xl={Math.floor(24/5)}>
           <Card
             hoverable
             onClick={() => setShowPendingDetails(!showPendingDetails)}
@@ -288,12 +288,30 @@ const AttendanceDashboard: React.FC = () => {
             }}
           >
             <Statistic
-              title={<Text type="secondary">Pending Clock-Out</Text>}
+              title={<Text type="secondary" style={{ fontSize: 12 }}>Pending Clock-Out</Text>}
               value={summary.usersWithoutClockOut}
-              prefix={<WarningOutlined style={{ color: '#faad14' }} />}
-              valueStyle={{ color: '#faad14', fontSize: 28 }}
+              prefix={<WarningOutlined style={{ color: '#faad14', fontSize: 20 }} />}
+              valueStyle={{ color: '#faad14', fontSize: 24 }}
             />
-            <Text type="secondary" style={{ fontSize: 11 }}>Click to view details</Text>
+            <Text type="secondary" style={{ fontSize: 10 }}>Click to view details</Text>
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} md={8} lg={Math.floor(24/5)} xl={Math.floor(24/5)}>
+          <Card
+            hoverable
+            style={{ 
+              cursor: 'default',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <Statistic
+              title={<Text type="secondary" style={{ fontSize: 12 }}>Early Clock-Ins</Text>}
+              value={summary.earlyClockIns || 0}
+              prefix={<ThunderboltOutlined style={{ color: '#52c41a', fontSize: 20 }} />}
+              valueStyle={{ color: '#52c41a', fontSize: 24 }}
+            />
+            <Text type="secondary" style={{ fontSize: 10 }}>15+ min early</Text>
           </Card>
         </Col>
       </Row>
