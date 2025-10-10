@@ -216,7 +216,7 @@ const AttendanceDashboard: React.FC = () => {
 
       {/* Summary Statistics Row */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
           <Card 
             hoverable 
             onClick={() => setShowTotalDetails(!showTotalDetails)}
@@ -236,7 +236,7 @@ const AttendanceDashboard: React.FC = () => {
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
           <Card 
             hoverable
             onClick={() => setShowClockedInDetails(!showClockedInDetails)}
@@ -257,7 +257,7 @@ const AttendanceDashboard: React.FC = () => {
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
           <Card 
             hoverable
             onClick={() => setShowClockedOutDetails(!showClockedOutDetails)}
@@ -277,7 +277,7 @@ const AttendanceDashboard: React.FC = () => {
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={Math.floor(24/4)}>
           <Card
             hoverable
             onClick={() => setShowPendingDetails(!showPendingDetails)}
