@@ -12,6 +12,16 @@ export const fetchProjectTasks = async ({ id }: { id: string | undefined }) => {
 
   return response.data;
 };
+export const fetchUserProjectTasks = async ({ 
+  projectId, 
+  userId 
+}: { 
+  projectId: string | undefined; 
+  userId: string | undefined 
+}) => {
+  const response = await axios.get(`${backendURI}/tasks/project/${projectId}/user/${userId}`);
+  return response.data;
+};
 export const fetchProjectTaskById = async ({
   pid,
   tid,

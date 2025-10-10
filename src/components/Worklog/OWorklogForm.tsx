@@ -188,53 +188,38 @@ const OWorklogForm = () => {
 
   const timeFormat = "HH:mm";
 
-  // Fetch tasks for a specific project
+  // Fetch tasks for a specific project and user
   const fetchProjectTasks = async (projectId: string, fieldName: string) => {
     setLoadingTasks(prev => ({ ...prev, [fieldName]: true }));
     
     try {
       // Import the service function directly
-      const { fetchProjectTasks } = await import("@/service/task.service");
-      const { fetchProject } = await import("@/service/project.service");
+      const { fetchUserProjectTasks } = await import("@/service/task.service");
       
-      // Fetch both tasks and project details
-      const [tasksData, projectData] = await Promise.all([
-        fetchProjectTasks({ id: projectId }),
-        fetchProject({ id: projectId })
-      ]);
-      
+      // Get the current user's ID
       const userId = (user as any)?.id;
-      let tasksList = tasksData || [];
       
-      // Filter tasks where current user is assigned
-      tasksList = tasksList.filter((task: any) => {
-        if (!task.assignees || !Array.isArray(task.assignees)) return false;
-        return task.assignees.some((assignee: any) => 
-          assignee?.id?.toString() === userId?.toString()
-        );
-      });
-      
-      // Filter tasks based on project's allowSubtaskWorklog setting
-      if (projectData && !projectData.allowSubtaskWorklog) {
-        // If project doesn't allow subtask worklog, only show main tasks (stories) regardless of whether they have subtasks
-        tasksList = tasksList.filter((task: any) => task.taskType === 'story');
-      } else {
-        // If project allows subtask worklog, show all tasks except parent tasks that have subtasks
-        tasksList = tasksList.filter((task: any) => {
-          if (task.taskType === 'story' && task.subTasks && task.subTasks.length > 0) {
-            return false; // Don't show parent tasks that have subtasks
-          }
-          return true;
-        });
+      if (!userId || !projectId) {
+        console.error("Missing user ID or project ID");
+        return;
       }
       
+      // Use our new optimized endpoint that returns tasks already filtered for the user and project
+      const tasksData = await fetchUserProjectTasks({ 
+        projectId, 
+        userId 
+      });
+      
+      let tasksList = tasksData || [];
+      
+      // Set the tasks in state - they are already filtered by the backend based on project settings
       setFilteredTasks(prev => ({
         ...prev,
         [fieldName]: tasksList
       }));
       
     } catch (error) {
-      console.error("Error fetching project tasks:", error);
+      console.error("Error fetching user project tasks:", error);
       setFilteredTasks(prev => ({
         ...prev,
         [fieldName]: []
