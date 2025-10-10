@@ -58,6 +58,22 @@ const columns = (
         return <Link to={`/projects/${record?.task?.project?.id}`} className="text-blue-600">{record?.task?.project?.name}</Link>
       }
     },
+      {
+        title: "Requested By",
+        dataIndex: "requestedByUser",
+        key: "requestedByUser",
+        ...getColumnSearchProps('user.name', 'Requested By'),
+        sorter: (a: any, b: any) => (a.user?.name || '').localeCompare(b.user?.name || ''),
+        sortOrder: sortedInfo.columnKey === 'requestedByUser' && sortedInfo.order,
+        render: (_: any, record: any) => {
+          const user = record?.user || record?.createdByUser;
+          return user ? (
+            <Tooltip title={user.email || user.name}>
+              <span>{user.name}</span>
+            </Tooltip>
+          ) : "-";
+        }
+      },
     {
       title: "Task",
       dataIndex: "Task",
