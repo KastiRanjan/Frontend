@@ -36,4 +36,8 @@ export const permissionConfig = {
   // Task ranking permissions
   MANAGE_TASK_RANKING: 'task-ranking:patch',
   VIEW_TASK_RANKING: 'task-ranking:get',
+  
+  // Dashboard permissions
+  VIEW_DASHBOARD_ATTENDANCE: 'dashboard:attendance:get',
+  VIEW_DASHBOARD_WORKING_TIME: 'dashboard:working-time:get'
 };

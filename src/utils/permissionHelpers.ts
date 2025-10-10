@@ -186,3 +186,29 @@ export const canViewPendingApprovals = (permissions: any[]): boolean => {
         perm.method?.toLowerCase() === "get"
     );
 };
+
+/**
+ * Check if user can view dashboard attendance
+ */
+export const canViewDashboardAttendance = (permissions: any[]): boolean => {
+  return Array.isArray(permissions) &&
+    permissions.some(
+      (perm: any) =>
+        perm.resource === "dashboard" &&
+        perm.path === "/dashboard/attendance" &&
+        perm.method?.toLowerCase() === "get"
+    );
+};
+
+/**
+ * Check if user can view dashboard working time
+ */
+export const canViewDashboardWorkingTime = (permissions: any[]): boolean => {
+  return Array.isArray(permissions) &&
+    permissions.some(
+      (perm: any) =>
+        perm.resource === "dashboard" &&
+        perm.path === "/dashboard/working-time" &&
+        perm.method?.toLowerCase() === "get"
+    );
+};
