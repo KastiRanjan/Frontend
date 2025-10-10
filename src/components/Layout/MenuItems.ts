@@ -94,6 +94,12 @@ export const MenuItems = (): MenuProps[] => {
       icon: React.createElement(ClockCircleOutlined),
     },
     {
+      key: "/leave-management",
+      label: "Leave",
+      resource: "leave",
+      icon: React.createElement(CalendarOutlined),
+    },
+    {
       key: "/notice-board",
       label: "Notice Board",
       resource: "default", // Make notice board available to all authenticated users

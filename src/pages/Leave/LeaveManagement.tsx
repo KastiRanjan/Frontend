@@ -15,7 +15,8 @@ import {
   notification,
   Modal,
   Select,
-  Form
+  Form,
+  Popconfirm
 } from 'antd';
 import { 
   CalendarOutlined, 
@@ -23,7 +24,9 @@ import {
   EyeOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  EditOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import moment from 'moment';
@@ -35,9 +38,10 @@ import {
   rejectLeave,
   fetchLeavesForUser
 } from '../../service/leave.service';
-import { usePendingApprovals } from '../../hooks/leave';
+import { usePendingApprovals, useDeleteLeave } from '../../hooks/leave';
 import LeaveRequestModal from '../../components/Leave/LeaveRequestModal';
 import LeaveDetailsModal from '../../components/Leave/LeaveDetailsModal';
+import EditLeaveModal from '../../components/Leave/EditLeaveModal';
 import { LeaveType } from '../../types/leave';
 // Removed notification import - backend handles notifications automatically
 import {
@@ -66,6 +70,8 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState<LeaveType | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [leaveToEdit, setLeaveToEdit] = useState<LeaveType | null>(null);
   
   // Permission checks using our permission helper functions
   const permissionsArr = permissions || [];
@@ -104,7 +110,7 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
       console.log('Approving leave with ID:', leaveId, typeof leaveId, 'notifyAdmins:', notifyAdmins);
       return approveLeave(leaveId, notifyAdmins);
     },
-    onSuccess: (data: any) => {
+    onSuccess: () => {
       message.success('Leave approved successfully');
       
       // Refresh the data
@@ -146,6 +152,37 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
   });
 
   // Override functionality removed per requirements
+
+  // Delete mutation
+  const deleteLeaveMutation = useDeleteLeave();
+
+  const handleDeleteLeave = async (leaveId: string) => {
+    try {
+      await deleteLeaveMutation.mutateAsync(leaveId);
+      message.success('Leave request deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || 'Failed to delete leave request');
+    }
+  };
+
+  const handleCancelLeave = async (leaveId: string) => {
+    try {
+      await rejectMutation.mutateAsync({ leaveId });
+      message.success('Leave request cancelled successfully');
+      queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || 'Failed to cancel leave request');
+    }
+  };
+
+  const handleEditLeave = (leave: LeaveType) => {
+    setLeaveToEdit(leave);
+    setIsEditMode(true);
+    // Don't set isRequestModalOpen - we only want the EditLeaveModal to open
+  };
 
   // Use shared helper functions from leaveHelpers.ts
   const getStatusColor = getLeaveStatusColor;
@@ -362,18 +399,76 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
     {
       title: 'Actions',
       key: 'actions',
-      render: (record: LeaveType) => (
-        <Button
-          type="text"
-          icon={<EyeOutlined />}
-          onClick={() => {
-            setSelectedLeave(record);
-            setIsDetailsModalOpen(true);
-          }}
-        >
-          View
-        </Button>
-      )
+      render: (record: LeaveType) => {
+        const isOwnLeave = record.user.id === userId;
+        const canEdit = isOwnLeave && (record.status === 'pending' || record.status === 'approved_by_manager');
+        const canDelete = isOwnLeave && (record.status === 'pending');
+        const canCancel = isOwnLeave && (record.status === 'pending' || record.status === 'approved_by_manager');
+        
+        return (
+          <Space size="small" direction="vertical">
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              onClick={() => {
+                setSelectedLeave(record);
+                setIsDetailsModalOpen(true);
+              }}
+            >
+              View
+            </Button>
+            <Space>
+              {canEdit && (
+                <Button
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEditLeave(record)}
+                >
+                  Edit
+                </Button>
+              )}
+              {canDelete && (
+                <Popconfirm
+                  title="Delete Leave Request"
+                  description="Are you sure you want to delete this leave request? This action cannot be undone."
+                  onConfirm={() => handleDeleteLeave(record.id)}
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    type="link"
+                    danger
+                    icon={<DeleteOutlined />}
+                    loading={deleteLeaveMutation.isPending}
+                  >
+                    Delete
+                  </Button>
+                </Popconfirm>
+              )}
+              {canCancel && !canDelete && (
+                <Popconfirm
+                  title="Cancel Leave Request"
+                  description="Are you sure you want to cancel this leave request? This will reject it and you will need to create a new request."
+                  onConfirm={() => handleCancelLeave(record.id)}
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    type="link"
+                    danger
+                    icon={<CloseCircleOutlined />}
+                    loading={rejectMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                </Popconfirm>
+              )}
+            </Space>
+          </Space>
+        );
+      }
     }
   ];
 
@@ -697,10 +792,31 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
 
       {/* Modals */}
       <LeaveRequestModal
-        open={isRequestModalOpen}
-        onCancel={() => setIsRequestModalOpen(false)}
+        open={isRequestModalOpen && !isEditMode}
+        onCancel={() => {
+          setIsRequestModalOpen(false);
+          setIsEditMode(false);
+          setLeaveToEdit(null);
+        }}
         onSuccess={() => {
           setIsRequestModalOpen(false);
+          setIsEditMode(false);
+          setLeaveToEdit(null);
+          queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
+          queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
+        }}
+      />
+
+      <EditLeaveModal
+        open={isEditMode && leaveToEdit !== null}
+        leave={leaveToEdit}
+        onCancel={() => {
+          setIsEditMode(false);
+          setLeaveToEdit(null);
+        }}
+        onSuccess={() => {
+          setIsEditMode(false);
+          setLeaveToEdit(null);
           queryClient.invalidateQueries({ queryKey: ['user-leaves'] });
           queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
         }}
