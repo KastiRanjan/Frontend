@@ -1,4 +1,4 @@
-import { useTasks } from "@/hooks/task/useTask";
+import { useCurrentUserTasks } from "@/hooks/task/useCurrentUserTasks";
 import { useMarkTasksComplete } from "@/hooks/task/useMarkTasksComplete";
 import { useFirstVerifyTasks, useSecondVerifyTasks } from "@/hooks/task/useVerifyTasks";
 import { TaskType } from "@/types/task";
@@ -19,15 +19,14 @@ import {
   TableProps,
   Tooltip,
   Tag,
-  Modal,
-  Typography
+  Modal
 } from "antd";
 import { useMemo, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Highlighter from 'react-highlight-words';
 import _ from "lodash";
 
-const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, userId?: number, userRole?: string, onEdit?: (task: TaskType) => void }) => {
+const AllTaskTable = ({ status, userRole, onEdit }: { status: string, userRole?: string, onEdit?: (task: TaskType) => void }) => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({ 
@@ -42,20 +41,29 @@ const AllTaskTable = ({ status, userId, userRole, onEdit }: { status: string, us
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   
   // Hooks
-  const { data, isPending } = useTasks({ status });
+  const { data: currentUserData, isPending } = useCurrentUserTasks(true);
   const { mutate: markTasksComplete, isPending: isMarkingComplete } = useMarkTasksComplete();
   const { mutate: firstVerifyTasks, isPending: isFirstVerifying } = useFirstVerifyTasks();
   const { mutate: secondVerifyTasks, isPending: isSecondVerifying } = useSecondVerifyTasks();
   const { profile } = useSession();
-  // Filter tasks assigned to the current user (works for array of user objects or empty)
-  const filteredData = userId !== undefined
-    ? (data || []).filter((task: TaskType) => {
-        const assignees = task.assignees;
-        if (!assignees || !Array.isArray(assignees) || assignees.length === 0) return false;
-        // Assignees is an array of user objects
-        return assignees.some((user: any) => user?.id?.toString() === userId.toString());
-      })
-    : data;
+  
+  // Filter by status - handle parent-child relationships
+  // Show parent if: parent matches status OR any child matches status
+  const filteredData = useMemo(() => {
+    if (!currentUserData || !status) return currentUserData;
+    
+    return currentUserData.filter((task: TaskType) => {
+      // Check if parent matches the status
+      const parentMatches = task.status === status;
+      
+      // Check if any child matches the status
+      const childMatches = task.subTasks && Array.isArray(task.subTasks) && 
+        task.subTasks.some((subTask: any) => subTask.status === status);
+      
+      // Show parent if either parent or any child matches
+      return parentMatches || childMatches;
+    });
+  }, [currentUserData, status]);
 
   // Get selected tasks data for conditional rendering
   const selectedTasks = (filteredData || []).filter((task: TaskType) => 

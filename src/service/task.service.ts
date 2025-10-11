@@ -7,6 +7,10 @@ export const fetchTasks = async ({ status }: { status: string }) => {
   const response = await axios.get(`${backendURI}/tasks?status=${status}`);
   return response.data;
 };
+export const fetchCurrentUserTasks = async () => {
+  const response = await axios.get(`${backendURI}/tasks/user`);
+  return response.data;
+};
 export const fetchProjectTasks = async ({ id }: { id: string | undefined }) => {
   const response = await axios.get(`${backendURI}/tasks/project/${id}`);
 
