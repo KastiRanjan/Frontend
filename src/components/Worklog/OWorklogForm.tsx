@@ -19,6 +19,7 @@ import { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
+import { getFilteredApprovers } from '@/utils/approver';
 import dayjs from "dayjs";
 
 const OWorklogForm = () => {
@@ -235,22 +236,10 @@ const OWorklogForm = () => {
     const selectedProject = projects?.find(
       (project: any) => project.id?.toString() === projectId?.toString()
     );
-    let filteredUsers: UserType[] = selectedProject?.users || [];
     const currentUserId = (user as any)?.id?.toString();
-    const currentUserRole = user?.role && (user.role as any).name ? (user.role as any).name.toLowerCase() : "";
+    const currentUserRole = user?.role && (user.role as any).name ? (user.role as any).name : undefined;
 
-    // Remove auditjunior and self from the list
-    filteredUsers = filteredUsers.filter((u: any) => {
-      const roleName = u?.role && u.role.name ? u.role.name.toLowerCase() : "";
-      const isProjectLead = u?.position === "projectLead";
-      if (u?.id?.toString() === currentUserId) return false; // Exclude self
-      if (roleName === "auditjunior") return false; // Always exclude auditjunior
-      // For auditsenior, only allow projectmanager, admin, superuser, or project lead (by position)
-      if (currentUserRole === "auditsenior") {
-        return ["projectmanager", "admin", "superuser"].includes(roleName) || isProjectLead;
-      }
-      return true;
-    });
+    const filteredUsers: UserType[] = getFilteredApprovers(selectedProject?.users || [], currentUserRole, currentUserId);
 
     setUsers((prevUsers) => ({
       ...prevUsers,

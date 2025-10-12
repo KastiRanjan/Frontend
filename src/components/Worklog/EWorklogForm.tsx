@@ -6,6 +6,7 @@ import ReactQuill from "react-quill";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import dayjs from "dayjs";
+import { getFilteredApprovers } from '@/utils/approver';
 import { useWorklogSingle } from "@/hooks/worklog/useWorklogSingle";
 import { useEditingWorklog } from "@/hooks/worklog/useEditingWorklog";
 
@@ -64,7 +65,9 @@ const EWorklogForm = () => {
       if (worklog.task?.project) {
         setProjects([worklog.task.project]);
         setTasks([worklog.task]);
-        setUsers(worklog.task.project.users || []);
+        const currentUserId = (user as any)?.id?.toString();
+        const currentUserRole = (user as any)?.role?.name;
+        setUsers(getFilteredApprovers(worklog.task.project.users || [], currentUserRole, currentUserId));
       }
     }
   }, [worklog, form]);

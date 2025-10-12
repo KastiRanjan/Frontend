@@ -8,6 +8,7 @@ import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Col, DatePicker, Form, Input, Row, Select, message, Card, Modal, Alert } from "antd";
 import { useParams } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
+import { getFilteredApprovers } from '@/utils/approver';
 import moment from "moment";
 import { useState } from "react";
 // ...existing code...
@@ -291,7 +292,7 @@ const WorklogForm = () => {
                           filterOption={(input, option: any) =>
                             (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                           }
-                          options={project?.users?.map((user: any) => ({
+                          options={getFilteredApprovers(project?.users || [], (profile?.role as any)?.name, (profile as any)?.id)?.map((user: any) => ({
                             label: user.name,
                             value: user.id,
                           }))}
