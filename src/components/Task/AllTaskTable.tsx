@@ -48,21 +48,44 @@ const AllTaskTable = ({ status, userRole, onEdit }: { status: string, userRole?:
   const { profile } = useSession();
   
   // Filter by status - handle parent-child relationships
-  // Show parent if: parent matches status OR any child matches status
+  // Show parent task with ONLY subtasks that match the status
   const filteredData = useMemo(() => {
     if (!currentUserData || !status) return currentUserData;
     
-    return currentUserData.filter((task: TaskType) => {
-      // Check if parent matches the status
-      const parentMatches = task.status === status;
-      
-      // Check if any child matches the status
-      const childMatches = task.subTasks && Array.isArray(task.subTasks) && 
-        task.subTasks.some((subTask: any) => subTask.status === status);
-      
-      // Show parent if either parent or any child matches
-      return parentMatches || childMatches;
-    });
+    return currentUserData
+      .map((task: TaskType) => {
+        // If task has subtasks, filter them by status
+        if (task.subTasks && task.subTasks.length > 0) {
+          const matchingSubtasks = task.subTasks.filter((subtask: any) => subtask.status === status);
+          
+          // If any subtasks match, return parent with ONLY matching subtasks
+          if (matchingSubtasks.length > 0) {
+            return {
+              ...task,
+              subTasks: matchingSubtasks // Only include subtasks that match the status
+            };
+          }
+          
+          // If parent matches status but no subtasks match, still include parent if it matches
+          if (task.status === status) {
+            return {
+              ...task,
+              subTasks: [] // No matching subtasks
+            };
+          }
+          
+          // Neither parent nor any subtask matches, exclude this task
+          return null;
+        }
+        
+        // Task has no subtasks, include it only if it matches status
+        if (task.status === status) {
+          return task;
+        }
+        
+        return null;
+      })
+      .filter((task: any) => task !== null); // Remove null entries
   }, [currentUserData, status]);
 
   // Get selected tasks data for conditional rendering
@@ -494,7 +517,25 @@ const AllTaskTable = ({ status, userRole, onEdit }: { status: string, userRole?:
     // Transform the data to have proper parent-child relationships
     console.log('Original taskList:', filteredData);
     
-    const expandedData: any = _.chain(filteredData)
+    // Log taskTypes to debug
+    console.log('=== DEBUGGING TASK TYPES ===');
+    if (filteredData && Array.isArray(filteredData)) {
+      filteredData.forEach((task: any) => {
+        console.log(`Task "${task.name}":`, {
+          id: task.id,
+          taskType: task.taskType,
+          hasParentTask: !!task.parentTask,
+          parentTaskId: task.parentTask?.id,
+          hasSubTasks: task.subTasks?.length > 0,
+          subTasksCount: task.subTasks?.length || 0
+        });
+      });
+    } else {
+      console.log('filteredData is undefined or not an array:', filteredData);
+    }
+    console.log('=== END DEBUG ===');
+    
+    const expandedData: any = _.chain(filteredData || [])
       .filter((task: any) => task.taskType === 'story') // Only get stories (which display as Tasks) as main tasks
       .map((story: any) => {
         // Use the subTasks relation directly from backend if available
@@ -538,10 +579,27 @@ const AllTaskTable = ({ status, userRole, onEdit }: { status: string, userRole?:
         isStandalone: true
       }));
     
-    console.log('Standalone tasks:', standaloneTasks);
+    // Also add subtasks whose parent is not in the filtered list
+    // These are tasks assigned to the user but their parent is not
+    const orphanedSubtasks = (filteredData || [])
+      .filter((task: any) => {
+        if (task.taskType !== 'task' || !task.parentTask) return false;
+        
+        // Check if parent exists in filteredData
+        const parentExists = filteredData.some((t: any) => t.id === task.parentTask.id);
+        return !parentExists; // Include if parent doesn't exist in the list
+      })
+      .map((task: any) => ({
+        ...task,
+        key: task.id,
+        isOrphanedSubtask: true
+      }));
     
-    // Combine stories with their subtasks and standalone tasks
-    const finalData = [...expandedData, ...standaloneTasks];
+    console.log('Standalone tasks:', standaloneTasks);
+    console.log('Orphaned subtasks (parent not in list):', orphanedSubtasks);
+    
+    // Combine stories with their subtasks, standalone tasks, and orphaned subtasks
+    const finalData = [...expandedData, ...standaloneTasks, ...orphanedSubtasks];
     
     // Apply default sorting by name (alphabetical) if no other sorting is applied
     const sortedData = finalData.sort((a: any, b: any) => {
