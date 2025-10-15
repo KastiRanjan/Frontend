@@ -41,44 +41,9 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   );
 
   // Add null checks for project data
-  const tasks = project?.tasks || [];
   const users = project?.users || [];
   const name = project?.name || '';
 
-  // Group tasks by status while maintaining parent-subtask relationships
-  // These hooks must be called BEFORE any conditional returns
-  const tasksByStatus = useMemo(() => {
-    if (!tasks || tasks.length === 0) {
-      return {
-        open: [],
-        in_progress: [],
-        done: []
-      };
-    }
-
-    return {
-      open: groupTasksByStatus(tasks, 'open'),
-      in_progress: groupTasksByStatus(tasks, 'in_progress'),
-      done: groupTasksByStatus(tasks, 'done')
-    };
-  }, [tasks]);
-
-  // Count tasks by status
-  const taskCounts = useMemo(() => {
-    if (!tasks || tasks.length === 0) {
-      return {
-        open: 0,
-        in_progress: 0,
-        done: 0
-      };
-    }
-
-    return {
-      open: countTasksByStatus(tasks, 'open'),
-      in_progress: countTasksByStatus(tasks, 'in_progress'),
-      done: countTasksByStatus(tasks, 'done')
-    };
-  }, [tasks]);
 
   // Don't render if project is not loaded yet
   if (!project && loading) {
@@ -153,59 +118,49 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
             defaultActiveKey="todo"
             items={[
               {
-                label: `To Do (${taskCounts.open})`,
+                label: `To Do`,
                 key: 'todo',
                 children: (
                   <TaskTable 
-                    data={tasksByStatus.open}
+                    projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
+                    status="open"
                     showModal={showModal}
-                    project={{
-                      id: project?.id?.toString?.() ?? String(project?.id ?? ''),
-                      users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
-                      projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
-                    }}
+                    users={project?.users ?? []}
+                    projectLead={project?.projectLead}
                     onRefresh={handleRefresh}
                     loading={loading}
                   />
                 )
               },
               {
-                label: `Doing (${taskCounts.in_progress})`,
+                label: `Doing`,
                 key: 'doing',
                 children: (
                   <TaskTable 
-                    data={tasksByStatus.in_progress}
+                    projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
+                    status="in_progress"
                     showModal={showModal}
-                    project={{
-                      id: project?.id?.toString?.() ?? String(project?.id ?? ''),
-                      users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
-                      projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
-                    }}
+                    users={project?.users ?? []}
+                    projectLead={project?.projectLead}
                     onRefresh={handleRefresh}
                     loading={loading}
                   />
                 )
               },
               {
-                label: `Completed (${taskCounts.done})`,
+                label: `Completed`,
                 key: 'completed',
-                children: (() => {
-                  const completedTasks = tasksByStatus.done;
-                  console.log('Completed tasks:', completedTasks);
-                  return (
-                    <TaskTable 
-                      data={completedTasks}
-                      showModal={showModal}
-                      project={{
-                        id: project?.id?.toString?.() ?? String(project?.id ?? ''),
-                        users: (project?.users ?? []).map(user => ({ ...user, id: user.id ?? 0 })) as any,
-                        projectLead: project?.projectLead ? { ...project.projectLead, id: project.projectLead.id ?? 0 } as any : { id: 0, name: '', username: '', email: '' }
-                      }}
-                      onRefresh={handleRefresh}
-                      loading={loading}
-                    />
-                  );
-                })()
+                children: (
+                  <TaskTable 
+                    projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
+                    status="done"
+                    showModal={showModal}
+                    users={project?.users ?? []}
+                    projectLead={project?.projectLead}
+                    onRefresh={handleRefresh}
+                    loading={loading}
+                  />
+                )
               }
             ]}
           />

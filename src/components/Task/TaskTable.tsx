@@ -3,7 +3,7 @@ import { useDeleteTask } from "@/hooks/task/useDeleteTask";
 import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { useMarkTasksComplete } from "@/hooks/task/useMarkTasksComplete";
 import { useFirstVerifyTasks, useSecondVerifyTasks } from "@/hooks/task/useVerifyTasks";
-// import { useProjectTasksWithHierarchy } from "@/hooks/task/useProjectTasksWithHierarchy"; // Disabled - causes issues with filtered data
+import { useProjectTasksWithHierarchy } from "@/hooks/task/useProjectTasksWithHierarchy";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
 import { EditOutlined, DeleteOutlined, SearchOutlined, CheckOutlined, CheckCircleOutlined } from "@ant-design/icons";
@@ -14,7 +14,7 @@ import moment from "moment";
 import { useSession } from "@/context/SessionContext";
 import Highlighter from 'react-highlight-words';
 import _ from "lodash";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient} from "@tanstack/react-query";
 
 interface ExtendedTaskType extends TaskType {
   first?: boolean;
@@ -23,7 +23,6 @@ interface ExtendedTaskType extends TaskType {
   key?: string;
   children?: ExtendedTaskType[];
   isSubTask?: boolean;
-  isStandalone?: boolean;
   groupProject?: {
     id: string;
     name?: string;
@@ -37,27 +36,29 @@ interface ExtendedTaskType extends TaskType {
   };
 }
 
+
 interface TaskTableProps {
-  data: TaskType[];
+  projectId: string;
+  status: string;
   showModal: (task?: ExtendedTaskType) => void;
-  project: {
-    id: string;
-    users: UserType[];
-    projectLead: UserType;
-  };
+  users: UserType[];
+  projectLead?: UserType;
   onRefresh?: () => void;
   loading?: boolean;
 }
 
-const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: externalLoading }: TaskTableProps) => {
-  console.log('TaskTable rendering - Project ID:', project.id);
-  console.log('Initial Data:', initialData);
-  console.log('Checking for hierarchy in data:', {
-    withGroupProject: initialData.filter(task => task.groupProject).length,
-    withGroupProjectTaskSuper: initialData.filter(task => task.groupProject?.taskSuper).length,
-    totalTasks: initialData.length
+const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh, loading: externalLoading }: TaskTableProps) => {
+  console.log('TaskTable rendering - Project ID:', projectId);
+
+  // Use the custom hook to fetch project tasks with hierarchy and status filtering
+  const { data: allTasks = [], isLoading } = useProjectTasksWithHierarchy({
+    projectId,
+    status
   });
-  
+
+  // Filter/group tasks by status (if needed, but hook already filters by status)
+  const data = allTasks;
+
   const [form] = Form.useForm();
   const [bulkForm] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -82,47 +83,9 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
   const searchInput = useRef<any>(null);
   const queryClient = useQueryClient();
   
-  // DISABLED: useProjectTasksWithHierarchy hook because it fetches all tasks and overrides filtered data
-  // We now rely on the parent component to provide properly filtered and grouped tasks
-  // This prevents showing tasks from other status categories when switching tabs
-  
-  // Use the new hook to fetch tasks with complete hierarchy
-  // const { 
-  //   data: hierarchyTasks,
-  //   isLoading: isHierarchyLoading,
-  //   refetch: refetchHierarchy
-  // } = useProjectTasksWithHierarchy({
-  //   projectId: project.id,
-  //   // Filter by status based on the initial data's status
-  //   status: initialData.length > 0 ? initialData[0].status : undefined
-  // });
-  
-  // Run refetch when onRefresh is called
-  // useEffect(() => {
-  //   // This effect will create a one-time refresh function when the component mounts
-  //   if (onRefresh) {
-  //     const originalRefresh = onRefresh;
-  //     onRefresh = () => {
-  //       // Call the original refresh function
-  //       originalRefresh();
-  //       // Then also refetch our hierarchy data
-  //       refetchHierarchy();
-  //       // Also invalidate the query cache for this specific hierarchy
-  //       queryClient.invalidateQueries({ 
-  //         queryKey: ["project-tasks-hierarchy", project.id, initialData.length > 0 ? initialData[0].status : undefined] 
-  //       });
-  //       console.log("TaskTable refreshing hierarchy data for status:", initialData.length > 0 ? initialData[0].status : 'all');
-  //     };
-  //   }
-  // }, []);
-  
   // Combine the loading states
-  const loading = externalLoading; // || isHierarchyLoading;
+  const loading = isLoading || externalLoading;
   
-  // Use the filtered data passed from parent component
-  const data = initialData; // hierarchyTasks || initialData;
-
-  // Check if user has task delete permission
   const canDeleteTask = useMemo(() => {
     // Check if permissions is an array of strings or objects
     if (permissions && permissions.length > 0) {
@@ -162,8 +125,8 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
 
   // Check if user is project lead
   const isProjectLead = useMemo(() => {
-    return (profile as any)?.id === project?.projectLead?.id;
-  }, [(profile as any)?.id, project?.projectLead?.id]);
+    return (profile as any)?.id === projectLead?.id;
+  }, [(profile as any)?.id, projectLead?.id]);
 
   // Check if user can mark tasks complete (has permission OR is project lead)
   const canMarkComplete = useMemo(() => {
@@ -185,91 +148,114 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
     // Memoized data processing for hierarchical structure
   const { processedData, filteredData } = useMemo(() => {
     // Transform the data to have proper parent-child relationships
-    console.log('Original taskList:', data);
+    console.log('Original taskList from hook:', data);
     
-    // First, organize tasks by their relationships
-    // 1. First level: TaskSuperProject
-    // 2. Second level: TaskGroupProject related to the TaskSuperProject
-    // 3. Third level: Tasks (type story) related to the TaskGroupProject
-    // 4. Fourth level: Subtasks (type task) related to parent Tasks
+    // Process parent tasks (stories) with their subtasks from backend
+    const expandedData = data
+      .filter((task: any) => task.taskType === 'story') // Only get stories (parent tasks)
+      .map((story: any) => {
+        // Use the subTasks relation directly from backend if available
+        const subTasks = story.subTasks || [];
+        
+        // Sort subtasks by rank
+        const children = subTasks
+          .sort((a: any, b: any) => {
+            const aRank = a.rank || 0;
+            const bRank = b.rank || 0;
+            if (aRank !== bRank) {
+              return aRank - bRank;
+            }
+            return a.name.localeCompare(b.name);
+          })
+          .map((subTask: any) => ({
+            ...subTask,
+            key: `${story.id}-${subTask.id}`,
+            isSubTask: true,
+            projectId: projectId
+          }));
+        
+        // Detailed logging for each subtask
+        children.forEach((child: any) => {
+          console.log(`Subtask "${child.name}" details:`, {
+            id: child.id,
+            hasGroupProject: !!child.groupProject,
+            groupProjectName: child.groupProject?.name,
+            groupProjectRank: child.groupProject?.rank,
+            taskSuperName: child.groupProject?.taskSuper?.name,
+            taskSuperRank: child.groupProject?.taskSuper?.rank,
+            status: child.status
+          });
+        });
+        
+        console.log(`Task "${story.name}" has ${children.length} subtasks with groupProject:`, 
+          children.map((c: any) => ({ 
+            name: c.name, 
+            hasGroupProject: !!c.groupProject,
+            groupProjectName: c.groupProject?.name,
+            taskSuperName: c.groupProject?.taskSuper?.name 
+          }))
+        );
+        
+        // Return task (story type) with its subtasks as children
+        return {
+          ...story,
+          key: story.id,
+          projectId: projectId,
+          children: children.length > 0 ? children : undefined
+        };
+      });
     
-    // Process subtasks
-    const subTasks = data.filter((task: any) => task.taskType === 'task' && task.parentTask);
-    
-    // Map for quick lookups
-    const taskMap = new Map();
-    data.forEach((task: any) => {
-      // Ensure we're passing the complete hierarchy information
-      taskMap.set(task.id, {
+    // Also add any standalone tasks (taskType='task' with no parent)
+    const standaloneTasks = data
+      .filter((task: any) => task.taskType === 'task' && !task.parentTask)
+      .map((task: any) => ({
         ...task,
         key: task.id,
-        projectId: project.id,
-        children: []
-      });
-    });
+        projectId: projectId,
+        isStandalone: true
+      }));
     
-    // Assign subtasks to their parent tasks
-    subTasks.forEach((subTask: any) => {
-      const parentId = subTask.parentTask?.id;
-      if (parentId && taskMap.has(parentId)) {
-        const parent = taskMap.get(parentId);
-        parent.children.push({
-          ...subTask,
-          key: `${parentId}-${subTask.id}`,
-          isSubTask: true,
-          projectId: project.id
-        });
-      }
-    });
+    console.log('Standalone tasks with groupProject:', 
+      standaloneTasks.map((t: any) => ({ 
+        name: t.name, 
+        hasGroupProject: !!t.groupProject,
+        groupProjectName: t.groupProject?.name,
+        taskSuperName: t.groupProject?.taskSuper?.name 
+      }))
+    );
+    
+    // Combine stories with their subtasks and standalone tasks
+    const combinedTasks = [...expandedData, ...standaloneTasks];
     
     // Sort tasks by hierarchy rank
     // The order is strictly based on:
-    // 1. TaskSuperProject rank (via groupProject.taskSuper.rank or group.taskSuper.rank)
-    // 2. TaskGroupProject rank (via groupProject.rank or group.rank)
+    // 1. TaskSuperProject rank (via groupProject.taskSuper.rank)
+    // 2. TaskGroupProject rank (via groupProject.rank)
     // 3. Task's own rank
-    // 4. Subtask's rank within parent task
-    
-    const finalTasks = Array.from(taskMap.values())
-      .filter((task: any) => task.taskType === 'story' || (task.taskType === 'task' && !task.parentTask))
-      .sort((a: any, b: any) => {
-        // First compare by taskSuper rank (check both groupProject and group)
-        const aTaskSuperRank = a.groupProject?.taskSuper?.rank || a.group?.taskSuper?.rank || 0;
-        const bTaskSuperRank = b.groupProject?.taskSuper?.rank || b.group?.taskSuper?.rank || 0;
-        if (aTaskSuperRank !== bTaskSuperRank) {
-          return aTaskSuperRank - bTaskSuperRank;
-        }
-        
-        // Then compare by taskGroup rank (check both groupProject and group)
-        const aGroupRank = a.groupProject?.rank || a.group?.rank || 0;
-        const bGroupRank = b.groupProject?.rank || b.group?.rank || 0;
-        if (aGroupRank !== bGroupRank) {
-          return aGroupRank - bGroupRank;
-        }
-        
-        // Then by task's own rank
-        const aRank = a.rank || 0;
-        const bRank = b.rank || 0;
-        if (aRank !== bRank) {
-          return aRank - bRank;
-        }
-        
-        // Finally sort alphabetically by name (for equal ranks)
-        return a.name.localeCompare(b.name);
-      });
-    
-    // Make sure each task's children (subtasks) are also sorted by rank
-    finalTasks.forEach((task: any) => {
-      if (task.children && task.children.length > 0) {
-        task.children.sort((a: any, b: any) => {
-          const aRank = a.rank || 0;
-          const bRank = b.rank || 0;
-          if (aRank !== bRank) {
-            return aRank - bRank;
-          }
-          // For equal ranks, sort by name
-          return a.name.localeCompare(b.name);
-        });
+    const finalTasks = combinedTasks.sort((a: any, b: any) => {
+      // First compare by taskSuper rank
+      const aTaskSuperRank = a.groupProject?.taskSuper?.rank || 0;
+      const bTaskSuperRank = b.groupProject?.taskSuper?.rank || 0;
+      if (aTaskSuperRank !== bTaskSuperRank) {
+        return aTaskSuperRank - bTaskSuperRank;
       }
+      
+      // Then compare by taskGroup rank
+      const aGroupRank = a.groupProject?.rank || 0;
+      const bGroupRank = b.groupProject?.rank || 0;
+      if (aGroupRank !== bGroupRank) {
+        return aGroupRank - bGroupRank;
+      }
+      
+      // Then by task's own rank
+      const aRank = a.rank || 0;
+      const bRank = b.rank || 0;
+      if (aRank !== bRank) {
+        return aRank - bRank;
+      }
+      
+      // Finally sort alphabetically by name (for equal ranks)
+      return a.name.localeCompare(b.name);
     });    // Apply global search filter
     const filtered = globalSearchText ? 
       finalTasks.filter((record: any) => {
@@ -397,10 +383,21 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
       processedData: finalTasks,
       filteredData: filtered
     };
-  }, [data, sortedInfo, globalSearchText, project.id]);
+  }, [data, sortedInfo, globalSearchText, projectId]);
 
   const enhancedData: ExtendedTaskType[] = useMemo(
-    () => filteredData,
+    () => {
+      console.log('🟢 enhancedData being passed to Table:', filteredData);
+      filteredData.forEach((task: any) => {
+        console.log(`🟢 Task in table: "${task.name}"`, {
+          id: task.id,
+          hasGroupProject: !!task.groupProject,
+          groupProjectName: task.groupProject?.name,
+          taskSuperName: task.groupProject?.taskSuper?.name
+        });
+      });
+      return filteredData;
+    },
     [filteredData]
   );
 
@@ -665,7 +662,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         return rec[dataIndex]
           ? rec[dataIndex].toString().toLowerCase().includes(searchValue)
           : false;
-      };
+    };
 
       // Check if the current record (parent) matches the search
       const parentMatches = recordMatches(record);
@@ -750,7 +747,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         assineeId: values.assineeId,
         first: values.first,
         last: values.last,
-        projectId: project.id,
+        projectId: projectId,
         name: enhancedData.find(item => String(item.id) === key)?.name,
         description: enhancedData.find(item => String(item.id) === key)?.description,
         groupId: enhancedData.find(item => String(item.id) === key)?.groupProject?.id,
@@ -798,7 +795,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         onSuccess: () => {
           message.success("Tasks updated successfully");
           // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
+          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", projectId] });
           if (onRefresh) onRefresh();
         },
         onError: (error: any) => {
@@ -819,7 +816,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         onSuccess: () => {
           message.success("Task deleted successfully");
           // Invalidate the hierarchy query to refresh data
-          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
+          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", projectId] });
           if (onRefresh) onRefresh();
         },
         onError: (error: any) => {
@@ -840,7 +837,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         onSuccess: () => {
           message.success("Tasks assigned successfully");
           // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
+          queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", projectId] });
           if (onRefresh) onRefresh();
         },
         onError: (error: any) => {
@@ -944,7 +941,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
             
             setSelectedRowKeys([]);
             // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
+            queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", projectId] });
             if (onRefresh) onRefresh();
           },
           onError: (error: any) => {
@@ -1012,7 +1009,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
             }
             
             // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", project.id] });
+            queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", projectId] });
             if (onRefresh) onRefresh();
           },
           onError: (error: any) => {
@@ -1322,7 +1319,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
           ) : name;
 
           // Get hierarchy information for prefix/indicator
-          const isSubTask = record.isSubTask;
+          const isSubTask = record.taskType === 'task' && !!record.parentTask;
           const hasChildren = record.children && record.children.length > 0;
           const hasTaskGroup = !!record.groupProject?.name;
           const hasTaskSuper = !!record.groupProject?.taskSuper?.name;
@@ -1332,27 +1329,26 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
           let tooltip = '';
           
           if (isSubTask) {
-            prefix = '↳ '; // Subtask indicator
+            prefix = '↳ '; // Subtask indicator (taskType = 'task' with parent)
             tooltip = 'Subtask';
           } else if (hasChildren) {
-            prefix = '📋 '; // Parent task with subtasks
-            tooltip = 'Task with subtasks';
-          } else if (hasTaskGroup && hasTaskSuper) {
-            prefix = '📝 '; // Task with complete hierarchy
-            tooltip = `Task in ${record.groupProject?.name} group under ${record.groupProject?.taskSuper?.name}`;
-          } else if (hasTaskGroup) {
-            prefix = '📝 '; // Task with group only
-            tooltip = `Task in ${record.groupProject?.name} group`;
-          } else {
-            prefix = '📄 '; // Standalone task
-            tooltip = 'Standalone task';
+            prefix = '📋 '; // Parent task with subtasks (taskType = 'story' with children)
+            tooltip = 'Parent Task with subtasks';
+          } else if (record.taskType === 'story') {
+            prefix = '📝 '; // Parent task without subtasks (taskType = 'story')
+            tooltip = 'Task';
+            if (hasTaskGroup && hasTaskSuper) {
+              tooltip += ` in ${record.groupProject?.name} group under ${record.groupProject?.taskSuper?.name}`;
+            } else if (hasTaskGroup) {
+              tooltip += ` in ${record.groupProject?.name} group`;
+            }
           }
 
           // Include rank info in the tooltip if available
           if (hasTaskSuper && hasTaskGroup) {
             const superRank = record.groupProject?.taskSuper?.rank;
             const groupRank = record.groupProject?.rank;
-            tooltip += ` (Super #${superRank || '-'}, Group #${groupRank || '-'})`;  // Don't try to access rank that doesn't exist
+            tooltip += ` (Super #${superRank || '-'}, Group #${groupRank || '-'})`;
           }
 
           return (
@@ -1420,7 +1416,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
       },
       {
         title: "Task Super",
-        dataIndex: "taskSuper",
+        dataIndex: ["groupProject", "taskSuper", "name"], // Use array notation for nested property
         key: "taskSuper",
         width: 180,
         sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
@@ -1437,25 +1433,19 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         },
         sortOrder: sortedInfo.columnKey === 'taskSuper' && sortedInfo.order,
         render: (_: any, record: ExtendedTaskType) => {
-          // Get TaskSuper information from groupProject
-          const taskGroupProject = record.groupProject;
+          console.log('🔵 RENDERING TaskSuper column for task:', record.name);
           
-          // Get taskSuper info
-          const taskSuper = taskGroupProject?.taskSuper;
-          const taskSuperName = taskSuper?.name;
-          const taskSuperRank = taskSuper?.rank;
+          const taskSuperName = record.groupProject?.taskSuper?.name;
+          const taskSuperRank = record.groupProject?.taskSuper?.rank;
           
-          console.log('TaskSuper render:', { 
-            taskId: record.id, 
-            taskName: record.name, 
-            hasGroupProject: !!taskGroupProject,
-            hasGroupProjectTaskSuper: !!(taskGroupProject?.taskSuper),
-            taskSuper,
+          console.log('TaskSuper data:', { 
+            taskName: record.name,
             taskSuperName,
-            taskSuperRank
+            taskSuperRank,
+            fullGroupProject: record.groupProject
           });
           
-          // If the task has a TaskSuper (via groupProject or group), show it
+          // If the task has a TaskSuper (via groupProject), show it
           if (taskSuperName) {
             return (
               <Tooltip title={`Rank: ${taskSuperRank || '-'}`} placement="topLeft">
@@ -1473,7 +1463,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
       },
       {
         title: "Group",
-        dataIndex: "groupProject",
+        dataIndex: ["groupProject", "name"], // Use array notation for nested property
         key: "groupProject",
         width: 180,
         sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => {
@@ -1547,12 +1537,12 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         render: (assignees: UserType[], record: ExtendedTaskType) => {
           const editable = isEditing(record);
           return editable ? (
-            <Form.Item name="assineeId" style={{ margin: 0 }} rules={[{ required: false }]}>
+            <Form.Item name="assineeId" style={{ margin: 0 }} rules={[{ required: false }]}> 
               <Select
                 mode="multiple"
                 style={{ width: "100%" }}
                 placeholder="Select assignees"
-                options={project.users.map(user => ({
+                options={users.map((user: any) => ({
                   label: user.username,
                   value: user.id,
                 }))}
@@ -1797,7 +1787,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
         },
       },
     ],
-    [editingKey, project.users, project.id, isUpdating, canDeleteTask, sortedInfo, searchText, searchedColumn, isFirstVerifying, isSecondVerifying, isMarkingComplete, globalSearchText, dataHasDoneTasks, hasFirstVerifyPermission, hasSecondVerifyPermission, canMarkComplete]
+  [editingKey, users, projectId, isUpdating, canDeleteTask, sortedInfo, searchText, searchedColumn, isFirstVerifying, isSecondVerifying, isMarkingComplete, globalSearchText, dataHasDoneTasks, hasFirstVerifyPermission, hasSecondVerifyPermission, canMarkComplete]
   );
 
   const mergedColumns = columns.map(col => {
@@ -1813,6 +1803,12 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
       }),
     };
   });
+  
+  console.log('🔴 Merged columns being used:', mergedColumns.map(col => ({ 
+    title: col.title, 
+    key: col.key,
+    hasRender: !!col.render 
+  })));
 
   const rowSelection: TableProps<ExtendedTaskType>["rowSelection"] = {
     selectedRowKeys,
@@ -2013,7 +2009,7 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
             <Select
               mode="multiple"
               placeholder="Select assignees"
-              options={project.users.map(user => ({
+              options={users.map((user: any) => ({
                 label: user.username,
                 value: user.id,
               }))}
