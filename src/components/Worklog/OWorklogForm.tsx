@@ -46,9 +46,7 @@ const OWorklogForm = () => {
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
   const location = useLocation();
-  // ...existing code...
-  // user is already declared above
-  
+
   // Get date from URL parameters if provided
   const urlParams = new URLSearchParams(location.search);
   const dateParam = urlParams.get('date');
@@ -204,9 +202,7 @@ const OWorklogForm = () => {
         console.error("Missing user ID or project ID");
         return;
       }
-      
-      // Use our new optimized endpoint that returns tasks already filtered for the user and project
-      const tasksData = await fetchUserProjectTasks({ 
+        const tasksData = await fetchUserProjectTasks({ 
         projectId, 
         userId 
       });

@@ -4,14 +4,16 @@ import { Button, Card, Col, Modal, Row, Tabs } from 'antd';
 import { useSession } from '@/context/SessionContext';
 import TaskTable from '../Task/TaskTable';
 import TaskForm from '../Task/TaskForm';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import ProjectSummary from './ProjectSummary';
 import ProjectUserCard from './ProjectUserCard';
 import ProjectTimeline from './ProjectTimeline';
 import ProjectDetails from './ProjectDetails';
 import ProjectRanking from './ProjectRanking';
 import ProjectBudget from './ProjectBudget';
+import ProjectCompletionWorkflow from './ProjectCompletionWorkflow';
 import { useQueryClient } from '@tanstack/react-query';
+import { groupTasksByStatus, countTasksByStatus } from '@/utils/taskStatusGrouping';
 
 
 
@@ -39,9 +41,44 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   );
 
   // Add null checks for project data
-  const tasks = project?.tasks;
-  const users = project?.users;
-  const name = project?.name;
+  const tasks = project?.tasks || [];
+  const users = project?.users || [];
+  const name = project?.name || '';
+
+  // Group tasks by status while maintaining parent-subtask relationships
+  // These hooks must be called BEFORE any conditional returns
+  const tasksByStatus = useMemo(() => {
+    if (!tasks || tasks.length === 0) {
+      return {
+        open: [],
+        in_progress: [],
+        done: []
+      };
+    }
+
+    return {
+      open: groupTasksByStatus(tasks, 'open'),
+      in_progress: groupTasksByStatus(tasks, 'in_progress'),
+      done: groupTasksByStatus(tasks, 'done')
+    };
+  }, [tasks]);
+
+  // Count tasks by status
+  const taskCounts = useMemo(() => {
+    if (!tasks || tasks.length === 0) {
+      return {
+        open: 0,
+        in_progress: 0,
+        done: 0
+      };
+    }
+
+    return {
+      open: countTasksByStatus(tasks, 'open'),
+      in_progress: countTasksByStatus(tasks, 'in_progress'),
+      done: countTasksByStatus(tasks, 'done')
+    };
+  }, [tasks]);
 
   // Don't render if project is not loaded yet
   if (!project && loading) {
@@ -116,11 +153,11 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
             defaultActiveKey="todo"
             items={[
               {
-                label: `To Do (${(tasks ?? []).filter(task => task.status === 'open').length})`,
+                label: `To Do (${taskCounts.open})`,
                 key: 'todo',
                 children: (
                   <TaskTable 
-                    data={(tasks ?? []).filter(task => task.status === 'open')}
+                    data={tasksByStatus.open}
                     showModal={showModal}
                     project={{
                       id: project?.id?.toString?.() ?? String(project?.id ?? ''),
@@ -133,11 +170,11 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
                 )
               },
               {
-                label: `Doing (${(tasks ?? []).filter(task => task.status === 'in_progress').length})`,
+                label: `Doing (${taskCounts.in_progress})`,
                 key: 'doing',
                 children: (
                   <TaskTable 
-                    data={(tasks ?? []).filter(task => task.status === 'in_progress')}
+                    data={tasksByStatus.in_progress}
                     showModal={showModal}
                     project={{
                       id: project?.id?.toString?.() ?? String(project?.id ?? ''),
@@ -150,10 +187,10 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
                 )
               },
               {
-                label: `Completed (${(tasks ?? []).filter(task => task.status === 'done').length})`,
+                label: `Completed (${taskCounts.done})`,
                 key: 'completed',
                 children: (() => {
-                  const completedTasks = (tasks ?? []).filter(task => task.status === 'done');
+                  const completedTasks = tasksByStatus.done;
                   console.log('Completed tasks:', completedTasks);
                   return (
                     <TaskTable 
@@ -196,6 +233,15 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
       children: <ProjectBudget project={project} loading={loading} />
     }
   ];
+
+  // Add Completion/Evaluation/Signoff tab for completed or signed off projects
+  if (project?.status === 'completed' || project?.status === 'signed_off') {
+    tabItems.push({
+      label: 'Completion & Sign-off',
+      key: 'completion',
+      children: <ProjectCompletionWorkflow project={project} currentUser={profile} />
+    });
+  }
 
   // Add Rankings tab if user has permission
   if (canViewRankings) {
