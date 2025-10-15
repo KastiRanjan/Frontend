@@ -6,6 +6,7 @@ export interface TaskType {
     description?: string;
     dueDate?: string;
     project?:ProjectType
+    parentTask?: TaskType;
     subTasks:TaskType[];
     createdAt?: string;
     updatedAt?: string;
