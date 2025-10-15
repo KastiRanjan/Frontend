@@ -3,7 +3,7 @@ import { useDeleteTask } from "@/hooks/task/useDeleteTask";
 import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { useMarkTasksComplete } from "@/hooks/task/useMarkTasksComplete";
 import { useFirstVerifyTasks, useSecondVerifyTasks } from "@/hooks/task/useVerifyTasks";
-import { useProjectTasksWithHierarchy } from "@/hooks/task/useProjectTasksWithHierarchy";
+// import { useProjectTasksWithHierarchy } from "@/hooks/task/useProjectTasksWithHierarchy"; // Disabled - causes issues with filtered data
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
 import { EditOutlined, DeleteOutlined, SearchOutlined, CheckOutlined, CheckCircleOutlined } from "@ant-design/icons";
@@ -82,41 +82,45 @@ const TaskTable = ({ data: initialData, showModal, project, onRefresh, loading: 
   const searchInput = useRef<any>(null);
   const queryClient = useQueryClient();
   
+  // DISABLED: useProjectTasksWithHierarchy hook because it fetches all tasks and overrides filtered data
+  // We now rely on the parent component to provide properly filtered and grouped tasks
+  // This prevents showing tasks from other status categories when switching tabs
+  
   // Use the new hook to fetch tasks with complete hierarchy
-  const { 
-    data: hierarchyTasks,
-    isLoading: isHierarchyLoading,
-    refetch: refetchHierarchy
-  } = useProjectTasksWithHierarchy({
-    projectId: project.id,
-    // Filter by status based on the initial data's status
-    status: initialData.length > 0 ? initialData[0].status : undefined
-  });
+  // const { 
+  //   data: hierarchyTasks,
+  //   isLoading: isHierarchyLoading,
+  //   refetch: refetchHierarchy
+  // } = useProjectTasksWithHierarchy({
+  //   projectId: project.id,
+  //   // Filter by status based on the initial data's status
+  //   status: initialData.length > 0 ? initialData[0].status : undefined
+  // });
   
   // Run refetch when onRefresh is called
-  useEffect(() => {
-    // This effect will create a one-time refresh function when the component mounts
-    if (onRefresh) {
-      const originalRefresh = onRefresh;
-      onRefresh = () => {
-        // Call the original refresh function
-        originalRefresh();
-        // Then also refetch our hierarchy data
-        refetchHierarchy();
-        // Also invalidate the query cache for this specific hierarchy
-        queryClient.invalidateQueries({ 
-          queryKey: ["project-tasks-hierarchy", project.id, initialData.length > 0 ? initialData[0].status : undefined] 
-        });
-        console.log("TaskTable refreshing hierarchy data for status:", initialData.length > 0 ? initialData[0].status : 'all');
-      };
-    }
-  }, []);
+  // useEffect(() => {
+  //   // This effect will create a one-time refresh function when the component mounts
+  //   if (onRefresh) {
+  //     const originalRefresh = onRefresh;
+  //     onRefresh = () => {
+  //       // Call the original refresh function
+  //       originalRefresh();
+  //       // Then also refetch our hierarchy data
+  //       refetchHierarchy();
+  //       // Also invalidate the query cache for this specific hierarchy
+  //       queryClient.invalidateQueries({ 
+  //         queryKey: ["project-tasks-hierarchy", project.id, initialData.length > 0 ? initialData[0].status : undefined] 
+  //       });
+  //       console.log("TaskTable refreshing hierarchy data for status:", initialData.length > 0 ? initialData[0].status : 'all');
+  //     };
+  //   }
+  // }, []);
   
   // Combine the loading states
-  const loading = externalLoading || isHierarchyLoading;
+  const loading = externalLoading; // || isHierarchyLoading;
   
-  // Use hierarchyTasks if available, fall back to initialData
-  const data = hierarchyTasks || initialData;
+  // Use the filtered data passed from parent component
+  const data = initialData; // hierarchyTasks || initialData;
 
   // Check if user has task delete permission
   const canDeleteTask = useMemo(() => {
