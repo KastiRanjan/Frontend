@@ -14,7 +14,7 @@ export interface ProjectType {
     id: number;
     name: string;
     description: string;
-    status: "active" | "suspended" | "archived" | "signed_off";
+    status: "active" | "suspended" | "archived" | "completed" | "signed_off";
     natureOfWork: NatureOfWorkType | string;
     fiscalYear: number;
     startingDate: string;

@@ -12,6 +12,7 @@ export const fetchProjects = async ({ status }: { status: string }) => {
   const response = await axios.get(`${backendURI}/projects?status=${status}`);
   return response.data;
 };
+
 export const fetchProject = async ({ id }: { id: string | undefined }) => {
   if (!id) {
     throw new Error("Project ID is required");
@@ -32,5 +33,10 @@ export const editProject = async ({
   id: string;
 }) => {
   const response = await axios.patch(`${backendURI}/projects/${id}`, payload);
+  return response.data;
+};
+
+export const completeProject = async (id: string) => {
+  const response = await axios.post(`${backendURI}/projects/${id}/complete`);
   return response.data;
 };

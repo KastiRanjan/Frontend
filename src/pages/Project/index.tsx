@@ -50,12 +50,20 @@ const ProjectPage: React.FC = () => {
             ),
           },
           {
+              label: `Completed`,
+              key: "4",
+              children: (
+                <ProjectTable showModal={showModal} status="completed" />
+              ),
+          },
+          {
             label: `Archived`,
-            key: "4",
+            key: "5",
             children: (
               <ProjectTable showModal={showModal} status="archived" />
             ),
-          },
+            },
+
         ]}
       />
 
