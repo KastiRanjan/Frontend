@@ -3,6 +3,7 @@ import { useEditProject } from "@/hooks/project/useEditProject";
 import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
 import { Button, Col, Divider, Form, Row, Select, Switch } from "antd";
+import { message } from "antd";
 import { useEffect, useState } from "react";
 import FormInputWrapper from "../FormInputWrapper";
 import { fetchNatureOfWorks, NatureOfWork } from "@/service/natureOfWork.service";
@@ -51,6 +52,7 @@ interface ProjectFormProps {
 const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   const [form] = Form.useForm();
   const { mutate, isPending } = useCreateProject();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { data: clients } = useClient();
   const { data: billings } = useBilling("active");
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
@@ -225,7 +227,19 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         { onSuccess: () => handleCancel() }
       );
     } else {
-      mutate(transformedValues, { onSuccess: () => handleCancel() });
+      mutate(transformedValues, {
+        onSuccess: () => handleCancel(),
+        onError: (error: any) => {
+          const msg = error?.response?.data?.message || error?.message || "Failed to create project.";
+          setErrorMessage(msg);
+          // Show error using Ant Design message
+          if (msg.toLowerCase().includes("already exists")) {
+            message.error(msg);
+          } else {
+            message.error("Failed to create project. Please try again.");
+          }
+        }
+      });
     }
   };
 
@@ -418,6 +432,9 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
       layout="vertical"
       onFinish={onFinish}
     >
+      {errorMessage && (
+        <div style={{ color: 'red', marginBottom: 16 }}>{errorMessage}</div>
+      )}
       <Row gutter={18}>
         <Divider />
         <Col span={12}>
