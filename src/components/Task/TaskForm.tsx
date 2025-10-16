@@ -36,26 +36,34 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
 
   useEffect(() => {
     if (isEditing && editTaskData) {
+      // Find the correct group id and name
+      let groupId = editTaskData.group?.id || editTaskData.groupProject?.id;
+      let groupName = editTaskData.group?.name || editTaskData.groupProject?.name;
       const initialData = {
         name: editTaskData.name,
         description: editTaskData.description,
-        group: editTaskData.group?.id,
-        parentTaskId: editTaskData.parentTaskId,
+        group: groupId,
+        parentTaskId: editTaskData.parentTaskId || editTaskData.parentTask?.id,
         dueDate: editTaskData.dueDate ? moment(editTaskData.dueDate) : null,
         assignees: editTaskData.assignees?.map((user: any) => user.id) || [],
-        projectId: editTaskData.projectId,
+        projectId: editTaskData.projectId || editTaskData.project?.id,
         status: editTaskData.status,
         taskType: editTaskData.taskType || "story",
         budgetedHours: editTaskData.budgetedHours
       };
       form.setFieldsValue(initialData);
-      setSelectedGroupId(editTaskData.groupId || null);
+      setSelectedGroupId(groupId || null);
       setTaskType(editTaskData.taskType || "story");
+      // Set group name in dropdown if not present in options
+      if (groupId && groupName && group && !group.some((g: any) => g.id === groupId)) {
+        group.push({ id: groupId, name: groupName });
+      }
     } else {
       form.resetFields();
       setTaskType("story");
     }
-  }, [editTaskData, form, isEditing]);
+  }, [editTaskData, form, isEditing, group]);
+  console.log("Edit Task Data:", editTaskData);
 
   // Reset parentTaskId when taskType changes to 'story'
   useEffect(() => {
@@ -113,13 +121,29 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
     );
   };
 
-  const filteredParentTasks =
+  let filteredParentTasks =
     tasks?.filter((task: any) => {
       const isStory = task.taskType === 'story';
       const matchesGroup = !selectedGroupId || task.groupId === selectedGroupId;
       const notCompleted = task.status !== 'done';
       return isStory && matchesGroup && notCompleted;
     }) || [];
+
+  // Ensure the selected parent task is always in the dropdown
+  if (isEditing && editTaskData) {
+    const parentTaskId = editTaskData.parentTaskId || editTaskData.parentTask?.id;
+    const parentTaskName = editTaskData.parentTask?.name;
+    if (
+      parentTaskId &&
+      parentTaskName &&
+      !filteredParentTasks.some((task: any) => task.id === parentTaskId)
+    ) {
+      filteredParentTasks = [
+        { id: parentTaskId, name: parentTaskName, taskType: "story", groupId: selectedGroupId, status: "open" },
+        ...filteredParentTasks,
+      ];
+    }
+  }
 
   const handleGroupChange = (value: string) => {
     setSelectedGroupId(value);
