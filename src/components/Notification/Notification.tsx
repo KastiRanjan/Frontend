@@ -1,5 +1,6 @@
 import { useMyNotifications } from "@/hooks/notification/useMyNotifications";
 import useNotificationRead from "@/hooks/notification/useNotificationRead";
+import useMarkAllAsReadByType from "@/hooks/notification/useMarkAllAsReadByType";
 import { calculateDays } from "@/utils/calculateDays";
 import { NotificationType } from "@/types/notification";
 import { List, Badge, Tabs, Space, Tag, Card, Divider, Button } from "antd";
@@ -13,7 +14,8 @@ import {
     CheckCircleOutlined, 
     ProjectOutlined,
     ArrowLeftOutlined,
-    AppstoreOutlined 
+    AppstoreOutlined,
+    CheckOutlined
 } from "@ant-design/icons";
 
 // Replace with your actual user ID retrieval logic
@@ -61,6 +63,7 @@ const Notification = () => {
     const { data: allNotifications, refetch } = useMyNotifications(userId, undefined);
     const { data: filteredNotifications } = useMyNotifications(userId, selectedType);
     const { mutateAsync: updateNotifications } = useNotificationRead();
+    const { mutateAsync: markAllAsRead } = useMarkAllAsReadByType();
     const [activeTab, setActiveTab] = useState("unread");
 
     // Deduplicate notification toasts by notification ID
@@ -180,14 +183,38 @@ const Notification = () => {
             return (
                 <>
                     <div style={{ marginBottom: 16 }}>
-                        <Button 
-                            icon={<ArrowLeftOutlined />}
-                            onClick={() => setSelectedType(undefined)}
-                            type="link"
-                            style={{ padding: 0, marginBottom: 8 }}
-                        >
-                            Back to Groups
-                        </Button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <Button 
+                                icon={<ArrowLeftOutlined />}
+                                onClick={() => setSelectedType(undefined)}
+                                type="link"
+                                style={{ padding: 0 }}
+                            >
+                                Back to Groups
+                            </Button>
+                            {showMarkAsRead && notificationList.length > 0 && (
+                                <Button 
+                                    icon={<CheckOutlined />}
+                                    onClick={async () => {
+                                        await markAllAsRead({ userId, type: selectedType }, {
+                                            onSuccess: () => {
+                                                antdNotification.success({
+                                                    message: 'Success',
+                                                    description: `All ${typeLabels[selectedType]} notifications marked as read`,
+                                                    placement: 'top',
+                                                });
+                                                refetch();
+                                            }
+                                        });
+                                    }}
+                                    type="primary"
+                                    size="small"
+                                    style={{ fontSize: '12px' }}
+                                >
+                                    Mark All as Read
+                                </Button>
+                            )}
+                        </div>
                         <Divider style={{ margin: '8px 0' }} />
                     </div>
                     <List

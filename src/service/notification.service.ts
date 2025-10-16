@@ -16,6 +16,11 @@ export const updateNotifications = async ({ id, userId }: { id: string, userId: 
   return response.data;
 };
 
+export const markAllAsReadByType = async ({ userId, type }: { userId: string, type: NotificationType }) => {
+  const response = await axios.patch(`${backendURI}/notification/read-all/${userId}/${type}`, {});
+  return response.data;
+};
+
 // Send a notification for leave-related events
 export const sendLeaveNotification = async (
   leaveId: string,
