@@ -36,6 +36,10 @@ export interface TaskGroupsTableProps {
   taskSuperId: string;
   onEdit?: (id: string) => void;
   data?: TaskGroupType[];
+  page?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
 // Props for expanded row view (templates)

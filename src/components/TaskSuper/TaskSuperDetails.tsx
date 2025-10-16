@@ -17,11 +17,15 @@ const TaskSuperDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isTaskGroupModalOpen, setIsTaskGroupModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const queryClient = useQueryClient();
 
   const { data: taskSuper, isPending: isTaskSuperLoading } = useFetchTaskSuper(id as string);
   const { data: taskGroups, isPending: isTaskGroupsLoading } = useFetchTaskGroups({
     taskSuperId: id as string,
+    limit: pageSize,
+    page: page
   });
 
   // Log the task groups to see if they contain templates
@@ -104,6 +108,10 @@ const TaskSuperDetails = () => {
         <TaskGroupsTable 
           taskSuperId={id as string}
           data={taskGroups}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
         />
       ) : (
         <Empty description="No Task Groups found" />

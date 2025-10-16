@@ -3,10 +3,15 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
-export const fetchTaskGroup = async (params?: { taskSuperId?: string }) => {
+export const fetchTaskGroup = async (params?: { taskSuperId?: string; limit?: number; page?: number }) => {
   const url = `${backendURI}/task-group`;
-  const queryParams = params?.taskSuperId ? `?taskSuperId=${params.taskSuperId}&includeTemplates=true` : '?includeTemplates=true';
-  const response = await axios.get(`${url}${queryParams}`);
+  const query = [];
+  if (params?.taskSuperId) query.push(`taskSuperId=${params.taskSuperId}`);
+  if (params?.limit) query.push(`limit=${params.limit}`);
+  if (params?.page) query.push(`page=${params.page}`);
+  query.push('includeTemplates=true');
+  const queryString = query.length ? `?${query.join('&')}` : '';
+  const response = await axios.get(`${url}${queryString}`);
   return response.data;
 };
 

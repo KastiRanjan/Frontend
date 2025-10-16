@@ -10,7 +10,15 @@ import { deleteTaskTemplate } from "@/service/tasktemplate.service";
 import TemplateExpandedView from "./components/TemplateExpandedView";
 import ProjectAssignmentModal from "./components/ProjectAssignmentModal";
 
-const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({ taskSuperId, onEdit, data }) => {
+const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
+  taskSuperId,
+  onEdit,
+  data,
+  page = 1,
+  pageSize = 10,
+  onPageChange = () => {},
+  onPageSizeChange = () => {},
+}) => {
   const [taskGroups, setTaskGroups] = useState(data || []);
   const [modal, contextHolder] = Modal.useModal();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -264,7 +272,15 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({ taskSuperId, onEdit, 
           return (a.name || '').localeCompare(b.name || '');
         })} 
         rowKey="id" 
-        pagination={{ pageSize: 5 }}
+        pagination={{
+          current: page,
+          pageSize: pageSize,
+          showSizeChanger: true,
+          onChange: (newPage, newPageSize) => {
+            onPageChange(newPage);
+            onPageSizeChange(newPageSize);
+          }
+        }}
         rowSelection={{
           selectedRowKeys: selectedGroups,
           onChange: (selectedRowKeys) => {
