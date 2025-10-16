@@ -1,9 +1,13 @@
 import axios from "axios";
+import { NotificationType } from "@/types/notification";
 axios.defaults.withCredentials = true;
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
-export const fetchMyNotifications = async (userId: string) => {
-  const response = await axios.get(`${backendURI}/notification/user/${userId}`);
+export const fetchMyNotifications = async (userId: string, type?: NotificationType) => {
+  const url = type 
+    ? `${backendURI}/notification/user/${userId}?type=${type}`
+    : `${backendURI}/notification/user/${userId}`;
+  const response = await axios.get(url);
   return response.data;
 };
 
