@@ -67,8 +67,13 @@ import NoticeBoardPage from "@/pages/NoticeBoard";
 import NoticeBoardAdmin from "@/pages/NoticeBoard/Admin";
 import CreateNoticePage from "@/pages/NoticeBoard/Create";
 import EditNoticePage from "@/pages/NoticeBoard/Edit";
+import ForgotPasswordPage from "@/pages/ForgotPassword";
 
 const Router = [
+  {
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />,
+  },
   {
     path: "/login",
     element: <Login />,

@@ -67,14 +67,19 @@ export const LoginForm = () => {
           type="password"
           autoComplete="off"
         />
-        <Form.Item
-          name="remember"
-          valuePropName="checked"
-          noStyle
-          initialValue={false}
-        >
-          <Checkbox>Remember me</Checkbox>
-        </Form.Item>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+          <Form.Item
+            name="remember"
+            valuePropName="checked"
+            noStyle
+            initialValue={false}
+            style={{ marginBottom: 0 }}
+          >
+            <Checkbox>Remember me</Checkbox>
+          </Form.Item>
+          <a href="/forgot-password">Forgot password?</a>
+        </div>
+
         <div className="mt-5">
           <Button size="large" loading={login.isPending} type="primary" htmlType="submit" className="w-full">
             Submit

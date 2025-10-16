@@ -2,6 +2,25 @@ import axios from "axios";
 
 const backendURI = import.meta.env.VITE_BACKEND_URI;
 
+
+export const validateResetToken = async (token: string) => {
+  try {
+    const response = await axios.get(`${backendURI}/auth/validate-reset-token?token=${token}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await axios.put(`${backendURI}/auth/forgot-password`, { email });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const login = async (payload: any) => {
   const response = await axios.post(`${backendURI}/auth/login`, payload, {
     withCredentials: true,

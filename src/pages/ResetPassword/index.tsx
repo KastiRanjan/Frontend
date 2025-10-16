@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Form, Input, Button, message, Result, Alert, Typography } from 'antd';
 import { useResetPassword } from '@/hooks/auth/useResetPassword';
 import Title from 'antd/es/typography/Title';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import { validateResetToken } from '@/service/auth.service';
 
 const { Paragraph, Text } = Typography;
 
@@ -23,15 +24,49 @@ const ResetPasswordForm = () => {
     const [resetSuccess, setResetSuccess] = useState(false);
     const [resetError, setResetError] = useState<string | null>(null);
     const [passwordStrength, setPasswordStrength] = useState(0);
-    const navigate = useNavigate();
 
-    // If no token is provided, redirect to login
+    // State for token validity
+    const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+
     useEffect(() => {
         if (!token) {
-            message.error('Invalid password reset link');
-            navigate('/login');
+            setTokenValid(false);
+            return;
         }
-    }, [token, navigate]);
+        // Validate token with backend
+        validateResetToken(token)
+            .then(() => setTokenValid(true))
+            .catch(() => setTokenValid(false));
+    }, [token]);
+
+    if (tokenValid === false) {
+        return (
+            <div style={{ display: 'grid', placeItems: 'center', height: '100vh' }}>
+                <Result
+                    status="error"
+                    title="Link Expired"
+                    subTitle="The password reset link is invalid or has expired."
+                    extra={[
+                        <Button type="primary" key="login">
+                            <Link to="/login">Go to Login</Link>
+                        </Button>
+                    ]}
+                />
+            </div>
+        );
+    }
+
+    if (tokenValid === null) {
+        // Loading state while checking token
+        return (
+            <div style={{ display: 'grid', placeItems: 'center', height: '100vh' }}>
+                <Result
+                    status="info"
+                    title="Checking reset link..."
+                />
+            </div>
+        );
+    }
 
     // Check password strength as user types
     const checkPasswordStrength = (password: string) => {

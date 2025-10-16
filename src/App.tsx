@@ -17,11 +17,14 @@ const App: React.FC = () => {
   useTrackUserActivity();
 
   useEffect(() => {
+    const publicRoutes = ["/login", "/signup", "/forgot-password"];
+    // Allow /reset/:token as public route
+    const isResetRoute = /^\/reset\//.test(window.location.pathname);
     if (isAuthenticated && window.location.pathname === "/login") {
       navigate("/");
     } else if (
       !isAuthenticated &&
-      !["/login", "/signup", ...window.location.pathname.match(/^\/reset\//) ? [window.location.pathname] : []].includes(window.location.pathname)
+      ![...publicRoutes, ...(isResetRoute ? [window.location.pathname] : [])].includes(window.location.pathname)
     ) {
       navigate("/login");
     }
