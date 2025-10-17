@@ -24,6 +24,7 @@ const EWorklogForm = () => {
   const [tasks, setTasks] = useState<TaskTemplateType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const [isIncomingRequest, setIsIncomingRequest] = useState(false);
 
   // Permission check for editing worklog date (object-based)
   const permissions = (user as any)?.role?.permission || [];
@@ -57,56 +58,88 @@ const EWorklogForm = () => {
       
       let tasksList = tasksData || [];
       
+      // Ensure the current worklog's task is always included in the list
+      // even if it doesn't meet the status filter (since it's already in use)
+      if (worklog?.task && !tasksList.find((t: TaskTemplateType) => t.id === worklog.task.id)) {
+        tasksList = [worklog.task, ...tasksList];
+      }
+      
       // Set the tasks in state - they are already filtered by the backend based on project settings and status
       setTasks(tasksList);
       
     } catch (error) {
       console.error("Error fetching user project tasks:", error);
-      setTasks([]);
+      // If fetch fails, at least keep the current task
+      if (worklog?.task) {
+        setTasks([worklog.task]);
+      } else {
+        setTasks([]);
+      }
     } finally {
       setLoadingTasks(false);
     }
   };
 
   useEffect(() => {
-    if (worklog) {
+    if (worklog && worklog.task?.project) {
       let startDayjs = worklog.startTime;
       let endDayjs = worklog.endTime;
       // Defensive: ensure dayjs object
       if (!dayjs.isDayjs?.(startDayjs)) startDayjs = dayjs(startDayjs);
       if (!dayjs.isDayjs?.(endDayjs)) endDayjs = dayjs(endDayjs);
-      // Log for debugging
-      if (typeof startDayjs !== 'object' || !(dayjs.isDayjs?.(startDayjs))) {
-        // eslint-disable-next-line no-console
-        console.warn('startDayjs is not a dayjs object:', startDayjs, typeof startDayjs);
-      }
+      
       // Auto-set requestTo to the current value or first user if not set
       let requestToValue = worklog.requestTo;
-      if (!requestToValue && worklog.task?.project?.users?.length) {
+      if (!requestToValue && worklog.task.project.users?.length) {
         requestToValue = worklog.task.project.users[0].id;
       }
-      form.setFieldsValue({
-        date: startDayjs,
-        projectId: worklog.task?.project?.id,
-        taskId: worklog.task?.id,
-        startTime: startDayjs,
-        endTime: endDayjs,
-        approvedBy: worklog.approvedBy,
-        description: worklog.description,
-        requestTo: requestToValue,
-      });
 
-      if (worklog.task?.project) {
-        setProjects([worklog.task.project]);
-        const currentUserId = (user as any)?.id?.toString();
-        const currentUserRole = (user as any)?.role?.name;
-        setUsers(getFilteredApprovers(worklog.task.project.users || [], currentUserRole, currentUserId));
-        
-        // Fetch tasks for the project
-        fetchProjectTasks(worklog.task.project.id);
+      // Check if this is an incoming request (current user is the approver/requestTo)
+      const currentUserId = (user as any)?.id?.toString();
+      const isIncoming = worklog.requestTo?.toString() === currentUserId;
+      setIsIncomingRequest(isIncoming);
+
+      // Set up project dropdown
+      setProjects([worklog.task.project]);
+      
+      // Set up users dropdown with proper filtering
+      const currentUserRole = (user as any)?.role?.name;
+      const filteredUsers = getFilteredApprovers(worklog.task.project.users || [], currentUserRole, currentUserId);
+      
+      // If incoming request, ensure the requestToUser is in the users list
+      if (isIncoming && worklog.requestToUser) {
+        // Check if requestToUser is already in filteredUsers
+        const userExists = filteredUsers.some((u: UserType) => u.id?.toString() === worklog.requestToUser.id?.toString());
+        if (!userExists) {
+          filteredUsers.unshift(worklog.requestToUser);
+        }
       }
+      
+      setUsers(filteredUsers);
+      
+      // Set the current task immediately so it displays while fetching other tasks
+      if (worklog.task) {
+        setTasks([worklog.task]);
+      }
+      
+      // Set form values after setting up the dropdowns - use setTimeout to ensure state is updated
+      setTimeout(() => {
+        form.setFieldsValue({
+          date: startDayjs,
+          projectId: worklog.task.project.id,
+          taskId: worklog.task.id,
+          startTime: startDayjs,
+          endTime: endDayjs,
+          approvedBy: worklog.approvedBy,
+          description: worklog.description,
+          requestTo: requestToValue,
+        });
+      }, 0);
+      
+      // Fetch all available tasks for the project
+      fetchProjectTasks(worklog.task.project.id);
     }
-  }, [worklog, form]);
+  }, [worklog]);
 
   // Removed handleProjectChange as it's no longer needed since project and task are fixed
 
@@ -218,7 +251,7 @@ const EWorklogForm = () => {
                   label: u.name,
                   value: u.id,
                 }))}
-                disabled={!users.length}
+                disabled={isIncomingRequest || !users.length}
               />
             </Form.Item>
           </Col>
