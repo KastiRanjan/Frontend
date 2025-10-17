@@ -1,6 +1,6 @@
 
 
-import { Table, Space, Button, Input } from "antd";
+import { Table, Space, Button, Input, Tooltip } from "antd";
 import moment from "moment";
 import { useState, useRef, useEffect } from "react";
 import { SearchOutlined } from "@ant-design/icons";
@@ -201,7 +201,18 @@ const WorklogTable = ({ data }: { data: any }) => {
       dataIndex: "rejectedRemark",
       key: "rejectedRemark",
       ...getColumnSearchProps('rejectedRemark', 'Rejection Remark'),
-      render: (_: any, record: any) => record?.rejectedRemark || "-",
+      render: (_: any, record: any) => {
+        if (record?.status === 'rejected' && record?.rejectedRemark) {
+          return (
+            <Tooltip title={record.rejectedRemark}>
+              <span style={{ cursor: 'pointer', textDecoration: 'underline', color: '#fa541c' }}>
+                {record.rejectedRemark.length > 30 ? record.rejectedRemark.slice(0, 30) + '...' : record.rejectedRemark}
+              </span>
+            </Tooltip>
+          );
+        }
+        return record?.rejectedRemark || "-";
+      },
     });
   }
 
@@ -218,6 +229,20 @@ const WorklogTable = ({ data }: { data: any }) => {
         showQuickJumper: true,
         pageSizeOptions: [5, 10, 20, 50],
         showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+      }}
+      expandable={{
+        expandedRowRender: (record: any) => {
+          let description = record?.description || "No description available";
+          if (record?.status === "rejected" && record?.rejectedRemark) {
+            description += `<br/><b>Rejection Remark:</b> ${record.rejectedRemark}`;
+          }
+          return (
+            <div
+              className="p-4 bg-gray-50"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          );
+        }
       }}
     />
   );

@@ -336,7 +336,10 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
   });
 
   const expandedRowRender = (record: any) => {
-    const description = record?.description || "No description available";
+    let description = record?.description || "No description available";
+    if (record?.status === "rejected" && record?.rejectedRemark) {
+      description += `<br/><b>Rejection Remark:</b> ${record.rejectedRemark}`;
+    }
     return (
       <div
         className="p-4 bg-gray-50"

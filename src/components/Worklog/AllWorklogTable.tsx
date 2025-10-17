@@ -125,18 +125,16 @@ const columns = (
       sorter: (a: any, b: any) => (a.rejectedRemark || '').localeCompare(b.rejectedRemark || ''),
       sortOrder: sortedInfo.columnKey === 'rejectedRemark' && sortedInfo.order,
       render: (_: any, record: any) => {
-        const user = record?.rejectByUser;
-        const rejectedAt = record?.rejectedAt ? new Date(record.rejectedAt).toLocaleString() : null;
-        return (
-          <span>
-            {record?.rejectedRemark || "-"}
-            {user && (
-              <Tooltip title={<span>{user.email || user.name}<br/>{rejectedAt && <span>Rejected At: {rejectedAt}</span>}</span>}>
-                <span style={{ marginLeft: 8, color: '#fa541c' }}>(Rejected by: {user.name})</span>
-              </Tooltip>
-            )}
-          </span>
-        );
+        if (record?.status === 'rejected' && record?.rejectedRemark) {
+          return (
+            <Tooltip title={record.rejectedRemark}>
+              <span style={{ cursor: 'pointer', textDecoration: 'underline', color: '#fa541c' }}>
+                {record.rejectedRemark.length > 30 ? record.rejectedRemark.slice(0, 30) + '...' : record.rejectedRemark}
+              </span>
+            </Tooltip>
+          );
+        }
+        return record?.rejectedRemark || "-";
       }
     });
   }
@@ -215,7 +213,10 @@ const AllWorklogTable = ({ status }: { status: string }) => {
 
   // Expanded row render function for description
   const expandedRowRender = (record: any) => {
-    const description = record?.description || "No description available";
+    let description = record?.description || "No description available";
+    if (record?.status === "rejected" && record?.rejectedRemark) {
+      description += `<br/><br/><b>Rejection Remark:</b> ${record.rejectedRemark}`;
+    }
     return (
       <div 
         className="p-4 bg-gray-50"

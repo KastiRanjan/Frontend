@@ -4,8 +4,8 @@ import { editWorklog } from "../../service/worklog.service";
 export const useEditWorklog = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ remark,status, id }: any) => {
-            return editWorklog({ remark,status, id });
+        mutationFn: (payload: any) => {
+            return editWorklog(payload);
         },
         onSuccess: (_data, variables) => {
             // Invalidate all possible status queries and the generic worklogs query

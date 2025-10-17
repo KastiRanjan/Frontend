@@ -7,9 +7,10 @@ export const useFirstVerifyTasks = () => {
   return useMutation({
     mutationFn: firstVerifyTasks,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
-      queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy"] }); // Invalidate our new query key
+  queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  queryClient.invalidateQueries({ queryKey: ["projectTasks"] });
+  queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy"] }); // Invalidate our new query key
+  queryClient.invalidateQueries({ queryKey: ["current_user_tasks"] });
     },
     onError: (error) => {
       console.error("First verify tasks error:", error);

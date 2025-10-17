@@ -10,8 +10,9 @@ export const useCreateTask = () => {
       return createTask(payload);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["project_task"] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  queryClient.invalidateQueries({ queryKey: ["project_task"] });
+  queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  queryClient.invalidateQueries({ queryKey: ["current_user_tasks"] });
       // Invalidate project queries to refresh project details when tasks are added
       queryClient.invalidateQueries({ queryKey: ["project"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
