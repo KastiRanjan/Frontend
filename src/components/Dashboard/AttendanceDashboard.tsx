@@ -67,6 +67,14 @@ const AttendanceDashboard: React.FC = () => {
   }, [data?.usersWithAttendance]);
 
   const earlyClockOuts = useMemo(() => {
+    // Use backend-provided earlyClockOuts if available (contains role-specific expected times)
+    if (data?.earlyClockOuts && data.earlyClockOuts.length > 0) {
+      return data.earlyClockOuts.map((user: any) => ({
+        ...user,
+        clockOutDiff: user.clockOutMinutesDiff // Use backend calculation
+      }));
+    }
+    // Fallback to client-side calculation if backend doesn't provide it
     return clockedOutUsers
       .filter((user: User) => {
         if (!user.clockOutTime) return false;
@@ -77,9 +85,17 @@ const AttendanceDashboard: React.FC = () => {
         ...user,
         clockOutDiff: calculateTimeDiff(user.clockOutTime!, DEFAULT_END_TIME)
       }));
-  }, [clockedOutUsers]);
+  }, [data?.earlyClockOuts, clockedOutUsers]);
 
   const lateClockOuts = useMemo(() => {
+    // Use backend-provided lateClockOuts if available (contains role-specific expected times)
+    if (data?.lateClockOuts && data.lateClockOuts.length > 0) {
+      return data.lateClockOuts.map((user: any) => ({
+        ...user,
+        clockOutDiff: user.clockOutMinutesDiff // Use backend calculation
+      }));
+    }
+    // Fallback to client-side calculation if backend doesn't provide it
     return clockedOutUsers
       .filter((user: User) => {
         if (!user.clockOutTime) return false;
@@ -90,7 +106,7 @@ const AttendanceDashboard: React.FC = () => {
         ...user,
         clockOutDiff: calculateTimeDiff(user.clockOutTime!, DEFAULT_END_TIME)
       }));
-  }, [clockedOutUsers]);
+  }, [data?.lateClockOuts, clockedOutUsers]);
 
   // Render scrollable list component
   const renderScrollableList = (
