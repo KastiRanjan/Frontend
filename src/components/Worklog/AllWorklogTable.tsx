@@ -58,7 +58,9 @@ const columns = (
       title: "Request To",
       dataIndex: "requestTo",
       key: "requestTo",
-      ...getColumnSearchProps('requestTo', 'Request To'),
+      ...getColumnSearchProps('requestToUser.name', 'Request To'),
+      sorter: (a: any, b: any) => (a.requestToUser?.name || '').localeCompare(b.requestToUser?.name || ''),
+      sortOrder: sortedInfo.columnKey === 'requestTo' && sortedInfo.order,
       render: (_: any, record: any) => {
         const user = record?.requestToUser;
         const requestAt = record?.requestedAt ? new Date(record.requestedAt).toLocaleString() : null;
@@ -100,14 +102,54 @@ const columns = (
       title: getStatusTitle(status),
       dataIndex: "approvedBy",
       key: "approvedBy",
-      ...getColumnSearchProps('user.name', 'User'),
-      sorter: (a: any, b: any) => (a.user?.name || '').localeCompare(b.user?.name || ''),
+      ...getColumnSearchProps(
+        status.toLowerCase() === 'approved' ? 'approvedByUser.name' : 
+        status.toLowerCase() === 'rejected' ? 'rejectByUser.name' : 
+        'user.name', 
+        getStatusTitle(status)
+      ),
+      sorter: (a: any, b: any) => {
+        let nameA = '';
+        let nameB = '';
+        if (status.toLowerCase() === 'approved') {
+          nameA = a.approvedByUser?.name || '';
+          nameB = b.approvedByUser?.name || '';
+        } else if (status.toLowerCase() === 'rejected') {
+          nameA = a.rejectByUser?.name || '';
+          nameB = b.rejectByUser?.name || '';
+        } else {
+          nameA = a.user?.name || '';
+          nameB = b.user?.name || '';
+        }
+        return nameA.localeCompare(nameB);
+      },
       sortOrder: sortedInfo.columnKey === 'approvedBy' && sortedInfo.order,
       render: (_: any, record: any) => {
-        const user = record?.user;
-        const approvedAt = record?.approvedAt ? new Date(record.approvedAt).toLocaleString() : null;
+        let user = null;
+        let extra = null;
+        
+        if (status.toLowerCase() === 'approved') {
+          user = record?.approvedByUser;
+          const approvedAt = record?.approvedAt ? new Date(record.approvedAt).toLocaleString() : null;
+          if (approvedAt) {
+            extra = <span>Approved At: {approvedAt}</span>;
+          }
+        } else if (status.toLowerCase() === 'rejected') {
+          user = record?.rejectByUser;
+          const rejectedAt = record?.rejectedAt ? new Date(record.rejectedAt).toLocaleString() : null;
+          if (rejectedAt) {
+            extra = <span>Rejected At: {rejectedAt}</span>;
+          }
+        } else {
+          user = record?.user;
+          const requestedAt = record?.requestedAt ? new Date(record.requestedAt).toLocaleString() : null;
+          if (requestedAt) {
+            extra = <span>Requested At: {requestedAt}</span>;
+          }
+        }
+        
         return user ? (
-          <Tooltip title={<span>{user.email || user.name}<br/>{approvedAt && <span>Approved At: {approvedAt}</span>}</span>}>
+          <Tooltip title={<span>{user.email || user.name}<br/>{extra}</span>}>
             <span>{user.name}</span>
           </Tooltip>
         ) : "-";
@@ -176,7 +218,7 @@ const columns = (
 const AllWorklogTable = ({ status }: { status: string }) => {
   const navigate = useNavigate();
   const { data: worklogs, isPending } = useWorklog(status);
-  const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
+  const { isPending: isEditPending } = useEditWorklog();
   const { mutate: deleteWorklog } = useDeleteWorklog();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   // For search
@@ -236,7 +278,7 @@ const AllWorklogTable = ({ status }: { status: string }) => {
     setSearchText('');
   };
   
-  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+  const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
     setSortedInfo(sorter);
   };
   
