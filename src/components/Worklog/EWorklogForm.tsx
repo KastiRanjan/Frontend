@@ -23,6 +23,7 @@ const EWorklogForm = () => {
   const [projects, setProjects] = useState<TaskTemplateType[]>([]);
   const [tasks, setTasks] = useState<TaskTemplateType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(false);
 
   // Permission check for editing worklog date (object-based)
   const permissions = (user as any)?.role?.permission || [];
@@ -33,6 +34,39 @@ const EWorklogForm = () => {
         perm.path === "/worklogs/:id/date" &&
         perm.method?.toLowerCase() === "patch"
     );
+
+  // Fetch tasks for a specific project
+  const fetchProjectTasks = async (projectId: string) => {
+    setLoadingTasks(true);
+    
+    try {
+      // Import the service function directly
+      const { fetchUserProjectTasks } = await import("@/service/task.service");
+      
+      // Get the current user's ID
+      const userId = (user as any)?.id;
+      
+      if (!userId || !projectId) {
+        console.error("Missing user ID or project ID");
+        return;
+      }
+        const tasksData = await fetchUserProjectTasks({ 
+        projectId, 
+        userId 
+      });
+      
+      let tasksList = tasksData || [];
+      
+      // Set the tasks in state - they are already filtered by the backend based on project settings and status
+      setTasks(tasksList);
+      
+    } catch (error) {
+      console.error("Error fetching user project tasks:", error);
+      setTasks([]);
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
 
   useEffect(() => {
     if (worklog) {
@@ -64,10 +98,12 @@ const EWorklogForm = () => {
 
       if (worklog.task?.project) {
         setProjects([worklog.task.project]);
-        setTasks([worklog.task]);
         const currentUserId = (user as any)?.id?.toString();
         const currentUserRole = (user as any)?.role?.name;
         setUsers(getFilteredApprovers(worklog.task.project.users || [], currentUserRole, currentUserId));
+        
+        // Fetch tasks for the project
+        fetchProjectTasks(worklog.task.project.id);
       }
     }
   }, [worklog, form]);
@@ -90,7 +126,7 @@ const EWorklogForm = () => {
       endTime,
       requestTo: values.requestTo, // Use requestTo for approver
       projectId: worklog.task.project.id, // Fixed
-      taskId: worklog.task.id, // Fixed
+      taskId: values.taskId, // Allow user to change task within the project
       status: "requested",
     };
     editingWorklog(updatedWorklog, {
@@ -160,7 +196,10 @@ const EWorklogForm = () => {
                   label: t.name,
                   value: t.id,
                 }))}
-                disabled // Always disabled as per requirement
+                loading={loadingTasks}
+                disabled={loadingTasks || !tasks.length}
+                showSearch
+                optionFilterProp="label"
               />
             </Form.Item>
           </Col>
