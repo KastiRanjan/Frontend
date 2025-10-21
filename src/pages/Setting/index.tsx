@@ -84,13 +84,10 @@ const Setting = () => {
         </Card>
       </Col>
       <Col span={6}>
-        <Card className="h-full">
-          <svg className="admin-icon-prop">
-            <use></use>
-          </svg>
+        <Card className="h-full" onClick={() => navigate("/mail-settings")} hoverable>
           <Title level={4}>Mail Settings</Title>
           <Paragraph>
-            Mail Server SettingsMail AddressesMail BoxMail FilterEmail Command
+            Configure automated attendance reminder emails, grace periods, and excluded roles.
           </Paragraph>
         </Card>
       </Col>
