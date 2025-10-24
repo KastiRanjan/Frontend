@@ -38,9 +38,10 @@ const ProjectCompletionWorkflow: React.FC<ProjectCompletionWorkflowProps> = ({
   const isProjectLead = project?.projectLead?.id === currentUser?.id;
   const isProjectManager = project?.projectManager?.id === currentUser?.id;
   const userRole = currentUser?.role?.name?.toLowerCase();
-  const isManager = userRole === 'projectmanager' || userRole === 'manager';
+  // Manager includes: projectmanager, manager, administrator, and superuser
+  const isManager = ['projectmanager', 'manager', 'administrator', 'admin', 'superuser'].includes(userRole);
 
-  // Project lead can evaluate, but manager can evaluate all
+  // Project lead can evaluate, but manager/admin can evaluate all
   const canEvaluate = isProjectLead || isManager;
 
   // Filter users that can be evaluated based on role
@@ -48,23 +49,29 @@ const ProjectCompletionWorkflow: React.FC<ProjectCompletionWorkflowProps> = ({
     if (!projectUsers || projectUsers.length === 0) return [];
 
     // Protected roles that cannot be evaluated
-    const protectedRoles = ['projectmanager', 'manager', 'administrator', 'admin', 'superuser'];
+    // Project managers, administrators and superusers are excluded from evaluation
+    const protectedRoles = ['projectmanager', 'administrator', 'admin', 'superuser'];
 
     return projectUsers.filter((user: any) => {
       const userRoleName = user?.role?.name?.toLowerCase();
 
-      // Don't evaluate protected roles
+      // Don't show the current user to themselves (project lead shouldn't evaluate themselves)
+      if (user?.id === currentUser?.id) {
+        return false;
+      }
+
+      // Don't evaluate protected roles (projectmanager, administrator and superuser)
       if (protectedRoles.includes(userRoleName)) {
         return false;
       }
 
-      // Manager can evaluate all (except protected roles)
+      // Manager/Admin/Superuser can evaluate all (except protected roles and themselves)
       if (isManager) {
         return true;
       }
 
-      // Project lead can only evaluate audit senior and audit junior
-      if (isProjectLead) {
+      // Project lead (who is not a manager) can only evaluate audit senior and audit junior
+      if (isProjectLead && !isManager) {
         return ['auditsenior', 'auditjunior'].includes(userRoleName);
       }
 
@@ -188,7 +195,7 @@ const ProjectCompletionWorkflow: React.FC<ProjectCompletionWorkflowProps> = ({
                   allEvaluated 
                     ? 'All evaluable team members have been evaluated. Manager can now sign off the project.' 
                     : canEvaluate
-                      ? 'Complete team member evaluations before sign-off. Project leads can evaluate audit seniors and juniors. Managers can evaluate all members including the project lead.'
+                      ? 'Complete team member evaluations before sign-off. Only audit seniors, audit juniors, and team leads need evaluation. Project managers, administrators, and superusers are excluded from evaluation.'
                       : 'Only project lead or manager can evaluate team members.'
                 }
                 type={allEvaluated ? 'success' : 'warning'}
