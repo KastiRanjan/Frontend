@@ -4,9 +4,8 @@ import { ProjectType } from "@/types/project";
 import { checkPermissionForComponent } from "@/utils/permission";
 import { DownloadOutlined, EditOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons";
 import { Avatar, Button, Card, Space, Table, TableProps, Tooltip, Input, Select, DatePicker, Form, Row, Col } from "antd";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
-import SearchBarWithPopover from "../SearchBarPopover";
 import TableToolbar from "../Table/TableToolbar";
 import Highlighter from 'react-highlight-words';
 import moment from 'moment';
@@ -18,7 +17,7 @@ const ProjectTable = ({ showModal, status }: any) => {
   const { permissions, profile } = useSession();
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
-  const [filters, setFilters] = useState({});
+  const [advancedFilters, setAdvancedFilters] = useState<any>({});
   const [showFilters, setShowFilters] = useState(false);
   const [sortedInfo, setSortedInfo] = useState<any>({});
   const searchInput = useRef<any>(null);
@@ -28,11 +27,10 @@ const ProjectTable = ({ showModal, status }: any) => {
   const userRole = profile?.role?.name?.toLowerCase();
   const hideCreateDelete = userRole === "auditsenior" || userRole === "auditjunior";
 
-  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+  const handleTableChange = (pagination: any, _filters: any, sorter: any) => {
     setPage(pagination.current);
     setLimit(pagination.pageSize);
     setSortedInfo(sorter);
-    setFilters(filters);
   };
 
   const handleSearch = (selectedKeys: string[], confirm: () => void, dataIndex: string) => {
@@ -41,78 +39,201 @@ const ProjectTable = ({ showModal, status }: any) => {
     setSearchedColumn(dataIndex);
   };
 
-  const handleReset = (clearFilters: () => void) => {
-    clearFilters();
-    setSearchText('');
-  };
+  const getColumnSearchProps = (dataIndex: string, title: string): any => {
+    // Get unique values for autocomplete
+    const getUniqueValues = () => {
+      const getValue = (obj: any, path: string): any => {
+        if (Array.isArray(path)) {
+          return path.reduce((acc, key) => acc?.[key], obj);
+        }
+        return path.split('.').reduce((acc, key) => acc?.[key], obj);
+      };
 
-  const getColumnSearchProps = (dataIndex: string, title: string): any => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          ref={searchInput}
-          placeholder={`Search ${title}`}
-          value={selectedKeys[0]}
-          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-          style={{ marginBottom: 8, display: 'block' }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-            icon={<SearchOutlined />}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Search
-          </Button>
-          <Button
-            onClick={() => handleReset(clearFilters)}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
-    ),
-    filterIcon: (filtered: boolean) => (
-      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-    ),
-    onFilter: (value: string, record: any) =>
-      record[dataIndex]
-        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
-        : '',
-    onFilterDropdownVisibleChange: (visible: boolean) => {
-      if (visible) {
-        setTimeout(() => searchInput.current?.select(), 100);
-      }
-    },
-    render: (text: string, record: any) =>
-      searchedColumn === dataIndex ? (
-        <Highlighter
-          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-          searchWords={[searchText]}
-          autoEscape
-          textToHighlight={text ? text.toString() : ''}
-        />
-      ) : (
-        text
+      const values = new Set<string>();
+      filteredProject?.forEach((record: any) => {
+        const value = getValue(record, dataIndex);
+        if (value) {
+          values.add(value.toString());
+        }
+      });
+      return Array.from(values).sort();
+    };
+
+    return {
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => {
+        const uniqueValues = getUniqueValues();
+        const currentValue = selectedKeys[0] || '';
+        const filteredOptions = currentValue 
+          ? uniqueValues.filter(val => 
+              val.toLowerCase().includes(currentValue.toLowerCase())
+            ).slice(0, 10) // Show max 10 suggestions
+          : [];
+
+        return (
+          <div style={{ padding: 8 }}>
+            <Input
+              ref={searchInput}
+              placeholder={`Search ${title}`}
+              value={currentValue}
+              onChange={e => {
+                const val = e.target.value;
+                setSelectedKeys(val ? [val] : []);
+              }}
+              onPressEnter={() => {
+                handleSearch(selectedKeys, confirm, dataIndex);
+              }}
+              style={{ marginBottom: 8, display: 'block' }}
+            />
+            {filteredOptions.length > 0 && currentValue && (
+              <div style={{ 
+                maxHeight: 200, 
+                overflowY: 'auto', 
+                marginBottom: 8,
+                border: '1px solid #d9d9d9',
+                borderRadius: 4
+              }}>
+                {filteredOptions.map((option, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      backgroundColor: 'white',
+                      borderBottom: idx < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f0f0f0';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                    }}
+                    onClick={() => {
+                      setSelectedKeys([option]);
+                      handleSearch([option], confirm, dataIndex);
+                    }}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+            <Space>
+              <Button
+                type="primary"
+                onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                icon={<SearchOutlined />}
+                size="small"
+                style={{ width: 90 }}
+              >
+                Search
+              </Button>
+              <Button
+                onClick={() => {
+                  clearFilters();
+                  setSelectedKeys([]);
+                  setSearchText('');
+                  setSearchedColumn('');
+                  confirm({ closeDropdown: false });
+                }}
+                size="small"
+                style={{ width: 90 }}
+              >
+                Reset
+              </Button>
+            </Space>
+          </div>
+        );
+      },
+      filterIcon: (filtered: boolean) => (
+        <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
       ),
-  });
+      onFilter: (value: string, record: any) => {
+        // Handle nested dataIndex like "customer.name" or ["customer", "name"]
+        const getValue = (obj: any, path: string): any => {
+          if (Array.isArray(path)) {
+            return path.reduce((acc, key) => acc?.[key], obj);
+          }
+          return path.split('.').reduce((acc, key) => acc?.[key], obj);
+        };
+        
+        const fieldValue = getValue(record, dataIndex);
+        return fieldValue
+          ? fieldValue.toString().toLowerCase().includes(value.toLowerCase())
+          : false;
+      },
+      onFilterDropdownVisibleChange: (visible: boolean) => {
+        if (visible) {
+          setTimeout(() => searchInput.current?.select(), 100);
+        }
+      },
+      render: (text: string) =>
+        searchedColumn === dataIndex ? (
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[searchText]}
+            autoEscape
+            textToHighlight={text ? text.toString() : ''}
+          />
+        ) : (
+          text
+        ),
+    };
+  };
 
   const applyFilters = (values: any) => {
     console.log("Applied filters:", values);
-    // In a real implementation, you would update your API call with these filters
-    // For now, we'll just close the filter panel
-    setShowFilters(false);
+    setAdvancedFilters(values);
   };
 
   const resetFilters = () => {
     form.resetFields();
-    setShowFilters(false);
+    setAdvancedFilters({});
   };
+
+  // Filter data based on advanced filters
+  const filteredProject = useMemo(() => {
+    if (!project) return [];
+    
+    let filtered = [...project];
+    
+    // Apply advanced filters
+    if (advancedFilters.dateRange && advancedFilters.dateRange.length === 2) {
+      filtered = filtered.filter((p: any) => {
+        const startDate = moment(p.startingDate);
+        const endDate = moment(p.endingDate);
+        const [filterStart, filterEnd] = advancedFilters.dateRange;
+        return (
+          startDate.isSameOrAfter(filterStart, 'day') &&
+          endDate.isSameOrBefore(filterEnd, 'day')
+        );
+      });
+    }
+    
+    if (advancedFilters.clientId) {
+      filtered = filtered.filter((p: any) => p.customer?.id === advancedFilters.clientId);
+    }
+    
+    if (advancedFilters.projectLeadId) {
+      filtered = filtered.filter((p: any) => p.projectLead?.id === advancedFilters.projectLeadId);
+    }
+    
+    if (advancedFilters.projectManagerId) {
+      filtered = filtered.filter((p: any) => p.projectManager?.id === advancedFilters.projectManagerId);
+    }
+    
+    if (advancedFilters.natureOfWork) {
+      filtered = filtered.filter((p: any) => {
+        const natureId = typeof p.natureOfWork === 'object' ? p.natureOfWork?.id : p.natureOfWork;
+        return natureId === advancedFilters.natureOfWork;
+      });
+    }
+    
+    if (advancedFilters.status) {
+      filtered = filtered.filter((p: any) => p.status === advancedFilters.status);
+    }
+    
+    return filtered;
+  }, [project, advancedFilters]);
 
   const columns = (): TableProps<ProjectType>["columns"] => [
     {
@@ -138,6 +259,7 @@ const ProjectTable = ({ showModal, status }: any) => {
         return aName.localeCompare(bName);
       },
       sortOrder: sortedInfo.columnKey === 'natureOfWork' && sortedInfo.order,
+      ...getColumnSearchProps('natureOfWork.name', 'Nature Of Project'),
       filters: Array.from(
         new Set(project?.map((p: any) => {
           const name = typeof p.natureOfWork === 'object' ? p.natureOfWork?.name : p.natureOfWork;
@@ -158,8 +280,9 @@ const ProjectTable = ({ showModal, status }: any) => {
       title: "Client",
       dataIndex: ["customer", "name"],
       key: "client",
-      sorter: (a, b) => (a.customer?.name || '').localeCompare(b.customer?.name || ''),
+      sorter: (a: any, b: any) => (a.customer?.name || '').localeCompare(b.customer?.name || ''),
       sortOrder: sortedInfo.columnKey === 'client' && sortedInfo.order,
+      ...getColumnSearchProps('customer.name', 'Client'),
       filters: Array.from(
         new Set(project?.map((p: any) => p.customer?.name))
       )
@@ -172,8 +295,9 @@ const ProjectTable = ({ showModal, status }: any) => {
       title: "Manager",
       dataIndex: ["projectManager", "name"],
       key: "projectManager",
-      sorter: (a, b) => (a.projectManager?.name || '').localeCompare(b.projectManager?.name || ''),
+      sorter: (a: any, b: any) => (a.projectManager?.name || '').localeCompare(b.projectManager?.name || ''),
       sortOrder: sortedInfo.columnKey === 'projectManager' && sortedInfo.order,
+      ...getColumnSearchProps('projectManager.name', 'Manager'),
       filters: Array.from(
         new Set(project?.map((p: any) => p.projectManager?.name))
       )
@@ -237,8 +361,9 @@ const ProjectTable = ({ showModal, status }: any) => {
       title: "Lead",
       dataIndex: ["projectLead", "name"],
       key: "projectLead",
-      sorter: (a, b) => (a.projectLead?.name || '').localeCompare(b.projectLead?.name || ''),
+      sorter: (a: any, b: any) => (a.projectLead?.name || '').localeCompare(b.projectLead?.name || ''),
       sortOrder: sortedInfo.columnKey === 'projectLead' && sortedInfo.order,
+      ...getColumnSearchProps('projectLead.name', 'Lead'),
       filters: Array.from(
         new Set(project?.map((p: any) => p.projectLead?.name))
       )
@@ -266,7 +391,7 @@ const ProjectTable = ({ showModal, status }: any) => {
       key: "fiscalYear",
       sorter: (a, b) => (a.fiscalYear || 0) - (b.fiscalYear || 0),
       sortOrder: sortedInfo.columnKey === 'fiscalYear' && sortedInfo.order,
-      filters: Array.from(new Set(project?.map((p: any) => p.fiscalYear)))
+      filters: Array.from(new Set(filteredProject?.map((p: any) => p.fiscalYear)))
         .filter(Boolean)
         .map((fy: any) => {
           const endYear = (fy + 1).toString().slice(-2);
@@ -307,7 +432,7 @@ const ProjectTable = ({ showModal, status }: any) => {
   const paginationOptions = {
     current: page,
     pageSize: limit,
-    total: project?.length,
+    total: filteredProject?.length,
     showSizeChanger: true,
     showQuickJumper: true,
     pageSizeOptions: [5, 10, 20, 30, 50, 100],
@@ -329,7 +454,6 @@ const ProjectTable = ({ showModal, status }: any) => {
       <TableToolbar>
         <div className="flex w-full justify-between">
           <div className="flex items-center space-x-2">
-            <SearchBarWithPopover />
             <Button 
               icon={<FilterOutlined />} 
               onClick={() => setShowFilters(!showFilters)}
@@ -468,7 +592,7 @@ const ProjectTable = ({ showModal, status }: any) => {
         pagination={paginationOptions}
         rowSelection={rowSelection}
         showSorterTooltip={true}
-        dataSource={project}
+        dataSource={filteredProject}
         columns={columns()}
         onChange={handleTableChange}
         rowKey={"id"}

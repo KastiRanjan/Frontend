@@ -259,63 +259,119 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     setSearchText(selectedKeys[0]);
     setSearchedColumn(dataIndex);
   };
-
-  const handleReset = (clearFilters: any) => {
-    clearFilters();
-    setSearchText('');
-  };
   
   const handleTableChange = (pagination: any, filters: any, sorter: any) => {
     setSortedInfo(sorter);
   };
   
+  // Helper function to get value from nested path
+  const getValue = (obj: any, path: string) => {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+  };
+
+  // Helper function to get unique values for autocomplete
+  const getUniqueValues = (dataIndex: string, inputValue: string = '') => {
+    if (!filteredWorklogs) return [];
+    
+    const values = new Set<string>();
+    filteredWorklogs.forEach((record: any) => {
+      const value = getValue(record, dataIndex);
+      if (value) {
+        const strValue = value.toString();
+        if (strValue.toLowerCase().includes(inputValue.toLowerCase())) {
+          values.add(strValue);
+        }
+      }
+    });
+    
+    return Array.from(values).slice(0, 10);
+  };
+  
   const getColumnSearchProps = (dataIndex: string, title: string) => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          ref={searchInput}
-          placeholder={`Search ${title}`}
-          value={selectedKeys[0]}
-          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-          style={{ marginBottom: 8, display: 'block' }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-            icon={<SearchOutlined />}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Search
-          </Button>
-          <Button
-            onClick={() => handleReset(clearFilters)}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
-    ),
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => {
+      const inputValue = selectedKeys[0] || '';
+      const suggestions = getUniqueValues(dataIndex, inputValue);
+      
+      return (
+        <div style={{ padding: 8 }}>
+          <Input
+            ref={searchInput}
+            placeholder={`Search ${title}`}
+            value={inputValue}
+            onChange={e => {
+              const value = e.target.value;
+              setSelectedKeys(value ? [value] : []);
+            }}
+            onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            style={{ marginBottom: 8, display: 'block' }}
+          />
+          {inputValue && suggestions.length > 0 && (
+            <div style={{ 
+              maxHeight: 200, 
+              overflowY: 'auto', 
+              marginBottom: 8,
+              border: '1px solid #d9d9d9',
+              borderRadius: 4
+            }}>
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    borderBottom: index < suggestions.length - 1 ? '1px solid #f0f0f0' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f0f0f0';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                  onClick={() => {
+                    setSelectedKeys([suggestion]);
+                    handleSearch([suggestion], confirm, dataIndex);
+                  }}
+                >
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          )}
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+              icon={<SearchOutlined />}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Search
+            </Button>
+            <Button
+              onClick={() => {
+                clearFilters();
+                setSelectedKeys([]);
+                setSearchText('');
+                setSearchedColumn('');
+                confirm({ closeDropdown: false });
+              }}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
+      );
+    },
     filterIcon: (filtered: boolean) => (
       <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
     ),
     onFilter: (value: string, record: any) => {
-      if (dataIndex.includes('.')) {
-        const keys = dataIndex.split('.');
-        let nestedObj = record;
-        for (const key of keys) {
-          if (!nestedObj || !nestedObj[key]) return false;
-          nestedObj = nestedObj[key];
-        }
-        return nestedObj.toString().toLowerCase().includes(value.toLowerCase());
-      }
-      return record[dataIndex]
-        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
-        : '';
+      const recordValue = getValue(record, dataIndex);
+      return recordValue
+        ? recordValue.toString().toLowerCase().includes(value.toLowerCase())
+        : false;
     },
     onFilterDropdownOpenChange: (visible: boolean) => {
       if (visible) {

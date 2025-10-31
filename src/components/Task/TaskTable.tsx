@@ -496,13 +496,6 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
     }
   };
 
-  const handleReset = (clearFilters: () => void) => {
-    clearFilters();
-    setSearchText('');
-    setSearchedColumn('');
-    setExpandedRowKeys([]);
-  };
-
   const handleGlobalSearch = (value: string) => {
     setGlobalSearchText(value);
     
@@ -595,37 +588,128 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
     setSortedInfo(sorter);
   };
 
-  const getColumnSearchProps = (dataIndex: string, title: string): any => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          ref={searchInput}
-          placeholder={`Search ${title}`}
-          value={selectedKeys[0]}
-          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-          style={{ marginBottom: 8, display: 'block' }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-            icon={<SearchOutlined />}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Search
-          </Button>
-          <Button
-            onClick={() => handleReset(clearFilters)}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
-    ),
+  const getColumnSearchProps = (dataIndex: string, title: string): any => {
+    // Get unique values for autocomplete
+    const getUniqueValues = () => {
+      const getValue = (obj: any, path: string): any => {
+        if (path.includes('.')) {
+          const keys = path.split('.');
+          let val = obj;
+          for (const key of keys) {
+            if (!val) return null;
+            val = val[key];
+          }
+          return val;
+        }
+        
+        // Handle special taskType display mapping
+        if (path === 'taskType') {
+          return obj?.taskType === 'story' ? 'Task' : 'Subtask';
+        }
+        
+        return obj[path];
+      };
+
+      const values = new Set<string>();
+      enhancedData?.forEach((record: any) => {
+        const value = getValue(record, dataIndex);
+        if (value) {
+          values.add(value.toString());
+        }
+        // Also check children
+        if (record.children && Array.isArray(record.children)) {
+          record.children.forEach((child: any) => {
+            const childValue = getValue(child, dataIndex);
+            if (childValue) {
+              values.add(childValue.toString());
+            }
+          });
+        }
+      });
+      return Array.from(values).sort();
+    };
+
+    return {
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => {
+        const uniqueValues = getUniqueValues();
+        const currentValue = selectedKeys[0] || '';
+        const filteredOptions = currentValue 
+          ? uniqueValues.filter(val => 
+              val.toLowerCase().includes(currentValue.toLowerCase())
+            ).slice(0, 10)
+          : uniqueValues.slice(0, 10);
+
+        return (
+          <div style={{ padding: 8 }}>
+            <Input
+              ref={searchInput}
+              placeholder={`Search ${title}`}
+              value={currentValue}
+              onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+              onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+              style={{ marginBottom: 8, display: 'block' }}
+            />
+            {filteredOptions.length > 0 && (
+              <div style={{ 
+                maxHeight: 200, 
+                overflowY: 'auto', 
+                marginBottom: 8,
+                border: '1px solid #d9d9d9',
+                borderRadius: 4
+              }}>
+                {filteredOptions.map((option, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      backgroundColor: 'white',
+                      borderBottom: idx < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f0f0f0';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                    }}
+                    onClick={() => {
+                      setSelectedKeys([option]);
+                      handleSearch([option], confirm, dataIndex);
+                    }}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+            <Space>
+              <Button
+                type="primary"
+                onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                icon={<SearchOutlined />}
+                size="small"
+                style={{ width: 90 }}
+              >
+                Search
+              </Button>
+              <Button
+                onClick={() => {
+                  clearFilters();
+                  setSelectedKeys([]);
+                  setSearchText('');
+                  setSearchedColumn('');
+                  setExpandedRowKeys([]);
+                  confirm({ closeDropdown: false });
+                }}
+                size="small"
+                style={{ width: 90 }}
+              >
+                Reset
+              </Button>
+            </Space>
+          </div>
+        );
+      },
     filterIcon: (filtered: boolean) => (
       <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
     ),
@@ -662,7 +746,7 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
         return rec[dataIndex]
           ? rec[dataIndex].toString().toLowerCase().includes(searchValue)
           : false;
-    };
+      };
 
       // Check if the current record (parent) matches the search
       const parentMatches = recordMatches(record);
@@ -714,7 +798,8 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
         text
       );
     },
-  });
+    };
+  };
 
   const isEditing = (record: ExtendedTaskType) => String(record.id) === editingKey;
 

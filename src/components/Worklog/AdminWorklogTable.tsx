@@ -4,7 +4,7 @@ import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { SearchOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined, PlusOutlined, FilterOutlined, ClearOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 import { useAllWorklog, WorklogFilters } from "@/hooks/worklog/useAllWorklog";
@@ -26,6 +26,7 @@ const AdminWorklogTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [rejectedRemark, setRejectedRemark] = useState("");
+  const [worklogTypeFilter, setWorklogTypeFilter] = useState<string | undefined>(undefined);
   
   // For search functionality
   const [searchText, setSearchText] = useState('');
@@ -75,7 +76,21 @@ const AdminWorklogTable = () => {
   // Fetch active workhour for the current user's role
   const { data: activeWorkhour } = useActiveWorkhour(
     currentUser?.roleId
-  );  const toggleDescription = (id: string) => {
+  );
+  
+  // Filter worklogs by worklog type
+  const filteredWorklogs = useMemo(() => {
+    if (!worklogs) return [];
+    
+    if (!worklogTypeFilter) return worklogs;
+    
+    return worklogs.filter((worklog: any) => {
+      const worklogType = getWorklogType(worklog, activeWorkhour);
+      return worklogType === worklogTypeFilter;
+    });
+  }, [worklogs, worklogTypeFilter, activeWorkhour]);
+  
+  const toggleDescription = (id: string) => {
     setExpandedRows(prev =>
       prev.includes(id)
         ? prev.filter(rowId => rowId !== id)
@@ -102,63 +117,119 @@ const AdminWorklogTable = () => {
     setSearchText(selectedKeys[0]);
     setSearchedColumn(dataIndex);
   };
-
-  const handleReset = (clearFilters: any) => {
-    clearFilters();
-    setSearchText('');
-  };
   
   const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
     setSortedInfo(sorter);
   };
   
+  // Helper function to get value from nested path
+  const getValue = (obj: any, path: string) => {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+  };
+
+  // Helper function to get unique values for autocomplete
+  const getUniqueValues = (dataIndex: string, inputValue: string = '') => {
+    if (!worklogs) return [];
+    
+    const values = new Set<string>();
+    worklogs.forEach((record: any) => {
+      const value = getValue(record, dataIndex);
+      if (value) {
+        const strValue = value.toString();
+        if (strValue.toLowerCase().includes(inputValue.toLowerCase())) {
+          values.add(strValue);
+        }
+      }
+    });
+    
+    return Array.from(values).slice(0, 10);
+  };
+  
   const getColumnSearchProps = (dataIndex: string, title: string) => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          ref={searchInput}
-          placeholder={`Search ${title}`}
-          value={selectedKeys[0]}
-          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-          style={{ marginBottom: 8, display: 'block' }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-            icon={<SearchOutlined />}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Search
-          </Button>
-          <Button
-            onClick={() => handleReset(clearFilters)}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
-    ),
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => {
+      const inputValue = selectedKeys[0] || '';
+      const suggestions = getUniqueValues(dataIndex, inputValue);
+      
+      return (
+        <div style={{ padding: 8 }}>
+          <Input
+            ref={searchInput}
+            placeholder={`Search ${title}`}
+            value={inputValue}
+            onChange={e => {
+              const value = e.target.value;
+              setSelectedKeys(value ? [value] : []);
+            }}
+            onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            style={{ marginBottom: 8, display: 'block' }}
+          />
+          {inputValue && suggestions.length > 0 && (
+            <div style={{ 
+              maxHeight: 200, 
+              overflowY: 'auto', 
+              marginBottom: 8,
+              border: '1px solid #d9d9d9',
+              borderRadius: 4
+            }}>
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    borderBottom: index < suggestions.length - 1 ? '1px solid #f0f0f0' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f0f0f0';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                  onClick={() => {
+                    setSelectedKeys([suggestion]);
+                    handleSearch([suggestion], confirm, dataIndex);
+                  }}
+                >
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          )}
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+              icon={<SearchOutlined />}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Search
+            </Button>
+            <Button
+              onClick={() => {
+                clearFilters();
+                setSelectedKeys([]);
+                setSearchText('');
+                setSearchedColumn('');
+                confirm({ closeDropdown: false });
+              }}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
+      );
+    },
     filterIcon: (filtered: boolean) => (
       <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
     ),
     onFilter: (value: string, record: any) => {
-      if (dataIndex.includes('.')) {
-        const keys = dataIndex.split('.');
-        let nestedObj = record;
-        for (const key of keys) {
-          if (!nestedObj || !nestedObj[key]) return false;
-          nestedObj = nestedObj[key];
-        }
-        return nestedObj.toString().toLowerCase().includes(value.toLowerCase());
-      }
-      return record[dataIndex]
-        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
-        : '';
+      const recordValue = getValue(record, dataIndex);
+      return recordValue
+        ? recordValue.toString().toLowerCase().includes(value.toLowerCase())
+        : false;
     },
     onFilterDropdownOpenChange: (visible: boolean) => {
       if (visible) {
@@ -223,6 +294,7 @@ const AdminWorklogTable = () => {
   // Clear all filters
   const clearFilters = () => {
     setFilters({});
+    setWorklogTypeFilter(undefined);
   };
 
   // Dynamically determine which columns to show based on worklog status
@@ -687,6 +759,27 @@ const AdminWorklogTable = () => {
             </Form.Item>
           </div>
           
+          <div style={{ width: '150px' }}>
+            <Form.Item label="Worklog Type" style={{ marginBottom: '2px' }}>
+              <Select
+                placeholder="Worklog Type"
+                allowClear
+                size="small"
+                style={{ width: '100%' }}
+                value={worklogTypeFilter}
+                onChange={(value) => setWorklogTypeFilter(value)}
+                dropdownStyle={{ minWidth: '110px' }}
+              >
+                <Select.Option value={WorklogStatus.NORMAL}>Normal</Select.Option>
+                <Select.Option value={WorklogStatus.EARLY}>Early</Select.Option>
+                <Select.Option value={WorklogStatus.LATE}>Late</Select.Option>
+                <Select.Option value={WorklogStatus.LATE_APPROVED}>Late Approved</Select.Option>
+                <Select.Option value={WorklogStatus.LATE_UNAPPROVED}>Late Unapproved</Select.Option>
+                <Select.Option value={WorklogStatus.REJECTED_THEN_APPROVED}>Rejected Then Approved</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
+          
           <div className="flex gap-1">
             <Tooltip title="Clear Filters">
               <Button type="default" size="small" icon={<ClearOutlined />} onClick={clearFilters} style={{ padding: '0 4px', height: '20px' }} className="action-btn" />
@@ -700,7 +793,7 @@ const AdminWorklogTable = () => {
       <div className="table-container admin-worklog-table" style={{ overflowX: 'auto', width: '100%' }}>
         <Table
           loading={isPending || isEditPending}
-          dataSource={worklogs || []}
+          dataSource={filteredWorklogs || []}
           columns={getColumns() as any}
           size="small"
           className="text-xs compact-table admin-worklog-table"
