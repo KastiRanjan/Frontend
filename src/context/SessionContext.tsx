@@ -73,13 +73,33 @@ export const SessionProvider = ({
     }
   }, [error]);
 
-  // Check user status and automatically log out blocked/suspended users
+  // Check user status and automatically log out blocked/suspended/inactive users
   useEffect(() => {
     if (profile && profile.status && ['suspended', 'inactive', 'blocked'].includes(profile.status)) {
       console.log('SessionProvider: User status requires logout:', profile.status);
       setIsAuthenticated(false);
       setLoading(false);
-      // You might want to show a message here about account status
+      
+      // Clear authentication data
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('userId');
+      
+      // Redirect to login with a message
+      if (typeof window !== 'undefined') {
+        const statusMessages = {
+          'inactive': 'Your account is inactive. Please contact the administrator.',
+          'blocked': 'Your account has been blocked. Please contact the administrator.',
+          'suspended': 'Your account has been suspended. Please contact the administrator.',
+        };
+        
+        const message = statusMessages[profile.status as keyof typeof statusMessages] || 'Account access restricted.';
+        
+        // Store message in sessionStorage to display on login page
+        sessionStorage.setItem('loginMessage', message);
+        
+        // Redirect to login
+        window.location.href = '/login';
+      }
     }
   }, [profile]);
 

@@ -4,10 +4,20 @@ import { useLogin } from "@/hooks/auth/useLogin";
 import FormInputWrapper from "../FormInputWrapper";
 import Title from "antd/es/typography/Title";
 import Paragraph from "antd/es/typography/Paragraph";
+import { useEffect } from "react";
 
 export const LoginForm = () => {
   const [form] = Form.useForm();
   const login = useLogin();
+
+  // Check for any stored message from session and display it
+  useEffect(() => {
+    const storedMessage = sessionStorage.getItem('loginMessage');
+    if (storedMessage) {
+      message.warning(storedMessage);
+      sessionStorage.removeItem('loginMessage');
+    }
+  }, []);
 
   const onFinish = (values: any) => {
     // Always lowercase the username before submitting
@@ -20,7 +30,17 @@ export const LoginForm = () => {
         message.success("Login successful!");
       },
       onError: (error: any) => {
-        message.error(error?.response?.data?.message || "Login failed!");
+        const errorMessage = error?.response?.data?.message || "Login failed!";
+        const errorCode = error?.response?.data?.code;
+        
+        // Handle specific error codes
+        if (errorCode === 1012 || errorMessage.toLowerCase().includes('inactive')) {
+          message.error("Your account is inactive. Please contact the administrator.");
+        } else if (errorMessage.toLowerCase().includes('invalid') || errorMessage.toLowerCase().includes('credential')) {
+          message.error("Invalid username or password.");
+        } else {
+          message.error(errorMessage);
+        }
       },
     });
   };
