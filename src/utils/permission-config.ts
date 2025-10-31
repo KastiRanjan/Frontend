@@ -39,5 +39,11 @@ export const permissionConfig = {
   
   // Dashboard permissions
   VIEW_DASHBOARD_ATTENDANCE: 'dashboard:attendance:get',
-  VIEW_DASHBOARD_WORKING_TIME: 'dashboard:working-time:get'
+  VIEW_DASHBOARD_WORKING_TIME: 'dashboard:working-time:get',
+  
+  // Leave balance management permissions
+  ALLOCATE_LEAVE: 'allocate_leave',
+  ALLOCATE_LEAVE_ALL: 'allocate_leave_all',
+  CARRY_OVER_LEAVE: 'carry_over_leave',
+  VIEW_LEAVE_BALANCES: 'view_leave_balances'
 };

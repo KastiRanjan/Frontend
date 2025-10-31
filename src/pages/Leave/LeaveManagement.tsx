@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
   Button, 
@@ -26,7 +27,8 @@ import {
   CloseCircleOutlined,
   ClockCircleOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import moment from 'moment';
@@ -55,6 +57,8 @@ import {
   canViewUserLeaves as checkCanViewUserLeaves,
   hasAnyLeaveApprovalPermission as checkHasAnyLeaveApprovalPermission
 } from '../../utils/permissionHelpers';
+import { hasPermission } from '@/utils/utils';
+import { permissionConfig } from '@/utils/permission-config';
 
 const { Title, Text } = Typography;
 
@@ -65,6 +69,7 @@ interface LeaveManagementProps {
 const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId }) => {
   const { profile, permissions } = useSession();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const userId = profileUserId || (profile as any)?.id;
   
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -84,6 +89,9 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
   
   // Check if user can view other users' leaves
   const canViewUserLeaves = permissionsArr.length > 0 ? checkCanViewUserLeaves(permissionsArr) : false;
+  
+  // Check if user can allocate leave (admin permission)
+  const canAllocateLeave = hasPermission(permissionConfig.ALLOCATE_LEAVE);
 
   // Fetch user's leave balances
   const { data: balances = [], isLoading: balancesLoading } = useQuery({
@@ -704,8 +712,17 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
 
   return (
     <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={2}>Leave Management</Title>
+        {canAllocateLeave && (
+          <Button
+            type="default"
+            icon={<SettingOutlined />}
+            onClick={() => navigate('/leave-balance-management')}
+          >
+            Manage Leave Balances
+          </Button>
+        )}
       </div>
 
       {/* Leave Balances */}

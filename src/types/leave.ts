@@ -13,6 +13,9 @@ export interface LeaveType {
     id: string;
     name: string;
     maxDaysPerYear?: number;
+    isEmergency?: boolean;
+    allowCarryOver?: boolean;
+    maxCarryOverDays?: number;
     isActive: boolean;
   };
   startDate: string;
@@ -66,4 +69,38 @@ export interface UpdateLeaveDto {
   endDate?: string;
   type?: string;
   reason?: string;
+}
+
+// Leave Balance Types
+export interface LeaveBalance {
+  leaveType: {
+    id: string;
+    name: string;
+    maxDaysPerYear?: number;
+    isEmergency?: boolean;
+    allowCarryOver?: boolean;
+    maxCarryOverDays?: number;
+    isActive: boolean;
+  };
+  allocatedDays: number;
+  carriedOverDays: number;
+  totalAvailableDays: number;
+  usedDays: number;
+  pendingDays: number;
+  remainingDays: number;
+}
+
+export interface AllocateLeaveDto {
+  userId: string;
+  leaveTypeId: string;
+  year: number;
+  allocatedDays: number;
+  carriedOverDays?: number;
+}
+
+export interface CarryOverLeaveDto {
+  fromYear: number;
+  toYear: number;
+  userIds?: string[];
+  leaveTypeIds?: string[];
 }

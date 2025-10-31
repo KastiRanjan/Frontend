@@ -135,6 +135,9 @@ const LeaveTypeManager: React.FC = () => {
       name: leaveType.name,
       description: leaveType.description,
       maxDaysPerYear: leaveType.maxDaysPerYear,
+      isEmergency: leaveType.isEmergency || false,
+      allowCarryOver: leaveType.allowCarryOver || false,
+      maxCarryOverDays: leaveType.maxCarryOverDays,
     });
     setIsModalVisible(true);
   };
@@ -204,6 +207,28 @@ const LeaveTypeManager: React.FC = () => {
       sorter: (a: LeaveType, b: LeaveType) => (a.maxDaysPerYear || 0) - (b.maxDaysPerYear || 0),
       sortOrder: sortedInfo.columnKey === 'maxDaysPerYear' && sortedInfo.order,
       render: (value: number) => value ? `${value} days` : 'Unlimited',
+    },
+    {
+      title: 'Emergency',
+      dataIndex: 'isEmergency',
+      key: 'isEmergency',
+      render: (value: boolean) => value ? <Tag color="orange">Emergency</Tag> : <Tag>Regular</Tag>,
+    },
+    {
+      title: 'Carry Over',
+      dataIndex: 'allowCarryOver',
+      key: 'allowCarryOver',
+      render: (value: boolean, record: LeaveType) => {
+        if (!value) return <Tag>No</Tag>;
+        return (
+          <Space direction="vertical" size={0}>
+            <Tag color="green">Yes</Tag>
+            {record.maxCarryOverDays && (
+              <span style={{ fontSize: '11px' }}>Max: {record.maxCarryOverDays}</span>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: 'Status',
@@ -294,6 +319,9 @@ const LeaveTypeManager: React.FC = () => {
           onFinish={handleSubmit}
           initialValues={{
             maxDaysPerYear: null,
+            isEmergency: false,
+            allowCarryOver: false,
+            maxCarryOverDays: null,
           }}
         >
           <Form.Item
@@ -332,6 +360,48 @@ const LeaveTypeManager: React.FC = () => {
               placeholder="e.g., 30"
               style={{ width: '100%' }}
             />
+          </Form.Item>
+
+          <Form.Item
+            label="Emergency Leave"
+            name="isEmergency"
+            valuePropName="checked"
+            help="Emergency leaves can be requested for today"
+          >
+            <Switch />
+          </Form.Item>
+
+          <Form.Item
+            label="Allow Carry Over"
+            name="allowCarryOver"
+            valuePropName="checked"
+            help="Allow unused leave to carry over to next year"
+          >
+            <Switch />
+          </Form.Item>
+
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => 
+              prevValues.allowCarryOver !== currentValues.allowCarryOver
+            }
+          >
+            {({ getFieldValue }) =>
+              getFieldValue('allowCarryOver') ? (
+                <Form.Item
+                  label="Maximum Carry Over Days"
+                  name="maxCarryOverDays"
+                  help="Leave blank for unlimited carry over"
+                >
+                  <InputNumber
+                    min={1}
+                    max={365}
+                    placeholder="e.g., 5"
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              ) : null
+            }
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>

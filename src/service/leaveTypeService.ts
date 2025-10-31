@@ -7,6 +7,9 @@ export interface LeaveType {
   name: string;
   description?: string;
   maxDaysPerYear?: number;
+  isEmergency?: boolean;
+  allowCarryOver?: boolean;
+  maxCarryOverDays?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -16,20 +19,29 @@ export interface CreateLeaveTypeDto {
   name: string;
   description?: string;
   maxDaysPerYear?: number;
+  isEmergency?: boolean;
+  allowCarryOver?: boolean;
+  maxCarryOverDays?: number;
 }
 
 export interface UpdateLeaveTypeDto {
   name?: string;
   description?: string;
   maxDaysPerYear?: number;
+  isEmergency?: boolean;
+  allowCarryOver?: boolean;
+  maxCarryOverDays?: number;
   isActive?: boolean;
 }
 
 export interface LeaveBalance {
   leaveType: LeaveType;
-  maxDays: number | null;
+  allocatedDays: number;
+  carriedOverDays: number;
+  totalAvailableDays: number;
   usedDays: number;
-  remainingDays: number | null;
+  pendingDays: number;
+  remainingDays: number;
 }
 
 export const leaveTypeService = {

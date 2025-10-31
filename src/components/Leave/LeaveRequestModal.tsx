@@ -385,6 +385,52 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({
           </Radio.Group>
         </Form.Item>
 
+        {/* Emergency Leave Warning */}
+        <Form.Item dependencies={['type', 'dateRange', 'customDates']} noStyle>
+          {({ getFieldValue }) => {
+            const selectedTypeName = getFieldValue('type');
+            const selectedType = validLeaveTypes.find(
+              (t: any) => t.name === selectedTypeName
+            );
+            
+            const dateRange = getFieldValue('dateRange');
+            const customDates = getFieldValue('customDates');
+            
+            const today = moment().startOf('day');
+            const hasToday = dateSelectionType === 'range' 
+              ? dateRange && dateRange[0] && moment(dateRange[0]).isSame(today, 'day')
+              : customDates && Array.isArray(customDates) && customDates.some((d: any) => moment(d).isSame(today, 'day'));
+            
+            if (selectedType && !selectedType.isEmergency && hasToday) {
+              return (
+                <Alert
+                  message="Same-Day Leave Not Allowed"
+                  description={`"${selectedType.name}" cannot be requested for today. Only emergency leave types can be requested for the same day. Please select a future date.`}
+                  type="warning"
+                  showIcon
+                  className="mb-4"
+                  style={{ marginBottom: '16px' }}
+                />
+              );
+            }
+            
+            if (selectedType && selectedType.isEmergency) {
+              return (
+                <Alert
+                  message="Emergency Leave"
+                  description={`"${selectedType.name}" is an emergency leave type and can be requested for today.`}
+                  type="info"
+                  showIcon
+                  className="mb-4"
+                  style={{ marginBottom: '16px' }}
+                />
+              );
+            }
+            
+            return null;
+          }}
+        </Form.Item>
+
         {dateSelectionType === 'range' ? (
           <Form.Item
             name="dateRange"

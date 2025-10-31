@@ -62,6 +62,7 @@ import CreateRole from "@/pages/Role/new";
 import EditRole from "@/pages/Role/edit";
 import PermissionAssignmentManager from "@/pages/Permission/AssignmentManager";
 import LeaveTypeManagementPage from "@/pages/LeaveTypeManagementPage";
+import LeaveBalanceManagement from "@/pages/Admin/LeaveBalanceManagement";
 import TodoTaskPage from "@/pages/TodoTask";
 import TaskTypeSettings from "@/pages/TodoTask/TaskTypeSettings";
 import NoticeBoardPage from "@/pages/NoticeBoard";
@@ -455,6 +456,16 @@ const Router = [
       method="get"
       resource="leave"
       component={<LeaveManagement />}
+    />
+  ),
+},
+{
+  path: "/leave-balance-management",
+  element: (
+    <ProtectedRoute
+      method="post"
+      resource="leave"
+      component={<LeaveBalanceManagement />}
     />
   ),
 },

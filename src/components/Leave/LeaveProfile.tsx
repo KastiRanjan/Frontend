@@ -337,24 +337,31 @@ const LeaveProfile: React.FC<LeaveProfileProps> = ({
                   <Card size="small" style={{ textAlign: 'center' }}>
                     <Statistic
                       title={balance.leaveType.name}
-                      value={balance.remainingDays || 'Unlimited'}
-                      suffix={balance.maxDays ? `/ ${balance.maxDays}` : ''}
+                      value={balance.remainingDays}
+                      suffix={balance.totalAvailableDays ? `/ ${balance.totalAvailableDays}` : ''}
                       valueStyle={{ 
-                        color: balance.remainingDays && balance.remainingDays < 5 ? '#ff4d4f' : '#3f8600' 
+                        color: balance.remainingDays < 5 ? '#ff4d4f' : '#3f8600' 
                       }}
                     />
-                    {balance.maxDays && (
+                    {balance.totalAvailableDays > 0 && (
                       <Progress
-                        percent={Math.round(((balance.maxDays - balance.remainingDays) / balance.maxDays) * 100)}
+                        percent={Math.round((balance.usedDays / balance.totalAvailableDays) * 100)}
                         size="small"
                         status={balance.remainingDays < 3 ? 'exception' : 'normal'}
                         showInfo={false}
                         style={{ marginTop: '8px' }}
                       />
                     )}
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      Used: {balance.usedDays} days
-                    </Text>
+                    <Space direction="vertical" size={0} style={{ fontSize: '12px', marginTop: '4px', width: '100%' }}>
+                      <Text type="secondary">Allocated: {balance.allocatedDays} days</Text>
+                      {balance.carriedOverDays > 0 && (
+                        <Text style={{ color: '#52c41a' }}>Carried Over: +{balance.carriedOverDays} days</Text>
+                      )}
+                      <Text type="secondary">Used: {balance.usedDays} days</Text>
+                      {balance.pendingDays > 0 && (
+                        <Text type="warning">Pending: {balance.pendingDays} days</Text>
+                      )}
+                    </Space>
                   </Card>
                 </Col>
               ))}

@@ -144,3 +144,39 @@ export const getPendingApprovals = async () => {
   const response = await axios.get(`${backendURI}/leave/approvals/pending`);
   return response.data;
 };
+
+// Leave Balance Management APIs
+export const allocateLeaveToUser = async (payload: {
+  userId: string;
+  leaveTypeId: string;
+  year: number;
+  allocatedDays: number;
+  carriedOverDays?: number;
+}) => {
+  const response = await axios.post(`${backendURI}/leave/balance/allocate`, payload);
+  return response.data;
+};
+
+export const allocateLeaveToAllUsers = async (payload: {
+  leaveTypeId: string;
+  year: number;
+  allocatedDays: number;
+}) => {
+  const response = await axios.post(`${backendURI}/leave/balance/allocate-all`, payload);
+  return response.data;
+};
+
+export const carryOverLeave = async (payload: {
+  fromYear: number;
+  toYear: number;
+  userIds?: string[];
+  leaveTypeIds?: string[];
+}) => {
+  const response = await axios.post(`${backendURI}/leave/balance/carry-over`, payload);
+  return response.data;
+};
+
+export const getUserLeaveBalancesByYear = async (userId: string, year: number) => {
+  const response = await axios.get(`${backendURI}/leave/balance/user/${userId}/year/${year}`);
+  return response.data;
+};
