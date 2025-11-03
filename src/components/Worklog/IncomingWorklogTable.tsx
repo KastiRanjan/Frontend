@@ -120,7 +120,11 @@ const columns = (
         ) : "-";
       }
     },
-    {
+  ];
+
+  // Only add the dynamic status column for approved and rejected statuses
+  if (status.toLowerCase() !== 'requested') {
+    baseColumns.push({
       title: getStatusTitle(status),
       dataIndex: "userId",
       key: "userId",
@@ -130,12 +134,7 @@ const columns = (
       render: (_: any, record: any) => {
         let user = null;
         let extra = null;
-        if (status.toLowerCase() === 'requested') {
-          user = record?.user || record?.createdByUser;
-          if (record?.requestedAt) {
-            extra = <span>Requested At: {new Date(record.requestedAt).toLocaleString()}</span>;
-          }
-        } else if (status.toLowerCase() === 'approved') {
+        if (status.toLowerCase() === 'approved') {
           user = record?.approvedByUser;
           if (record?.approvedAt) {
             extra = <span>Approved At: {new Date(record.approvedAt).toLocaleString()}</span>;
@@ -157,8 +156,8 @@ const columns = (
           </Tooltip>
         ) : "-";
       }
-    },
-  ];
+    });
+  }
 
   // Removed Rejection Remark column as remark is now shown in tooltip
 
