@@ -1,11 +1,11 @@
-import { Card, Button, Checkbox, Col, Form, InputNumber, Row, Switch, message, Select, DatePicker } from "antd";
+import { Card, Button, Checkbox, Col, Form, InputNumber, Row, message, Select, DatePicker, Tag } from "antd";
 import dayjs from 'dayjs';
 import Title from "antd/es/typography/Title";
 import FormInputWrapper from "../FormInputWrapper";
 import FormSelectWrapper from "../FormSelectWrapper";
 import { useCreateUserDetail } from "@/hooks/user/userCreateuserDetail";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { 
   countries, 
@@ -17,7 +17,7 @@ import { fetchDepartments, Department } from "@/service/department.service";
 
 // Define TypeScript interface for form values
 interface PersonalDetailFormValues {
-  department: string;
+  departmentId: string;
   location?: string;
   bloodGroup?: string;
   maritalStatus?: string;
@@ -49,9 +49,10 @@ interface PersonalDetailFormValues {
 
 interface PersonalDetailFormProps {
   initialValues?: Partial<PersonalDetailFormValues>;
+  userData?: any;
 }
 
-const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
+const PersonalDetailForm = ({ initialValues, userData }: PersonalDetailFormProps) => {
   const [form] = Form.useForm<PersonalDetailFormValues>();
   const mutation = useCreateUserDetail();
   const { mutate } = mutation;
@@ -69,9 +70,30 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
   const [temporaryState, setTemporaryState] = useState<string | null>(null);
   const [temporaryDistrict, setTemporaryDistrict] = useState<string | null>(null);
   
+  // Process initial values to convert date string to dayjs
+  const processedInitialValues = useMemo(() => {
+    if (!initialValues) return undefined;
+    
+    const processed = { ...initialValues };
+    
+    // Convert dateOfBirth to dayjs object
+    if (processed.dateOfBirth) {
+      const dateObj = dayjs(processed.dateOfBirth);
+      if (dateObj.isValid()) {
+        processed.dateOfBirth = dateObj;
+      }
+    }
+    
+    console.log('useMemo processedInitialValues:', processed);
+    
+    return processed;
+  }, [initialValues]);
+  
   // Update local state when initialValues change
   useEffect(() => {
-    console.log('PersonalDetailForm initialValues:', initialValues);
+    console.log('===== PersonalDetailForm Debug =====');
+    console.log('initialValues:', initialValues);
+    console.log('userData:', userData);
     
     if (initialValues) {
       setPermanentCountry(initialValues.permanentAddressCountry || null);
@@ -85,6 +107,9 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
       // Convert date string to dayjs object if it exists
       const formValues = {...initialValues};
       
+      console.log('Raw dateOfBirth:', formValues.dateOfBirth);
+      console.log('Raw departmentId:', formValues.departmentId);
+      
       if (formValues.dateOfBirth) {
         try {
           // Parse the string date into a dayjs object
@@ -92,21 +117,29 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
           // Check if the date is valid
           if (dateObj.isValid()) {
             formValues.dateOfBirth = dateObj;
-            console.log('Converted date of birth to dayjs object:', dateObj.format('YYYY-MM-DD'));
+            console.log('✓ Converted date of birth to dayjs:', dateObj.format('YYYY-MM-DD'));
           } else {
-            console.warn('Invalid date of birth format:', initialValues.dateOfBirth);
+            console.warn('✗ Invalid date of birth format:', initialValues.dateOfBirth);
             formValues.dateOfBirth = undefined;
           }
         } catch (error) {
-          console.error('Error parsing date of birth:', error);
+          console.error('✗ Error parsing date of birth:', error);
           formValues.dateOfBirth = undefined;
         }
       }
       
+      console.log('Form values to set:', formValues);
+      
       // Initialize form fields with processed initial values
-      form.setFieldsValue(formValues);
+      // Use setTimeout to ensure form is ready
+      setTimeout(() => {
+        form.setFieldsValue(formValues);
+        const currentValues = form.getFieldsValue();
+        console.log('✓ Form values after setting:', currentValues);
+        console.log('===== End Debug =====');
+      }, 100);
     }
-  }, [initialValues, form]);
+  }, [initialValues, userData, form]);
   
   // Fetch departments when component mounts
   useEffect(() => {
@@ -136,8 +169,8 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
     });
 
     // Department is required, so ensure it's included
-    if (!cleanedValues.department && values.department) {
-      cleanedValues.department = values.department;
+    if (!cleanedValues.departmentId && values.departmentId) {
+      cleanedValues.departmentId = values.departmentId;
     }
     
     // If "Same as Permanent Address" is checked, copy permanent address fields
@@ -225,15 +258,72 @@ const PersonalDetailForm = ({ initialValues }: PersonalDetailFormProps) => {
     <Form
       form={form}
       layout="vertical"
-      initialValues={initialValues}
+      initialValues={processedInitialValues}
       onFinish={onFinish}
     >
+      {userData && (
+        <Card style={{ marginBottom: "20px", backgroundColor: "#f0f7ff", border: "1px solid #d6e4ff" }}>
+          <Title level={5} style={{ marginBottom: "16px", color: "#1890ff" }}>
+            <span style={{ fontSize: "16px" }}>🔐</span> Authentication Details (Read-Only)
+          </Title>
+          <Row gutter={[16, 16]}>
+            <Col span={8}>
+              <div style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px" }}>
+                <div style={{ color: "#8c8c8c", fontSize: "12px", marginBottom: "4px" }}>Username</div>
+                <div style={{ fontWeight: 500 }}>{userData.username || 'N/A'}</div>
+              </div>
+            </Col>
+            <Col span={8}>
+              <div style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px" }}>
+                <div style={{ color: "#8c8c8c", fontSize: "12px", marginBottom: "4px" }}>Email</div>
+                <div style={{ fontWeight: 500 }}>{userData.email}</div>
+              </div>
+            </Col>
+            <Col span={8}>
+              <div style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px" }}>
+                <div style={{ color: "#8c8c8c", fontSize: "12px", marginBottom: "4px" }}>Phone Number</div>
+                <div style={{ fontWeight: 500 }}>{userData.phoneNumber || 'N/A'}</div>
+              </div>
+            </Col>
+            <Col span={8}>
+              <div style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px" }}>
+                <div style={{ color: "#8c8c8c", fontSize: "12px", marginBottom: "4px" }}>Role</div>
+                <div style={{ fontWeight: 500 }}>
+                  <Tag color="blue">{userData.role?.displayName || userData.role?.name || 'N/A'}</Tag>
+                </div>
+              </div>
+            </Col>
+            <Col span={8}>
+              <div style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px" }}>
+                <div style={{ color: "#8c8c8c", fontSize: "12px", marginBottom: "4px" }}>Status</div>
+                <div style={{ fontWeight: 500 }}>
+                  <Tag color={userData.status === 'active' ? 'green' : 'red'}>{userData.status}</Tag>
+                </div>
+              </div>
+            </Col>
+            <Col span={8}>
+              <div style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px" }}>
+                <div style={{ color: "#8c8c8c", fontSize: "12px", marginBottom: "4px" }}>2FA Status</div>
+                <div style={{ fontWeight: 500 }}>
+                  {userData.isTwoFAEnabled ? (
+                    <Tag color="success">✓ Enabled</Tag>
+                  ) : (
+                    <Tag>✗ Disabled</Tag>
+                  )}
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </Card>
+      )}
+      
       <Card style={{ marginBottom: "20px" }}>
+        <Title level={4}>Personal Details</Title>
         <Row gutter={16}>
           <Col span={8}>
             <FormSelectWrapper
-              id="department"
-              name="department"
+              id="departmentId"
+              name="departmentId"
               label="Department"
               rules={[{ required: true, message: "Please select a department!" }]}
               options={departments.map(dept => ({ value: dept.id, label: dept.name }))}
