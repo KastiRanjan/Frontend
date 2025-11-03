@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -28,8 +28,10 @@ import {
   ClockCircleOutlined,
   EditOutlined,
   DeleteOutlined,
-  SettingOutlined
+  SettingOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import moment from 'moment';
 import { useSession } from '../../context/SessionContext';
@@ -77,6 +79,131 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [leaveToEdit, setLeaveToEdit] = useState<LeaveType | null>(null);
+  
+  // For search functionality
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<any>(null);
+
+  // Helper function to get unique values for autocomplete
+  const getUniqueValues = (dataSource: any[], dataIndex: string | string[]) => {
+    if (!dataSource) return [];
+    
+    const values = dataSource.map((item: any) => {
+      if (Array.isArray(dataIndex)) {
+        let value = item;
+        for (const key of dataIndex) {
+          value = value?.[key];
+        }
+        return value;
+      }
+      return item[dataIndex];
+    }).filter(Boolean);
+    
+    return [...new Set(values)];
+  };
+
+  const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: any, confirm: any) => {
+    clearFilters();
+    setSearchText('');
+    setSearchedColumn('');
+    confirm({ closeDropdown: false });
+  };
+
+  const getColumnSearchProps = (dataSource: any[], dataIndex: any, columnName: string) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => {
+      const uniqueValues = getUniqueValues(dataSource, dataIndex);
+      const [currentValue, setCurrentValue] = useState('');
+
+      const filteredOptions = currentValue
+        ? uniqueValues.filter((value: any) =>
+            value?.toString().toLowerCase().includes(currentValue.toLowerCase())
+          )
+        : uniqueValues.slice(0, 10);
+
+      return (
+        <div style={{ padding: 8 }}>
+          <Select
+            ref={searchInput}
+            placeholder={`Search ${columnName}`}
+            value={selectedKeys[0]}
+            onChange={(value) => {
+              setSelectedKeys(value ? [value] : []);
+              setCurrentValue('');
+            }}
+            onSearch={(value) => setCurrentValue(value)}
+            showSearch
+            allowClear
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            filterOption={false}
+            onDropdownVisibleChange={(open) => {
+              if (open) {
+                setCurrentValue('');
+              }
+            }}
+          >
+            {filteredOptions.map((value: any, index: number) => (
+              <Select.Option key={`${value}-${index}`} value={value}>
+                {value}
+              </Select.Option>
+            ))}
+          </Select>
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+              icon={<SearchOutlined />}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Search
+            </Button>
+            <Button
+              onClick={() => clearFilters && handleReset(clearFilters, confirm)}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
+      );
+    },
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value: any, record: any) => {
+      const recordValue = Array.isArray(dataIndex)
+        ? dataIndex.reduce((obj: any, key: any) => obj?.[key], record)
+        : record[dataIndex];
+      
+      return recordValue
+        ? recordValue.toString().toLowerCase().includes(value.toLowerCase())
+        : false;
+    },
+    onFilterDropdownOpenChange: (visible: boolean) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.focus(), 100);
+      }
+    },
+    render: (text: any) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
   
   // Permission checks using our permission helper functions
   const permissionsArr = permissions || [];
@@ -330,7 +457,21 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
       dataIndex: 'reason',
       key: 'reason',
       ellipsis: true,
-      render: (reason: string) => reason || <Text type="secondary">No reason provided</Text>
+      ...getColumnSearchProps(userLeaves, 'reason', 'Reason'),
+      render: (reason: string) => {
+        if (!reason) return <Text type="secondary">No reason provided</Text>;
+        
+        const displayText = searchedColumn === 'reason' ? (
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[searchText]}
+            autoEscape
+            textToHighlight={reason}
+          />
+        ) : reason;
+        
+        return displayText;
+      }
     },
     {
       title: 'Status',
@@ -489,34 +630,32 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
         const nameB = b.user.name;
         return nameA.localeCompare(nameB);
       },
-      filters: [
-        { text: 'Developer', value: 'developer' },
-        { text: 'Project Manager', value: 'project_manager' },
-        { text: 'Admin', value: 'admin' },
-        { text: 'Manager', value: 'manager' }
-      ],
-      onFilter: (value: any, record: LeaveType): boolean => {
-        if (!record.user.role) return false;
+      ...getColumnSearchProps(pendingApprovals, ['user', 'name'], 'Employee'),
+      render: (record: LeaveType) => {
+        const userName = record.user.name;
+        const displayName = searchedColumn === 'user,name' ? (
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[searchText]}
+            autoEscape
+            textToHighlight={userName || ''}
+          />
+        ) : userName;
         
-        const roleName = record.user.role.name.toLowerCase();
-        const roleDisplayName = record.user.role.displayName ? 
-          record.user.role.displayName.toLowerCase() : '';
-        
-        return roleName === value || roleDisplayName === value;
-      },
-      render: (record: LeaveType) => (
-        <div>
-          <div><strong>{record.user.name}</strong></div>
-          <Text type="secondary">{record.user.email}</Text>
-          {record.user.role && (
-            <div>
-              <Tag color="default" style={{ fontSize: '10px', marginTop: '4px' }}>
-                {record.user.role.displayName || record.user.role.name}
-              </Tag>
-            </div>
-          )}
-        </div>
-      )
+        return (
+          <div>
+            <div><strong>{displayName}</strong></div>
+            <Text type="secondary">{record.user.email}</Text>
+            {record.user.role && (
+              <div>
+                <Tag color="default" style={{ fontSize: '10px', marginTop: '4px' }}>
+                  {record.user.role.displayName || record.user.role.name}
+                </Tag>
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: 'Type',
@@ -581,7 +720,21 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ userId: profileUserId
       dataIndex: 'reason',
       key: 'reason',
       ellipsis: true,
-      render: (reason: string) => reason || <Text type="secondary">No reason provided</Text>
+      ...getColumnSearchProps(pendingApprovals, 'reason', 'Reason'),
+      render: (reason: string) => {
+        if (!reason) return <Text type="secondary">No reason provided</Text>;
+        
+        const displayText = searchedColumn === 'reason' ? (
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[searchText]}
+            autoEscape
+            textToHighlight={reason}
+          />
+        ) : reason;
+        
+        return displayText;
+      }
     },
     {
       title: 'Status',

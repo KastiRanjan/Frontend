@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
     Table, 
     Tag, 
@@ -26,8 +26,10 @@ import {
     UserOutlined,
     LikeOutlined,
     PauseCircleOutlined,
-    StopOutlined
+    StopOutlined,
+    SearchOutlined
 } from "@ant-design/icons";
+import Highlighter from "react-highlight-words";
 import { useSession } from "@/context/SessionContext";
 import { TodoTask, TodoTaskStatus } from "@/types/todoTask";
 import moment from "moment";
@@ -63,6 +65,131 @@ const TodoTaskTable = ({
     const [actionType, setActionType] = useState<string>('');
     const [remark, setRemark] = useState('');
     const [form] = Form.useForm();
+    
+    // For search functionality
+    const [searchText, setSearchText] = useState('');
+    const [searchedColumn, setSearchedColumn] = useState('');
+    const searchInput = useRef<any>(null);
+
+    // Helper function to get unique values for autocomplete
+    const getUniqueValues = (dataIndex: string | string[]) => {
+        if (!taskData) return [];
+        
+        const values = taskData.map((item: any) => {
+            if (Array.isArray(dataIndex)) {
+                let value = item;
+                for (const key of dataIndex) {
+                    value = value?.[key];
+                }
+                return value;
+            }
+            return item[dataIndex];
+        }).filter(Boolean);
+        
+        return [...new Set(values)];
+    };
+
+    const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+        confirm();
+        setSearchText(selectedKeys[0]);
+        setSearchedColumn(dataIndex);
+    };
+
+    const handleReset = (clearFilters: any, confirm: any) => {
+        clearFilters();
+        setSearchText('');
+        setSearchedColumn('');
+        confirm({ closeDropdown: false });
+    };
+
+    const getColumnSearchProps = (dataIndex: any, columnName: string) => ({
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => {
+            const uniqueValues = getUniqueValues(dataIndex);
+            const [currentValue, setCurrentValue] = useState('');
+
+            const filteredOptions = currentValue
+                ? uniqueValues.filter((value: any) =>
+                    value?.toString().toLowerCase().includes(currentValue.toLowerCase())
+                )
+                : uniqueValues.slice(0, 10);
+
+            return (
+                <div style={{ padding: 8 }}>
+                    <Select
+                        ref={searchInput}
+                        placeholder={`Search ${columnName}`}
+                        value={selectedKeys[0]}
+                        onChange={(value) => {
+                            setSelectedKeys(value ? [value] : []);
+                            setCurrentValue('');
+                        }}
+                        onSearch={(value) => setCurrentValue(value)}
+                        showSearch
+                        allowClear
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                        filterOption={false}
+                        onDropdownVisibleChange={(open) => {
+                            if (open) {
+                                setCurrentValue('');
+                            }
+                        }}
+                    >
+                        {filteredOptions.map((value: any, index: number) => (
+                            <Select.Option key={`${value}-${index}`} value={value}>
+                                {value}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                            icon={<SearchOutlined />}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Search
+                        </Button>
+                        <Button
+                            onClick={() => clearFilters && handleReset(clearFilters, confirm)}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Reset
+                        </Button>
+                    </Space>
+                </div>
+            );
+        },
+        filterIcon: (filtered: boolean) => (
+            <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+        ),
+        onFilter: (value: any, record: any) => {
+            const recordValue = Array.isArray(dataIndex)
+                ? dataIndex.reduce((obj, key) => obj?.[key], record)
+                : record[dataIndex];
+            
+            return recordValue
+                ? recordValue.toString().toLowerCase().includes(value.toLowerCase())
+                : false;
+        },
+        onFilterDropdownOpenChange: (visible: boolean) => {
+            if (visible) {
+                setTimeout(() => searchInput.current?.focus(), 100);
+            }
+        },
+        render: (text: any) =>
+            searchedColumn === dataIndex ? (
+                <Highlighter
+                    highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+                    searchWords={[searchText]}
+                    autoEscape
+                    textToHighlight={text ? text.toString() : ''}
+                />
+            ) : (
+                text
+            ),
+    });
 
     // Status display configuration
     const statusConfig = {
@@ -209,23 +336,47 @@ const TodoTaskTable = ({
             dataIndex: 'title',
             key: 'title',
             ellipsis: true,
-            render: (text: string, record: TodoTask) => (
-                <Space>
-                    <Text 
-                        style={{ cursor: 'pointer' }} 
-                        onClick={() => onViewTask && onViewTask(record)}
-                        strong
-                    >
-                        {text}
-                    </Text>
-                </Space>
-            ),
+            ...getColumnSearchProps('title', 'Title'),
+            render: (text: string, record: TodoTask) => {
+                const displayText = searchedColumn === 'title' ? (
+                    <Highlighter
+                        highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+                        searchWords={[searchText]}
+                        autoEscape
+                        textToHighlight={text ? text.toString() : ''}
+                    />
+                ) : text;
+                
+                return (
+                    <Space>
+                        <Text 
+                            style={{ cursor: 'pointer' }} 
+                            onClick={() => onViewTask && onViewTask(record)}
+                            strong
+                        >
+                            {displayText}
+                        </Text>
+                    </Space>
+                );
+            },
         },
         {
             title: 'Type',
             dataIndex: ['taskType', 'name'],
             key: 'type',
-            render: (text: string) => <Tag>{text}</Tag>,
+            ...getColumnSearchProps(['taskType', 'name'], 'Type'),
+            render: (text: string) => {
+                const displayText = searchedColumn === 'taskType,name' ? (
+                    <Highlighter
+                        highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+                        searchWords={[searchText]}
+                        autoEscape
+                        textToHighlight={text ? text.toString() : ''}
+                    />
+                ) : text;
+                
+                return <Tag>{displayText}</Tag>;
+            },
         },
             {
                 title: 'Due Date',
@@ -237,27 +388,53 @@ const TodoTaskTable = ({
             title: 'Assigned To',
             dataIndex: ['assignedTo', 'name'],
             key: 'assignedTo',
-            render: (text: string, record: TodoTask) => (
-                <Tooltip title={record.assignedTo?.email}>
-                    <Space>
-                        <UserOutlined />
-                        {text || record.assignedTo?.email}
-                    </Space>
-                </Tooltip>
-            ),
+            ...getColumnSearchProps(['assignedTo', 'name'], 'Assigned To'),
+            render: (text: string, record: TodoTask) => {
+                const displayName = text || record.assignedTo?.email;
+                const highlighted = searchedColumn === 'assignedTo,name' ? (
+                    <Highlighter
+                        highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+                        searchWords={[searchText]}
+                        autoEscape
+                        textToHighlight={displayName ? displayName.toString() : ''}
+                    />
+                ) : displayName;
+                
+                return (
+                    <Tooltip title={record.assignedTo?.email}>
+                        <Space>
+                            <UserOutlined />
+                            {highlighted}
+                        </Space>
+                    </Tooltip>
+                );
+            },
         },
         {
             title: 'Created By',
             dataIndex: ['createdByUser', 'name'],
             key: 'createdByUser',
-            render: (text: string, record: TodoTask) => (
-                <Tooltip title={record.createdByUser?.email}>
-                    <Space>
-                        <UserOutlined />
-                        {text || record.createdByUser?.email}
-                    </Space>
-                </Tooltip>
-            ),
+            ...getColumnSearchProps(['createdByUser', 'name'], 'Created By'),
+            render: (text: string, record: TodoTask) => {
+                const displayName = text || record.createdByUser?.email;
+                const highlighted = searchedColumn === 'createdByUser,name' ? (
+                    <Highlighter
+                        highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+                        searchWords={[searchText]}
+                        autoEscape
+                        textToHighlight={displayName ? displayName.toString() : ''}
+                    />
+                ) : displayName;
+                
+                return (
+                    <Tooltip title={record.createdByUser?.email}>
+                        <Space>
+                            <UserOutlined />
+                            {highlighted}
+                        </Space>
+                    </Tooltip>
+                );
+            },
         },
         {
             title: 'Created On',
