@@ -8,24 +8,18 @@ import { useParams } from "react-router-dom";
 const PersonalDetails = () => {
     const { id } = useParams();
     const { data: user, isLoading } = useUserDetails(id);
-    const [processedData, setProcessedData] = useState(null);
+    const [processedData, setProcessedData] = useState<any>(null);
     const [dataProcessed, setDataProcessed] = useState(false);
     
     // Process the profile data when it arrives
     useEffect(() => {
         if (user && user.profile) {
-            console.log('User profile data:', user.profile);
+            console.log('PersonalDetails - User profile data:', user.profile);
+            console.log('PersonalDetails - Date of birth:', user.profile.dateOfBirth);
             
-            // Create a sanitized copy of the profile data
-            const profileCopy = { ...user.profile };
-            
-            // Remove dateOfBirth to avoid validation issues - we'll set it back with proper validation
-            if (profileCopy.dateOfBirth) {
-                console.log('Original Date of birth:', profileCopy.dateOfBirth, 'Type:', typeof profileCopy.dateOfBirth);
-                delete profileCopy.dateOfBirth;  // Delete it completely from the initial form data
-            }
-            
-            setProcessedData(profileCopy);
+            // Just pass the profile data as-is
+            // PersonalDetailForm will handle the date conversion
+            setProcessedData(user.profile);
             setDataProcessed(true);
         }
     }, [user]);
@@ -42,18 +36,8 @@ const PersonalDetails = () => {
                 </div>
             ) : (
                 <PersonalDetailForm 
-                    initialValues={processedData || {
-                        // Default empty values for form fields
-                        department: '',
-                        location: '',
-                        bloodGroup: '',
-                        maritalStatus: '',
-                        gender: '',
-                        taxCalculation: '',
-                        panNo: '',
-                        contactNo: '',
-                        personalEmail: '',
-                    }} 
+                    initialValues={processedData} 
+                    userData={user}
                 />
             )}
         </>

@@ -1,5 +1,5 @@
 import { useUserDetails } from "@/hooks/user/useUserDetails";
-import { Card, List, Row, Col, Avatar, Tag, Badge, Descriptions, Divider, Space } from "antd";
+import { Card, List, Row, Col, Avatar, Tag, Badge, Descriptions, Divider, Space, Button } from "antd";
 import { UserOutlined, CheckCircleOutlined, CloseCircleOutlined, HistoryOutlined } from "@ant-design/icons";
 import Title from "antd/es/typography/Title";
 import { Link, useParams } from "react-router-dom";
@@ -11,12 +11,6 @@ const UserDetails = () => {
     const { data: user } = useUserDetails(id);
     // Get the last active time if available (for this demo we're just showing a placeholder)
     const lastActiveTime = user?.lastActiveAt ? new Date(user.lastActiveAt).getTime() : null;
-    
-    // Determine verification status
-    const getVerificationStatus = (detail: any) => {
-        if (!detail) return false;
-        return detail.isVerified === true;
-    };
     
     // Calculate overall profile completeness
     const calculateProfileCompleteness = () => {
@@ -85,12 +79,18 @@ const UserDetails = () => {
                             </div>
                             
                             <div style={{ marginLeft: 'auto' }}>
-                                <Link to={`/users/${id}/history`}>
-                                    <Space>
-                                        <HistoryOutlined />
-                                        View History
-                                    </Space>
-                                </Link>
+                                <Space>
+                                    <Link to={`/user/${id}/edit`}>
+                                        <Button type="primary">
+                                            Edit Profile
+                                        </Button>
+                                    </Link>
+                                    <Link to={`/user/${id}/history`}>
+                                        <Button icon={<HistoryOutlined />}>
+                                            View History
+                                        </Button>
+                                    </Link>
+                                </Space>
                             </div>
                         </div>
                     </Col>
@@ -166,23 +166,17 @@ const UserDetails = () => {
                     </Col>
                 </Row>
                 
-                <Divider orientation="left">Personal Information</Divider>
+                <Divider orientation="left">Authentication Details</Divider>
                 
-                <Descriptions bordered>
-                    <Descriptions.Item label="Name">{user?.name}</Descriptions.Item>
+                <Descriptions bordered column={3}>
+                    <Descriptions.Item label="Username">{user?.username || 'N/A'}</Descriptions.Item>
                     <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
-                    <Descriptions.Item label="Phone">{user?.phoneNumber || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Phone Number">{user?.phoneNumber || 'N/A'}</Descriptions.Item>
                     <Descriptions.Item label="Role">{user?.role?.name}</Descriptions.Item>
                     <Descriptions.Item label="Status">
                         <Tag color={user?.status === 'active' ? 'green' : 'red'}>
                             {user?.status}
                         </Tag>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Last Active">
-                        {user?.lastActiveAt ? dayjs(user.lastActiveAt).format('YYYY-MM-DD HH:mm:ss') : 'Never'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Joined">
-                        {user?.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD') : 'N/A'}
                     </Descriptions.Item>
                     <Descriptions.Item label="2FA Enabled">
                         {user?.isTwoFAEnabled ? (
@@ -191,7 +185,74 @@ const UserDetails = () => {
                             <CloseCircleOutlined style={{ color: 'red' }} />
                         )}
                     </Descriptions.Item>
+                    <Descriptions.Item label="Last Active">
+                        {user?.lastActiveAt ? dayjs(user.lastActiveAt).format('YYYY-MM-DD HH:mm:ss') : 'Never'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Joined">
+                        {user?.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD') : 'N/A'}
+                    </Descriptions.Item>
                 </Descriptions>
+
+                <Divider orientation="left">Personal Information</Divider>
+                
+                <Descriptions bordered column={3}>
+                    <Descriptions.Item label="Full Name">{user?.name}</Descriptions.Item>
+                    <Descriptions.Item label="Department">{user?.profile?.department?.name || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Date of Birth">
+                        {user?.profile?.dateOfBirth ? dayjs(user.profile.dateOfBirth).format('YYYY-MM-DD') : 'N/A'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Blood Group">{user?.profile?.bloodGroup || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Gender">{user?.profile?.gender || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Marital Status">{user?.profile?.maritalStatus || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Contact No">{user?.profile?.contactNo || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Personal Email">{user?.profile?.personalEmail || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="PAN No">{user?.profile?.panNo || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Location">{user?.profile?.location || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Tax Calculation">{user?.profile?.taxCalculation || 'N/A'}</Descriptions.Item>
+                </Descriptions>
+                
+                {user?.profile && (
+                    <>
+                        <Divider orientation="left">Address Information</Divider>
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Card title="Permanent Address" size="small">
+                                    <Descriptions bordered column={1} size="small">
+                                        <Descriptions.Item label="Country">{user?.profile?.permanentAddressCountry || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="State">{user?.profile?.permanentAddressState || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="District">{user?.profile?.permanentAddressDistrict || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="Local Jurisdiction">{user?.profile?.permanentAddressLocalJurisdiction || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="Ward No">{user?.profile?.permanentAddressWardNo || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="Locality">{user?.profile?.permanentAddressLocality || 'N/A'}</Descriptions.Item>
+                                    </Descriptions>
+                                </Card>
+                            </Col>
+                            <Col span={12}>
+                                <Card title="Temporary Address" size="small">
+                                    <Descriptions bordered column={1} size="small">
+                                        <Descriptions.Item label="Country">{user?.profile?.temporaryAddressCountry || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="State">{user?.profile?.temporaryAddressState || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="District">{user?.profile?.temporaryAddressDistrict || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="Local Jurisdiction">{user?.profile?.temporaryAddressLocalJurisdiction || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="Ward No">{user?.profile?.temporaryAddressWardNo || 'N/A'}</Descriptions.Item>
+                                        <Descriptions.Item label="Locality">{user?.profile?.temporaryAddressLocality || 'N/A'}</Descriptions.Item>
+                                    </Descriptions>
+                                </Card>
+                            </Col>
+                        </Row>
+                        
+                        {(user?.profile?.guardianName || user?.profile?.guardianContact) && (
+                            <>
+                                <Divider orientation="left">Guardian Information</Divider>
+                                <Descriptions bordered column={3}>
+                                    <Descriptions.Item label="Guardian Name">{user?.profile?.guardianName || 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="Relation">{user?.profile?.guardianRelation || 'N/A'}</Descriptions.Item>
+                                    <Descriptions.Item label="Contact">{user?.profile?.guardianContact || 'N/A'}</Descriptions.Item>
+                                </Descriptions>
+                            </>
+                        )}
+                    </>
+                )}
 
                 <Title level={4}>Bank Details</Title>
                 <List

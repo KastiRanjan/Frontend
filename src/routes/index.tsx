@@ -31,6 +31,7 @@ import EditTaskTemplate from "@/pages/TaskTemplate/edit";
 import AccountDetails from "@/pages/User/AccountDetails";
 import BankDetails from "@/pages/User/BankDetails";
 import UserDetails from "@/pages/User/details";
+import UserEdit from "@/pages/User/edit";
 import EducationalDetails from "@/pages/User/EducationalDetails";
 import CreateUser from "@/pages/User/new";
 import PersonalDetails from "@/pages/User/PersonalDetails";
@@ -231,8 +232,15 @@ const Router = [
         element: <UserDetails />,
       },
       {
-        path: "/user/edit/:id",
-        element: <>Edit</>,
+        path: "/user/:id/edit",
+        element: (
+          <ProtectedRoute
+            method="patch"
+            path="/users/:id"
+            resource="user"
+            component={<UserEdit />}
+          />
+        ),
       },
       {
         path: "/client",
