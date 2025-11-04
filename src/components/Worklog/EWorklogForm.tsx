@@ -196,6 +196,7 @@ const EWorklogForm = () => {
                 className="w-full py-2"
                 disabled={!canEditWorklogDate}
                 allowClear={false}
+                suffixIcon={null}
               />
             </Form.Item>
           </Col>

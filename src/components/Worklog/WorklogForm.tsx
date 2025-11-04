@@ -319,6 +319,7 @@ const WorklogForm = () => {
                           style={{ width: '100%' }}
                           defaultValue={moment()}
                           disabled={!canEditWorklogDate}
+                          suffixIcon={null}
                         />
                       </Form.Item>
                     </Col>

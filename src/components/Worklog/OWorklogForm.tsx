@@ -331,6 +331,7 @@ const OWorklogForm = () => {
                             format="YYYY-MM-DD"
                             placeholder="Select date"
                             style={{ width: '100%' }}
+                            suffixIcon={null}
                           />
                         </Form.Item>
                       </Col>
