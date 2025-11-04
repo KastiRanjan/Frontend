@@ -221,12 +221,12 @@ const WorklogForm = () => {
       >
         {/* Fixed header for the form */}
         <Row className="bg-gray-100 p-2 mb-2 font-semibold rounded">
-          <Col span={6}>Task</Col>
+          <Col span={8}>Task</Col>
           <Col span={3}>Request To</Col>
-          <Col span={3}>Date</Col>
+          <Col span={2}>Date</Col>
           <Col span={2}>Start Time</Col>
           <Col span={2}>End Time</Col>
-          <Col span={7}>Description</Col>
+          <Col span={6}>Description</Col>
           <Col span={1}></Col>
         </Row>
 
@@ -244,7 +244,7 @@ const WorklogForm = () => {
                   bodyStyle={{ padding: "12px" }}
                 >
                   <Row gutter={12} align="middle">
-                    <Col span={6}>
+                    <Col span={8}>
                       <Form.Item
                         name={[field.name, "taskId"]}
                         rules={[
@@ -302,7 +302,7 @@ const WorklogForm = () => {
                     </Col>
                     
                     {/* Date field - shown for all entries */}
-                    <Col span={3}>
+                    <Col span={2}>
                       <Form.Item
                         name={[field.name, "date"]}
                         rules={[
@@ -401,7 +401,7 @@ const WorklogForm = () => {
                       </Form.Item>
                     </Col>
                     
-                    <Col span={7}>
+                    <Col span={6}>
                       <Form.Item
                         name={[field.name, "description"]}
                         rules={[

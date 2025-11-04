@@ -291,9 +291,9 @@ const OWorklogForm = () => {
             <>
               {/* Fixed header for the form items */}
               <Row className="bg-gray-100 p-2 mb-2 font-semibold rounded">
-                <Col span={3}>Date</Col>
-                <Col span={6}>Project</Col>
-                <Col span={6}>Task</Col>
+                <Col span={2}>Date</Col>
+                <Col span={5}>Project</Col>
+                <Col span={8}>Task</Col>
                 <Col span={2}>Start Time</Col>
                 <Col span={2}>End Time</Col>
                 <Col span={3}>Request To</Col>
@@ -319,7 +319,7 @@ const OWorklogForm = () => {
                   <div>
                     <Row gutter={12} align="middle">
                       {/* Date Field */}
-                      <Col span={3}>
+                      <Col span={2}>
                         <Form.Item
                           name={[field.name, "date"]}
                           rules={[{ required: true, message: "Required!" }]}
@@ -336,7 +336,7 @@ const OWorklogForm = () => {
                       </Col>
 
                       {/* Project Dropdown */}
-                      <Col span={6}>
+                      <Col span={5}>
                         <Form.Item
                           name={[field.name, "projectId"]}
                           rules={[{ required: true, message: "Required!" }]}
@@ -359,7 +359,7 @@ const OWorklogForm = () => {
                       </Col>
 
                       {/* Task Dropdown */}
-                      <Col span={6}>
+                      <Col span={8}>
                         <Form.Item
                           name={[field.name, "taskId"]}
                           rules={[{ required: true, message: "Required!" }]}

@@ -186,7 +186,7 @@ const EWorklogForm = () => {
     <Card title="Edit Worklog">
       <Form form={form} onFinish={handleFinish} layout="vertical">
         <Row gutter={16}>
-          <Col span={3}>
+          <Col span={2}>
             <Form.Item
               label="Date"
               name="date"
@@ -200,7 +200,7 @@ const EWorklogForm = () => {
             </Form.Item>
           </Col>
 
-          <Col span={6}>
+          <Col span={5}>
             <Form.Item
               label="Project"
               name="projectId"
@@ -217,7 +217,7 @@ const EWorklogForm = () => {
             </Form.Item>
           </Col>
 
-          <Col span={6}>
+          <Col span={8}>
             <Form.Item
               label="Task"
               name="taskId"
