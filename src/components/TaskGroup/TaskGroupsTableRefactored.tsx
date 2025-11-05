@@ -7,6 +7,7 @@ import { TaskGroupsTableProps } from "./types";
 import TaskGroupForm from "./TaskGroupForm";
 import TaskTemplatForm from "../TaskTemplate/TaskTemplatForm";
 import { deleteTaskTemplate } from "@/service/tasktemplate.service";
+import { deleteTaskGroup } from "@/service/taskgroup.service";
 import TemplateExpandedView from "./components/TemplateExpandedView";
 import ProjectAssignmentModal from "./components/ProjectAssignmentModal";
 
@@ -75,17 +76,36 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
   };
 
   const handleDelete = (groupId: string) => {
+    // Find the task group to check if it has templates
+    const taskGroupToDelete = taskGroups.find((group: TaskGroupType) => group.id === groupId);
+    const templates = taskGroupToDelete?.tasktemplate || taskGroupToDelete?.taskTemplates || [];
+    const hasTemplates = templates.length > 0;
+    
     modal.confirm({
       title: "Are you sure you want to delete this task group?",
-      content: "This action cannot be undone and will affect all associated task templates.",
-      okText: "Yes",
+      content: hasTemplates 
+        ? `This task group has ${templates.length} task template(s). All associated task templates will be permanently deleted. This action cannot be undone.`
+        : "This action cannot be undone.",
+      okText: "Yes, Delete",
       okType: "danger",
       cancelText: "No",
-      onOk() {
-        // Call API to delete task group
+      onOk: () => {
         console.log("Deleting task group with ID:", groupId);
-        // For now, just refresh the query to simulate deletion
-        queryClient.invalidateQueries({ queryKey: ["taskGroups", taskSuperId] });
+        return new Promise<void>((resolve, reject) => {
+          deleteTaskGroup({ id: groupId })
+            .then(() => {
+              console.log('Delete completed successfully');
+              message.success("Task group and associated task templates deleted successfully");
+              // Refresh the task groups data
+              queryClient.invalidateQueries({ queryKey: ["taskGroups", taskSuperId] });
+              resolve();
+            })
+            .catch((error) => {
+              console.error('Delete failed:', error);
+              message.error(error.response?.data?.message || "Failed to delete task group");
+              reject(error);
+            });
+        });
       },
     });
   };
@@ -224,14 +244,20 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
           <Button
             type="text"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(record);
+            }}
             title="Edit Group"
           />
           <Button
             type="text"
             danger
             icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(record.id);
+            }}
             title="Delete Group"
           />
         </Space>

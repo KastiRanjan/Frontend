@@ -1,7 +1,7 @@
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
 import { useDeleteTaskGroup } from "@/hooks/taskGroup/useTaskGroupDelete";
 import { DeleteOutlined, EditOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import { Avatar, Button, Card, Checkbox, Col, Input, Modal, Row, Space } from "antd";
+import { Avatar, Button, Card, Checkbox, Col, Modal, Row } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MoveTemplateModal from "../TaskTemplate/MoveTemplateModal";
@@ -39,14 +39,39 @@ const TaskGroupList = ({  showModal }: TaskGroupListProps) => {
     console.log("Refreshing task group data after template add...");
   };
   const handleDelete = (id: string) => {
+    console.log('Delete button clicked for ID:', id);
+    // Find the task group to check if it has templates
+    const taskGroupToDelete = taskGroup?.find((group: TaskGroupType) => group.id === id);
+    const hasTemplates = taskGroupToDelete?.tasktemplate && taskGroupToDelete.tasktemplate.length > 0;
+    
+    console.log('Task group to delete:', taskGroupToDelete);
+    console.log('Has templates:', hasTemplates);
+    
     modal.confirm({
       title: 'Are you sure you want to delete this task group?',
-      content: 'This action cannot be undone.',
-      okText: 'Yes',
+      content: hasTemplates 
+        ? `This task group has ${taskGroupToDelete.tasktemplate.length} task template(s). All associated task templates will be permanently deleted. This action cannot be undone.`
+        : 'This action cannot be undone.',
+      okText: 'Yes, Delete',
       okType: 'danger',
       cancelText: 'No',
-      onOk() {
-        deleteTaskGroup({ id });
+      onOk: () => {
+        console.log('Deleting task group with ID:', id);
+        return new Promise<void>((resolve, reject) => {
+          deleteTaskGroup(
+            { id },
+            {
+              onSuccess: () => {
+                console.log('Delete completed successfully');
+                resolve();
+              },
+              onError: (error) => {
+                console.error('Delete failed:', error);
+                reject(error);
+              },
+            }
+          );
+        });
       },
     })
   };
@@ -72,10 +97,10 @@ const TaskGroupList = ({  showModal }: TaskGroupListProps) => {
             <Card
               loading={isPending}
               title={group.name}
-              extra={<Checkbox onClick={(e) => e.stopPropagation()} onChange={() => handleCheckboxChange(group.id)} />}
+              extra={<Checkbox onClick={(e) => { e.stopPropagation(); e.preventDefault(); }} onChange={() => handleCheckboxChange(group.id)} />}
               actions={[
-                <EditOutlined key="edit" onClick={(e) => { e.stopPropagation(); showModal(group); }} />,
-                <DeleteOutlined key="delete" onClick={(e) => { e.stopPropagation(); handleDelete(group.id); }} />,
+                <EditOutlined key="edit" onClick={(e) => { e.stopPropagation(); e.preventDefault(); showModal(group); }} />,
+                <DeleteOutlined key="delete" onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleDelete(group.id); }} />,
               ]}
               onClick={() => navigate(`/task-template/${group.id}`)}
             >
