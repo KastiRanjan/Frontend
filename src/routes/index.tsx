@@ -71,6 +71,7 @@ import NoticeBoardAdmin from "@/pages/NoticeBoard/Admin";
 import CreateNoticePage from "@/pages/NoticeBoard/Create";
 import EditNoticePage from "@/pages/NoticeBoard/Edit";
 import ForgotPasswordPage from "@/pages/ForgotPassword";
+import UserAvailabilityDashboard from "@/pages/Project/availability";
 
 const Router = [
   {
@@ -137,6 +138,16 @@ const Router = [
       {
         path: "/project/detail/:id",
         element: <ProjectDetail />,
+      },
+      {
+        path: "/projects/availability",
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="projects"
+            component={<UserAvailabilityDashboard />}
+          />
+        ),
       },
       {
         path: "/task",

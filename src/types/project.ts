@@ -24,6 +24,7 @@ export interface ProjectType {
     startingDateFormatted?: string; // Human-readable nepali date
     endingDateFormatted?: string; // Human-readable nepali date
     allowSubtaskWorklog?: boolean;
+    countsForAvailability?: boolean;
     projectLead?: UserType;
     projectManager?: UserType;
     users?: UserType[];

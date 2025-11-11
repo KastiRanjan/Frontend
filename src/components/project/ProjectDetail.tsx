@@ -14,6 +14,7 @@ import ProjectBudget from './ProjectBudget';
 import ProjectCompletionWorkflow from './ProjectCompletionWorkflow';
 import { useQueryClient } from '@tanstack/react-query';
 import { groupTasksByStatus, countTasksByStatus } from '@/utils/taskStatusGrouping';
+import ProjectUserAssignment from './ProjectUserAssignment';
 
 
 
@@ -176,6 +177,15 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
         name: u.name ?? '',
         email: u.email ?? ''
       }))} />
+    },
+    {
+      label: 'User Assignments',
+      key: '4b',
+      children: <ProjectUserAssignment 
+        projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
+        users={project?.users ?? []}
+        onAssignmentChange={handleRefresh}
+      />
     },
     {
       label: 'Timeline',

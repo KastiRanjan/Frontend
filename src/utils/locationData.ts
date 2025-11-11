@@ -262,7 +262,7 @@ export const localJurisdictionsByDistrict: Record<string, Array<{ value: string,
     { value: "dharmadevi", label: "Dharmadevi Municipality" },
     { value: "panchkhapan", label: "Panchkhapan Municipality" },
     { value: "sabhapokhari", label: "Sabhapokhari Rural Municipality" },
-    { value: "chingla", label: "Chichila Rural Municipality" },
+    { value: "chingla", label: "Chichil a Rural Municipality" },
     { value: "makalu", label: "Makalu Rural Municipality" },
     { value: "silichong", label: "Silichong Rural Municipality" }
   ],

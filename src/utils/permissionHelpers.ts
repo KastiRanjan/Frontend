@@ -212,3 +212,16 @@ export const canViewDashboardWorkingTime = (permissions: any[]): boolean => {
         perm.method?.toLowerCase() === "get"
     );
 };
+
+/**
+ * Check if user can view user availability
+ */
+export const canViewUserAvailability = (permissions: any[]): boolean => {
+  return Array.isArray(permissions) &&
+    permissions.some(
+      (perm: any) =>
+        perm.resource === "projects" &&
+        perm.path === "/projects/availability/users" &&
+        perm.method?.toLowerCase() === "get"
+    );
+};

@@ -1,6 +1,6 @@
 import Notification from "@/components/Notification/Notification";
-import { AttendanceDashboard, WorkingTimeDashboard } from "@/components/Dashboard";
-import { canViewDashboardAttendance, canViewDashboardWorkingTime } from "@/utils/permissionHelpers";
+import { AttendanceDashboard, WorkingTimeDashboard, UserAvailabilityDashboard } from "@/components/Dashboard";
+import { canViewDashboardAttendance, canViewDashboardWorkingTime, canViewUserAvailability } from "@/utils/permissionHelpers";
 import { useSession } from "@/context/SessionContext";
 import { Card, Col, Row, Spin } from "antd";
 import React, { Suspense } from "react";
@@ -10,6 +10,7 @@ const Dashboard: React.FC = () => {
   const { permissions } = useSession();
   const canViewAttendance = canViewDashboardAttendance(permissions || []);
   const canViewWorkingTime = canViewDashboardWorkingTime(permissions || []);
+  const canViewAvailability = canViewUserAvailability(permissions || []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "calc(100vh - 120px)" }}>
@@ -57,6 +58,17 @@ const Dashboard: React.FC = () => {
           <Col span={24}>
             <Suspense fallback={<Spin size="large" />}>
               <WorkingTimeDashboard />
+            </Suspense>
+          </Col>
+        </Row>
+      )}
+
+      {/* User Availability Dashboard - Only visible to users with permission */}
+      {canViewAvailability && (
+        <Row gutter={8}>
+          <Col span={24}>
+            <Suspense fallback={<Spin size="large" />}>
+              <UserAvailabilityDashboard />
             </Suspense>
           </Col>
         </Row>

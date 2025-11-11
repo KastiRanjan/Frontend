@@ -348,6 +348,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           client: (editProjectData as any).client?.id || (editProjectData as any).customer?.id || (editProjectData as any).client || (editProjectData as any).customer,
           billing: (editProjectData as any).billing?.id || (editProjectData as any).billing,
           allowSubtaskWorklog: editProjectData.allowSubtaskWorklog !== undefined ? editProjectData.allowSubtaskWorklog : true,
+          countsForAvailability: editProjectData.countsForAvailability !== undefined ? editProjectData.countsForAvailability : true,
           natureOfWork: typeof editProjectData.natureOfWork === "string" ? editProjectData.natureOfWork : (editProjectData.natureOfWork as any)?.id,
           
           // Set both date formats to ensure synchronization
@@ -491,6 +492,21 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             name="allowSubtaskWorklog"
             valuePropName="checked"
             initialValue={true}
+          >
+            <Switch 
+              checkedChildren="Yes" 
+              unCheckedChildren="No" 
+              defaultChecked={true}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label="Counts for User Availability"
+            name="countsForAvailability"
+            valuePropName="checked"
+            initialValue={true}
+            tooltip="When enabled, this project will be considered when calculating user availability and workload"
           >
             <Switch 
               checkedChildren="Yes" 
