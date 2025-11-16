@@ -30,11 +30,10 @@ interface UserAssignment {
 interface ProjectUserAssignmentProps {
   projectId: string;
   users: any[];
-  project?: any;
   onAssignmentChange?: () => void;
 }
 
-const ProjectUserAssignment = ({ projectId, users, project, onAssignmentChange }: ProjectUserAssignmentProps) => {
+const ProjectUserAssignment = ({ projectId, users, onAssignmentChange }: ProjectUserAssignmentProps) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [assignments, setAssignments] = useState<UserAssignment[]>([]);
@@ -394,10 +393,6 @@ const ProjectUserAssignment = ({ projectId, users, project, onAssignmentChange }
                 if (!current) return false;
                 // Disable past dates
                 if (current < dayjs().startOf('day')) return true;
-                // Disable dates before project start date if available
-                if (project?.startingDate && current < dayjs(project.startingDate).startOf('day')) return true;
-                // Disable dates after project end date if available
-                if (project?.endingDate && current > dayjs(project.endingDate).endOf('day')) return true;
                 return false;
               }}
             />
@@ -416,8 +411,6 @@ const ProjectUserAssignment = ({ projectId, users, project, onAssignmentChange }
                 if (current < dayjs().startOf('day')) return true;
                 // Disable dates before start date if set
                 if (startDate && current < dayjs(startDate).startOf('day')) return true;
-                // Disable dates after project end date if available
-                if (project?.endingDate && current > dayjs(project.endingDate).endOf('day')) return true;
                 return false;
               }}
             />
