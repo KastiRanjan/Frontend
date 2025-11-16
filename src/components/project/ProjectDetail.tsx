@@ -184,6 +184,7 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
       children: <ProjectUserAssignment 
         projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
         users={project?.users ?? []}
+        project={project}
         onAssignmentChange={handleRefresh}
       />
     },

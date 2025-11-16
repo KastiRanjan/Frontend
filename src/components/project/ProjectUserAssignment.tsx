@@ -13,6 +13,7 @@ interface UserAssignment {
   projectId: string;
   isActive: boolean;
   assignedDate: string;
+  startDate: string | null;
   releaseDate: string | null;
   plannedReleaseDate: string | null;
   notes: string | null;
@@ -29,10 +30,11 @@ interface UserAssignment {
 interface ProjectUserAssignmentProps {
   projectId: string;
   users: any[];
+  project?: any;
   onAssignmentChange?: () => void;
 }
 
-const ProjectUserAssignment = ({ projectId, users, onAssignmentChange }: ProjectUserAssignmentProps) => {
+const ProjectUserAssignment = ({ projectId, users, project, onAssignmentChange }: ProjectUserAssignmentProps) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [assignments, setAssignments] = useState<UserAssignment[]>([]);
@@ -74,6 +76,7 @@ const ProjectUserAssignment = ({ projectId, users, onAssignmentChange }: Project
         {
           userId: values.userId,
           isActive: values.isActive ?? true,
+          startDate: values.startDate ? dayjs(values.startDate).toISOString() : null,
           plannedReleaseDate: values.plannedReleaseDate ? dayjs(values.plannedReleaseDate).toISOString() : null,
           notes: values.notes
         },
@@ -105,6 +108,7 @@ const ProjectUserAssignment = ({ projectId, users, onAssignmentChange }: Project
         `${backendURI}/projects/${projectId}/users/${editingAssignment.userId}`,
         {
           isActive: values.isActive,
+          startDate: values.startDate ? dayjs(values.startDate).toISOString() : null,
           plannedReleaseDate: values.plannedReleaseDate ? dayjs(values.plannedReleaseDate).toISOString() : null,
           notes: values.notes
         },
@@ -164,6 +168,7 @@ const ProjectUserAssignment = ({ projectId, users, onAssignmentChange }: Project
     form.setFieldsValue({
       userId: assignment.userId,
       isActive: assignment.isActive,
+      startDate: assignment.startDate ? dayjs(assignment.startDate) : null,
       plannedReleaseDate: assignment.plannedReleaseDate ? dayjs(assignment.plannedReleaseDate) : null,
       notes: assignment.notes
     });
@@ -249,6 +254,12 @@ const ProjectUserAssignment = ({ projectId, users, onAssignmentChange }: Project
       dataIndex: 'assignedDate',
       key: 'assignedDate',
       render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+    },
+    {
+      title: 'Start Date',
+      dataIndex: 'startDate',
+      key: 'startDate',
+      render: (date: string | null) => date ? dayjs(date).format('YYYY-MM-DD') : '-',
     },
     {
       title: 'Planned Release',
@@ -373,10 +384,43 @@ const ProjectUserAssignment = ({ projectId, users, onAssignmentChange }: Project
           </Form.Item>
 
           <Form.Item
+            name="startDate"
+            label="Start Date"
+            rules={[{ required: true, message: 'Please select a start date' }]}
+          >
+            <DatePicker 
+              style={{ width: '100%' }}
+              disabledDate={(current) => {
+                if (!current) return false;
+                // Disable past dates
+                if (current < dayjs().startOf('day')) return true;
+                // Disable dates before project start date if available
+                if (project?.startingDate && current < dayjs(project.startingDate).startOf('day')) return true;
+                // Disable dates after project end date if available
+                if (project?.endingDate && current > dayjs(project.endingDate).endOf('day')) return true;
+                return false;
+              }}
+            />
+          </Form.Item>
+
+          <Form.Item
             name="plannedReleaseDate"
             label="Planned Release Date"
           >
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker 
+              style={{ width: '100%' }}
+              disabledDate={(current) => {
+                if (!current) return false;
+                const startDate = form.getFieldValue('startDate');
+                // Disable past dates
+                if (current < dayjs().startOf('day')) return true;
+                // Disable dates before start date if set
+                if (startDate && current < dayjs(startDate).startOf('day')) return true;
+                // Disable dates after project end date if available
+                if (project?.endingDate && current > dayjs(project.endingDate).endOf('day')) return true;
+                return false;
+              }}
+            />
           </Form.Item>
 
           <Form.Item
