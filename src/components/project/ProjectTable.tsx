@@ -9,6 +9,8 @@ import { Link } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import Highlighter from 'react-highlight-words';
 import moment from 'moment';
+import { DualDateConverter } from "@/utils/dateConverter";
+import dayjs from "dayjs";
 
 const ProjectTable = ({ showModal, status }: any) => {
   const [page, setPage] = useState(1);
@@ -328,12 +330,25 @@ const ProjectTable = ({ showModal, status }: any) => {
       ...getColumnSearchProps('startingDate', 'Start Date'),
       render: (_: any, record: any) => {
         if (record.startingDate) {
-          const date = new Date(record.startingDate);
-          return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          });
+          try {
+            const date = dayjs(record.startingDate);
+            const dualDate = DualDateConverter.createDualDate(date);
+            return (
+              <div>
+                <div>{date.format('MMM D, YYYY')}</div>
+                <div className="text-xs text-gray-500">
+                  {dualDate.nepali.format('YYYY-MM-DD', 'np')}
+                </div>
+              </div>
+            );
+          } catch (e) {
+            const date = new Date(record.startingDate);
+            return date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            });
+          }
         }
         return '';
       }
@@ -347,12 +362,25 @@ const ProjectTable = ({ showModal, status }: any) => {
       ...getColumnSearchProps('endingDate', 'End Date'),
       render: (_: any, record: any) => {
         if (record.endingDate) {
-          const date = new Date(record.endingDate);
-          return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          });
+          try {
+            const date = dayjs(record.endingDate);
+            const dualDate = DualDateConverter.createDualDate(date);
+            return (
+              <div>
+                <div>{date.format('MMM D, YYYY')}</div>
+                <div className="text-xs text-gray-500">
+                  {dualDate.nepali.format('YYYY-MM-DD', 'np')}
+                </div>
+              </div>
+            );
+          } catch (e) {
+            const date = new Date(record.endingDate);
+            return date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            });
+          }
         }
         return '';
       }

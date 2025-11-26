@@ -1,12 +1,26 @@
 import { ProjectType } from '@/types/project';
 import { Card, Descriptions, Tag } from 'antd';
 import moment from 'moment';
+import { DualDateConverter } from '@/utils/dateConverter';
+import dayjs from 'dayjs';
 
 interface ProjectDetailsProps {
   project: ProjectType;
 }
 
 const ProjectDetails = ({ project }: ProjectDetailsProps) => {
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const date = dayjs(dateStr);
+      const dualDate = DualDateConverter.createDualDate(date);
+      return DualDateConverter.formatDualDate(dualDate);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return moment(dateStr).format('MMM D, YYYY');
+    }
+  };
+
   return (
     <Card>
       <Descriptions bordered column={2}>
@@ -38,10 +52,10 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
           {project.fiscalYear}/{(project.fiscalYear + 1).toString().slice(-2)}
         </Descriptions.Item>
         <Descriptions.Item label="Starting Date">
-          {moment(project.startingDate).format('MMM D, YYYY')}
+          {formatDate(project.startingDate)}
         </Descriptions.Item>
         <Descriptions.Item label="Ending Date">
-          {moment(project.endingDate).format('MMM D, YYYY')}
+          {formatDate(project.endingDate)}
         </Descriptions.Item>
         <Descriptions.Item label="Project Lead">
           {project.projectLead?.name || 'N/A'}
@@ -68,5 +82,6 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
     </Card>
   );
 };
+
 
 export default ProjectDetails;

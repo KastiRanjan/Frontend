@@ -1,5 +1,6 @@
 import NepaliDate from 'nepali-date';
 import dayjs, { Dayjs } from 'dayjs';
+import * as bikram from 'bikram-sambat';
 
 export interface DualDate {
   gregorian: Dayjs;
@@ -18,7 +19,18 @@ export class DualDateConverter {
       // Always convert to Nepal time (UTC+5:45) before passing to NepaliDate
       // Add 5 hours and 45 minutes to the date
       const nepalTime = date.add(5, 'hour').add(45, 'minute');
-      return new NepaliDate(nepalTime.toDate());
+      const jsDate = nepalTime.toDate();
+      
+      // Use bikram-sambat for accurate conversion
+      // Check if toBik exists (it should in v1.8.0)
+      if (typeof (bikram as any).toBik === 'function') {
+        const bs = (bikram as any).toBik(jsDate);
+        // bikram-sambat returns 1-indexed month, NepaliDate expects 0-indexed
+        return new NepaliDate(bs.year, bs.month - 1, bs.day);
+      }
+      
+      // Fallback to NepaliDate constructor if bikram not available
+      return new NepaliDate(jsDate);
     } catch (error) {
       console.warn('Failed to convert Gregorian to Nepali date:', error);
       return new NepaliDate(); // Return current date as fallback
@@ -39,26 +51,66 @@ export class DualDateConverter {
 
   /**
    * Convert a Nepali date string (format YYYY-MM-DD) to AD date string
+   * Uses bikram-sambat library for reliable conversion
    */
   static convertToAD(nepaliDateStr: string): string {
     try {
+      console.log('convertToAD received:', nepaliDateStr);
+      
       // Parse the Nepali date string into year, month, day
       const [year, month, day] = nepaliDateStr.split('-').map(Number);
       if (!year || !month || !day) {
         throw new Error('Invalid Nepali date format. Expected YYYY-MM-DD');
       }
       
-      // Create a NepaliDate object
-      const nepaliDate = new NepaliDate(year, month - 1, day);
+      console.log('Parsing BS date:', { year, month, day });
       
-      // Convert to Gregorian date
-      const gregorianDate = this.nepaliToGregorian(nepaliDate);
+      // Try using bikram-sambat library to convert BS to AD
+      // The library exports { toGreg } function (not toAD)
+      if (typeof (bikram as any).toGreg === 'function') {
+        const adDateObj = (bikram as any).toGreg(year, month, day);
+        console.log('bikram.toGreg result:', adDateObj);
+        
+        if (adDateObj && adDateObj.year && adDateObj.month && adDateObj.day) {
+           const adDate = `${adDateObj.year}-${String(adDateObj.month).padStart(2, '0')}-${String(adDateObj.day).padStart(2, '0')}`;
+           console.log('Final AD date:', adDate);
+           return adDate;
+        }
+      }
       
-      // Return formatted as YYYY-MM-DD
-      return gregorianDate.format('YYYY-MM-DD');
+      // Fallback to old code if toGreg not found (unlikely)
+      if (typeof (bikram as any).toAD === 'function') {
+         const adDateObj = (bikram as any).toAD(year, month, day);
+         if (Array.isArray(adDateObj) && adDateObj.length === 3) {
+            const adDate = `${adDateObj[0]}-${String(adDateObj[1]).padStart(2, '0')}-${String(adDateObj[2]).padStart(2, '0')}`;
+            return adDate;
+         }
+      }
+
+      throw new Error('Invalid result from bikram conversion');
     } catch (error) {
       console.error('Error converting Nepali date to AD:', error);
-      return dayjs().format('YYYY-MM-DD'); // Return today as fallback
+      console.error('Input was:', nepaliDateStr);
+      
+      // Try alternative method using NepaliDate if bikram fails
+      try {
+        console.log('Trying alternative conversion with NepaliDate...');
+        const [year, month, day] = nepaliDateStr.split('-').map(Number);
+        const nepaliDate = new NepaliDate(year, month - 1, day);
+        
+        // Get the equivalent AD date from NepaliDate
+        const adYear = nepaliDate.getYear();
+        const adMonth = nepaliDate.getMonth() + 1; // Convert 0-indexed to 1-indexed
+        const adDay = nepaliDate.getDate();
+        
+        const adDate = `${adYear}-${String(adMonth).padStart(2, '0')}-${String(adDay).padStart(2, '0')}`;
+        console.log('Alternative conversion result:', adDate);
+        return adDate;
+      } catch (altError) {
+        console.error('Alternative conversion also failed:', altError);
+      }
+      
+      throw error;
     }
   }
 

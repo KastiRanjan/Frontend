@@ -13,7 +13,6 @@ import ProjectRanking from './ProjectRanking';
 import ProjectBudget from './ProjectBudget';
 import ProjectCompletionWorkflow from './ProjectCompletionWorkflow';
 import { useQueryClient } from '@tanstack/react-query';
-import { groupTasksByStatus, countTasksByStatus } from '@/utils/taskStatusGrouping';
 import ProjectUserAssignment from './ProjectUserAssignment';
 
 
@@ -184,7 +183,6 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
       children: <ProjectUserAssignment 
         projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
         users={project?.users ?? []}
-        project={project}
         onAssignmentChange={handleRefresh}
       />
     },
