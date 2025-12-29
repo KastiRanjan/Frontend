@@ -34,6 +34,7 @@ const MultiTaskSuperProjectAssignmentModal: React.FC<MultiTaskSuperProjectAssign
   const [submitting, setSubmitting] = useState(false);
   const [taskSuperDetails, setTaskSuperDetails] = useState<any[]>([]);
   const [loadingTaskSuperDetails, setLoadingTaskSuperDetails] = useState(false);
+  const [formValues, setFormValues] = useState<MultiProjectAssignmentFormValues | null>(null);
 
   const { data: allTaskGroups, isPending: isLoadingTaskGroups } = useFetchTaskGroups();
 
@@ -111,12 +112,14 @@ const MultiTaskSuperProjectAssignmentModal: React.FC<MultiTaskSuperProjectAssign
     if (visible) {
       setCurrentStep(0);
       form.resetFields();
+      setFormValues(null);
     }
   }, [visible, form]);
 
   const handleStep1Submit = async () => {
     try {
-      await form.validateFields();
+      const values = await form.validateFields();
+      setFormValues(values);
       setCurrentStep(1);
     } catch (error) {
       console.error('Form validation failed:', error);
@@ -130,9 +133,9 @@ const MultiTaskSuperProjectAssignmentModal: React.FC<MultiTaskSuperProjectAssign
   const handleAddToProjectSubmit = async () => {
     try {
       setSubmitting(true);
-      const values = form.getFieldsValue();
+      const values = formValues;
       
-      if (!values.projectId) {
+      if (!values || !values.projectId) {
         message.error('Project ID is required');
         return;
       }
@@ -163,21 +166,45 @@ const MultiTaskSuperProjectAssignmentModal: React.FC<MultiTaskSuperProjectAssign
             // Process each group to get their templates and subtasks
             const selectedGroups = groupsForTaskSuper.map((group: any) => group.id);
             
-            // Get all templates for these groups
-            const selectedTemplateRows: Record<string, any[]> = {};
-            const selectedSubtaskRows: Record<string, any[]> = {};
+            // Get all templates and subtasks for these groups
+            const selectedTemplates: any[] = [];
+            const selectedSubtasks: any[] = [];
             
             // For each group, select all its templates
             groupsForTaskSuper.forEach((group: any) => {
               const templates = group.tasktemplate || group.taskTemplates || [];
               if (templates.length > 0) {
-                selectedTemplateRows[group.id] = templates.map((t: any) => t.id);
+                // Filter to get only parent templates (those without a parentId or parentTask)
+                // This prevents adding subtasks as top-level templates
+                const parentTemplates = templates.filter((t: any) => !t.parentTaskId && !t.parentTask);
                 
-                // For each template, also get its subtasks if any
-                templates.forEach((template: any) => {
+                // For each parent template, add to selectedTemplates
+                parentTemplates.forEach((template: any) => {
+                  selectedTemplates.push({
+                    id: template.id,
+                    name: template.name + (suffixTaskTemplate || ''),
+                    groupId: group.id,
+                    groupName: group.name + (suffixTaskGroup || ''),
+                    description: template.description,
+                    budgetedHours: template.budgetedHours,
+                    rank: template.rank
+                  });
+
+                  // For each template, also get its subtasks if any
                   if (template.subTasks && template.subTasks.length > 0) {
-                    const key = `${group.id}:${template.id}`;
-                    selectedSubtaskRows[key] = template.subTasks.map((s: any) => s.id);
+                    template.subTasks.forEach((subtask: any) => {
+                      selectedSubtasks.push({
+                        id: subtask.id,
+                        name: subtask.name + (suffixTaskTemplate || ''),
+                        templateId: template.id,
+                        templateName: template.name + (suffixTaskTemplate || ''),
+                        groupId: group.id,
+                        groupName: group.name + (suffixTaskGroup || ''),
+                        description: subtask.description,
+                        budgetedHours: subtask.budgetedHours,
+                        rank: subtask.rank
+                      });
+                    });
                   }
                 });
               }
@@ -190,12 +217,8 @@ const MultiTaskSuperProjectAssignmentModal: React.FC<MultiTaskSuperProjectAssign
               suffixTaskSuper: suffixTaskSuper || '',
               suffixTaskGroup: suffixTaskGroup || '',
               suffixTaskTemplate: suffixTaskTemplate || '',
-              selectedGroups,
-              selectedTemplateRows,
-              selectedSubtaskRows,
-              metadata: {
-                explicitSelectionOnly: true
-              }
+              selectedTemplates,
+              selectedSubtasks
             };
             
             // Make the API call
