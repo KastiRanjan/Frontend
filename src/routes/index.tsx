@@ -55,6 +55,7 @@ import Task from "../pages/Task";
 import User from "../pages/User";
 import PrivateRoute from "./PrivateRoute";
 import ProtectedRoute from "./ProtectedRoute";
+import ClientPrivateRoute from "./ClientPrivateRoute";
 import EditWorklog from "@/pages/Worklog/edit";
 import Perimssion from "@/pages/Permission";
 import RolePermision from "@/pages/Role/role-permission";
@@ -72,8 +73,43 @@ import CreateNoticePage from "@/pages/NoticeBoard/Create";
 import EditNoticePage from "@/pages/NoticeBoard/Edit";
 import ForgotPasswordPage from "@/pages/ForgotPassword";
 import UserAvailabilityDashboard from "@/pages/Project/availability";
+// Client Portal imports
+import {
+  ClientLogin,
+  ClientDashboard,
+  ClientForgotPassword,
+  ClientResetPassword
+} from "@/pages/ClientPortal";
+// Admin client report management
+import ClientReportsAdmin from "@/pages/ClientReportsAdmin";
+import ClientUsersAdmin from "@/pages/ClientUsersAdmin";
 
 const Router = [
+  // Client Portal Routes (public)
+  {
+    path: "/client-login",
+    element: <ClientLogin />,
+  },
+  {
+    path: "/client-forgot-password",
+    element: <ClientForgotPassword />,
+  },
+  {
+    path: "/client/reset-password/:token",
+    element: <ClientResetPassword />,
+  },
+  // Client Portal Routes (protected)
+  {
+    path: "/client-portal",
+    element: <ClientPrivateRoute />,
+    children: [
+      {
+        path: "",
+        element: <ClientDashboard />,
+      },
+    ],
+  },
+  // Staff Routes
   {
     path: "/forgot-password",
     element: <ForgotPasswordPage />,
@@ -523,6 +559,27 @@ const Router = [
 {
   path: "/notice-board/edit/:id",
   element: <EditNoticePage />,
+},
+// Client Reports Admin Routes
+{
+  path: "/client-reports",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="client-reports"
+      component={<ClientReportsAdmin />}
+    />
+  ),
+},
+{
+  path: "/client-users",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="client-users"
+      component={<ClientUsersAdmin />}
+    />
+  ),
 },
     ],
     

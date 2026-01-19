@@ -1,0 +1,192 @@
+import React, { useState } from "react";
+import { Form, Input, Button, Card, Typography, Alert, message, Modal } from "antd";
+import { MailOutlined, LockOutlined, BankOutlined } from "@ant-design/icons";
+import { Link, useNavigate } from "react-router-dom";
+import { useClientLogin } from "@/hooks/clientReport";
+import { ClientLoginPayload, CustomerBasic } from "@/types/clientUser";
+import axios from "axios";
+
+const { Title, Text } = Typography;
+
+const ClientLogin: React.FC = () => {
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const { mutate: login, isPending, error } = useClientLogin();
+  const [showCustomerSelect, setShowCustomerSelect] = useState(false);
+  const [availableCustomers, setAvailableCustomers] = useState<CustomerBasic[]>([]);
+  const [pendingCredentials, setPendingCredentials] = useState<ClientLoginPayload | null>(null);
+
+  const onFinish = (values: ClientLoginPayload) => {
+    login(values, {
+      onSuccess: (data) => {
+        if (data.needsCustomerSelection && data.customers.length > 1) {
+          // Show customer selection modal
+          setAvailableCustomers(data.customers);
+          setPendingCredentials(values);
+          setShowCustomerSelect(true);
+        } else {
+          // Store token and navigate
+          localStorage.setItem("client_token", data.token);
+          axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+          if (data.customers?.length > 0) {
+            localStorage.setItem("selected_customer_id", data.customers[0].id);
+          }
+          message.success("Login successful");
+          navigate("/client-portal");
+        }
+      },
+      onError: (err: any) => {
+        message.error(err.response?.data?.message || "Login failed");
+      }
+    });
+  };
+
+  const handleCustomerSelect = (customerId: string) => {
+    if (!pendingCredentials) return;
+    
+    // Re-login with selected customer
+    login(
+      { ...pendingCredentials, customerId },
+      {
+        onSuccess: (data) => {
+          localStorage.setItem("client_token", data.token);
+          localStorage.setItem("selected_customer_id", customerId);
+          axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+          setShowCustomerSelect(false);
+          message.success("Login successful");
+          navigate("/client-portal");
+        },
+        onError: (err: any) => {
+          message.error(err.response?.data?.message || "Login failed");
+        }
+      }
+    );
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="w-full max-w-md shadow-xl rounded-xl">
+        <div className="text-center mb-8">
+          <Title level={2} className="!mb-2">
+            Client Portal
+          </Title>
+          <Text type="secondary">
+            Sign in to access your reports and documents
+          </Text>
+        </div>
+
+        {error && (
+          <Alert
+            message="Login Failed"
+            description={(error as any).response?.data?.message || "Invalid credentials"}
+            type="error"
+            showIcon
+            className="mb-4"
+          />
+        )}
+
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          autoComplete="off"
+        >
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: "Please enter your email" },
+              { type: "email", message: "Please enter a valid email" }
+            ]}
+          >
+            <Input
+              prefix={<MailOutlined className="text-gray-400" />}
+              placeholder="Enter your email"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: "Please enter your password" }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined className="text-gray-400" />}
+              placeholder="Enter your password"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={isPending}
+              size="large"
+              className="w-full"
+            >
+              Sign In
+            </Button>
+          </Form.Item>
+        </Form>
+
+        <div className="text-center mt-4">
+          <Link
+            to="/client-forgot-password"
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Forgot your password?
+          </Link>
+        </div>
+
+        <div className="text-center mt-6 pt-6 border-t">
+          <Text type="secondary">
+            Not a client? <Link to="/login" className="text-blue-600">Staff Login</Link>
+          </Text>
+        </div>
+      </Card>
+
+      {/* Customer Selection Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <BankOutlined />
+            <span>Select Organization</span>
+          </div>
+        }
+        open={showCustomerSelect}
+        onCancel={() => setShowCustomerSelect(false)}
+        footer={null}
+        centered
+      >
+        <div className="mb-4">
+          <Text type="secondary">
+            You have access to multiple organizations. Please select which one you'd like to access:
+          </Text>
+        </div>
+        <div className="space-y-2">
+          {availableCustomers.map((customer) => (
+            <Button
+              key={customer.id}
+              block
+              size="large"
+              className="text-left h-auto py-3"
+              onClick={() => handleCustomerSelect(customer.id)}
+              loading={isPending}
+            >
+              <div>
+                <div className="font-medium">{customer.name}</div>
+                {customer.shortName && (
+                  <Text type="secondary" className="text-sm">{customer.shortName}</Text>
+                )}
+              </div>
+            </Button>
+          ))}
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+export default ClientLogin;

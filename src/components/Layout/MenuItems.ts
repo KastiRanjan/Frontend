@@ -11,7 +11,9 @@ import {
   TeamOutlined,
   ClockCircleOutlined,
   CheckSquareOutlined,
-  NotificationOutlined
+  NotificationOutlined,
+  FolderOpenOutlined,
+  SolutionOutlined
 } from "@ant-design/icons";
 import { MenuProps } from "antd";
 import _ from "lodash";
@@ -128,6 +130,18 @@ export const MenuItems = (): MenuProps[] => {
       label: "Assign Permissions",
       resource: "admin",
       icon: React.createElement(SettingOutlined),
+    },
+    {
+      key: "/client-reports",
+      label: "Client Reports",
+      resource: "client-reports",
+      icon: React.createElement(FolderOpenOutlined),
+    },
+    {
+      key: "/client-users",
+      label: "Client Users",
+      resource: "client-users",
+      icon: React.createElement(SolutionOutlined),
     },
     // {
     //   key: "/reports",
