@@ -1,36 +1,43 @@
 /**
  * Subdomain configuration for client portal
  * 
- * The app can be configured to run on different subdomains:
- * - Main staff portal: app.example.com or localhost:5173
- * - Client portal: client.example.com or client.localhost:5173
+ * Production Setup:
+ * - Staff portal: task.artha.com.np
+ * - Client portal: client.artha.com.np
  * 
- * Set the VITE_CLIENT_SUBDOMAIN env variable to configure the client subdomain prefix
+ * Development:
+ * - Uses path-based routing on localhost
+ * 
+ * Set VITE_CLIENT_SUBDOMAIN env variable to configure the client subdomain prefix
  */
 
 const CLIENT_SUBDOMAIN_PREFIX = import.meta.env.VITE_CLIENT_SUBDOMAIN || 'client';
 
 /**
- * Check if the current hostname indicates we're on the client portal
+ * Check if the current hostname indicates we're on the client portal subdomain
+ * Returns true for: client.artha.com.np, client.example.com, etc.
  */
 export const isClientPortalDomain = (): boolean => {
   const hostname = window.location.hostname;
   
-  // Check for subdomain pattern: client.example.com or client.localhost
+  // Check for subdomain pattern: client.artha.com.np or client.example.com
   const parts = hostname.split('.');
   
-  // For localhost with subdomain: client.localhost
+  // Check if first part matches client subdomain prefix
+  // Works for: client.artha.com.np, client.localhost, client.example.com
   if (parts.length >= 2 && parts[0] === CLIENT_SUBDOMAIN_PREFIX) {
     return true;
   }
   
-  // For development: check if URL path starts with /client-portal or /client-login
-  const path = window.location.pathname;
-  if (path.startsWith('/client-portal') || 
-      path.startsWith('/client-login') || 
-      path.startsWith('/client-forgot-password') ||
-      path.startsWith('/client/reset-password')) {
-    return true;
+  // For development on localhost: also check path-based routes
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    const path = window.location.pathname;
+    if (path.startsWith('/client-portal') || 
+        path.startsWith('/client-login') || 
+        path.startsWith('/client-forgot-password') ||
+        path.startsWith('/client/reset-password')) {
+      return true;
+    }
   }
   
   return false;

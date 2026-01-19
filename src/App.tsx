@@ -22,22 +22,22 @@ const App: React.FC = () => {
   useEffect(() => {
     const pathname = location.pathname;
     
-    // Check if we're on the client portal domain/subdomain
-    const isOnClientDomain = isClientPortalDomain();
+    // Check if we're on the client portal subdomain (e.g., client.artha.com.np)
+    const isOnClientSubdomain = isClientPortalDomain();
     const isOnClientRoute = isClientOnlyRoute(pathname);
     
-    // If on client subdomain but not on client route, redirect to client login
-    if (isOnClientDomain && pathname === '/') {
-      navigate('/client-login');
+    // If on client subdomain (client.artha.com.np)
+    if (isOnClientSubdomain) {
+      // If trying to access non-client routes, redirect to client login
+      if (!isOnClientRoute) {
+        navigate('/client-login');
+        return;
+      }
+      // Don't apply staff auth logic on client subdomain
       return;
     }
     
-    // If on client subdomain, don't apply staff auth logic
-    if (isOnClientRoute) {
-      return;
-    }
-    
-    // Staff portal routes
+    // Staff portal routes (task.artha.com.np)
     const publicRoutes = ["/login", "/signup", "/forgot-password"];
     const isResetRoute = /^\/reset\//.test(pathname);
     
@@ -45,7 +45,8 @@ const App: React.FC = () => {
       navigate("/");
     } else if (
       !isAuthenticated &&
-      ![...publicRoutes, ...(isResetRoute ? [pathname] : [])].includes(pathname)
+      ![...publicRoutes, ...(isResetRoute ? [pathname] : [])].includes(pathname) &&
+      !isOnClientRoute
     ) {
       navigate("/login");
     }
