@@ -30,7 +30,7 @@ const App: React.FC = () => {
     if (isOnClientSubdomain) {
       // If trying to access non-client routes, redirect to client login
       if (!isOnClientRoute) {
-        navigate('/client-login');
+        navigate('/client-login', { replace: true });
         return;
       }
       // Don't apply staff auth logic on client subdomain
@@ -41,14 +41,17 @@ const App: React.FC = () => {
     const publicRoutes = ["/login", "/signup", "/forgot-password"];
     const isResetRoute = /^\/reset\//.test(pathname);
     
+    // Redirect authenticated users away from login page
     if (isAuthenticated && pathname === "/login") {
-      navigate("/");
+      console.log('App: User is authenticated, redirecting from login to home');
+      navigate("/", { replace: true });
     } else if (
       !isAuthenticated &&
       ![...publicRoutes, ...(isResetRoute ? [pathname] : [])].includes(pathname) &&
       !isOnClientRoute
     ) {
-      navigate("/login");
+      console.log('App: User is not authenticated, redirecting to login');
+      navigate("/login", { replace: true });
     }
   }, [isAuthenticated, navigate, location.pathname]);
 

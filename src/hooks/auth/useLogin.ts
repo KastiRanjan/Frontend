@@ -1,37 +1,39 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { login } from "../../service/auth.service";
 import { useNavigate } from "react-router-dom";
+import { useSession } from "@/context/SessionContext";
 
 export const useLogin = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { refreshAuth } = useSession();
+  
   return useMutation({
     mutationFn: login,
     onSuccess: (response) => {
       console.log('Login response:', response);
       
-      // Extract the Authentication token from response headers or cookies
-      const authToken = response.headers['set-cookie']?.find(cookie => cookie.startsWith('Authentication='));
-      
-      // If we can directly access the token, store it in localStorage
-      if (authToken) {
-        const tokenValue = authToken.split('=')[1].split(';')[0];
-        localStorage.setItem('access_token', tokenValue);
-        console.log('Token stored in localStorage');
+      // Token is already stored in localStorage by the login service
+      // Verify it's there
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.error('Token was not stored properly after login');
       } else {
-        // Fallback - use document.cookie to extract the token since it's already set by the backend
-        const cookies = document.cookie.split(';');
-        const authCookie = cookies.find(cookie => cookie.trim().startsWith('Authentication='));
-        
-        if (authCookie) {
-          const tokenValue = authCookie.trim().split('=')[1];
-          localStorage.setItem('access_token', tokenValue);
-          console.log('Token extracted from cookies and stored in localStorage');
-        } else {
-          console.warn('Could not extract Authentication token from cookies');
-        }
+        console.log('Token confirmed in localStorage after login');
       }
       
-      navigate("/");
+      // Invalidate the profile query to force a fresh fetch
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Refresh the authentication state in SessionContext
+      if (refreshAuth) {
+        refreshAuth();
+      }
+      
+      // Small delay to ensure state updates before navigation
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 100);
     },
   });
 };

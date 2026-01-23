@@ -18,6 +18,7 @@ type SessionContextType = {
   profile?: Profile;
   isProfilePending?: boolean;
   permissions?: string[];
+  refreshAuth?: () => void;
 };
 
 const SessionContext = createContext<SessionContextType>({
@@ -26,6 +27,7 @@ const SessionContext = createContext<SessionContextType>({
   profile: undefined,
   isProfilePending: false,
   permissions: [],
+  refreshAuth: () => {},
 });
 
 export const SessionProvider = ({
@@ -54,7 +56,15 @@ export const SessionProvider = ({
     const isAuthByToken = checkIsAuthenticated();
     
     // If either method confirms authentication, consider the user authenticated
-    setIsAuthenticated(isAuthByExpiry || isAuthByToken);
+    const newAuthState = isAuthByExpiry || isAuthByToken;
+    
+    // Only update if state actually changed to prevent unnecessary re-renders
+    setIsAuthenticated(prevAuth => {
+      if (prevAuth !== newAuthState) {
+        console.log('SessionProvider: Auth state changed from', prevAuth, 'to', newAuthState);
+      }
+      return newAuthState;
+    });
     setLoading(false);
     
     console.log('SessionProvider: Auth state -', { 
@@ -110,6 +120,20 @@ export const SessionProvider = ({
     }
   }, [profile]);
 
+  // Function to manually refresh authentication state
+  const refreshAuth = () => {
+    console.log('SessionProvider: Manual auth refresh triggered');
+    const isAuthByToken = checkIsAuthenticated();
+    const currentDateTime = new Date().getTime();
+    const expiresInDateTime = cookies?.ExpiresIn && !isNaN(new Date(cookies.ExpiresIn).getTime())
+      ? new Date(cookies.ExpiresIn).getTime()
+      : 0;
+    const isAuthByExpiry = expiresInDateTime >= currentDateTime;
+    
+    setIsAuthenticated(isAuthByExpiry || isAuthByToken);
+    setLoading(false);
+  };
+
   return (
     <SessionContext.Provider
       value={{
@@ -118,6 +142,7 @@ export const SessionProvider = ({
         profile,
         isProfilePending,
         permissions: profile?.role?.permission || [],
+        refreshAuth,
       }}
     >
       {children}
