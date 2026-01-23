@@ -4,15 +4,16 @@ import React, { useEffect } from "react";
 import { useNavigate, useRoutes, useLocation } from "react-router-dom";
 import Router from "./routes";
 import { useSession } from "./context/SessionContext";
-import { ClientAuthProvider } from "./context/ClientAuthContext";
+import { ClientAuthProvider, useClientAuth } from "./context/ClientAuthContext";
 import { antTheme } from "./theme";
 import { useTrackUserActivity } from "./utils/userActivityTracker";
 import { isClientPortalDomain, isClientOnlyRoute } from "./utils/subdomainConfig";
 import "react-quill/dist/quill.snow.css";
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const routes = useRoutes(Router);
   const { isAuthenticated } = useSession();
+  const { isClientAuthenticated, isLoading: isClientLoading } = useClientAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -25,6 +26,8 @@ const App: React.FC = () => {
     // Check if we're on the client portal subdomain (e.g., client.artha.com.np)
     const isOnClientSubdomain = isClientPortalDomain();
     const isOnClientRoute = isClientOnlyRoute(pathname);
+    const clientPublicRoutes = ["/client-login", "/client-forgot-password"];
+    const isClientResetRoute = /^\/client\/reset-password\//.test(pathname);
     
     // If on client subdomain (client.artha.com.np)
     if (isOnClientSubdomain) {
@@ -35,6 +38,22 @@ const App: React.FC = () => {
       }
       // Don't apply staff auth logic on client subdomain
       return;
+    }
+    
+    // Handle client authentication redirect (for client routes on main domain)
+    if (isOnClientRoute && !isClientLoading) {
+      if (isClientAuthenticated && pathname === "/client-login") {
+        console.log('App: Client is authenticated, redirecting from client-login to client-portal');
+        navigate("/client-portal", { replace: true });
+        return;
+      } else if (
+        !isClientAuthenticated &&
+        ![...clientPublicRoutes, ...(isClientResetRoute ? [pathname] : [])].includes(pathname)
+      ) {
+        console.log('App: Client is not authenticated, redirecting to client-login');
+        navigate("/client-login", { replace: true });
+        return;
+      }
     }
     
     // Staff portal routes (task.artha.com.np)
@@ -53,12 +72,16 @@ const App: React.FC = () => {
       console.log('App: User is not authenticated, redirecting to login');
       navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, navigate, location.pathname]);
+  }, [isAuthenticated, isClientAuthenticated, isClientLoading, navigate, location.pathname]);
 
+  return routes;
+};
+
+const App: React.FC = () => {
   return (
     <ConfigProvider theme={antTheme}>
       <ClientAuthProvider>
-        {routes}
+        <AppContent />
       </ClientAuthProvider>
     </ConfigProvider>
   );

@@ -4,6 +4,7 @@ import { MailOutlined, LockOutlined, BankOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useClientLogin } from "@/hooks/clientReport";
 import { ClientLoginPayload, CustomerBasic } from "@/types/clientUser";
+import { useClientAuth } from "@/context/ClientAuthContext";
 import axios from "axios";
 
 const { Title, Text } = Typography;
@@ -12,13 +13,14 @@ const ClientLogin: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { mutate: login, isPending, error } = useClientLogin();
+  const { checkAuth } = useClientAuth();
   const [showCustomerSelect, setShowCustomerSelect] = useState(false);
   const [availableCustomers, setAvailableCustomers] = useState<CustomerBasic[]>([]);
   const [pendingCredentials, setPendingCredentials] = useState<ClientLoginPayload | null>(null);
 
   const onFinish = (values: ClientLoginPayload) => {
     login(values, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         if (data.needsCustomerSelection && data.customers.length > 1) {
           // Show customer selection modal
           setAvailableCustomers(data.customers);
@@ -32,7 +34,14 @@ const ClientLogin: React.FC = () => {
             localStorage.setItem("selected_customer_id", data.customers[0].id);
           }
           message.success("Login successful");
-          navigate("/client-portal");
+          
+          // Refresh auth context
+          await checkAuth();
+          
+          // Navigate after small delay to ensure state updates
+          setTimeout(() => {
+            navigate("/client-portal", { replace: true });
+          }, 100);
         }
       },
       onError: (err: any) => {
@@ -48,13 +57,20 @@ const ClientLogin: React.FC = () => {
     login(
       { ...pendingCredentials, customerId },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           localStorage.setItem("client_token", data.token);
           localStorage.setItem("selected_customer_id", customerId);
           axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
           setShowCustomerSelect(false);
           message.success("Login successful");
-          navigate("/client-portal");
+          
+          // Refresh auth context
+          await checkAuth();
+          
+          // Navigate after small delay to ensure state updates
+          setTimeout(() => {
+            navigate("/client-portal", { replace: true });
+          }, 100);
         },
         onError: (err: any) => {
           message.error(err.response?.data?.message || "Login failed");

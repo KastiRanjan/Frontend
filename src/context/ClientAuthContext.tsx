@@ -13,6 +13,7 @@ interface ClientAuthContextType {
   logout: () => Promise<void>;
   refreshClientAuth: () => Promise<boolean>;
   selectCustomer: (customerId: string) => Promise<boolean>;
+  checkAuth: () => Promise<void>;
 }
 
 const ClientAuthContext = createContext<ClientAuthContextType>({
@@ -23,7 +24,8 @@ const ClientAuthContext = createContext<ClientAuthContextType>({
   selectedCustomer: null,
   logout: async () => {},
   refreshClientAuth: async () => false,
-  selectCustomer: async () => false
+  selectCustomer: async () => false,
+  checkAuth: async () => {}
 });
 
 export const ClientAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -136,7 +138,8 @@ export const ClientAuthProvider: React.FC<{ children: ReactNode }> = ({ children
         selectedCustomer,
         logout,
         refreshClientAuth,
-        selectCustomer
+        selectCustomer,
+        checkAuth: checkClientAuth
       }}
     >
       {children}
