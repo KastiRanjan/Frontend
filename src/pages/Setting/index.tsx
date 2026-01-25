@@ -92,6 +92,14 @@ const Setting = () => {
         </Card>
       </Col>
       <Col span={6}>
+        <Card className="h-full" onClick={() => navigate("/client-report-document-types")} hoverable>
+          <Title level={4}>Client Report Document Types</Title>
+          <Paragraph>
+            Manage document types for client reports. Create global or customer-specific types.
+          </Paragraph>
+        </Card>
+      </Col>
+      <Col span={6}>
         <Card className="h-full">
           <svg className="admin-icon-prop">
             <use></use>

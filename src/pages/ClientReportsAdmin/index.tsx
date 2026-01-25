@@ -27,7 +27,9 @@ import {
   ClockCircleOutlined,
   StopOutlined,
   EyeOutlined,
-  EyeInvisibleOutlined
+  EyeInvisibleOutlined,
+  FileTextOutlined,
+  EditOutlined
 } from "@ant-design/icons";
 import {
   useClientReports,
@@ -38,6 +40,7 @@ import {
   useBulkUpdateReportAccess,
   useProjectsByCustomer
 } from "@/hooks/clientReport";
+import { useDocumentTypesForCustomer, useDocumentTypes } from "@/hooks/clientReport/useClientReportDocumentTypes";
 import { useClient } from "@/hooks/client/useClient";
 import {
   ClientReportType,
@@ -53,25 +56,65 @@ const { TextArea } = Input;
 const ClientReportsAdmin: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<ReportAccessStatus | undefined>();
   const [filterCustomerId, setFilterCustomerId] = useState<string | undefined>();
+  const [filterDocumentTypeId, setFilterDocumentTypeId] = useState<string | undefined>();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ClientReportType | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [selectedCustomerForForm, setSelectedCustomerForForm] = useState<string | undefined>();
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
   const [accessForm] = Form.useForm();
 
   const { data: reports, isLoading } = useClientReports({
     accessStatus: filterStatus,
-    customerId: filterCustomerId
+    customerId: filterCustomerId,
+    documentTypeId: filterDocumentTypeId
   });
   const { data: clients } = useClient();
   const { data: projects } = useProjectsByCustomer(selectedCustomerForForm);
+  const { data: documentTypesForCustomer } = useDocumentTypesForCustomer(selectedCustomerForForm);
+  const { data: allDocumentTypes } = useDocumentTypes({ isActive: true });
   const { mutate: createReport, isPending: creating } = useCreateClientReport();
-  const { mutate: updateReport } = useUpdateClientReport();
+  const { mutate: updateReport, isPending: updating } = useUpdateClientReport();
   const { mutate: updateAccess, isPending: updatingAccess } = useUpdateReportAccess();
   const { mutate: deleteReport } = useDeleteClientReport();
   const { mutate: bulkUpdateAccess } = useBulkUpdateReportAccess();
+
+  const handleOpenEditModal = (report: ClientReportType) => {
+    setSelectedReport(report);
+    setSelectedCustomerForForm(report.customerId);
+    editForm.setFieldsValue({
+      title: report.title,
+      description: report.description,
+      projectId: report.projectId,
+      documentTypeId: report.documentTypeId,
+      fiscalYear: report.fiscalYear,
+      isVisible: report.isVisible
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditReport = (values: any) => {
+    if (!selectedReport) return;
+
+    updateReport(
+      { id: selectedReport.id, payload: values },
+      {
+        onSuccess: () => {
+          message.success("Report updated successfully");
+          setIsEditModalOpen(false);
+          setSelectedReport(null);
+          editForm.resetFields();
+          setSelectedCustomerForForm(undefined);
+        },
+        onError: (err: any) => {
+          message.error(err.response?.data?.message || "Failed to update report");
+        }
+      }
+    );
+  };
 
   const handleCreateReport = (values: any) => {
     const file = values.file?.fileList?.[0]?.originFileObj;
@@ -189,6 +232,14 @@ const ClientReportsAdmin: React.FC = () => {
       render: (project: any) => project?.name || "-"
     },
     {
+      title: "Document Type",
+      dataIndex: "documentType",
+      key: "documentType",
+      render: (documentType: any) => documentType?.name ? (
+        <Tag icon={<FileTextOutlined />}>{documentType.name}</Tag>
+      ) : "-"
+    },
+    {
       title: "Fiscal Year",
       dataIndex: "fiscalYear",
       key: "fiscalYear",
@@ -242,6 +293,13 @@ const ClientReportsAdmin: React.FC = () => {
       key: "actions",
       render: (_: any, record: ClientReportType) => (
         <Space>
+          <Tooltip title="Edit">
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleOpenEditModal(record)}
+            />
+          </Tooltip>
           <Button
             size="small"
             onClick={() => {
@@ -344,6 +402,18 @@ const ClientReportsAdmin: React.FC = () => {
               ))}
             </Select>
             <Select
+              style={{ width: 180 }}
+              placeholder="Filter by Document Type"
+              allowClear
+              onChange={setFilterDocumentTypeId}
+            >
+              {allDocumentTypes?.map((type: any) => (
+                <Option key={type.id} value={type.id}>
+                  {type.name}
+                </Option>
+              ))}
+            </Select>
+            <Select
               style={{ width: 150 }}
               placeholder="Filter by Status"
               allowClear
@@ -424,6 +494,7 @@ const ClientReportsAdmin: React.FC = () => {
               onChange={(value) => {
                 setSelectedCustomerForForm(value);
                 form.setFieldValue("projectId", undefined);
+                form.setFieldValue("documentTypeId", undefined);
               }}
             >
               {clients?.map((client: any) => (
@@ -443,6 +514,20 @@ const ClientReportsAdmin: React.FC = () => {
               {projects?.map((project: any) => (
                 <Option key={project.id} value={project.id}>
                   {project.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="documentTypeId" label="Document Type">
+            <Select 
+              placeholder={selectedCustomerForForm ? "Select document type (optional)" : "Select client first"} 
+              allowClear
+              disabled={!selectedCustomerForForm}
+            >
+              {documentTypesForCustomer?.map((type: any) => (
+                <Option key={type.id} value={type.id}>
+                  {type.name} {type.isGlobal && "(Global)"}
                 </Option>
               ))}
             </Select>
@@ -535,6 +620,93 @@ const ClientReportsAdmin: React.FC = () => {
             <Button onClick={() => setIsAccessModalOpen(false)}>Cancel</Button>
             <Button type="primary" htmlType="submit" loading={updatingAccess}>
               Update Access
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* Edit Report Modal */}
+      <Modal
+        title="Edit Report"
+        open={isEditModalOpen}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setSelectedReport(null);
+          editForm.resetFields();
+          setSelectedCustomerForForm(undefined);
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={editForm}
+          layout="vertical"
+          onFinish={handleEditReport}
+        >
+          <div className="mb-4 p-3 bg-gray-50 rounded">
+            <Text type="secondary">Client: </Text>
+            <Text strong>{selectedReport?.customer?.name}</Text>
+          </div>
+
+          <Form.Item
+            name="title"
+            label="Report Title"
+            rules={[{ required: true, message: "Please enter title" }]}
+          >
+            <Input placeholder="Enter report title" />
+          </Form.Item>
+
+          <Form.Item name="description" label="Description">
+            <TextArea rows={3} placeholder="Enter description" />
+          </Form.Item>
+
+          <Form.Item name="projectId" label="Project">
+            <Select 
+              placeholder="Select project (optional)" 
+              allowClear
+            >
+              {projects?.map((project: any) => (
+                <Option key={project.id} value={project.id}>
+                  {project.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="documentTypeId" label="Document Type">
+            <Select 
+              placeholder="Select document type (optional)" 
+              allowClear
+            >
+              {documentTypesForCustomer?.map((type: any) => (
+                <Option key={type.id} value={type.id}>
+                  {type.name} {type.isGlobal && "(Global)"}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="fiscalYear" label="Fiscal Year">
+            <Input type="number" placeholder="e.g., 2080" />
+          </Form.Item>
+
+          <Form.Item name="isVisible" label="Visibility">
+            <Select>
+              <Option value={true}>Visible to Client</Option>
+              <Option value={false}>Hidden from Client</Option>
+            </Select>
+          </Form.Item>
+
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => {
+              setIsEditModalOpen(false);
+              setSelectedReport(null);
+              editForm.resetFields();
+            }}>
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" loading={updating}>
+              Update Report
             </Button>
           </div>
         </Form>

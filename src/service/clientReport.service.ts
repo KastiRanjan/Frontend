@@ -20,6 +20,7 @@ export const fetchClientReports = async (
   const params = new URLSearchParams();
   if (filters?.customerId) params.append("customerId", filters.customerId);
   if (filters?.projectId) params.append("projectId", filters.projectId);
+  if (filters?.documentTypeId) params.append("documentTypeId", filters.documentTypeId);
   if (filters?.accessStatus) params.append("accessStatus", filters.accessStatus);
   if (filters?.fiscalYear) params.append("fiscalYear", filters.fiscalYear.toString());
 
@@ -42,6 +43,7 @@ export const createClientReport = async (
   if (payload.description) formData.append("description", payload.description);
   formData.append("customerId", payload.customerId);
   if (payload.projectId) formData.append("projectId", payload.projectId);
+  if (payload.documentTypeId) formData.append("documentTypeId", payload.documentTypeId);
   if (payload.fiscalYear) formData.append("fiscalYear", payload.fiscalYear.toString());
   if (payload.isVisible !== undefined) formData.append("isVisible", String(payload.isVisible));
 

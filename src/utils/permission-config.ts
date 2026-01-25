@@ -45,5 +45,11 @@ export const permissionConfig = {
   ALLOCATE_LEAVE: 'allocate_leave',
   ALLOCATE_LEAVE_ALL: 'allocate_leave_all',
   CARRY_OVER_LEAVE: 'carry_over_leave',
-  VIEW_LEAVE_BALANCES: 'view_leave_balances'
+  VIEW_LEAVE_BALANCES: 'view_leave_balances',
+  
+  // Client Report Document Type permissions
+  CREATE_CLIENT_REPORT_DOCUMENT_TYPE: 'create_client_report_document_type',
+  UPDATE_CLIENT_REPORT_DOCUMENT_TYPE: 'update_client_report_document_type',
+  DELETE_CLIENT_REPORT_DOCUMENT_TYPE: 'delete_client_report_document_type',
+  READ_CLIENT_REPORT_DOCUMENT_TYPE: 'read_client_report_document_type'
 };

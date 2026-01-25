@@ -23,6 +23,11 @@ export interface ClientReportType {
     id: string;
     name: string;
   };
+  documentTypeId?: string;
+  documentType?: {
+    id: string;
+    name: string;
+  };
   accessStatus: ReportAccessStatus;
   isVisible: boolean;
   accessGrantedAt?: string;
@@ -44,6 +49,7 @@ export interface CreateClientReportPayload {
   description?: string;
   customerId: string;
   projectId?: string;
+  documentTypeId?: string;
   fiscalYear?: number;
   isVisible?: boolean;
   file: File;
@@ -56,6 +62,7 @@ export interface UpdateClientReportPayload {
   isVisible?: boolean;
   accessNotes?: string;
   projectId?: string;
+  documentTypeId?: string;
   fiscalYear?: number;
 }
 
@@ -67,6 +74,7 @@ export interface UpdateReportAccessPayload {
 export interface ClientReportFilterPayload {
   customerId?: string;
   projectId?: string;
+  documentTypeId?: string;
   accessStatus?: ReportAccessStatus;
   fiscalYear?: number;
 }

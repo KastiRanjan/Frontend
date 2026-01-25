@@ -18,6 +18,7 @@ import ProjectSetting from "@/pages/Setting/ProjectSetting";
 import CustomerSetting from "@/pages/Setting/CustomerSetting";
 import DepartmentSetting from "@/pages/Setting/DepartmentSetting";
 import MailSettings from "@/pages/Setting/MailSettings";
+import ClientReportDocumentTypeSetting from "@/pages/Setting/ClientReportDocumentTypeSetting";
 import AllTask from "@/pages/Task/all";
 import NewTask from "@/pages/Task/new";
 import TaskDetails from "@/pages/Task/task-details";
@@ -441,6 +442,16 @@ const Router = [
             method="get"
             resource="mailSettings"
             component={<MailSettings />}
+          />
+        ),
+      },
+      {
+        path: "/client-report-document-types",
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="client-report-document-type"
+            component={<ClientReportDocumentTypeSetting />}
           />
         ),
       },

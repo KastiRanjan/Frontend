@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   Row,
@@ -12,7 +12,8 @@ import {
   Spin,
   Empty,
   message,
-  Dropdown
+  Dropdown,
+  Select
 } from "antd";
 import {
   FileOutlined,
@@ -21,15 +22,18 @@ import {
   DownloadOutlined,
   LogoutOutlined,
   SwapOutlined,
-  BankOutlined
+  BankOutlined,
+  FilterOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { useClientAuth } from "@/context/ClientAuthContext";
 import {
   useMyClientReports,
   useMyClientReportStats,
-  useDownloadClientReport
+  useDownloadClientReport,
+  useProjectsByCustomer
 } from "@/hooks/clientReport";
+import { useDocumentTypesForCustomer } from "@/hooks/clientReport/useClientReportDocumentTypes";
 import { ClientReportType, ReportAccessStatus } from "@/types/clientReport";
 import { formatDistanceToNow } from "date-fns";
 
@@ -40,6 +44,33 @@ const ClientDashboard: React.FC = () => {
   const { data: reports, isLoading: reportsLoading } = useMyClientReports(selectedCustomer?.id);
   const { data: stats, isLoading: statsLoading } = useMyClientReportStats(selectedCustomer?.id);
   const { mutate: download, isPending: downloading } = useDownloadClientReport();
+  
+  // Filters
+  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<string | undefined>();
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
+  
+  // Fetch document types and projects for filtering
+  const { data: documentTypes } = useDocumentTypesForCustomer(selectedCustomer?.id);
+  const { data: projects } = useProjectsByCustomer(selectedCustomer?.id);
+  
+  // Filter reports based on selected filters
+  const filteredReports = useMemo(() => {
+    if (!reports) return [];
+    return reports.filter((report: ClientReportType) => {
+      if (selectedDocumentTypeId && report.documentTypeId !== selectedDocumentTypeId) {
+        return false;
+      }
+      if (selectedProjectId && report.projectId !== selectedProjectId) {
+        return false;
+      }
+      return true;
+    });
+  }, [reports, selectedDocumentTypeId, selectedProjectId]);
+  
+  const handleClearFilters = () => {
+    setSelectedDocumentTypeId(undefined);
+    setSelectedProjectId(undefined);
+  };
 
   const handleDownload = (report: ClientReportType) => {
     if (report.accessStatus !== ReportAccessStatus.ACCESSIBLE) {
@@ -120,6 +151,12 @@ const ClientDashboard: React.FC = () => {
           )}
         </div>
       )
+    },
+    {
+      title: "Document Type",
+      dataIndex: "documentType",
+      key: "documentType",
+      render: (documentType: any) => documentType?.name || "-"
     },
     {
       title: "Project",
@@ -243,16 +280,51 @@ const ClientDashboard: React.FC = () => {
               <span>Your Reports</span>
             </div>
           }
+          extra={
+            <Space wrap>
+              <Select
+                placeholder="Filter by Document Type"
+                allowClear
+                style={{ width: 200 }}
+                value={selectedDocumentTypeId}
+                onChange={setSelectedDocumentTypeId}
+                options={documentTypes?.map((dt: any) => ({
+                  label: dt.name,
+                  value: dt.id
+                })) || []}
+              />
+              <Select
+                placeholder="Filter by Project"
+                allowClear
+                style={{ width: 200 }}
+                value={selectedProjectId}
+                onChange={setSelectedProjectId}
+                options={projects?.map((p: any) => ({
+                  label: p.name,
+                  value: p.id
+                })) || []}
+              />
+              {(selectedDocumentTypeId || selectedProjectId) && (
+                <Button icon={<FilterOutlined />} onClick={handleClearFilters}>
+                  Clear Filters
+                </Button>
+              )}
+            </Space>
+          }
         >
-          {reports && reports.length > 0 ? (
+          {filteredReports && filteredReports.length > 0 ? (
             <Table
-              dataSource={reports}
+              dataSource={filteredReports}
               columns={columns}
               rowKey="id"
               pagination={{ pageSize: 10 }}
             />
           ) : (
-            <Empty description="No reports available yet" />
+            <Empty description={
+              (selectedDocumentTypeId || selectedProjectId) 
+                ? "No reports match the selected filters" 
+                : "No reports available yet"
+            } />
           )}
         </Card>
 
