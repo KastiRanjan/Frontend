@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Card, Tag, Space, Button, Typography, Row, Col, Spin, Select, DatePicker, Tooltip, Modal, message } from 'antd';
-import { UserOutlined, ReloadOutlined, ZoomInOutlined, ZoomOutOutlined, CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Card, Tag, Space, Button, Typography, Row, Col, Spin, Select, DatePicker, Tooltip, Modal, message, Dropdown, Menu } from 'antd';
+import { UserOutlined, ReloadOutlined, ZoomInOutlined, ZoomOutOutlined, CalendarOutlined, ClockCircleOutlined, DownOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import PageTitle from '@/components/PageTitle';
+import { DualDateConverter } from '@/utils/dateConverter';
 
 dayjs.extend(isBetween);
 dayjs.extend(isSameOrBefore);
@@ -55,6 +56,23 @@ const UserAvailabilityDashboard = () => {
   } | null>(null);
   const [newPlannedDate, setNewPlannedDate] = useState<Dayjs | null>(null);
   const [extending, setExtending] = useState(false);
+  const [showInactiveProjects, setShowInactiveProjects] = useState(false); // Default: show only active projects
+
+  // Helper function to format date with Nepali
+  const formatDateWithNepali = (date: Dayjs, format: string = 'MMM DD, YYYY'): string => {
+    const nepaliDate = DualDateConverter.gregorianToNepali(date);
+    return `${date.format(format)} (${nepaliDate.format('YYYY-MM-DD', 'np')})`;
+  };
+
+  // Helper function to get short Nepali date
+  const getShortNepaliDate = (date: Dayjs): string => {
+    try {
+      const nepaliDate = DualDateConverter.gregorianToNepali(date);
+      return nepaliDate.format('YYYY-MM-DD', 'np');
+    } catch {
+      return '';
+    }
+  };
 
   const fetchUserAvailability = async () => {
     setLoading(true);
@@ -269,7 +287,7 @@ const UserAvailabilityDashboard = () => {
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             {/* Controls */}
             <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={24} sm={12} md={5}>
                 <Space>
                   <Text strong>Filter:</Text>
                   <Select
@@ -284,7 +302,19 @@ const UserAvailabilityDashboard = () => {
                   />
                 </Space>
               </Col>
-              <Col xs={24} sm={12} md={12}>
+              <Col xs={24} sm={12} md={5}>
+                <Tooltip title={showInactiveProjects ? "Hide inactive/released projects" : "Show inactive/released projects in dropdown"}>
+                  <Button
+                    type={showInactiveProjects ? "primary" : "default"}
+                    icon={showInactiveProjects ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                    onClick={() => setShowInactiveProjects(!showInactiveProjects)}
+                    style={{ width: '100%' }}
+                  >
+                    {showInactiveProjects ? 'Showing Inactive' : 'Show Inactive Projects'}
+                  </Button>
+                </Tooltip>
+              </Col>
+              <Col xs={24} sm={12} md={8}>
                 <Space>
                   <Text strong>Date Range:</Text>
                   <RangePicker
@@ -365,6 +395,7 @@ const UserAvailabilityDashboard = () => {
                         ? dateColumns[index + 1] 
                         : dateRange[1];
                       const isToday = dayjs().isBetween(date, endDate, 'day', '[]');
+                      const nepaliDateStr = getShortNepaliDate(date);
                       
                       return (
                         <div 
@@ -380,6 +411,9 @@ const UserAvailabilityDashboard = () => {
                         >
                           <div style={{ fontSize: '13px', fontWeight: '600' }}>
                             {date.format('MMM DD')}
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#1890ff', fontWeight: 500 }}>
+                            {nepaliDateStr}
                           </div>
                           <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
                             {date.format('YYYY')}
@@ -479,9 +513,11 @@ const UserAvailabilityDashboard = () => {
                                     <div>
                                       <div><strong>{project.projectName}</strong></div>
                                       <div style={{ color: '#52c41a', marginTop: 4 }}>✓ Active Assignment</div>
-                                      <div style={{ marginTop: 4 }}>From: {projectStart.format('MMM DD, YYYY')}</div>
+                                      <div style={{ marginTop: 4 }}>
+                                        From: {formatDateWithNepali(projectStart)}
+                                      </div>
                                       {project.plannedReleaseDate ? (
-                                        <div>Until: {projectEnd.format('MMM DD, YYYY')}</div>
+                                        <div>Until: {formatDateWithNepali(projectEnd)}</div>
                                       ) : (
                                         <div>Until: Project deadline</div>
                                       )}
@@ -540,8 +576,68 @@ const UserAvailabilityDashboard = () => {
                               );
                             })}
                             
-                            {/* Inactive Projects - Lighter and dashed border */}
-                            {inactiveProjects.map((project) => {
+                            {/* Inactive Projects Dropdown - Only show when toggle is enabled */}
+                            {showInactiveProjects && inactiveProjects.length > 0 && (
+                              <Dropdown
+                                overlay={
+                                  <Menu>
+                                    {inactiveProjects.map((project) => {
+                                      const projectStart = dayjs(project.assignedDate);
+                                      const projectEnd = project.plannedReleaseDate 
+                                        ? dayjs(project.plannedReleaseDate) 
+                                        : dayjs().add(2, 'year');
+                                      
+                                      return (
+                                        <Menu.Item key={`inactive-menu-${project.projectId}`}>
+                                          <div style={{ padding: '4px 0' }}>
+                                            <div style={{ fontWeight: 'bold', color: projectColors[project.projectId] }}>
+                                              {project.projectName}
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
+                                              ○ Inactive / Released
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#666' }}>
+                                              From: {formatDateWithNepali(projectStart, 'MMM DD, YY')}
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#666' }}>
+                                              Until: {project.plannedReleaseDate 
+                                                ? formatDateWithNepali(projectEnd, 'MMM DD, YY')
+                                                : 'Project deadline'
+                                              }
+                                            </div>
+                                          </div>
+                                        </Menu.Item>
+                                      );
+                                    })}
+                                  </Menu>
+                                }
+                                trigger={['click']}
+                                placement="bottomLeft"
+                              >
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    height: '20px',
+                                    background: 'rgba(0,0,0,0.04)',
+                                    borderRadius: '3px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    border: '1px dashed #d9d9d9',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  <Text style={{ fontSize: '9px', color: '#8c8c8c' }}>
+                                    +{inactiveProjects.length} inactive
+                                  </Text>
+                                  <DownOutlined style={{ fontSize: '8px', color: '#8c8c8c' }} />
+                                </div>
+                              </Dropdown>
+                            )}
+                            
+                            {/* Inactive Projects - Lighter and dashed border (old display - only if NOT using dropdown) */}
+                            {!showInactiveProjects && inactiveProjects.map((project) => {
                               const projectStart = dayjs(project.assignedDate);
                               const projectEnd = project.plannedReleaseDate 
                                 ? dayjs(project.plannedReleaseDate) 
@@ -560,9 +656,9 @@ const UserAvailabilityDashboard = () => {
                                     <div>
                                       <div><strong>{project.projectName}</strong></div>
                                       <div style={{ color: '#8c8c8c' }}>○ Inactive / Released</div>
-                                      <div>From: {projectStart.format('MMM DD, YYYY')}</div>
+                                      <div>From: {formatDateWithNepali(projectStart)}</div>
                                       {project.plannedReleaseDate ? (
-                                        <div>Until: {projectEnd.format('MMM DD, YYYY')}</div>
+                                        <div>Until: {formatDateWithNepali(projectEnd)}</div>
                                       ) : (
                                         <div>Until: Project deadline</div>
                                       )}
@@ -724,7 +820,7 @@ const UserAvailabilityDashboard = () => {
                                 Busy Until: 
                               </Text>
                               <Text strong style={{ fontSize: '12px', marginLeft: '8px' }}>
-                                {dayjs(user.busyUntil).format('MMM DD, YYYY')}
+                                {formatDateWithNepali(dayjs(user.busyUntil), 'MMM DD, YY')}
                               </Text>
                             </div>
                           )}
@@ -796,7 +892,7 @@ const UserAvailabilityDashboard = () => {
               <Text strong>Current Planned Release Date: </Text>
               <Text>
                 {selectedExtension.currentDate 
-                  ? dayjs(selectedExtension.currentDate).format('MMM DD, YYYY')
+                  ? formatDateWithNepali(dayjs(selectedExtension.currentDate))
                   : 'Not set'
                 }
               </Text>
@@ -816,9 +912,14 @@ const UserAvailabilityDashboard = () => {
                   return current && current.isBefore(dayjs(), 'day');
                 }}
               />
-              {newPlannedDate && selectedExtension.currentDate && (
+              {newPlannedDate && (
                 <Text type="secondary" style={{ fontSize: '12px', marginTop: 4, display: 'block' }}>
-                  Extension: {dayjs(newPlannedDate).diff(dayjs(selectedExtension.currentDate), 'day')} days
+                  New Date (Nepali): {getShortNepaliDate(newPlannedDate)}
+                  {selectedExtension.currentDate && (
+                    <span style={{ marginLeft: 8 }}>
+                      | Extension: {dayjs(newPlannedDate).diff(dayjs(selectedExtension.currentDate), 'day')} days
+                    </span>
+                  )}
                 </Text>
               )}
             </div>
