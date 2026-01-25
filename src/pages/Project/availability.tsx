@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, Tag, Space, Button, Typography, Row, Col, Spin, Select, DatePicker, Tooltip, Modal, message, Dropdown, Menu } from 'antd';
-import { UserOutlined, ReloadOutlined, ZoomInOutlined, ZoomOutOutlined, CalendarOutlined, ClockCircleOutlined, DownOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { UserOutlined, ReloadOutlined, ZoomInOutlined, ZoomOutOutlined, CalendarOutlined, ClockCircleOutlined, DownOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
@@ -56,7 +56,6 @@ const UserAvailabilityDashboard = () => {
   } | null>(null);
   const [newPlannedDate, setNewPlannedDate] = useState<Dayjs | null>(null);
   const [extending, setExtending] = useState(false);
-  const [showInactiveProjects, setShowInactiveProjects] = useState(false); // Default: show only active projects
 
   // Helper function to format date with Nepali
   const formatDateWithNepali = (date: Dayjs, format: string = 'MMM DD, YYYY'): string => {
@@ -287,7 +286,7 @@ const UserAvailabilityDashboard = () => {
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             {/* Controls */}
             <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={12} md={5}>
+              <Col xs={24} sm={12} md={6}>
                 <Space>
                   <Text strong>Filter:</Text>
                   <Select
@@ -302,19 +301,7 @@ const UserAvailabilityDashboard = () => {
                   />
                 </Space>
               </Col>
-              <Col xs={24} sm={12} md={5}>
-                <Tooltip title={showInactiveProjects ? "Hide inactive/released projects" : "Show inactive/released projects in dropdown"}>
-                  <Button
-                    type={showInactiveProjects ? "primary" : "default"}
-                    icon={showInactiveProjects ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                    onClick={() => setShowInactiveProjects(!showInactiveProjects)}
-                    style={{ width: '100%' }}
-                  >
-                    {showInactiveProjects ? 'Showing Inactive' : 'Show Inactive Projects'}
-                  </Button>
-                </Tooltip>
-              </Col>
-              <Col xs={24} sm={12} md={8}>
+              <Col xs={24} sm={12} md={12}>
                 <Space>
                   <Text strong>Date Range:</Text>
                   <RangePicker
@@ -576,8 +563,8 @@ const UserAvailabilityDashboard = () => {
                               );
                             })}
                             
-                            {/* Inactive Projects Dropdown - Only show when toggle is enabled */}
-                            {showInactiveProjects && inactiveProjects.length > 0 && (
+                            {/* Inactive Projects Dropdown */}
+                            {inactiveProjects.length > 0 && (
                               <Dropdown
                                 overlay={
                                   <Menu>
@@ -636,8 +623,8 @@ const UserAvailabilityDashboard = () => {
                               </Dropdown>
                             )}
                             
-                            {/* Inactive Projects - Lighter and dashed border (old display - only if NOT using dropdown) */}
-                            {!showInactiveProjects && inactiveProjects.map((project) => {
+                            {/* Hidden: Inactive projects are now only shown via dropdown above */}
+                            {false && inactiveProjects.map((project) => {
                               const projectStart = dayjs(project.assignedDate);
                               const projectEnd = project.plannedReleaseDate 
                                 ? dayjs(project.plannedReleaseDate) 
