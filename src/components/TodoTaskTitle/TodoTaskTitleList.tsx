@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
     Table, 
     Button, 
@@ -6,7 +6,6 @@ import {
     Modal, 
     Form, 
     Input, 
-    Select,
     Switch, 
     Typography,
     Popconfirm,
@@ -20,57 +19,50 @@ import {
     ExclamationCircleOutlined,
     LoadingOutlined
 } from "@ant-design/icons";
-import { TaskType, TodoTaskTitle } from "@/types/todoTask";
+import { TodoTaskTitle } from "@/types/todoTask";
 
 const { Title } = Typography;
 const { TextArea } = Input;
 
-interface TaskTypeListProps {
-    taskTypes: TaskType[];
+interface TodoTaskTitleListProps {
     titles: TodoTaskTitle[];
     loading: boolean;
-    onAdd?: (taskType: Partial<TaskType>) => void;
-    onEdit?: (id: string, taskType: Partial<TaskType>) => void;
+    onAdd?: (title: Partial<TodoTaskTitle>) => void;
+    onEdit?: (id: string, title: Partial<TodoTaskTitle>) => void;
     onDelete?: (id: string) => void;
 }
 
-const TaskTypeList = ({
-    taskTypes,
+const TodoTaskTitleList = ({
     titles,
     loading,
     onAdd,
     onEdit,
     onDelete
-}: TaskTypeListProps) => {
+}: TodoTaskTitleListProps) => {
     const [modalVisible, setModalVisible] = useState(false);
-    const [editingTaskType, setEditingTaskType] = useState<TaskType | null>(null);
+    const [editingTitle, setEditingTitle] = useState<TodoTaskTitle | null>(null);
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
-    // Debug log when taskTypes change
-    useEffect(() => {
-        console.log("TaskTypeList - taskTypes:", taskTypes);
-    }, [taskTypes]);
-
     const showAddModal = () => {
         if (!onAdd) {
-            message.error('You do not have permission to add task types');
+            message.error('You do not have permission to add titles');
             return;
         }
-        setEditingTaskType(null);
+        setEditingTitle(null);
         form.resetFields();
-        form.setFieldsValue({ isActive: true }); // Set default active state
+        form.setFieldsValue({ isActive: true });
         setModalVisible(true);
     };
 
-    const showEditModal = (taskType: TaskType) => {
+    const showEditModal = (title: TodoTaskTitle) => {
         if (!onEdit) {
-            message.error('You do not have permission to edit task types');
+            message.error('You do not have permission to edit titles');
             return;
         }
-        setEditingTaskType(taskType);
-        form.setFieldsValue(taskType);
+        setEditingTitle(title);
+        form.setFieldsValue(title);
         setModalVisible(true);
     };
 
@@ -79,17 +71,13 @@ const TaskTypeList = ({
             const values = await form.validateFields();
             setSubmitting(true);
             
-            if (editingTaskType) {
+            if (editingTitle) {
                 if (onEdit) {
-                    await onEdit(editingTaskType.id, values);
-                } else {
-                    message.error('You do not have permission to edit task types');
+                    await onEdit(editingTitle.id, values);
                 }
             } else {
                 if (onAdd) {
                     await onAdd(values);
-                } else {
-                    message.error('You do not have permission to add task types');
                 }
             }
             
@@ -109,8 +97,6 @@ const TaskTypeList = ({
             } finally {
                 setDeletingId(null);
             }
-        } else {
-            message.error('You do not have permission to delete task types');
         }
     };
 
@@ -121,19 +107,26 @@ const TaskTypeList = ({
             key: 'name',
         },
         {
-            title: 'Title (Group)',
-            key: 'todoTaskTitle',
-            render: (_: any, record: TaskType) => (
-                record.todoTaskTitle ? 
-                <Tag color="blue">{record.todoTaskTitle.name}</Tag> : 
-                <Tag color="default">Unassigned</Tag>
-            ),
-        },
-        {
             title: 'Description',
             dataIndex: 'description',
             key: 'description',
             ellipsis: true,
+        },
+        {
+            title: 'Task Types',
+            dataIndex: 'taskTypes',
+            key: 'taskTypes',
+            render: (taskTypes: any[]) => (
+                <Space wrap>
+                    {taskTypes && taskTypes.length > 0 ? (
+                        taskTypes.map((tt: any) => (
+                            <Tag key={tt.id} color="blue">{tt.name}</Tag>
+                        ))
+                    ) : (
+                        <Tag color="default">None</Tag>
+                    )}
+                </Space>
+            ),
         },
         {
             title: 'Status',
@@ -148,7 +141,7 @@ const TaskTypeList = ({
         {
             title: 'Actions',
             key: 'actions',
-            render: (_: any, record: TaskType) => (
+            render: (_: any, record: TodoTaskTitle) => (
                 <Space>
                     {onEdit && (
                         <Button 
@@ -159,7 +152,8 @@ const TaskTypeList = ({
                     )}
                     {onDelete && (
                         <Popconfirm
-                            title="Are you sure you want to delete this task type?"
+                            title="Are you sure you want to delete this title?"
+                            description="All task types under this title will be unlinked."
                             onConfirm={() => handleDelete(record.id)}
                             okText="Yes"
                             cancelText="No"
@@ -182,69 +176,49 @@ const TaskTypeList = ({
     return (
         <div>
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-                <Title level={4}>Task Types</Title>
+                <Title level={5}>Titles</Title>
                 {onAdd && (
                     <Button 
                         type="primary" 
                         icon={<PlusOutlined />}
                         onClick={showAddModal}
                     >
-                        Add Task Type
+                        Add Title
                     </Button>
                 )}
             </div>
             
             <Table 
                 columns={columns} 
-                dataSource={taskTypes} 
+                dataSource={titles} 
                 rowKey="id"
                 loading={loading}
                 pagination={{ pageSize: 10 }}
-                locale={{ emptyText: 'No task types found' }}
+                locale={{ emptyText: 'No titles found' }}
             />
             
             <Modal
-                title={editingTaskType ? "Edit Task Type" : "Add Task Type"}
+                title={editingTitle ? "Edit Title" : "Add Title"}
                 open={modalVisible}
                 onOk={handleSubmit}
                 onCancel={() => setModalVisible(false)}
-                okText={editingTaskType ? "Save" : "Create"}
+                okText={editingTitle ? "Save" : "Create"}
                 confirmLoading={submitting}
             >
                 <Form form={form} layout="vertical">
-                    <Form.Item
-                        name="titleId"
-                        label="Title (Group)"
-                        rules={[{ required: false }]}
-                    >
-                        <Select
-                            placeholder="Select a title group"
-                            allowClear
-                            showSearch
-                            optionFilterProp="children"
-                            filterOption={(input, option) =>
-                                (option?.children as unknown as string)?.toLowerCase()?.includes(input.toLowerCase())
-                            }
-                        >
-                            {titles.filter(t => t.isActive).map(title => (
-                                <Select.Option key={title.id} value={title.id}>{title.name}</Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
                     <Form.Item
                         name="name"
                         label="Name"
                         rules={[{ required: true, message: 'Please enter a name' }]}
                     >
-                        <Input placeholder="Enter task type name" />
+                        <Input placeholder="Enter title name" />
                     </Form.Item>
                     
                     <Form.Item
                         name="description"
                         label="Description"
                     >
-                        <TextArea rows={4} placeholder="Enter description (optional)" />
+                        <TextArea rows={3} placeholder="Enter description (optional)" />
                     </Form.Item>
                     
                     <Form.Item
@@ -261,4 +235,4 @@ const TaskTypeList = ({
     );
 };
 
-export default TaskTypeList;
+export default TodoTaskTitleList;

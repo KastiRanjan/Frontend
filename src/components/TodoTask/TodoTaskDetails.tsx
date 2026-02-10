@@ -260,7 +260,7 @@ const TodoTaskDetails = ({
             <Descriptions 
                 title={
                     <Space>
-                        <Text>{task.title}</Text>
+                        <Text>{task.todoTaskTitle?.name || task.title}</Text>
                         <Tag color={statusConfig[task.status].color} icon={statusConfig[task.status].icon}>
                             {statusConfig[task.status].text}
                         </Tag>
@@ -290,6 +290,17 @@ const TodoTaskDetails = ({
                         {task.assignedTo?.name || task.assignedTo?.email || 'Unknown'}
                     </Space>
                 </Descriptions.Item>
+                {task.informTo && task.informTo.length > 0 && (
+                    <Descriptions.Item label="Informed To" span={3}>
+                        <Space wrap>
+                            {task.informTo.map((user: any) => (
+                                <Tag key={user.id} icon={<UserOutlined />} color="blue">
+                                    {user.name || user.email}
+                                </Tag>
+                            ))}
+                        </Space>
+                    </Descriptions.Item>
+                )}
                 
                 {task.status === TodoTaskStatus.ACKNOWLEDGED && task.acknowledgedTimestamp && (
                     <Descriptions.Item label="Acknowledged On" span={task.acknowledgeRemark ? 1 : 3}>

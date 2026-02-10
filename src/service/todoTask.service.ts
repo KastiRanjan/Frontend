@@ -94,6 +94,27 @@ export const fetchTodoTasksByCreatedUser = async (userId: string, status?: TodoT
   }
 };
 
+export const fetchInformedTodoTasks = async (status?: TodoTaskStatus, dateFrom?: string, dateTo?: string) => {
+  try {
+    let url = `${backendURI}/todo-task/informed`;
+    const params = new URLSearchParams();
+    
+    if (status) params.append('status', status);
+    if (dateFrom) params.append('dateFrom', dateFrom);
+    if (dateTo) params.append('dateTo', dateTo);
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    console.log(`Fetching informed todo tasks with URL: ${url}`);
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
 export const createTodoTask = async (payload: any) => {
   try {
     console.log(`Creating todo task with payload:`, payload);

@@ -13,7 +13,8 @@ import {
     Dropdown, 
     Menu,
     Typography,
-    message
+    message,
+    Popconfirm
 } from "antd";
 import { 
     ClockCircleOutlined, 
@@ -27,7 +28,8 @@ import {
     LikeOutlined,
     PauseCircleOutlined,
     StopOutlined,
-    SearchOutlined
+    SearchOutlined,
+    DeleteOutlined
 } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 import { useSession } from "@/context/SessionContext";
@@ -47,6 +49,7 @@ interface TodoTaskTableProps {
     onViewTask?: (task: TodoTask) => void;
     onEditTask?: (task: TodoTask) => void;
     onStatusChange?: (taskId: string, status: TodoTaskStatus, remark: string) => void;
+    onDeleteTask?: (taskId: string) => void;
 }
 
 const TodoTaskTable = ({
@@ -57,7 +60,8 @@ const TodoTaskTable = ({
     selectedStatus,
     onViewTask,
     onEditTask,
-    onStatusChange
+    onStatusChange,
+    onDeleteTask
 }: TodoTaskTableProps) => {
     const { profile } = useSession();
     const [remarkModalVisible, setRemarkModalVisible] = useState(false);
@@ -326,6 +330,32 @@ const TodoTaskTable = ({
                 onClick: () => showRemarkModal(task, 'drop')
             });
         }
+
+        // Delete action for admins only
+        if (onDeleteTask) {
+            actions.push({
+                key: 'delete',
+                label: (
+                    <Popconfirm
+                        title="Delete Task"
+                        description="Are you sure you want to delete this task? This action cannot be undone."
+                        onConfirm={(e) => {
+                            e?.stopPropagation();
+                            onDeleteTask(task.id);
+                        }}
+                        onCancel={(e) => e?.stopPropagation()}
+                        okText="Delete"
+                        cancelText="Cancel"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <span onClick={(e) => e.stopPropagation()} style={{ color: '#ff4d4f' }}>
+                            <DeleteOutlined style={{ marginRight: 8 }} /> Delete Task
+                        </span>
+                    </Popconfirm>
+                ),
+                danger: true,
+            });
+        }
         
         return actions;
     };
@@ -333,30 +363,32 @@ const TodoTaskTable = ({
     const columns = [
         {
             title: 'Title',
-            dataIndex: 'title',
             key: 'title',
             ellipsis: true,
             ...getColumnSearchProps('title', 'Title'),
-            render: (text: string, record: TodoTask) => {
+            render: (_: any, record: TodoTask) => {
+                const titleText = record.todoTaskTitle?.name || record.title || '';
                 const displayText = searchedColumn === 'title' ? (
                     <Highlighter
                         highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
                         searchWords={[searchText]}
                         autoEscape
-                        textToHighlight={text ? text.toString() : ''}
+                        textToHighlight={titleText}
                     />
-                ) : text;
+                ) : titleText;
                 
                 return (
-                    <Space>
-                        <Text 
-                            style={{ cursor: 'pointer' }} 
-                            onClick={() => onViewTask && onViewTask(record)}
-                            strong
-                        >
-                            {displayText}
-                        </Text>
-                    </Space>
+                    <Tooltip title={record.description || 'No description'} placement="topLeft">
+                        <Space>
+                            <Text 
+                                style={{ cursor: 'pointer' }} 
+                                onClick={() => onViewTask && onViewTask(record)}
+                                strong
+                            >
+                                {displayText}
+                            </Text>
+                        </Space>
+                    </Tooltip>
                 );
             },
         },
@@ -405,6 +437,29 @@ const TodoTaskTable = ({
                         <Space>
                             <UserOutlined />
                             {highlighted}
+                        </Space>
+                    </Tooltip>
+                );
+            },
+        },
+        {
+            title: 'Inform To',
+            key: 'informTo',
+            render: (_: any, record: TodoTask) => {
+                if (!record.informTo || record.informTo.length === 0) {
+                    return <Tag color="default">—</Tag>;
+                }
+                return (
+                    <Tooltip title={record.informTo.map(u => u.name || u.email).join(', ')}>
+                        <Space size={[0, 4]} wrap>
+                            {record.informTo.slice(0, 2).map((u: any) => (
+                                <Tag key={u.id} icon={<UserOutlined />} color="blue" style={{ fontSize: '11px' }}>
+                                    {u.name || u.email}
+                                </Tag>
+                            ))}
+                            {record.informTo.length > 2 && (
+                                <Tag color="blue">+{record.informTo.length - 2}</Tag>
+                            )}
                         </Space>
                     </Tooltip>
                 );

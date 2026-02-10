@@ -13,7 +13,7 @@ import {
     DatePicker
 } from "antd";
 import { LoadingOutlined, UserOutlined } from "@ant-design/icons";
-import { TodoTask, TaskType, TodoTaskStatus } from "@/types/todoTask";
+import { TodoTask, TaskType, TodoTaskStatus, TodoTaskTitle } from "@/types/todoTask";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -22,10 +22,14 @@ const { Title } = Typography;
 interface TodoTaskFormProps {
     initialValues?: Partial<TodoTask>;
     taskTypes: TaskType[];
+    titles: TodoTaskTitle[];
     users: any[]; 
+    isSubmitting?: boolean;
     isTaskTypesLoading?: boolean;
+    isTitlesLoading?: boolean;
     isUsersLoading?: boolean;
     mode: 'create' | 'edit';
+    currentUserId?: string;
     onSubmit: (values: any) => void;
     onCancel: () => void;
 }
@@ -33,19 +37,36 @@ interface TodoTaskFormProps {
 const TodoTaskForm = ({
     initialValues,
     taskTypes,
+    titles,
     users,
     isSubmitting,
     isTaskTypesLoading = false,
+    isTitlesLoading = false,
     isUsersLoading = false,
     mode,
+    currentUserId,
     onSubmit,
     onCancel
 }: TodoTaskFormProps) => {
     const [form] = Form.useForm();
+    const [selectedTitleId, setSelectedTitleId] = useState<string | undefined>(undefined);
+    
+    // Filter task types by selected title
+    const filteredTaskTypes = selectedTitleId 
+        ? taskTypes.filter(tt => tt.titleId === selectedTitleId)
+        : taskTypes;
     
     useEffect(() => {
         if (initialValues) {
-            form.setFieldsValue(initialValues);
+            const formValues = {
+                ...initialValues,
+                informToIds: initialValues.informTo?.map((u: any) => u.id) || [],
+            };
+            form.setFieldsValue(formValues);
+            // Set the selected title from initial values
+            if (initialValues.titleId) {
+                setSelectedTitleId(initialValues.titleId);
+            }
         }
     }, [initialValues, form]);
     
@@ -58,6 +79,10 @@ const TodoTaskForm = ({
         if ('dueTime' in values) {
             delete values.dueTime;
         }
+        // Ensure informToIds is an array
+        if (!values.informToIds) {
+            values.informToIds = [];
+        }
         onSubmit(values);
     };
     
@@ -66,7 +91,7 @@ const TodoTaskForm = ({
             <Title level={4}>{mode === 'create' ? 'Create New Task' : 'Edit Task'}</Title>
             <Divider />
             
-            <Spin spinning={isTaskTypesLoading || isUsersLoading} tip="Loading data...">
+            <Spin spinning={isTaskTypesLoading || isUsersLoading || isTitlesLoading} tip="Loading data...">
                 <Form
                     form={form}
                     layout="vertical"
@@ -75,12 +100,30 @@ const TodoTaskForm = ({
                 >
                     <div style={{ display: 'flex', width: '100%', gap: 16 }}>
                         <Form.Item
-                            name="title"
+                            name="titleId"
                             label="Title"
-                            rules={[{ required: true, message: 'Please enter task title' }]}
+                            rules={[{ required: true, message: 'Please select a title' }]}
                             style={{ flex: '0 1 70%' }}
                         >
-                            <Input placeholder="Enter task title" />
+                            <Select 
+                                placeholder={isTitlesLoading ? "Loading titles..." : "Select title"}
+                                loading={isTitlesLoading}
+                                disabled={isTitlesLoading}
+                                showSearch
+                                optionFilterProp="children"
+                                filterOption={(input, option) =>
+                                    (option?.children as unknown as string)?.toLowerCase()?.includes(input.toLowerCase())
+                                }
+                                onChange={(val) => {
+                                    setSelectedTitleId(val);
+                                    // Clear taskTypeId when title changes since task types are filtered by title
+                                    form.setFieldsValue({ taskTypeId: undefined });
+                                }}
+                            >
+                                {titles.filter(t => t.isActive).map(title => (
+                                    <Option key={title.id} value={title.id}>{title.name}</Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                         <Form.Item
                             name="taskTypeId"
@@ -89,11 +132,16 @@ const TodoTaskForm = ({
                             style={{ flex: '0 1 30%' }}
                         >
                             <Select 
-                                placeholder={isTaskTypesLoading ? "Loading task types..." : "Select task type"}
+                                placeholder={isTaskTypesLoading ? "Loading task types..." : (selectedTitleId ? "Select task type" : "Select title first")}
                                 loading={isTaskTypesLoading}
-                                disabled={isTaskTypesLoading}
+                                disabled={isTaskTypesLoading || !selectedTitleId}
+                                showSearch
+                                optionFilterProp="children"
+                                filterOption={(input, option) =>
+                                    (option?.children as unknown as string)?.toLowerCase()?.includes(input.toLowerCase())
+                                }
                             >
-                                {taskTypes.map(type => (
+                                {filteredTaskTypes.map(type => (
                                     <Option key={type.id} value={type.id}>{type.name}</Option>
                                 ))}
                             </Select>
@@ -121,6 +169,14 @@ const TodoTaskForm = ({
                                 placeholder={isUsersLoading ? "Loading users..." : "Select user"}
                                 loading={isUsersLoading}
                                 disabled={isUsersLoading}
+                                showSearch
+                                optionFilterProp="children"
+                                filterOption={(input, option) => {
+                                    const text = (option?.children as any)?.props?.children
+                                        ?.map?.((c: any) => (typeof c === 'string' ? c : c?.props?.children || ''))
+                                        ?.join?.('') || '';
+                                    return text.toLowerCase().includes(input.toLowerCase());
+                                }}
                                 notFoundContent={
                                     isUsersLoading ? 
                                     <div style={{ padding: '10px', textAlign: 'center' }}>
@@ -161,6 +217,55 @@ const TodoTaskForm = ({
                             <DatePicker style={{ width: '100%' }} showTime format="YYYY-MM-DD HH:mm" />
                         </Form.Item>
                     </div>
+
+                    <Form.Item
+                        name="informToIds"
+                        label="Inform To"
+                    >
+                        <Select 
+                            mode="multiple"
+                            placeholder={isUsersLoading ? "Loading users..." : "Select users to inform"}
+                            loading={isUsersLoading}
+                            disabled={isUsersLoading}
+                            showSearch
+                            optionFilterProp="children"
+                            filterOption={(input, option) => {
+                                const text = (option?.children as any)?.props?.children
+                                    ?.map?.((c: any) => (typeof c === 'string' ? c : c?.props?.children || ''))
+                                    ?.join?.('') || '';
+                                return text.toLowerCase().includes(input.toLowerCase());
+                            }}
+                            notFoundContent={
+                                isUsersLoading ? 
+                                <div style={{ padding: '10px', textAlign: 'center' }}>
+                                    <LoadingOutlined style={{ marginRight: '8px' }} />
+                                    Loading users...
+                                </div> : 
+                                <Empty 
+                                    image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                                    description="No users found" 
+                                />
+                            }
+                        >
+                            {users && users.length > 0 ? (
+                                users.map(user => (
+                                    <Option key={user.id} value={user.id}>
+                                        <Space>
+                                            <UserOutlined />
+                                            {user.name || user.username || user.email || `User #${user.id}`}
+                                            {user.role && user.role.name && 
+                                                <span style={{ color: '#999', fontSize: '12px' }}>
+                                                    ({user.role.name})
+                                                </span>
+                                            }
+                                        </Space>
+                                    </Option>
+                                ))
+                            ) : (
+                                <Option disabled value="">No users available</Option>
+                            )}
+                        </Select>
+                    </Form.Item>
 
                     <Divider />
 

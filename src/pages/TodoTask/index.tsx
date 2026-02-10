@@ -9,12 +9,15 @@ import {
     Alert,
     DatePicker,
     Modal,
-    message
+    message,
+    Popconfirm
 } from "antd";
 import { 
     PlusOutlined, 
     OrderedListOutlined, 
-    SettingOutlined
+    SettingOutlined,
+    DeleteOutlined,
+    ClearOutlined
 } from "@ant-design/icons";
 import { useSession } from "@/context/SessionContext";
 import TodoTaskTable from "@/components/TodoTask/TodoTaskTable";
@@ -22,19 +25,23 @@ import TodoTaskForm from "@/components/TodoTask/TodoTaskForm";
 import TodoTaskDetails from "@/components/TodoTask/TodoTaskDetails";
 import { TodoTask, TodoTaskStatus } from "@/types/todoTask";
 import { fetchTaskTypes } from "@/service/taskType.service";
+import { fetchTodoTaskTitles } from "@/service/todoTaskTitle.service";
 import { fetchUsers } from "@/service/user.service";
 import { 
     fetchTodoTasks,
     fetchTodoTasksByAssignedUser,
     fetchTodoTasksByCreatedUser,
+    fetchInformedTodoTasks,
     createTodoTask,
     updateTodoTask,
+    deleteTodoTask,
     acknowledgeTodoTask,
     markTodoTaskAsPending,
     completeTodoTask,
     dropTodoTask
 } from "@/service/todoTask.service";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import "./TodoTask.css";
 
 const { Title } = Typography;
@@ -51,10 +58,30 @@ const TodoTaskPage = () => {
     const [filterStatus, setFilterStatus] = useState<TodoTaskStatus | "">("");
     const [taskData, setTaskData] = useState<TodoTask[]>([]);
     const [taskTypes, setTaskTypes] = useState<any[]>([]);
+    const [titles, setTitles] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isTaskTypesLoading, setIsTaskTypesLoading] = useState(false);
+    const [isTitlesLoading, setIsTitlesLoading] = useState(false);
     const [isUsersLoading, setIsUsersLoading] = useState(false);
+    const [dateFilter, setDateFilter] = useState<'day' | 'week' | 'month' | ''>('');
+
+    // Compute date range from filter
+    const getDateRange = () => {
+        if (!dateFilter) return { dateFrom: undefined, dateTo: undefined };
+        const now = dayjs();
+        let dateFrom: string | undefined;
+        let dateTo: string | undefined;
+        dateTo = now.endOf('day').toISOString();
+        if (dateFilter === 'day') {
+            dateFrom = now.startOf('day').toISOString();
+        } else if (dateFilter === 'week') {
+            dateFrom = now.startOf('week').toISOString();
+        } else if (dateFilter === 'month') {
+            dateFrom = now.startOf('month').toISOString();
+        }
+        return { dateFrom, dateTo };
+    };
     
     // Fetch task types from API
     const loadTaskTypes = async () => {
@@ -68,6 +95,20 @@ const TodoTaskPage = () => {
             message.error('Failed to load task types');
         } finally {
             setIsTaskTypesLoading(false);
+        }
+    };
+
+    // Fetch titles from API
+    const loadTitles = async () => {
+        setIsTitlesLoading(true);
+        try {
+            const response = await fetchTodoTaskTitles();
+            setTitles(Array.isArray(response) ? response : []);
+        } catch (error) {
+            console.error('Error fetching titles:', error);
+            message.error('Failed to load titles');
+        } finally {
+            setIsTitlesLoading(false);
         }
     };
 
@@ -119,9 +160,11 @@ const TodoTaskPage = () => {
                 setIsLoading(false);
                 return;
             }
-            
-    // Remove the redundant permission check since we now do it at the beginning of fetchTasks
-    console.log(`Fetching tasks for tab: ${activeTab}, userId: ${userId}, filterUserId: ${filterUserId}, filterStatus: ${filterStatus}`);            if (activeTab === 'my-tasks') {
+
+            if (activeTab === 'informed') {
+                // Fetch tasks where current user is informed
+                response = await fetchInformedTodoTasks(filterStatus || undefined);
+            } else if (activeTab === 'my-tasks') {
                 // If status filter is applied for My Tasks
                 if (filterStatus) {
                     console.log(`Fetching my tasks with status: ${filterStatus}`);
@@ -271,6 +314,17 @@ const TodoTaskPage = () => {
         if (!selectedTask) return;
         await handleStatusChange(selectedTask.id, status, remark);
     };
+
+    const handleDeleteTask = async (taskId: string) => {
+        try {
+            await deleteTodoTask(taskId);
+            message.success('Task deleted successfully');
+            fetchTasks();
+        } catch (error: any) {
+            console.error('Error deleting task:', error);
+            message.error(error.message || 'Failed to delete task');
+        }
+    };
     
     // Get permissions
     const { permissions = [] } = useSession();
@@ -290,6 +344,10 @@ const TodoTaskPage = () => {
     
     const hasManagePermission = permissions.some((permission: any) => 
         permission.method === 'manage' && permission.resource === 'todo-task'
+    );
+
+    const hasDeletePermission = permissions.some((permission: any) => 
+        permission.method === 'delete' && permission.resource === 'todo-task'
     );
 
     
@@ -351,6 +409,7 @@ const TodoTaskPage = () => {
     // Effect to fetch task types and users on initial load
     useEffect(() => {
         loadTaskTypes();
+        loadTitles();
         loadUsers();
         
         // Add debug console output
@@ -370,7 +429,25 @@ const TodoTaskPage = () => {
     // Effect to fetch tasks when tab changes or filters change
     useEffect(() => {
         fetchTasks();
-    }, [activeTab, filterUserId, filterStatus, profile]);
+    }, [activeTab, filterUserId, filterStatus, dateFilter, profile]);
+
+    // Apply client-side date and status filters on the fetched data
+    const getFilteredTaskData = () => {
+        let data = taskData;
+        if (filterStatus) {
+            data = data.filter(task => task.status === filterStatus);
+        }
+        if (dateFilter) {
+            const { dateFrom, dateTo } = getDateRange();
+            if (dateFrom && dateTo) {
+                data = data.filter(task => {
+                    const taskDate = new Date(task.createdTimestamp).getTime();
+                    return taskDate >= new Date(dateFrom).getTime() && taskDate <= new Date(dateTo).getTime();
+                });
+            }
+        }
+        return data;
+    };
     
     return (
         <div className="todo-task-container">
@@ -417,16 +494,20 @@ const TodoTaskPage = () => {
                     <>
                         <Tabs 
                             activeKey={activeTab} 
-                            onChange={setActiveTab}
+                            onChange={(key) => {
+                                setActiveTab(key);
+                                setFilterStatus('');
+                                setFilterUserId('');
+                            }}
                         >
                             <TabPane tab="My Tasks" key="my-tasks">
-                                <Space style={{ marginBottom: 16 }}>
+                                <Space style={{ marginBottom: 16 }} wrap>
                                     <Select
                                         placeholder="Filter by status"
                                         style={{ width: 200 }}
                                         allowClear
-                                        value={filterStatus}
-                                        onChange={setFilterStatus}
+                                        value={filterStatus || undefined}
+                                        onChange={(val) => setFilterStatus(val || '')}
                                     >
                                         <Option value={TodoTaskStatus.OPEN}>Open</Option>
                                         <Option value={TodoTaskStatus.ACKNOWLEDGED}>Acknowledged</Option>
@@ -434,26 +515,61 @@ const TodoTaskPage = () => {
                                         <Option value={TodoTaskStatus.COMPLETED}>Completed</Option>
                                         <Option value={TodoTaskStatus.DROPPED}>Dropped</Option>
                                     </Select>
+                                    <Button
+                                        type={dateFilter === 'day' ? 'primary' : 'default'}
+                                        size="small"
+                                        onClick={() => setDateFilter(dateFilter === 'day' ? '' : 'day')}
+                                    >
+                                        Day
+                                    </Button>
+                                    <Button
+                                        type={dateFilter === 'week' ? 'primary' : 'default'}
+                                        size="small"
+                                        onClick={() => setDateFilter(dateFilter === 'week' ? '' : 'week')}
+                                    >
+                                        Week
+                                    </Button>
+                                    <Button
+                                        type={dateFilter === 'month' ? 'primary' : 'default'}
+                                        size="small"
+                                        onClick={() => setDateFilter(dateFilter === 'month' ? '' : 'month')}
+                                    >
+                                        Month
+                                    </Button>
+                                    {(filterStatus || filterUserId || dateFilter) && (
+                                        <Button
+                                            size="small"
+                                            icon={<ClearOutlined />}
+                                            onClick={() => {
+                                                setFilterStatus('');
+                                                setFilterUserId('');
+                                                setDateFilter('');
+                                            }}
+                                        >
+                                            Clear
+                                        </Button>
+                                    )}
                                 </Space>
                                 <TodoTaskTable 
                                     viewType="my"
-                                    taskData={filterStatus ? taskData.filter(task => task.status === filterStatus) : taskData}
+                                    taskData={getFilteredTaskData()}
                                     isPending={isLoading}
                                     onViewTask={handleViewTask}
                                     onEditTask={handleEditTask}
                                     onStatusChange={handleStatusChange}
+                                    onDeleteTask={hasDeletePermission ? handleDeleteTask : undefined}
                                 />
                             </TabPane>
                             
                             {hasCreatePermission && (
                                 <TabPane tab="Created By Me" key="created-tasks">
-                                    <Space style={{ marginBottom: 16 }}>
+                                    <Space style={{ marginBottom: 16 }} wrap>
                                         <Select
                                             placeholder="Filter by status"
                                             style={{ width: 200 }}
                                             allowClear
-                                            value={filterStatus}
-                                            onChange={setFilterStatus}
+                                            value={filterStatus || undefined}
+                                            onChange={(val) => setFilterStatus(val || '')}
                                         >
                                             <Option value={TodoTaskStatus.OPEN}>Open</Option>
                                             <Option value={TodoTaskStatus.ACKNOWLEDGED}>Acknowledged</Option>
@@ -461,27 +577,123 @@ const TodoTaskPage = () => {
                                             <Option value={TodoTaskStatus.COMPLETED}>Completed</Option>
                                             <Option value={TodoTaskStatus.DROPPED}>Dropped</Option>
                                         </Select>
+                                        <Button
+                                            type={dateFilter === 'day' ? 'primary' : 'default'}
+                                            size="small"
+                                            onClick={() => setDateFilter(dateFilter === 'day' ? '' : 'day')}
+                                        >
+                                            Day
+                                        </Button>
+                                        <Button
+                                            type={dateFilter === 'week' ? 'primary' : 'default'}
+                                            size="small"
+                                            onClick={() => setDateFilter(dateFilter === 'week' ? '' : 'week')}
+                                        >
+                                            Week
+                                        </Button>
+                                        <Button
+                                            type={dateFilter === 'month' ? 'primary' : 'default'}
+                                            size="small"
+                                            onClick={() => setDateFilter(dateFilter === 'month' ? '' : 'month')}
+                                        >
+                                            Month
+                                        </Button>
+                                        {(filterStatus || filterUserId || dateFilter) && (
+                                            <Button
+                                                size="small"
+                                                icon={<ClearOutlined />}
+                                                onClick={() => {
+                                                    setFilterStatus('');
+                                                    setFilterUserId('');
+                                                    setDateFilter('');
+                                                }}
+                                            >
+                                                Clear
+                                            </Button>
+                                        )}
                                     </Space>
                                     <TodoTaskTable 
                                         viewType="created"
-                                        taskData={filterStatus ? taskData.filter(task => task.status === filterStatus) : taskData}
+                                        taskData={getFilteredTaskData()}
                                         isPending={isLoading}
                                         onViewTask={handleViewTask}
                                         onEditTask={handleEditTask}
                                         onStatusChange={handleStatusChange}
+                                        onDeleteTask={hasDeletePermission ? handleDeleteTask : undefined}
                                     />
                                 </TabPane>
                             )}
+
+                            <TabPane tab="Informed" key="informed">
+                                <Space style={{ marginBottom: 16 }} wrap>
+                                    <Select
+                                        placeholder="Filter by status"
+                                        style={{ width: 200 }}
+                                        allowClear
+                                        value={filterStatus || undefined}
+                                        onChange={(val) => setFilterStatus(val || '')}
+                                    >
+                                        <Option value={TodoTaskStatus.OPEN}>Open</Option>
+                                        <Option value={TodoTaskStatus.ACKNOWLEDGED}>Acknowledged</Option>
+                                        <Option value={TodoTaskStatus.PENDING}>Pending</Option>
+                                        <Option value={TodoTaskStatus.COMPLETED}>Completed</Option>
+                                        <Option value={TodoTaskStatus.DROPPED}>Dropped</Option>
+                                    </Select>
+                                    <Button
+                                        type={dateFilter === 'day' ? 'primary' : 'default'}
+                                        size="small"
+                                        onClick={() => setDateFilter(dateFilter === 'day' ? '' : 'day')}
+                                    >
+                                        Day
+                                    </Button>
+                                    <Button
+                                        type={dateFilter === 'week' ? 'primary' : 'default'}
+                                        size="small"
+                                        onClick={() => setDateFilter(dateFilter === 'week' ? '' : 'week')}
+                                    >
+                                        Week
+                                    </Button>
+                                    <Button
+                                        type={dateFilter === 'month' ? 'primary' : 'default'}
+                                        size="small"
+                                        onClick={() => setDateFilter(dateFilter === 'month' ? '' : 'month')}
+                                    >
+                                        Month
+                                    </Button>
+                                    {(filterStatus || filterUserId || dateFilter) && (
+                                        <Button
+                                            size="small"
+                                            icon={<ClearOutlined />}
+                                            onClick={() => {
+                                                setFilterStatus('');
+                                                setFilterUserId('');
+                                                setDateFilter('');
+                                            }}
+                                        >
+                                            Clear
+                                        </Button>
+                                    )}
+                                </Space>
+                                <TodoTaskTable 
+                                    viewType="my"
+                                    taskData={getFilteredTaskData()}
+                                    isPending={isLoading}
+                                    onViewTask={handleViewTask}
+                                    onEditTask={handleEditTask}
+                                    onStatusChange={handleStatusChange}
+                                    onDeleteTask={hasDeletePermission ? handleDeleteTask : undefined}
+                                />
+                            </TabPane>
                             
                             {shouldShowAllTasksTab && (
                                 <TabPane tab="All Tasks" key="all-tasks">
-                                    <Space style={{ marginBottom: 16 }}>
+                                    <Space style={{ marginBottom: 16 }} wrap>
                                         <Select
                                             placeholder="Filter by status"
                                             style={{ width: 200 }}
                                             allowClear
-                                            value={filterStatus}
-                                            onChange={setFilterStatus}
+                                            value={filterStatus || undefined}
+                                            onChange={(val) => setFilterStatus(val || '')}
                                         >
                                             <Option value={TodoTaskStatus.OPEN}>Open</Option>
                                             <Option value={TodoTaskStatus.ACKNOWLEDGED}>Acknowledged</Option>
@@ -489,13 +701,12 @@ const TodoTaskPage = () => {
                                             <Option value={TodoTaskStatus.COMPLETED}>Completed</Option>
                                             <Option value={TodoTaskStatus.DROPPED}>Dropped</Option>
                                         </Select>
-                                        
                                         <Select
                                             placeholder="Filter by user"
                                             style={{ width: 250 }}
                                             allowClear
-                                            value={filterUserId}
-                                            onChange={setFilterUserId}
+                                            value={filterUserId || undefined}
+                                            onChange={(val) => setFilterUserId(val || '')}
                                             showSearch
                                             optionFilterProp="children"
                                         >
@@ -511,14 +722,49 @@ const TodoTaskPage = () => {
                                                 </Option>
                                             ))}
                                         </Select>
+                                        <Button
+                                            type={dateFilter === 'day' ? 'primary' : 'default'}
+                                            size="small"
+                                            onClick={() => setDateFilter(dateFilter === 'day' ? '' : 'day')}
+                                        >
+                                            Day
+                                        </Button>
+                                        <Button
+                                            type={dateFilter === 'week' ? 'primary' : 'default'}
+                                            size="small"
+                                            onClick={() => setDateFilter(dateFilter === 'week' ? '' : 'week')}
+                                        >
+                                            Week
+                                        </Button>
+                                        <Button
+                                            type={dateFilter === 'month' ? 'primary' : 'default'}
+                                            size="small"
+                                            onClick={() => setDateFilter(dateFilter === 'month' ? '' : 'month')}
+                                        >
+                                            Month
+                                        </Button>
+                                        {(filterStatus || filterUserId || dateFilter) && (
+                                            <Button
+                                                size="small"
+                                                icon={<ClearOutlined />}
+                                                onClick={() => {
+                                                    setFilterStatus('');
+                                                    setFilterUserId('');
+                                                    setDateFilter('');
+                                                }}
+                                            >
+                                                Clear
+                                            </Button>
+                                        )}
                                     </Space>
                                     <TodoTaskTable 
                                         viewType="all"
-                                        taskData={filterStatus ? taskData.filter(task => task.status === filterStatus) : taskData}
+                                        taskData={getFilteredTaskData()}
                                         isPending={isLoading}
                                         onViewTask={handleViewTask}
                                         onEditTask={handleEditTask}
                                         onStatusChange={handleStatusChange}
+                                        onDeleteTask={hasDeletePermission ? handleDeleteTask : undefined}
                                     />
                                 </TabPane>
                             )}
@@ -529,11 +775,14 @@ const TodoTaskPage = () => {
                 {viewMode === 'create' && (
                     <TodoTaskForm 
                         taskTypes={taskTypes}
+                        titles={titles}
                         users={users}
                         isSubmitting={isLoading}
                         isTaskTypesLoading={isTaskTypesLoading}
+                        isTitlesLoading={isTitlesLoading}
                         isUsersLoading={isUsersLoading}
                         mode="create"
+                        currentUserId={(profile as any)?.id}
                         onSubmit={handleCreateTask}
                         onCancel={() => setViewMode('list')}
                     />
@@ -543,11 +792,14 @@ const TodoTaskPage = () => {
                     <TodoTaskForm 
                         initialValues={selectedTask}
                         taskTypes={taskTypes}
+                        titles={titles}
                         users={users}
                         isSubmitting={isLoading}
                         isTaskTypesLoading={isTaskTypesLoading}
+                        isTitlesLoading={isTitlesLoading}
                         isUsersLoading={isUsersLoading}
                         mode="edit"
+                        currentUserId={(profile as any)?.id}
                         onSubmit={handleUpdateTask}
                         onCancel={() => setViewMode('list')}
                     />

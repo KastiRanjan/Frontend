@@ -6,11 +6,23 @@ export enum TodoTaskStatus {
     DROPPED = 'dropped'
 }
 
+export interface TodoTaskTitle {
+    id: string;
+    name: string;
+    description?: string;
+    isActive: boolean;
+    taskTypes?: TaskType[];
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface TaskType {
     id: string;
     name: string;
     description?: string;
     isActive: boolean;
+    titleId?: string;
+    todoTaskTitle?: TodoTaskTitle;
     createdAt: string;
     updatedAt: string;
 }
@@ -23,7 +35,9 @@ export interface User {
 
 export interface TodoTask {
     id: string;
-    title: string;
+    titleId?: string;
+    todoTaskTitle?: TodoTaskTitle;
+    title?: string;
     description?: string;
     taskTypeId: string;
     taskType?: TaskType;
@@ -33,6 +47,7 @@ export interface TodoTask {
     dueDate?: string;
     assignedToId: string;
     assignedTo?: User;
+    informTo?: User[];
     acknowledgedTimestamp?: string;
     acknowledgeRemark?: string;
     completedById?: string;

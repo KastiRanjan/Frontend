@@ -29,6 +29,12 @@ export const permissionConfig = {
   DELETE_TASK_TYPE: 'delete_task_type',
   READ_TASK_TYPE: 'read_task_type',
   
+  // TodoTaskTitle permissions
+  CREATE_TODO_TASK_TITLE: 'create_todo_task_title',
+  UPDATE_TODO_TASK_TITLE: 'update_todo_task_title',
+  DELETE_TODO_TASK_TITLE: 'delete_todo_task_title',
+  READ_TODO_TASK_TITLE: 'read_todo_task_title',
+  
   // Project ranking permissions
   MANAGE_PROJECT_RANKING: 'manage_project_ranking',
   VIEW_PROJECT_RANKING: 'view_project_ranking',
