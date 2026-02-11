@@ -26,7 +26,7 @@ import TodoTaskDetails from "@/components/TodoTask/TodoTaskDetails";
 import { TodoTask, TodoTaskStatus } from "@/types/todoTask";
 import { fetchTaskTypes } from "@/service/taskType.service";
 import { fetchTodoTaskTitles } from "@/service/todoTaskTitle.service";
-import { fetchUsers } from "@/service/user.service";
+import { listActiveUsers } from "@/service/user.service";
 import { 
     fetchTodoTasks,
     fetchTodoTasksByAssignedUser,
@@ -112,24 +112,13 @@ const TodoTaskPage = () => {
         }
     };
 
-    // Fetch users from API
+    // Fetch active users from API (lightweight endpoint, no full user management permission required)
     const loadUsers = async () => {
         setIsUsersLoading(true);
         try {
-            const response = await fetchUsers({ status: 'active', limit: 100, page: 1, keywords: '' });
-            console.log('Fetched users response:', response);
-            
-            // Handle the paginated response structure
-            if (response && response.results && Array.isArray(response.results)) {
-                setUsers(response.results);
-            } else if (Array.isArray(response)) {
-                // Handle case where API might return an array directly
-                setUsers(response);
-            } else {
-                console.error('Unexpected users response format:', response);
-                setUsers([]);
-                message.error('Failed to parse user data');
-            }
+            const response = await listActiveUsers();
+            console.log('Fetched active users:', response);
+            setUsers(Array.isArray(response) ? response : []);
         } catch (error) {
             console.error('Error fetching users:', error);
             message.error('Failed to load users');

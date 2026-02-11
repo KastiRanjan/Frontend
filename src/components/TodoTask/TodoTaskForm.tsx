@@ -190,7 +190,9 @@ const TodoTaskForm = ({
                                 }
                             >
                                 {users && users.length > 0 ? (
-                                    users.map(user => (
+                                    users
+                                        .filter(user => user.id !== currentUserId)
+                                        .map(user => (
                                         <Option key={user.id} value={user.id}>
                                             <Space>
                                                 <UserOutlined />

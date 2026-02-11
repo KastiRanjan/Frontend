@@ -57,5 +57,8 @@ export const permissionConfig = {
   CREATE_CLIENT_REPORT_DOCUMENT_TYPE: 'create_client_report_document_type',
   UPDATE_CLIENT_REPORT_DOCUMENT_TYPE: 'update_client_report_document_type',
   DELETE_CLIENT_REPORT_DOCUMENT_TYPE: 'delete_client_report_document_type',
-  READ_CLIENT_REPORT_DOCUMENT_TYPE: 'read_client_report_document_type'
+  READ_CLIENT_REPORT_DOCUMENT_TYPE: 'read_client_report_document_type',
+  
+  // User listing permissions
+  LIST_ACTIVE_USERS: 'list_active_users'
 };

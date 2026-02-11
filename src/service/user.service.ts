@@ -68,3 +68,16 @@ export const updateUser = async (id: string, payload: any) => {
   const response = await axios.patch(`${backendURI}/users/${id}`, payload);
   return response.data;
 };
+
+/**
+ * Fetch active users (lightweight endpoint, no full user management permission required)
+ * Used for dropdowns/selects in todo tasks, etc.
+ */
+export const listActiveUsers = async () => {
+  try {
+    const response = await axios.get(`${backendURI}/users/list-active`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
