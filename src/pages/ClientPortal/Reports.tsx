@@ -39,18 +39,7 @@ import { ClientPortalProject } from "@/types/project";
 import { formatDistanceToNow } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 
-const { Title, Text } = Typography;
-
-/** Strip UUID prefix from stored filenames (e.g. "abc123-...uuid....pdf" → show clean label) */
-const getCleanFileName = (file: ClientReportFileType, index: number): string => {
-  const name = file.displayFileName || file.originalFileName;
-  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\./i;
-  if (uuidPattern.test(name)) {
-    const ext = name.split(".").pop();
-    return ext ? `File ${index + 1}.${ext}` : `File ${index + 1}`;
-  }
-  return name;
-};
+const { Text } = Typography;
 
 const ClientReports: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -186,25 +175,99 @@ const ClientReports: React.FC = () => {
       title: "Report",
       dataIndex: "title",
       key: "title",
+      width: 340,
       render: (title: string, record: ClientReportType) => {
         const files = record.files || [];
-        const fileCount = files.length || (record.originalFileName ? 1 : 0);
+        const isProjectPaymentPending = record.projectId && projects?.find(
+          (p: ClientPortalProject) => p.id === record.projectId && !p.isPaymentDone && !p.isPaymentTemporarilyEnabled
+        );
+        const isDisabled = record.accessStatus !== ReportAccessStatus.ACCESSIBLE || !!isProjectPaymentPending;
+        const tooltipMsg = isProjectPaymentPending
+          ? "Project payment pending – documents available after payment"
+          : record.accessStatus === ReportAccessStatus.PENDING
+          ? "Payment pending for this report"
+          : record.accessStatus === ReportAccessStatus.REVOKED
+          ? "Access to this report has been revoked"
+          : "";
+
         return (
-          <div>
-            <div className="font-medium">{title}</div>
+          <div style={{ minWidth: 0 }}>
+            {/* Title */}
+            <Tooltip title={title}>
+              <div
+                className="font-medium"
+                style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                {title}
+              </div>
+            </Tooltip>
+
+            {/* Description */}
             {record.description && (
-              <div className="mt-0.5">
-                <Text type="secondary" className="text-xs">{record.description}</Text>
-              </div>
+              <Tooltip title={record.description}>
+                <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Text type="secondary" className="text-xs">{record.description}</Text>
+                </div>
+              </Tooltip>
             )}
-            {fileCount > 0 && (
-              <div className="mt-1">
-                <Text type="secondary" className="text-xs">
-                  <PaperClipOutlined className="mr-1" />
-                  {fileCount} {fileCount === 1 ? "file" : "files"} attached
-                </Text>
+
+            {/* Files with inline download buttons */}
+            {files.length > 0 ? (
+              <div className="mt-1" style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {files.map((file) => {
+                  const fileName = file.displayFileName || file.originalFileName;
+                  return (
+                    <div key={file.id} style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+                      <PaperClipOutlined style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0 }} />
+                      <Tooltip title={fileName}>
+                        <Text
+                          type="secondary"
+                          className="text-xs"
+                          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}
+                        >
+                          {fileName}
+                        </Text>
+                      </Tooltip>
+                      <Tooltip title={tooltipMsg || undefined}>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
+                          disabled={isDisabled}
+                          loading={downloadingFile}
+                          onClick={() => handleDownloadFile(record, file)}
+                          style={{ flexShrink: 0, padding: "0 4px", height: 20, lineHeight: "20px" }}
+                        />
+                      </Tooltip>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+            ) : record.originalFileName ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4, minWidth: 0 }}>
+                <PaperClipOutlined style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0 }} />
+                <Tooltip title={record.originalFileName}>
+                  <Text
+                    type="secondary"
+                    className="text-xs"
+                    style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}
+                  >
+                    {record.originalFileName}
+                  </Text>
+                </Tooltip>
+                <Tooltip title={tooltipMsg || undefined}>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
+                    disabled={isDisabled}
+                    loading={downloading}
+                    onClick={() => handleDownload(record)}
+                    style={{ flexShrink: 0, padding: "0 4px", height: 20, lineHeight: "20px" }}
+                  />
+                </Tooltip>
+              </div>
+            ) : null}
           </div>
         );
       }
@@ -213,37 +276,61 @@ const ClientReports: React.FC = () => {
       title: "Company",
       dataIndex: "customer",
       key: "customer",
-      render: (customer: any) => (
+      width: 150,
+      render: (customer: any) =>
         customer?.name ? (
-          <div className="flex items-center gap-1">
-            <BankOutlined className="text-gray-400" />
-            <span>{customer.name}</span>
-          </div>
+          <Tooltip title={customer.name}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, overflow: "hidden" }}>
+              <BankOutlined style={{ color: "#9ca3af", flexShrink: 0 }} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {customer.name}
+              </span>
+            </div>
+          </Tooltip>
         ) : "-"
-      )
     },
     {
       title: "Document Type",
       dataIndex: "documentType",
       key: "documentType",
-      render: (documentType: any) => documentType?.name || "-"
+      width: 140,
+      render: (documentType: any) =>
+        documentType?.name ? (
+          <Tooltip title={documentType.name}>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
+              {documentType.name}
+            </span>
+          </Tooltip>
+        ) : "-"
     },
     {
       title: "Project",
       dataIndex: "project",
       key: "project",
-      render: (project: any) => project?.name || <Text type="secondary">Standalone</Text>
+      width: 140,
+      render: (project: any) =>
+        project?.name ? (
+          <Tooltip title={project.name}>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
+              {project.name}
+            </span>
+          </Tooltip>
+        ) : (
+          <Text type="secondary">Standalone</Text>
+        )
     },
     {
       title: "Fiscal Year",
       dataIndex: "fiscalYear",
       key: "fiscalYear",
+      width: 90,
       render: (fy: number) => fy ? `FY ${fy}` : "-"
     },
     {
       title: "Status",
       dataIndex: "accessStatus",
       key: "accessStatus",
+      width: 170,
       render: (status: ReportAccessStatus) => getStatusTag(status),
       filters: [
         { text: "Accessible", value: ReportAccessStatus.ACCESSIBLE },
@@ -256,68 +343,11 @@ const ClientReports: React.FC = () => {
       title: "Uploaded",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 130,
       sorter: (a: ClientReportType, b: ClientReportType) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       defaultSortOrder: "descend" as const,
       render: (date: string) => formatDistanceToNow(new Date(date), { addSuffix: true })
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (_: any, record: ClientReportType) => {
-        const isProjectPaymentPending = record.projectId && projects?.find(
-          (p: ClientPortalProject) => p.id === record.projectId && !p.isPaymentDone && !p.isPaymentTemporarilyEnabled
-        );
-
-        const files = record.files || [];
-        const isDisabled = record.accessStatus !== ReportAccessStatus.ACCESSIBLE || !!isProjectPaymentPending;
-
-        const tooltipMsg = isProjectPaymentPending
-          ? "Project payment pending - documents available after payment"
-          : record.accessStatus === ReportAccessStatus.PENDING
-          ? "Payment pending for this report"
-          : record.accessStatus === ReportAccessStatus.REVOKED
-          ? "Access to this report has been revoked"
-          : "";
-
-        if (files.length > 1) {
-          // Multiple files — show individual labelled download buttons
-          return (
-            <Tooltip title={tooltipMsg}>
-              <Space direction="vertical" size={4}>
-                {files.map((file, idx) => (
-                  <Button
-                    key={file.id}
-                    size="small"
-                    icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
-                    disabled={isDisabled}
-                    loading={downloadingFile}
-                    onClick={() => handleDownloadFile(record, file)}
-                    style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                  >
-                    {getCleanFileName(file, idx)}
-                  </Button>
-                ))}
-              </Space>
-            </Tooltip>
-          );
-        }
-
-        return (
-          <Tooltip title={tooltipMsg}>
-            <Button
-              type={isDisabled ? "default" : "primary"}
-              size="small"
-              icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
-              disabled={isDisabled}
-              loading={downloading || downloadingFile}
-              onClick={() => handleDownload(record)}
-            >
-              {isDisabled ? "Locked" : "Download"}
-            </Button>
-          </Tooltip>
-        );
-      }
     }
   ];
 
@@ -432,7 +462,7 @@ const ClientReports: React.FC = () => {
             columns={reportColumns}
             rowKey="id"
             pagination={{ pageSize: 15, showSizeChanger: true, showTotal: (total) => `${total} reports` }}
-            scroll={{ x: 900 }}
+            scroll={{ x: 1160 }}
           />
         ) : (
           <Empty description={
