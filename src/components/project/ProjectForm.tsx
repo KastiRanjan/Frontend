@@ -360,6 +360,8 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           billing: (editProjectData as any).billing?.id || (editProjectData as any).billing,
           allowSubtaskWorklog: editProjectData.allowSubtaskWorklog !== undefined ? editProjectData.allowSubtaskWorklog : true,
           countsForAvailability: editProjectData.countsForAvailability !== undefined ? editProjectData.countsForAvailability : true,
+          isPaymentDone: editProjectData.isPaymentDone || false,
+          isPaymentTemporarilyEnabled: editProjectData.isPaymentTemporarilyEnabled || false,
           natureOfWork: typeof editProjectData.natureOfWork === "string" ? editProjectData.natureOfWork : (editProjectData.natureOfWork as any)?.id,
           
           // Set all date fields together
@@ -414,7 +416,9 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               endingDate: adDate,
               endingDateEnglish: adDate,
               allowSubtaskWorklog: true,
-              countsForAvailability: true
+              countsForAvailability: true,
+              isPaymentDone: false,
+              isPaymentTemporarilyEnabled: false
             });
             console.log('Set default dates for new project:', { todayNepali, adDate });
             
@@ -515,6 +519,34 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               checkedChildren="Yes" 
               unCheckedChildren="No" 
               defaultChecked={true}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label="Payment Done"
+            name="isPaymentDone"
+            valuePropName="checked"
+            initialValue={false}
+            tooltip="When enabled, client can access documents for this project in their portal"
+          >
+            <Switch 
+              checkedChildren="Paid" 
+              unCheckedChildren="Pending" 
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            label="Temporary Document Access"
+            name="isPaymentTemporarilyEnabled"
+            valuePropName="checked"
+            initialValue={false}
+            tooltip="Temporarily grant document access even if payment is pending"
+          >
+            <Switch 
+              checkedChildren="On" 
+              unCheckedChildren="Off" 
             />
           </Form.Item>
         </Col>

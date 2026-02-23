@@ -393,6 +393,10 @@ const ClientReportsAdmin: React.FC = () => {
               style={{ width: 200 }}
               placeholder="Filter by Client"
               allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+              }
               onChange={setFilterCustomerId}
             >
               {clients?.map((client: any) => (
@@ -405,6 +409,10 @@ const ClientReportsAdmin: React.FC = () => {
               style={{ width: 180 }}
               placeholder="Filter by Document Type"
               allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+              }
               onChange={setFilterDocumentTypeId}
             >
               {allDocumentTypes?.map((type: any) => (
@@ -505,10 +513,13 @@ const ClientReportsAdmin: React.FC = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item name="projectId" label="Project">
+          <Form.Item
+            name="projectId"
+            label="Project"
+            rules={[{ required: true, message: "Please select a project" }]}
+          >
             <Select 
-              placeholder={selectedCustomerForForm ? "Select project (optional)" : "Select client first"} 
-              allowClear
+              placeholder={selectedCustomerForForm ? "Select project" : "Select client first"} 
               disabled={!selectedCustomerForForm}
             >
               {projects?.map((project: any) => (
@@ -660,10 +671,13 @@ const ClientReportsAdmin: React.FC = () => {
             <TextArea rows={3} placeholder="Enter description" />
           </Form.Item>
 
-          <Form.Item name="projectId" label="Project">
+          <Form.Item
+            name="projectId"
+            label="Project"
+            rules={[{ required: true, message: "Please select a project" }]}
+          >
             <Select 
-              placeholder="Select project (optional)" 
-              allowClear
+              placeholder="Select project" 
             >
               {projects?.map((project: any) => (
                 <Option key={project.id} value={project.id}>

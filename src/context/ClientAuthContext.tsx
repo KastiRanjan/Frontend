@@ -1,18 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClientUserType, CustomerBasic } from "@/types/clientUser";
-import { getClientProfile, clientLogout, switchCustomer } from "@/service/clientPortal.service";
+import { ClientUserType } from "@/types/clientUser";
+import { getClientProfile, clientLogout } from "@/service/clientPortal.service";
 
 interface ClientAuthContextType {
   clientUser: ClientUserType | null;
   isClientAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  selectedCustomer: CustomerBasic | null;
   logout: () => Promise<void>;
   refreshClientAuth: () => Promise<boolean>;
-  selectCustomer: (customerId: string) => Promise<boolean>;
   checkAuth: () => Promise<void>;
 }
 
@@ -21,17 +19,14 @@ const ClientAuthContext = createContext<ClientAuthContextType>({
   isClientAuthenticated: false,
   isLoading: true,
   error: null,
-  selectedCustomer: null,
   logout: async () => {},
   refreshClientAuth: async () => false,
-  selectCustomer: async () => false,
   checkAuth: async () => {}
 });
 
 export const ClientAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
   const [clientUser, setClientUser] = useState<ClientUserType | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerBasic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,24 +45,10 @@ export const ClientAuthProvider: React.FC<{ children: ReactNode }> = ({ children
       
       const profile = await getClientProfile();
       setClientUser(profile);
-      
-      // Set selected customer from profile or localStorage
-      const savedCustomerId = localStorage.getItem("selected_customer_id");
-      if (profile.selectedCustomerId) {
-        const customer = profile.customers?.find((c: CustomerBasic) => c.id === profile.selectedCustomerId);
-        if (customer) setSelectedCustomer(customer);
-      } else if (savedCustomerId) {
-        const customer = profile.customers?.find((c: CustomerBasic) => c.id === savedCustomerId);
-        if (customer) setSelectedCustomer(customer);
-      } else if (profile.customers?.length === 1) {
-        setSelectedCustomer(profile.customers[0]);
-        localStorage.setItem("selected_customer_id", profile.customers[0].id);
-      }
     } catch (err) {
       console.error("Client auth check failed:", err);
       localStorage.removeItem("client_token");
       localStorage.removeItem("client_user");
-      localStorage.removeItem("selected_customer_id");
       setError("Session expired. Please login again.");
     } finally {
       setIsLoading(false);
@@ -86,36 +67,9 @@ export const ClientAuthProvider: React.FC<{ children: ReactNode }> = ({ children
     } finally {
       localStorage.removeItem("client_token");
       localStorage.removeItem("client_user");
-      localStorage.removeItem("selected_customer_id");
       setClientUser(null);
-      setSelectedCustomer(null);
       setError(null);
-    }
-  };
-
-  const selectCustomer = async (customerId: string): Promise<boolean> => {
-    try {
-      const result = await switchCustomer({ customerId });
-      
-      // Update token
-      localStorage.setItem("client_token", result.token);
-      localStorage.setItem("selected_customer_id", customerId);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
-      
-      setSelectedCustomer(result.customer);
-      
-      // Invalidate all client portal queries to trigger refetch
-      queryClient.invalidateQueries({ queryKey: ["my-client-reports"] });
-      queryClient.invalidateQueries({ queryKey: ["my-client-report-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["client-report-details"] });
-      queryClient.invalidateQueries({ queryKey: ["client-profile"] });
-      
-      // Refresh profile
-      await checkClientAuth();
-      return true;
-    } catch (err) {
-      console.error("Switch customer failed:", err);
-      return false;
+      queryClient.clear();
     }
   };
 
@@ -135,10 +89,8 @@ export const ClientAuthProvider: React.FC<{ children: ReactNode }> = ({ children
         isClientAuthenticated: !!clientUser,
         isLoading,
         error,
-        selectedCustomer,
         logout,
         refreshClientAuth,
-        selectCustomer,
         checkAuth: checkClientAuth
       }}
     >

@@ -25,10 +25,65 @@ export interface ProjectType {
     endingDateFormatted?: string; // Human-readable nepali date
     allowSubtaskWorklog?: boolean;
     countsForAvailability?: boolean;
+    isPaymentDone?: boolean;
+    isPaymentTemporarilyEnabled?: boolean;
     projectLead?: UserType;
     projectManager?: UserType;
     users?: UserType[];
     tasks?: TaskType[];
     createdAt?: string;
     updatedAt?: string;
+}
+
+export interface ClientPortalProject {
+    id: string;
+    name: string;
+    description: string;
+    status: "active" | "suspended" | "archived" | "completed" | "signed_off";
+    natureOfWork: string | null;
+    fiscalYear: number;
+    startingDate: string;
+    endingDate: string;
+    isPaymentDone: boolean;
+    isPaymentTemporarilyEnabled: boolean;
+    customerName: string | null;
+    customerId: string | null;
+    totalTasks: number;
+    completedTasks: number;
+    progress: number;
+    reports?: {
+        total: number;
+        accessible: number;
+        pending: number;
+    };
+}
+
+export interface ClientCompanyDetails {
+    id: string;
+    name: string;
+    shortName?: string;
+    panNo: string;
+    registeredDate: string;
+    status: string;
+    address: {
+        country: string;
+        state: string;
+        district: string;
+        localJurisdiction: string;
+        wardNo?: string;
+        locality: string;
+    };
+    legalStatus: string | null;
+    businessSize: string | null;
+    industryNature: string | null;
+    contact: {
+        telephoneNo?: string;
+        mobileNo?: string;
+        email?: string;
+        website?: string;
+    };
+    projectSummary: {
+        total: number;
+        [key: string]: number;
+    };
 }

@@ -77,10 +77,14 @@ import UserAvailabilityDashboard from "@/pages/Project/availability";
 // Client Portal imports
 import {
   ClientLogin,
-  ClientDashboard,
+  ClientDashboardHome,
+  ClientProjects,
+  ClientCompany,
+  ClientReports,
   ClientForgotPassword,
   ClientResetPassword
 } from "@/pages/ClientPortal";
+import ClientPortalLayout from "@/components/Layout/ClientPortalLayout";
 // Admin client report management
 import ClientReportsAdmin from "@/pages/ClientReportsAdmin";
 import ClientUsersAdmin from "@/pages/ClientUsersAdmin";
@@ -106,7 +110,25 @@ const Router = [
     children: [
       {
         path: "",
-        element: <ClientDashboard />,
+        element: <ClientPortalLayout />,
+        children: [
+          {
+            path: "",
+            element: <ClientDashboardHome />,
+          },
+          {
+            path: "projects",
+            element: <ClientProjects />,
+          },
+          {
+            path: "company",
+            element: <ClientCompany />,
+          },
+          {
+            path: "reports",
+            element: <ClientReports />,
+          },
+        ],
       },
     ],
   },

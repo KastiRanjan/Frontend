@@ -16,7 +16,6 @@ export interface ClientUserType {
   name: string;
   phoneNumber?: string;
   customers: CustomerBasic[];
-  selectedCustomerId?: string;
   status: ClientUserStatus;
   lastLoginAt?: string;
   createdAt: string;
@@ -34,7 +33,6 @@ export interface ClientLoginResponse {
     status: string;
   };
   customers: CustomerBasic[];
-  needsCustomerSelection: boolean;
 }
 
 export interface CreateClientUserPayload {

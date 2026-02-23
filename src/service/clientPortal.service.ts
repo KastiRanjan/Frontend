@@ -7,9 +7,7 @@ import {
   ClientLoginPayload,
   ClientForgotPasswordPayload,
   ClientResetPasswordPayload,
-  ClientChangePasswordPayload,
-  SelectCustomerPayload,
-  CustomerBasic
+  ClientChangePasswordPayload
 } from "@/types/clientUser";
 import {
   ClientReportType,
@@ -69,13 +67,6 @@ export const clientLogout = async (): Promise<{ success: boolean }> => {
   return response.data;
 };
 
-export const switchCustomer = async (
-  payload: SelectCustomerPayload
-): Promise<{ success: boolean; token: string; customer: CustomerBasic }> => {
-  const response = await axios.post(`${backendURI}/client-portal/switch-customer`, payload);
-  return response.data;
-};
-
 export const getClientProfile = async (): Promise<ClientUserType> => {
   const response = await axios.get(`${backendURI}/client-portal/profile`);
   return response.data;
@@ -123,5 +114,22 @@ export const clientChangePassword = async (
   payload: ClientChangePasswordPayload
 ): Promise<{ success: boolean }> => {
   const response = await axios.post(`${backendURI}/client-portal/change-password`, payload);
+  return response.data;
+};
+
+// Client Portal: Projects
+export const getClientProjects = async (): Promise<any[]> => {
+  const response = await axios.get(`${backendURI}/client-portal/projects`);
+  return response.data;
+};
+
+export const getClientProjectById = async (id: string): Promise<any> => {
+  const response = await axios.get(`${backendURI}/client-portal/projects/${id}`);
+  return response.data;
+};
+
+// Client Portal: Company
+export const getClientCompanyDetails = async (): Promise<any> => {
+  const response = await axios.get(`${backendURI}/client-portal/company`);
   return response.data;
 };

@@ -98,9 +98,9 @@ const ClientDashboard: React.FC = () => {
   const handleCustomerSwitch = async (customerId: string) => {
     const success = await selectCustomer(customerId);
     if (success) {
-      message.success("Switched organization successfully");
+      message.success("Switched company successfully");
     } else {
-      message.error("Failed to switch organization");
+      message.error("Failed to switch company");
     }
   };
 
@@ -224,12 +224,12 @@ const ClientDashboard: React.FC = () => {
             {clientUser?.customers && clientUser.customers.length > 1 ? (
               <Dropdown menu={{ items: customerMenuItems }} trigger={["click"]}>
                 <Button icon={<SwapOutlined />}>
-                  {selectedCustomer?.name || "Select Organization"}
+                  {selectedCustomer?.name || "Select Company"}
                 </Button>
               </Dropdown>
             ) : (
               <Button icon={<BankOutlined />}>
-                {selectedCustomer?.name || "My Organization"}
+                {selectedCustomer?.name || "My Company"}
               </Button>
             )}
             <Button icon={<LogoutOutlined />} onClick={logout}>

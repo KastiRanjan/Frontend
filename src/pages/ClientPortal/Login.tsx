@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { Form, Input, Button, Card, Typography, Alert, message, Modal } from "antd";
-import { MailOutlined, LockOutlined, BankOutlined } from "@ant-design/icons";
+import React from "react";
+import { Form, Input, Button, Card, Typography, Alert, message } from "antd";
+import { MailOutlined, LockOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useClientLogin } from "@/hooks/clientReport";
-import { ClientLoginPayload, CustomerBasic } from "@/types/clientUser";
+import { ClientLoginPayload } from "@/types/clientUser";
 import { useClientAuth } from "@/context/ClientAuthContext";
 import axios from "axios";
 
@@ -14,69 +14,30 @@ const ClientLogin: React.FC = () => {
   const navigate = useNavigate();
   const { mutate: login, isPending, error } = useClientLogin();
   const { checkAuth } = useClientAuth();
-  const [showCustomerSelect, setShowCustomerSelect] = useState(false);
-  const [availableCustomers, setAvailableCustomers] = useState<CustomerBasic[]>([]);
-  const [pendingCredentials, setPendingCredentials] = useState<ClientLoginPayload | null>(null);
 
   const onFinish = (values: ClientLoginPayload) => {
     login(values, {
       onSuccess: async (data) => {
-        if (data.needsCustomerSelection && data.customers.length > 1) {
-          // Show customer selection modal
-          setAvailableCustomers(data.customers);
-          setPendingCredentials(values);
-          setShowCustomerSelect(true);
-        } else {
-          // Store token and navigate
-          localStorage.setItem("client_token", data.token);
-          axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-          if (data.customers?.length > 0) {
-            localStorage.setItem("selected_customer_id", data.customers[0].id);
-          }
-          message.success("Login successful");
-          
-          // Refresh auth context
-          await checkAuth();
-          
-          // Navigate after small delay to ensure state updates
-          setTimeout(() => {
-            navigate("/client-portal", { replace: true });
-          }, 100);
+        // Store token and auto-select first customer
+        localStorage.setItem("client_token", data.token);
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+        if (data.customers?.length > 0) {
+          localStorage.setItem("selected_customer_id", data.customers[0].id);
         }
+        message.success("Login successful");
+        
+        // Refresh auth context
+        await checkAuth();
+        
+        // Navigate after small delay to ensure state updates
+        setTimeout(() => {
+          navigate("/client-portal", { replace: true });
+        }, 100);
       },
       onError: (err: any) => {
         message.error(err.response?.data?.message || "Login failed");
       }
     });
-  };
-
-  const handleCustomerSelect = (customerId: string) => {
-    if (!pendingCredentials) return;
-    
-    // Re-login with selected customer
-    login(
-      { ...pendingCredentials, customerId },
-      {
-        onSuccess: async (data) => {
-          localStorage.setItem("client_token", data.token);
-          localStorage.setItem("selected_customer_id", customerId);
-          axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-          setShowCustomerSelect(false);
-          message.success("Login successful");
-          
-          // Refresh auth context
-          await checkAuth();
-          
-          // Navigate after small delay to ensure state updates
-          setTimeout(() => {
-            navigate("/client-portal", { replace: true });
-          }, 100);
-        },
-        onError: (err: any) => {
-          message.error(err.response?.data?.message || "Login failed");
-        }
-      }
-    );
   };
 
   return (
@@ -162,45 +123,6 @@ const ClientLogin: React.FC = () => {
           </Text>
         </div>
       </Card>
-
-      {/* Customer Selection Modal */}
-      <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <BankOutlined />
-            <span>Select Organization</span>
-          </div>
-        }
-        open={showCustomerSelect}
-        onCancel={() => setShowCustomerSelect(false)}
-        footer={null}
-        centered
-      >
-        <div className="mb-4">
-          <Text type="secondary">
-            You have access to multiple organizations. Please select which one you'd like to access:
-          </Text>
-        </div>
-        <div className="space-y-2">
-          {availableCustomers.map((customer) => (
-            <Button
-              key={customer.id}
-              block
-              size="large"
-              className="text-left h-auto py-3"
-              onClick={() => handleCustomerSelect(customer.id)}
-              loading={isPending}
-            >
-              <div>
-                <div className="font-medium">{customer.name}</div>
-                {customer.shortName && (
-                  <Text type="secondary" className="text-sm">{customer.shortName}</Text>
-                )}
-              </div>
-            </Button>
-          ))}
-        </div>
-      </Modal>
     </div>
   );
 };

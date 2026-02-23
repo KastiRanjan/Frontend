@@ -10,7 +10,10 @@ import {
   downloadClientReport,
   clientForgotPassword,
   clientResetPassword,
-  clientChangePassword
+  clientChangePassword,
+  getClientProjects,
+  getClientProjectById,
+  getClientCompanyDetails
 } from "@/service/clientPortal.service";
 import {
   ClientLoginPayload,
@@ -54,20 +57,18 @@ export const useClientProfile = () => {
 };
 
 // Hook to get client's reports
-export const useMyClientReports = (customerId?: string) => {
+export const useMyClientReports = () => {
   return useQuery({
-    queryKey: ["my-client-reports", customerId],
-    queryFn: () => getClientReports(),
-    enabled: !!customerId
+    queryKey: ["my-client-reports"],
+    queryFn: () => getClientReports()
   });
 };
 
 // Hook to get client report stats
-export const useMyClientReportStats = (customerId?: string) => {
+export const useMyClientReportStats = () => {
   return useQuery({
-    queryKey: ["my-client-report-stats", customerId],
-    queryFn: () => getClientReportStats(),
-    enabled: !!customerId
+    queryKey: ["my-client-report-stats"],
+    queryFn: () => getClientReportStats()
   });
 };
 
@@ -124,5 +125,29 @@ export const useClientResetPassword = () => {
 export const useClientChangePassword = () => {
   return useMutation({
     mutationFn: (payload: ClientChangePasswordPayload) => clientChangePassword(payload)
+  });
+};
+
+// Hook for client portal projects
+export const useClientProjects = () => {
+  return useQuery({
+    queryKey: ["client-portal-projects"],
+    queryFn: () => getClientProjects()
+  });
+};
+
+export const useClientProjectById = (id: string) => {
+  return useQuery({
+    queryKey: ["client-portal-project", id],
+    queryFn: () => getClientProjectById(id),
+    enabled: !!id
+  });
+};
+
+// Hook for client portal company details
+export const useClientCompanyDetails = () => {
+  return useQuery({
+    queryKey: ["client-portal-company"],
+    queryFn: () => getClientCompanyDetails()
   });
 };

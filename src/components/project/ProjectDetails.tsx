@@ -1,14 +1,55 @@
 import { ProjectType } from '@/types/project';
-import { Card, Descriptions, Tag } from 'antd';
+import { Card, Descriptions, Tag, Switch, message, Divider, Space, Typography } from 'antd';
+import { DollarOutlined, UnlockOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { DualDateConverter } from '@/utils/dateConverter';
 import dayjs from 'dayjs';
+import { useSession } from '@/context/SessionContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { editProject } from '@/service/project.service';
+
+const { Text } = Typography;
 
 interface ProjectDetailsProps {
   project: ProjectType;
 }
 
 const ProjectDetails = ({ project }: ProjectDetailsProps) => {
+  const { profile } = useSession();
+  const queryClient = useQueryClient();
+
+  // Check if user is superuser (has all permissions typically)
+  const userRole = (profile?.role && 'name' in profile.role && typeof profile.role.name === 'string')
+    ? profile.role.name.toLowerCase()
+    : undefined;
+  const isSuperUser = userRole === 'superuser' || userRole === 'super_user' || userRole === 'admin';
+
+  const paymentMutation = useMutation({
+    mutationFn: ({ payload, id }: { payload: any; id: string }) => editProject({ payload, id }),
+    onSuccess: () => {
+      message.success('Payment status updated');
+      queryClient.invalidateQueries({ queryKey: ['project', project?.id?.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: () => {
+      message.error('Failed to update payment status');
+    }
+  });
+
+  const handlePaymentToggle = (checked: boolean) => {
+    paymentMutation.mutate({
+      payload: { isPaymentDone: checked },
+      id: project.id.toString()
+    });
+  };
+
+  const handleTemporaryAccessToggle = (checked: boolean) => {
+    paymentMutation.mutate({
+      payload: { isPaymentTemporarilyEnabled: checked },
+      id: project.id.toString()
+    });
+  };
+
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return 'N/A';
     try {
@@ -79,6 +120,78 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
           {moment(project.updatedAt).format('MMM D, YYYY h:mm A')}
         </Descriptions.Item>
       </Descriptions>
+
+      {/* Payment Status Section - Visible to super users */}
+      {isSuperUser && (
+        <>
+          <Divider />
+          <Card
+            size="small"
+            title={
+              <Space>
+                <DollarOutlined className="text-green-600" />
+                <span>Client Payment & Document Access</span>
+              </Space>
+            }
+            type="inner"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <Text strong>Payment Done</Text>
+                  <br />
+                  <Text type="secondary" className="text-xs">
+                    When enabled, client can access and download documents for this project in their portal.
+                  </Text>
+                </div>
+                <Switch
+                  checked={project.isPaymentDone}
+                  onChange={handlePaymentToggle}
+                  loading={paymentMutation.isPending}
+                  checkedChildren="Paid"
+                  unCheckedChildren="Pending"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <UnlockOutlined className="text-blue-500" />
+                    <Text strong>Temporary Access</Text>
+                  </div>
+                  <Text type="secondary" className="text-xs">
+                    Temporarily grant document access even if payment is not done. Useful for urgent document needs.
+                  </Text>
+                </div>
+                <Switch
+                  checked={project.isPaymentTemporarilyEnabled}
+                  onChange={handleTemporaryAccessToggle}
+                  loading={paymentMutation.isPending}
+                  disabled={project.isPaymentDone}
+                  checkedChildren="On"
+                  unCheckedChildren="Off"
+                />
+              </div>
+
+              {project.isPaymentDone && (
+                <Tag color="success" className="mt-2">
+                  Payment completed - Client has full document access
+                </Tag>
+              )}
+              {!project.isPaymentDone && project.isPaymentTemporarilyEnabled && (
+                <Tag color="blue" className="mt-2">
+                  Temporary access enabled - Client can access documents
+                </Tag>
+              )}
+              {!project.isPaymentDone && !project.isPaymentTemporarilyEnabled && (
+                <Tag color="warning" className="mt-2">
+                  Payment pending - Client cannot download documents for this project
+                </Tag>
+              )}
+            </div>
+          </Card>
+        </>
+      )}
     </Card>
   );
 };
