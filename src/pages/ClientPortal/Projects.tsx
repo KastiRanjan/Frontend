@@ -64,7 +64,6 @@ const ClientProjects: React.FC = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <Title level={4} className="!mb-0">Projects</Title>
         <div className="flex gap-3">
           <Badge count={activeProjects.length} showZero>
             <Tag color="processing" className="px-3 py-1">Active</Tag>

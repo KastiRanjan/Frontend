@@ -3,11 +3,15 @@ import {
   fetchClientReports,
   fetchClientReportById,
   createClientReport,
+  createMultipleClientReports,
   updateClientReport,
   updateReportAccess,
   bulkUpdateReportAccess,
   replaceReportFile,
   deleteClientReport,
+  addFilesToReport,
+  removeFileFromReport,
+  updateReportFileDisplayName,
   fetchReportsByCustomerId,
   fetchCustomerReportStats,
   fetchProjectsByCustomer
@@ -61,6 +65,19 @@ export const useCreateClientReport = () => {
 
   return useMutation({
     mutationFn: (payload: CreateClientReportPayload) => createClientReport(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+    }
+  });
+};
+
+// Hook to create multiple client reports (bulk upload) - creates single report with multiple files
+export const useCreateMultipleClientReports = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Omit<CreateClientReportPayload, "file"> & { files: File[] }) =>
+      createMultipleClientReports(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
     }
@@ -127,6 +144,44 @@ export const useDeleteClientReport = () => {
 
   return useMutation({
     mutationFn: (id: string) => deleteClientReport(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+    }
+  });
+};
+
+// Hook to add files to an existing report
+export const useAddFilesToReport = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, files }: { id: string; files: File[] }) => addFilesToReport(id, files),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+    }
+  });
+};
+
+// Hook to remove a file from a report
+export const useRemoveFileFromReport = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ reportId, fileId }: { reportId: string; fileId: string }) =>
+      removeFileFromReport(reportId, fileId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+    }
+  });
+};
+
+// Hook to update a file's display name
+export const useUpdateReportFileDisplayName = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ reportId, fileId, displayFileName }: { reportId: string; fileId: string; displayFileName: string }) =>
+      updateReportFileDisplayName(reportId, fileId, displayFileName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
     }

@@ -17,6 +17,7 @@ export interface ClientUserType {
   phoneNumber?: string;
   customers: CustomerBasic[];
   status: ClientUserStatus;
+  isDownloadDisabled?: boolean;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -48,6 +49,7 @@ export interface UpdateClientUserPayload {
   phoneNumber?: string;
   status?: ClientUserStatus;
   customerIds?: string[];
+  isDownloadDisabled?: boolean;
 }
 
 export interface ClientLoginPayload {

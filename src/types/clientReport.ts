@@ -4,14 +4,28 @@ export enum ReportAccessStatus {
   REVOKED = 'revoked'
 }
 
+export interface ClientReportFileType {
+  id: string;
+  filePath: string;
+  originalFileName: string;
+  displayFileName?: string;
+  fileType?: string;
+  fileSize?: number;
+  reportId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ClientReportType {
   id: string;
   title: string;
   description?: string;
-  filePath: string;
-  originalFileName: string;
+  filePath?: string;
+  originalFileName?: string;
+  displayFileName?: string;
   fileType?: string;
   fileSize?: number;
+  files?: ClientReportFileType[];
   customerId: string;
   customer?: {
     id: string;
@@ -58,6 +72,7 @@ export interface CreateClientReportPayload {
 export interface UpdateClientReportPayload {
   title?: string;
   description?: string;
+  displayFileName?: string;
   accessStatus?: ReportAccessStatus;
   isVisible?: boolean;
   accessNotes?: string;

@@ -64,17 +64,12 @@ const ClientCompany: React.FC = () => {
   const companyList: ClientCompanyDetails[] = Array.isArray(companies) ? companies : [companies];
 
   return (
-    <div>
-      <Title level={4} className="!mb-6">
-        Companies ({companyList.length})
-      </Title>
 
       <div className="space-y-8">
         {companyList.map((company) => (
           <CompanyCard key={company.id} company={company} />
         ))}
       </div>
-    </div>
   );
 };
 

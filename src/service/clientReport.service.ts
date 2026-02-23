@@ -53,6 +53,25 @@ export const createClientReport = async (
   return response.data;
 };
 
+export const createMultipleClientReports = async (
+  payload: Omit<CreateClientReportPayload, "file"> & { files: File[] }
+): Promise<ClientReportType> => {
+  const formData = new FormData();
+  payload.files.forEach((file) => formData.append("files", file));
+  formData.append("title", payload.title);
+  if (payload.description) formData.append("description", payload.description);
+  formData.append("customerId", payload.customerId);
+  if (payload.projectId) formData.append("projectId", payload.projectId);
+  if (payload.documentTypeId) formData.append("documentTypeId", payload.documentTypeId);
+  if (payload.fiscalYear) formData.append("fiscalYear", payload.fiscalYear.toString());
+  if (payload.isVisible !== undefined) formData.append("isVisible", String(payload.isVisible));
+
+  const response = await axios.post(`${backendURI}/client-reports/bulk-upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+  return response.data;
+};
+
 export const updateClientReport = async (
   id: string,
   payload: UpdateClientReportPayload
@@ -95,6 +114,36 @@ export const replaceReportFile = async (
 
 export const deleteClientReport = async (id: string): Promise<{ success: boolean }> => {
   const response = await axios.delete(`${backendURI}/client-reports/${id}`);
+  return response.data;
+};
+
+export const addFilesToReport = async (
+  id: string,
+  files: File[]
+): Promise<ClientReportType> => {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("files", file));
+
+  const response = await axios.post(`${backendURI}/client-reports/${id}/files`, formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+  return response.data;
+};
+
+export const removeFileFromReport = async (
+  reportId: string,
+  fileId: string
+): Promise<ClientReportType> => {
+  const response = await axios.delete(`${backendURI}/client-reports/${reportId}/files/${fileId}`);
+  return response.data;
+};
+
+export const updateReportFileDisplayName = async (
+  reportId: string,
+  fileId: string,
+  displayFileName: string
+): Promise<ClientReportType> => {
+  const response = await axios.patch(`${backendURI}/client-reports/${reportId}/files/${fileId}`, { displayFileName });
   return response.data;
 };
 

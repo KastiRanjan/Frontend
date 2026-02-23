@@ -9,10 +9,12 @@ import {
   Form,
   Input,
   Select,
+  Switch,
   message,
   Popconfirm,
   Typography,
-  Avatar
+  Avatar,
+  Tooltip
 } from "antd";
 import {
   PlusOutlined,
@@ -20,7 +22,9 @@ import {
   EditOutlined,
   UserOutlined,
   MailOutlined,
-  PhoneOutlined
+  PhoneOutlined,
+  StopOutlined,
+  DownloadOutlined
 } from "@ant-design/icons";
 import {
   useClientUsers,
@@ -154,6 +158,35 @@ const ClientUsersAdmin: React.FC = () => {
       render: (status: ClientUserStatus) => getStatusTag(status)
     },
     {
+      title: "Downloads",
+      dataIndex: "isDownloadDisabled",
+      key: "isDownloadDisabled",
+      render: (disabled: boolean, record: ClientUserType) => (
+        <Tooltip title={disabled ? "Downloads disabled for this user" : "Downloads enabled"}>
+          <Switch
+            checked={!disabled}
+            checkedChildren={<DownloadOutlined />}
+            unCheckedChildren={<StopOutlined />}
+            onChange={(checked) => {
+              updateUser(
+                { id: record.id, payload: { isDownloadDisabled: !checked } },
+                {
+                  onSuccess: () => {
+                    message.success(
+                      `Downloads ${checked ? "enabled" : "disabled"} for ${record.name}`
+                    );
+                  },
+                  onError: () => {
+                    message.error("Failed to update download access");
+                  }
+                }
+              );
+            }}
+          />
+        </Tooltip>
+      )
+    },
+    {
       title: "Last Login",
       dataIndex: "lastLoginAt",
       key: "lastLoginAt",
@@ -180,7 +213,8 @@ const ClientUsersAdmin: React.FC = () => {
                 name: record.name,
                 phoneNumber: record.phoneNumber,
                 status: record.status,
-                customerIds: record.customers?.map((c: any) => c.id) || []
+                customerIds: record.customers?.map((c: any) => c.id) || [],
+                isDownloadDisabled: record.isDownloadDisabled || false
               });
               setIsEditModalOpen(true);
             }}
@@ -377,6 +411,16 @@ const ClientUsersAdmin: React.FC = () => {
               ))}
             </Select>
           </Form.Item>
+
+          <Form.Item name="isDownloadDisabled" label="Disable Downloads" valuePropName="checked">
+            <Switch
+              checkedChildren={<StopOutlined />}
+              unCheckedChildren={<DownloadOutlined />}
+            />
+          </Form.Item>
+          <Text type="secondary" className="text-xs -mt-4 mb-4 block">
+            When enabled, this user cannot download any files regardless of individual file settings.
+          </Text>
 
           <div className="flex justify-end gap-2">
             <Button onClick={() => setIsEditModalOpen(false)}>Cancel</Button>

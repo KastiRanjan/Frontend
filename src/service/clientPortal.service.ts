@@ -96,6 +96,13 @@ export const downloadClientReport = async (id: string): Promise<Blob> => {
   return response.data;
 };
 
+export const downloadClientReportFile = async (reportId: string, fileId: string): Promise<Blob> => {
+  const response = await axios.get(`${backendURI}/client-portal/reports/${reportId}/files/${fileId}/download`, {
+    responseType: "blob"
+  });
+  return response.data;
+};
+
 export const clientForgotPassword = async (
   payload: ClientForgotPasswordPayload
 ): Promise<{ success: boolean; message: string }> => {

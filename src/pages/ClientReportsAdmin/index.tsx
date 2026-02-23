@@ -17,7 +17,8 @@ import {
   Statistic,
   Typography,
   Tooltip,
-  Switch
+  Switch,
+  List
 } from "antd";
 import {
   PlusOutlined,
@@ -29,21 +30,28 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
   FileTextOutlined,
-  EditOutlined
+  EditOutlined,
+  PaperClipOutlined,
+  SaveOutlined
 } from "@ant-design/icons";
 import {
   useClientReports,
   useCreateClientReport,
+  useCreateMultipleClientReports,
   useUpdateClientReport,
   useUpdateReportAccess,
   useDeleteClientReport,
   useBulkUpdateReportAccess,
-  useProjectsByCustomer
+  useProjectsByCustomer,
+  useAddFilesToReport,
+  useRemoveFileFromReport,
+  useUpdateReportFileDisplayName
 } from "@/hooks/clientReport";
 import { useDocumentTypesForCustomer, useDocumentTypes } from "@/hooks/clientReport/useClientReportDocumentTypes";
 import { useClient } from "@/hooks/client/useClient";
 import {
   ClientReportType,
+  ClientReportFileType,
   ReportAccessStatus,
   UpdateReportAccessPayload
 } from "@/types/clientReport";
@@ -77,10 +85,18 @@ const ClientReportsAdmin: React.FC = () => {
   const { data: documentTypesForCustomer } = useDocumentTypesForCustomer(selectedCustomerForForm);
   const { data: allDocumentTypes } = useDocumentTypes({ isActive: true });
   const { mutate: createReport, isPending: creating } = useCreateClientReport();
+  const { mutate: createMultipleReports, isPending: creatingMultiple } = useCreateMultipleClientReports();
   const { mutate: updateReport, isPending: updating } = useUpdateClientReport();
   const { mutate: updateAccess, isPending: updatingAccess } = useUpdateReportAccess();
   const { mutate: deleteReport } = useDeleteClientReport();
   const { mutate: bulkUpdateAccess } = useBulkUpdateReportAccess();
+  const { mutate: addFiles, isPending: addingFiles } = useAddFilesToReport();
+  const { mutate: removeFile } = useRemoveFileFromReport();
+  const { mutate: updateFileDisplayName } = useUpdateReportFileDisplayName();
+
+  // State for inline editing file display names
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const [editingFileName, setEditingFileName] = useState("");
 
   const handleOpenEditModal = (report: ClientReportType) => {
     setSelectedReport(report);
@@ -117,29 +133,51 @@ const ClientReportsAdmin: React.FC = () => {
   };
 
   const handleCreateReport = (values: any) => {
-    const file = values.file?.fileList?.[0]?.originFileObj;
-    if (!file) {
-      message.error("Please select a file");
+    const fileList = values.file?.fileList;
+    if (!fileList || fileList.length === 0) {
+      message.error("Please select at least one file");
       return;
     }
 
-    createReport(
-      {
-        ...values,
-        file
-      },
-      {
-        onSuccess: () => {
-          message.success("Report uploaded successfully");
-          setIsModalOpen(false);
-          form.resetFields();
-          setSelectedCustomerForForm(undefined);
-        },
-        onError: (err: any) => {
-          message.error(err.response?.data?.message || "Failed to upload report");
+    const files = fileList.map((f: any) => f.originFileObj).filter(Boolean);
+    if (files.length === 0) {
+      message.error("Please select at least one file");
+      return;
+    }
+
+    const { file: _, ...rest } = values;
+
+    if (files.length === 1) {
+      createReport(
+        { ...rest, file: files[0] },
+        {
+          onSuccess: () => {
+            message.success("Report uploaded successfully");
+            setIsModalOpen(false);
+            form.resetFields();
+            setSelectedCustomerForForm(undefined);
+          },
+          onError: (err: any) => {
+            message.error(err.response?.data?.message || "Failed to upload report");
+          }
         }
-      }
-    );
+      );
+    } else {
+      createMultipleReports(
+        { ...rest, files },
+        {
+          onSuccess: () => {
+            message.success(`${files.length} reports uploaded successfully`);
+            setIsModalOpen(false);
+            form.resetFields();
+            setSelectedCustomerForForm(undefined);
+          },
+          onError: (err: any) => {
+            message.error(err.response?.data?.message || "Failed to upload reports");
+          }
+        }
+      );
+    }
   };
 
   const handleUpdateAccess = (values: UpdateReportAccessPayload) => {
@@ -210,14 +248,26 @@ const ClientReportsAdmin: React.FC = () => {
       title: "Title",
       dataIndex: "title",
       key: "title",
-      render: (title: string, record: ClientReportType) => (
-        <div>
-          <div className="font-medium">{title}</div>
-          <Text type="secondary" className="text-xs">
-            {record.originalFileName}
-          </Text>
-        </div>
-      )
+      render: (title: string, record: ClientReportType) => {
+        const files = record.files || [];
+        const fileCount = files.length;
+        return (
+          <div>
+            <div className="font-medium">{title}</div>
+            {fileCount > 0 ? (
+              <Tooltip title={files.map(f => f.displayFileName || f.originalFileName).join(", ")}>
+                <Text type="secondary" className="text-xs">
+                  <PaperClipOutlined /> {fileCount} file{fileCount > 1 ? "s" : ""}
+                </Text>
+              </Tooltip>
+            ) : (
+              <Text type="secondary" className="text-xs">
+                {record.displayFileName || record.originalFileName || "No files"}
+              </Text>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: "Client",
@@ -516,11 +566,11 @@ const ClientReportsAdmin: React.FC = () => {
           <Form.Item
             name="projectId"
             label="Project"
-            rules={[{ required: true, message: "Please select a project" }]}
           >
             <Select 
-              placeholder={selectedCustomerForForm ? "Select project" : "Select client first"} 
+              placeholder={selectedCustomerForForm ? "Select project (optional)" : "Select client first"} 
               disabled={!selectedCustomerForForm}
+              allowClear
             >
               {projects?.map((project: any) => (
                 <Option key={project.id} value={project.id}>
@@ -550,15 +600,15 @@ const ClientReportsAdmin: React.FC = () => {
 
           <Form.Item
             name="file"
-            label="File"
-            rules={[{ required: true, message: "Please select a file" }]}
+            label="File(s)"
+            rules={[{ required: true, message: "Please select at least one file" }]}
           >
-            <Upload beforeUpload={() => false} maxCount={1}>
-              <Button icon={<UploadOutlined />}>Select File</Button>
+            <Upload beforeUpload={() => false} multiple>
+              <Button icon={<UploadOutlined />}>Select File(s)</Button>
             </Upload>
           </Form.Item>
 
-          <Form.Item name="isVisible" label="Visibility" initialValue={true}>
+          <Form.Item name="isVisible" label="Visibility" initialValue={false}>
             <Select>
               <Option value={true}>Visible to Client</Option>
               <Option value={false}>Hidden from Client</Option>
@@ -567,7 +617,7 @@ const ClientReportsAdmin: React.FC = () => {
 
           <div className="flex justify-end gap-2">
             <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="primary" htmlType="submit" loading={creating}>
+            <Button type="primary" htmlType="submit" loading={creating || creatingMultiple}>
               Upload
             </Button>
           </div>
@@ -671,13 +721,154 @@ const ClientReportsAdmin: React.FC = () => {
             <TextArea rows={3} placeholder="Enter description" />
           </Form.Item>
 
+          {/* Files Management Section */}
+          {selectedReport && (selectedReport.files?.length || 0) > 0 && (
+            <div className="mb-4">
+              <Text strong className="block mb-2">Attached Files</Text>
+              <List
+                size="small"
+                bordered
+                dataSource={selectedReport.files || []}
+                renderItem={(file: ClientReportFileType) => (
+                  <List.Item
+                    actions={[
+                      editingFileId === file.id ? (
+                        <Button
+                          key="save"
+                          size="small"
+                          type="link"
+                          icon={<SaveOutlined />}
+                          onClick={() => {
+                            updateFileDisplayName(
+                              { reportId: selectedReport.id, fileId: file.id, displayFileName: editingFileName },
+                              {
+                                onSuccess: () => {
+                                  message.success("File name updated");
+                                  setEditingFileId(null);
+                                  setEditingFileName("");
+                                }
+                              }
+                            );
+                          }}
+                        >
+                          Save
+                        </Button>
+                      ) : (
+                        <Button
+                          key="edit"
+                          size="small"
+                          type="link"
+                          icon={<EditOutlined />}
+                          onClick={() => {
+                            setEditingFileId(file.id);
+                            setEditingFileName(file.displayFileName || file.originalFileName);
+                          }}
+                        >
+                          Rename
+                        </Button>
+                      ),
+                      <Popconfirm
+                        key="delete"
+                        title="Remove this file?"
+                        onConfirm={() => {
+                          removeFile(
+                            { reportId: selectedReport.id, fileId: file.id },
+                            {
+                              onSuccess: () => {
+                                message.success("File removed");
+                                // Update selectedReport locally
+                                setSelectedReport({
+                                  ...selectedReport,
+                                  files: selectedReport.files?.filter(f => f.id !== file.id)
+                                });
+                              },
+                              onError: () => message.error("Failed to remove file")
+                            }
+                          );
+                        }}
+                      >
+                        <Button size="small" type="link" danger icon={<DeleteOutlined />}>
+                          Remove
+                        </Button>
+                      </Popconfirm>
+                    ]}
+                  >
+                    <div className="flex-1">
+                      {editingFileId === file.id ? (
+                        <Input
+                          size="small"
+                          value={editingFileName}
+                          onChange={(e) => setEditingFileName(e.target.value)}
+                          onPressEnter={() => {
+                            updateFileDisplayName(
+                              { reportId: selectedReport.id, fileId: file.id, displayFileName: editingFileName },
+                              {
+                                onSuccess: () => {
+                                  message.success("File name updated");
+                                  setEditingFileId(null);
+                                  setEditingFileName("");
+                                }
+                              }
+                            );
+                          }}
+                        />
+                      ) : (
+                        <Text>
+                          <PaperClipOutlined className="mr-1" />
+                          {file.displayFileName || file.originalFileName}
+                        </Text>
+                      )}
+                    </div>
+                  </List.Item>
+                )}
+              />
+            </div>
+          )}
+
+          {/* Add More Files */}
+          {selectedReport && (
+            <div className="mb-4">
+              <Upload
+                beforeUpload={() => false}
+                multiple
+                onChange={(info) => {
+                  const newFiles = info.fileList
+                    .filter((f: any) => f.originFileObj)
+                    .map((f: any) => f.originFileObj);
+                  if (newFiles.length > 0 && info.file.status !== "removed") {
+                    // Only trigger on the last file added
+                    const lastFile = info.fileList[info.fileList.length - 1];
+                    if (lastFile.uid === info.file.uid) {
+                      addFiles(
+                        { id: selectedReport.id, files: newFiles },
+                        {
+                          onSuccess: (updatedReport) => {
+                            message.success("Files added successfully");
+                            setSelectedReport(updatedReport);
+                            info.fileList.length = 0; // Clear the upload list
+                          },
+                          onError: () => message.error("Failed to add files")
+                        }
+                      );
+                    }
+                  }
+                }}
+                showUploadList={false}
+              >
+                <Button icon={<UploadOutlined />} loading={addingFiles} size="small">
+                  Add More Files
+                </Button>
+              </Upload>
+            </div>
+          )}
+
           <Form.Item
             name="projectId"
             label="Project"
-            rules={[{ required: true, message: "Please select a project" }]}
           >
             <Select 
-              placeholder="Select project" 
+              placeholder="Select project (optional)" 
+              allowClear
             >
               {projects?.map((project: any) => (
                 <Option key={project.id} value={project.id}>

@@ -24,26 +24,40 @@ import {
   FilterOutlined,
   LockOutlined,
   SearchOutlined,
-  BankOutlined
+  BankOutlined,
+  PaperClipOutlined
 } from "@ant-design/icons";
 import {
   useMyClientReports,
   useMyClientReportStats,
   useDownloadClientReport,
+  useDownloadClientReportFile,
   useClientProjects
 } from "@/hooks/clientReport/useClientPortal";
-import { ClientReportType, ReportAccessStatus } from "@/types/clientReport";
+import { ClientReportType, ClientReportFileType, ReportAccessStatus } from "@/types/clientReport";
 import { ClientPortalProject } from "@/types/project";
 import { formatDistanceToNow } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
+/** Strip UUID prefix from stored filenames (e.g. "abc123-...uuid....pdf" → show clean label) */
+const getCleanFileName = (file: ClientReportFileType, index: number): string => {
+  const name = file.displayFileName || file.originalFileName;
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\./i;
+  if (uuidPattern.test(name)) {
+    const ext = name.split(".").pop();
+    return ext ? `File ${index + 1}.${ext}` : `File ${index + 1}`;
+  }
+  return name;
+};
+
 const ClientReports: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: reports, isLoading: reportsLoading } = useMyClientReports();
   const { data: stats, isLoading: statsLoading } = useMyClientReportStats();
   const { mutate: download, isPending: downloading } = useDownloadClientReport();
+  const { mutate: downloadFile, isPending: downloadingFile } = useDownloadClientReportFile();
   const { data: projects } = useClientProjects();
 
   // Filters
@@ -117,8 +131,36 @@ const ClientReports: React.FC = () => {
       return;
     }
 
-    download(
-      { id: report.id, fileName: report.originalFileName },
+    // If report has files, download the first file
+    if (report.files && report.files.length > 0) {
+      const file = report.files[0];
+      downloadFile(
+        { reportId: report.id, fileId: file.id, fileName: file.displayFileName || file.originalFileName },
+        {
+          onSuccess: () => message.success("Download started"),
+          onError: () => message.error("Download failed. Please try again.")
+        }
+      );
+    } else {
+      // Legacy fallback
+      download(
+        { id: report.id, fileName: report.originalFileName || "download" },
+        {
+          onSuccess: () => message.success("Download started"),
+          onError: () => message.error("Download failed. Please try again.")
+        }
+      );
+    }
+  };
+
+  const handleDownloadFile = (report: ClientReportType, file: ClientReportFileType) => {
+    if (report.accessStatus !== ReportAccessStatus.ACCESSIBLE) {
+      message.warning("Report is not accessible for download.");
+      return;
+    }
+
+    downloadFile(
+      { reportId: report.id, fileId: file.id, fileName: file.displayFileName || file.originalFileName },
       {
         onSuccess: () => message.success("Download started"),
         onError: () => message.error("Download failed. Please try again.")
@@ -144,14 +186,28 @@ const ClientReports: React.FC = () => {
       title: "Report",
       dataIndex: "title",
       key: "title",
-      render: (title: string, record: ClientReportType) => (
-        <div>
-          <div className="font-medium">{title}</div>
-          {record.description && (
-            <Text type="secondary" className="text-sm">{record.description}</Text>
-          )}
-        </div>
-      )
+      render: (title: string, record: ClientReportType) => {
+        const files = record.files || [];
+        const fileCount = files.length || (record.originalFileName ? 1 : 0);
+        return (
+          <div>
+            <div className="font-medium">{title}</div>
+            {record.description && (
+              <div className="mt-0.5">
+                <Text type="secondary" className="text-xs">{record.description}</Text>
+              </div>
+            )}
+            {fileCount > 0 && (
+              <div className="mt-1">
+                <Text type="secondary" className="text-xs">
+                  <PaperClipOutlined className="mr-1" />
+                  {fileCount} {fileCount === 1 ? "file" : "files"} attached
+                </Text>
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: "Company",
@@ -213,17 +269,51 @@ const ClientReports: React.FC = () => {
           (p: ClientPortalProject) => p.id === record.projectId && !p.isPaymentDone && !p.isPaymentTemporarilyEnabled
         );
 
+        const files = record.files || [];
+        const isDisabled = record.accessStatus !== ReportAccessStatus.ACCESSIBLE || !!isProjectPaymentPending;
+
+        const tooltipMsg = isProjectPaymentPending
+          ? "Project payment pending - documents available after payment"
+          : record.accessStatus === ReportAccessStatus.PENDING
+          ? "Payment pending for this report"
+          : record.accessStatus === ReportAccessStatus.REVOKED
+          ? "Access to this report has been revoked"
+          : "";
+
+        if (files.length > 1) {
+          // Multiple files — show individual labelled download buttons
+          return (
+            <Tooltip title={tooltipMsg}>
+              <Space direction="vertical" size={4}>
+                {files.map((file, idx) => (
+                  <Button
+                    key={file.id}
+                    size="small"
+                    icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
+                    disabled={isDisabled}
+                    loading={downloadingFile}
+                    onClick={() => handleDownloadFile(record, file)}
+                    style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  >
+                    {getCleanFileName(file, idx)}
+                  </Button>
+                ))}
+              </Space>
+            </Tooltip>
+          );
+        }
+
         return (
-          <Tooltip title={isProjectPaymentPending ? "Project payment pending - documents available after payment" : ""}>
+          <Tooltip title={tooltipMsg}>
             <Button
-              type="primary"
+              type={isDisabled ? "default" : "primary"}
               size="small"
-              icon={isProjectPaymentPending ? <LockOutlined /> : <DownloadOutlined />}
-              disabled={record.accessStatus !== ReportAccessStatus.ACCESSIBLE || !!isProjectPaymentPending}
-              loading={downloading}
+              icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
+              disabled={isDisabled}
+              loading={downloading || downloadingFile}
               onClick={() => handleDownload(record)}
             >
-              {isProjectPaymentPending ? "Locked" : "Download"}
+              {isDisabled ? "Locked" : "Download"}
             </Button>
           </Tooltip>
         );
@@ -241,8 +331,6 @@ const ClientReports: React.FC = () => {
 
   return (
     <div>
-      <Title level={4} className="!mb-6">Reports</Title>
-
       {/* Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={8}>

@@ -12,7 +12,7 @@ import "react-quill/dist/quill.snow.css";
 
 const AppContent: React.FC = () => {
   const routes = useRoutes(Router);
-  const { isAuthenticated } = useSession();
+  const { isAuthenticated, loading } = useSession();
   const { isClientAuthenticated, isLoading: isClientLoading } = useClientAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,6 +60,9 @@ const AppContent: React.FC = () => {
     const publicRoutes = ["/login", "/signup", "/forgot-password"];
     const isResetRoute = /^\/reset\//.test(pathname);
     
+    // Don't redirect while session is still loading (prevents redirect on page reload)
+    if (loading) return;
+    
     // Redirect authenticated users away from login page
     if (isAuthenticated && pathname === "/login") {
       console.log('App: User is authenticated, redirecting from login to home');
@@ -72,7 +75,7 @@ const AppContent: React.FC = () => {
       console.log('App: User is not authenticated, redirecting to login');
       navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, isClientAuthenticated, isClientLoading, navigate, location.pathname]);
+  }, [isAuthenticated, isClientAuthenticated, isClientLoading, loading, navigate, location.pathname]);
 
   return routes;
 };

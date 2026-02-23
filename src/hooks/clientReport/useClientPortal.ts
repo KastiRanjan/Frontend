@@ -8,6 +8,7 @@ import {
   getClientReportStats,
   getClientReportDetails,
   downloadClientReport,
+  downloadClientReportFile,
   clientForgotPassword,
   clientResetPassword,
   clientChangePassword,
@@ -81,13 +82,33 @@ export const useClientReportDetails = (id: string) => {
   });
 };
 
-// Hook to download a report
+// Hook to download a report (legacy or first file)
 export const useDownloadClientReport = () => {
   return useMutation({
     mutationFn: async ({ id, fileName }: { id: string; fileName: string }) => {
       const blob = await downloadClientReport(id);
       
       // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      return true;
+    }
+  });
+};
+
+// Hook to download a specific file from a report
+export const useDownloadClientReportFile = () => {
+  return useMutation({
+    mutationFn: async ({ reportId, fileId, fileName }: { reportId: string; fileId: string; fileName: string }) => {
+      const blob = await downloadClientReportFile(reportId, fileId);
+      
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

@@ -182,8 +182,6 @@ const ClientDashboardHome: React.FC = () => {
 
   return (
     <div>
-      <Title level={4} className="!mb-6">Dashboard</Title>
-
       {/* Stats Cards */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} lg={6}>
