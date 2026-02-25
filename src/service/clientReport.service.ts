@@ -169,3 +169,25 @@ export const fetchProjectsByCustomer = async (
   );
   return response.data;
 };
+
+export const fetchAccessibleProjects = async (): Promise<
+  { id: string; name: string; status: string; customer: { id: string; name: string; shortName?: string } | null }[]
+> => {
+  const response = await axios.get(`${backendURI}/client-reports/staff/accessible-projects`);
+  return response.data;
+};
+
+export const fetchStaffReports = async (
+  filters?: ClientReportFilterPayload
+): Promise<ClientReportType[]> => {
+  const params = new URLSearchParams();
+  if (filters?.customerId) params.append('customerId', filters.customerId);
+  if (filters?.projectId) params.append('projectId', filters.projectId);
+  if (filters?.documentTypeId) params.append('documentTypeId', filters.documentTypeId);
+  if (filters?.accessStatus) params.append('accessStatus', filters.accessStatus);
+  if (filters?.fiscalYear) params.append('fiscalYear', filters.fiscalYear.toString());
+
+  const url = `${backendURI}/client-reports/staff/reports${params.toString() ? `?${params.toString()}` : ''}`;
+  const response = await axios.get(url);
+  return response.data;
+};

@@ -24,15 +24,17 @@ import {
   FilterOutlined,
   ProjectOutlined,
   LockOutlined,
-  BankOutlined
+  BankOutlined,
+  PaperClipOutlined
 } from "@ant-design/icons";
 import {
   useMyClientReports,
   useMyClientReportStats,
   useDownloadClientReport,
+  useDownloadClientReportFile,
   useClientProjects
 } from "@/hooks/clientReport/useClientPortal";
-import { ClientReportType, ReportAccessStatus } from "@/types/clientReport";
+import { ClientReportType, ClientReportFileType, ReportAccessStatus } from "@/types/clientReport";
 import { ClientPortalProject } from "@/types/project";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -46,6 +48,7 @@ const ClientDashboardHome: React.FC = () => {
   const { data: reports, isLoading: reportsLoading } = useMyClientReports();
   const { data: stats, isLoading: statsLoading } = useMyClientReportStats();
   const { mutate: download, isPending: downloading } = useDownloadClientReport();
+  const { mutate: downloadFile, isPending: downloadingFile } = useDownloadClientReportFile();
   const { data: projects, isLoading: projectsLoading } = useClientProjects();
 
   // Filters
@@ -81,8 +84,35 @@ const ClientDashboardHome: React.FC = () => {
       return;
     }
 
-    download(
-      { id: report.id, fileName: report.originalFileName },
+    // If report has files, download the first file
+    if (report.files && report.files.length > 0) {
+      const file = report.files[0];
+      downloadFile(
+        { reportId: report.id, fileId: file.id, fileName: file.displayFileName || file.originalFileName },
+        {
+          onSuccess: () => message.success("Download started"),
+          onError: () => message.error("Download failed. Please try again.")
+        }
+      );
+    } else {
+      download(
+        { id: report.id, fileName: report.originalFileName || "download" },
+        {
+          onSuccess: () => message.success("Download started"),
+          onError: () => message.error("Download failed. Please try again.")
+        }
+      );
+    }
+  };
+
+  const handleDownloadFile = (report: ClientReportType, file: ClientReportFileType) => {
+    if (report.accessStatus !== ReportAccessStatus.ACCESSIBLE) {
+      message.warning("Report is not accessible for download.");
+      return;
+    }
+
+    downloadFile(
+      { reportId: report.id, fileId: file.id, fileName: file.displayFileName || file.originalFileName },
       {
         onSuccess: () => message.success("Download started"),
         onError: () => message.error("Download failed. Please try again.")
@@ -108,63 +138,160 @@ const ClientDashboardHome: React.FC = () => {
       title: "Report",
       dataIndex: "title",
       key: "title",
-      render: (title: string, record: ClientReportType) => (
-        <div>
-          <div className="font-medium">{title}</div>
-          {record.description && (
-            <Text type="secondary" className="text-sm">{record.description}</Text>
-          )}
-        </div>
-      )
+      width: "24%",
+      render: (title: string, record: ClientReportType) => {
+        const files = record.files || [];
+        return (
+          <div style={{ minWidth: 0 }}>
+            <Tooltip title={title}>
+              <div
+                className="font-medium"
+                style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                {title}
+              </div>
+            </Tooltip>
+            {record.description && (
+              <Tooltip title={record.description}>
+                <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Text type="secondary" className="text-xs">{record.description}</Text>
+                </div>
+              </Tooltip>
+            )}
+            {/* Show file names with truncation + hover */}
+            {files.length > 0 ? (
+              <div className="mt-1" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {files.map((file) => {
+                  const fileName = file.displayFileName || file.originalFileName;
+                  return (
+                    <div key={file.id} style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+                      <PaperClipOutlined style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0 }} />
+                      <Tooltip title={fileName}>
+                        <Text
+                          type="secondary"
+                          className="text-xs"
+                          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}
+                        >
+                          {fileName}
+                        </Text>
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : record.originalFileName ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4, minWidth: 0 }}>
+                <PaperClipOutlined style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0 }} />
+                <Tooltip title={record.originalFileName}>
+                  <Text
+                    type="secondary"
+                    className="text-xs"
+                    style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}
+                  >
+                    {record.originalFileName}
+                  </Text>
+                </Tooltip>
+              </div>
+            ) : null}
+          </div>
+        );
+      }
     },
     {
       title: "Company",
       dataIndex: "customer",
       key: "customer",
+      width: "13%",
+      ellipsis: true,
       render: (customer: any) => customer?.name || "-"
     },
     {
       title: "Document Type",
       dataIndex: "documentType",
       key: "documentType",
+      width: "13%",
+      ellipsis: true,
       render: (documentType: any) => documentType?.name || "-"
     },
     {
       title: "Project",
       dataIndex: "project",
       key: "project",
+      width: "13%",
+      ellipsis: true,
       render: (project: any) => project?.name || "-"
     },
     {
       title: "Status",
       dataIndex: "accessStatus",
       key: "accessStatus",
+      width: "14%",
       render: (status: ReportAccessStatus) => getStatusTag(status)
     },
     {
       title: "Uploaded",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: "11%",
       render: (date: string) => formatDistanceToNow(new Date(date), { addSuffix: true })
     },
     {
-      title: "Action",
-      key: "action",
+      title: "Download",
+      key: "download",
+      width: "12%",
       render: (_: any, record: ClientReportType) => {
         const isProjectPaymentPending = record.projectId && projects?.find(
           (p: ClientPortalProject) => p.id === record.projectId && !p.isPaymentDone && !p.isPaymentTemporarilyEnabled
         );
+        const isDisabled = record.accessStatus !== ReportAccessStatus.ACCESSIBLE || !!isProjectPaymentPending;
+        const disabledMsg = isProjectPaymentPending
+          ? "Project payment pending - documents available after payment"
+          : record.accessStatus === ReportAccessStatus.PENDING
+          ? "Payment pending for this report"
+          : record.accessStatus === ReportAccessStatus.REVOKED
+          ? "Access revoked"
+          : "";
+        const files = record.files || [];
 
+        if (files.length > 0) {
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {files.map((file) => {
+                const fileName = file.displayFileName || file.originalFileName;
+                return (
+                  <Tooltip key={file.id} title={isDisabled ? disabledMsg : fileName}>
+                    <Button
+                      type="primary"
+                      size="small"
+                      icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
+                      disabled={isDisabled}
+                      loading={downloadingFile}
+                      onClick={() => handleDownloadFile(record, file)}
+                      block
+                    >
+                      {isDisabled ? "Locked" : "Download"}
+                    </Button>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          );
+        }
+
+        // Legacy single-file fallback
+        const legacyFileName = record.displayFileName || record.originalFileName || "";
         return (
-          <Tooltip title={isProjectPaymentPending ? "Project payment pending - documents available after payment" : ""}>
+          <Tooltip title={isDisabled ? disabledMsg : legacyFileName || undefined}>
             <Button
               type="primary"
-              icon={isProjectPaymentPending ? <LockOutlined /> : <DownloadOutlined />}
-              disabled={record.accessStatus !== ReportAccessStatus.ACCESSIBLE || !!isProjectPaymentPending}
+              size="small"
+              icon={isDisabled ? <LockOutlined /> : <DownloadOutlined />}
+              disabled={isDisabled}
               loading={downloading}
               onClick={() => handleDownload(record)}
+              block
             >
-              {isProjectPaymentPending ? "Locked" : "Download"}
+              {isDisabled ? "Locked" : "Download"}
             </Button>
           </Tooltip>
         );
@@ -318,7 +445,7 @@ const ClientDashboardHome: React.FC = () => {
             columns={reportColumns}
             rowKey="id"
             pagination={false}
-            scroll={{ x: 800 }}
+            tableLayout="fixed"
           />
         ) : (
           <Empty description={

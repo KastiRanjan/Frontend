@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -35,20 +35,20 @@ import {
   SaveOutlined
 } from "@ant-design/icons";
 import {
-  useClientReports,
+  useClientReportById,
   useCreateClientReport,
   useCreateMultipleClientReports,
   useUpdateClientReport,
   useUpdateReportAccess,
   useDeleteClientReport,
   useBulkUpdateReportAccess,
-  useProjectsByCustomer,
   useAddFilesToReport,
   useRemoveFileFromReport,
-  useUpdateReportFileDisplayName
+  useUpdateReportFileDisplayName,
+  useAccessibleProjects,
+  useStaffReports
 } from "@/hooks/clientReport";
 import { useDocumentTypesForCustomer, useDocumentTypes } from "@/hooks/clientReport/useClientReportDocumentTypes";
-import { useClient } from "@/hooks/client/useClient";
 import {
   ClientReportType,
   ClientReportFileType,
@@ -60,6 +60,8 @@ import { formatDistanceToNow, format } from "date-fns";
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
+
+const backendURI = import.meta.env.VITE_BACKEND_URI;
 
 const ClientReportsAdmin: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<ReportAccessStatus | undefined>();
@@ -75,13 +77,31 @@ const ClientReportsAdmin: React.FC = () => {
   const [editForm] = Form.useForm();
   const [accessForm] = Form.useForm();
 
-  const { data: reports, isLoading } = useClientReports({
+  const { data: reports, isLoading } = useStaffReports({
     accessStatus: filterStatus,
     customerId: filterCustomerId,
     documentTypeId: filterDocumentTypeId
   });
-  const { data: clients } = useClient();
-  const { data: projects } = useProjectsByCustomer(selectedCustomerForForm);
+
+  // Fetch all projects accessible to the current staff user (respects project-level assignment).
+  // From this we derive both the client dropdown list and the project dropdown list.
+  const { data: accessibleProjects } = useAccessibleProjects();
+
+  // Unique clients derived from accessible projects
+  const clientOptions = useMemo(() => {
+    if (!accessibleProjects) return [];
+    const seen = new Set<string>();
+    return accessibleProjects
+      .filter((p) => p.customer && !seen.has(p.customer.id) && seen.add(p.customer.id))
+      .map((p) => ({ id: p.customer!.id, name: p.customer!.name }));
+  }, [accessibleProjects]);
+
+  // Projects for the currently selected customer (used in upload + edit project dropdown)
+  const projectsForCustomer = useMemo(() => {
+    if (!accessibleProjects || !selectedCustomerForForm) return [];
+    return accessibleProjects.filter((p) => p.customer?.id === selectedCustomerForForm);
+  }, [accessibleProjects, selectedCustomerForForm]);
+
   const { data: documentTypesForCustomer } = useDocumentTypesForCustomer(selectedCustomerForForm);
   const { data: allDocumentTypes } = useDocumentTypes({ isActive: true });
   const { mutate: createReport, isPending: creating } = useCreateClientReport();
@@ -93,6 +113,23 @@ const ClientReportsAdmin: React.FC = () => {
   const { mutate: addFiles, isPending: addingFiles } = useAddFilesToReport();
   const { mutate: removeFile } = useRemoveFileFromReport();
   const { mutate: updateFileDisplayName } = useUpdateReportFileDisplayName();
+
+  // Fetch fresh report detail when editing (ensures files are always up-to-date)
+  const { data: reportDetail } = useClientReportById(selectedReport?.id || "");
+
+  // Re-apply projectId when projectsForCustomer changes (handles edit-modal open scenario)
+  useEffect(() => {
+    if (isEditModalOpen && selectedReport?.projectId) {
+      editForm.setFieldValue("projectId", selectedReport.projectId);
+    }
+  }, [projectsForCustomer, isEditModalOpen]);
+
+  // Re-apply documentTypeId when document types finish loading (fixes auto-select in edit modal)
+  useEffect(() => {
+    if (isEditModalOpen && selectedReport?.documentTypeId && documentTypesForCustomer?.length) {
+      editForm.setFieldValue("documentTypeId", selectedReport.documentTypeId);
+    }
+  }, [documentTypesForCustomer, isEditModalOpen, selectedReport]);
 
   // State for inline editing file display names
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
@@ -449,7 +486,7 @@ const ClientReportsAdmin: React.FC = () => {
               }
               onChange={setFilterCustomerId}
             >
-              {clients?.map((client: any) => (
+              {clientOptions.map((client) => (
                 <Option key={client.id} value={client.id}>
                   {client.name}
                 </Option>
@@ -549,13 +586,17 @@ const ClientReportsAdmin: React.FC = () => {
           >
             <Select 
               placeholder="Select client"
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+              }
               onChange={(value) => {
                 setSelectedCustomerForForm(value);
                 form.setFieldValue("projectId", undefined);
                 form.setFieldValue("documentTypeId", undefined);
               }}
             >
-              {clients?.map((client: any) => (
+              {clientOptions.map((client) => (
                 <Option key={client.id} value={client.id}>
                   {client.name}
                 </Option>
@@ -571,8 +612,12 @@ const ClientReportsAdmin: React.FC = () => {
               placeholder={selectedCustomerForForm ? "Select project (optional)" : "Select client first"} 
               disabled={!selectedCustomerForForm}
               allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+              }
             >
-              {projects?.map((project: any) => (
+              {projectsForCustomer.map((project) => (
                 <Option key={project.id} value={project.id}>
                   {project.name}
                 </Option>
@@ -585,6 +630,10 @@ const ClientReportsAdmin: React.FC = () => {
               placeholder={selectedCustomerForForm ? "Select document type (optional)" : "Select client first"} 
               allowClear
               disabled={!selectedCustomerForForm}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+              }
             >
               {documentTypesForCustomer?.map((type: any) => (
                 <Option key={type.id} value={type.id}>
@@ -721,14 +770,127 @@ const ClientReportsAdmin: React.FC = () => {
             <TextArea rows={3} placeholder="Enter description" />
           </Form.Item>
 
+          {/* Legacy single-file section (reports with filePath but no files[] entries) */}
+          {selectedReport && !((reportDetail?.files ?? selectedReport?.files)?.length) && selectedReport.filePath && (
+            <div className="mb-4">
+              <Text strong className="block mb-2">Attached File</Text>
+              <List
+                size="small"
+                bordered
+                dataSource={[selectedReport]}
+                renderItem={() => (
+                  <List.Item
+                    actions={[
+                      editingFileId === '__legacy__' ? (
+                        <Button
+                          key="save"
+                          size="small"
+                          type="link"
+                          icon={<SaveOutlined />}
+                          onClick={() => {
+                            updateReport(
+                              { id: selectedReport.id, payload: { displayFileName: editingFileName } },
+                              {
+                                onSuccess: (updatedReport) => {
+                                  message.success("File name updated");
+                                  setEditingFileId(null);
+                                  setEditingFileName("");
+                                  setSelectedReport(updatedReport);
+                                }
+                              }
+                            );
+                          }}
+                        >
+                          Save
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            key="view"
+                            size="small"
+                            type="link"
+                            icon={<EyeOutlined />}
+                            onClick={() => window.open(`${backendURI}${selectedReport.filePath}`, "_blank")}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            key="edit"
+                            size="small"
+                            type="link"
+                            icon={<EditOutlined />}
+                            onClick={() => {
+                              setEditingFileId('__legacy__');
+                              setEditingFileName(selectedReport.displayFileName || selectedReport.originalFileName || "");
+                            }}
+                          >
+                            Rename
+                          </Button>
+                        </>
+                      ),
+                      <Popconfirm
+                        key="delete"
+                        title="Delete this report?"
+                        description="Removing the only file will permanently delete this report."
+                        onConfirm={() => {
+                          deleteReport(selectedReport.id, {
+                            onSuccess: () => {
+                              message.success("Report deleted");
+                              setIsEditModalOpen(false);
+                              setSelectedReport(null);
+                              editForm.resetFields();
+                            },
+                            onError: () => message.error("Failed to delete report")
+                          });
+                        }}
+                      >
+                        <Button size="small" type="link" danger icon={<DeleteOutlined />}>
+                          Remove
+                        </Button>
+                      </Popconfirm>
+                    ]}
+                  >
+                    <div className="flex-1">
+                      {editingFileId === '__legacy__' ? (
+                        <Input
+                          size="small"
+                          value={editingFileName}
+                          onChange={(e) => setEditingFileName(e.target.value)}
+                          onPressEnter={() => {
+                            updateReport(
+                              { id: selectedReport.id, payload: { displayFileName: editingFileName } },
+                              {
+                                onSuccess: (updatedReport) => {
+                                  message.success("File name updated");
+                                  setEditingFileId(null);
+                                  setEditingFileName("");
+                                  setSelectedReport(updatedReport);
+                                }
+                              }
+                            );
+                          }}
+                        />
+                      ) : (
+                        <Text>
+                          <PaperClipOutlined className="mr-1" />
+                          {selectedReport.displayFileName || selectedReport.originalFileName || selectedReport.filePath}
+                        </Text>
+                      )}
+                    </div>
+                  </List.Item>
+                )}
+              />
+            </div>
+          )}
+
           {/* Files Management Section */}
-          {selectedReport && (selectedReport.files?.length || 0) > 0 && (
+          {selectedReport && ((reportDetail?.files ?? selectedReport?.files)?.length || 0) > 0 && (
             <div className="mb-4">
               <Text strong className="block mb-2">Attached Files</Text>
               <List
                 size="small"
                 bordered
-                dataSource={selectedReport.files || []}
+                dataSource={reportDetail?.files ?? selectedReport?.files ?? []}
                 renderItem={(file: ClientReportFileType) => (
                   <List.Item
                     actions={[
@@ -742,10 +904,11 @@ const ClientReportsAdmin: React.FC = () => {
                             updateFileDisplayName(
                               { reportId: selectedReport.id, fileId: file.id, displayFileName: editingFileName },
                               {
-                                onSuccess: () => {
+                                onSuccess: (updatedReport) => {
                                   message.success("File name updated");
                                   setEditingFileId(null);
                                   setEditingFileName("");
+                                  setSelectedReport(updatedReport);
                                 }
                               }
                             );
@@ -754,18 +917,29 @@ const ClientReportsAdmin: React.FC = () => {
                           Save
                         </Button>
                       ) : (
-                        <Button
-                          key="edit"
-                          size="small"
-                          type="link"
-                          icon={<EditOutlined />}
-                          onClick={() => {
-                            setEditingFileId(file.id);
-                            setEditingFileName(file.displayFileName || file.originalFileName);
-                          }}
-                        >
-                          Rename
-                        </Button>
+                        <>
+                          <Button
+                            key="view"
+                            size="small"
+                            type="link"
+                            icon={<EyeOutlined />}
+                            onClick={() => window.open(`${backendURI}${file.filePath}`, "_blank")}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            key="edit"
+                            size="small"
+                            type="link"
+                            icon={<EditOutlined />}
+                            onClick={() => {
+                              setEditingFileId(file.id);
+                              setEditingFileName(file.displayFileName || file.originalFileName);
+                            }}
+                          >
+                            Rename
+                          </Button>
+                        </>
                       ),
                       <Popconfirm
                         key="delete"
@@ -803,10 +977,11 @@ const ClientReportsAdmin: React.FC = () => {
                             updateFileDisplayName(
                               { reportId: selectedReport.id, fileId: file.id, displayFileName: editingFileName },
                               {
-                                onSuccess: () => {
+                                onSuccess: (updatedReport) => {
                                   message.success("File name updated");
                                   setEditingFileId(null);
                                   setEditingFileName("");
+                                  setSelectedReport(updatedReport);
                                 }
                               }
                             );
@@ -869,8 +1044,12 @@ const ClientReportsAdmin: React.FC = () => {
             <Select 
               placeholder="Select project (optional)" 
               allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+              }
             >
-              {projects?.map((project: any) => (
+              {projectsForCustomer.map((project) => (
                 <Option key={project.id} value={project.id}>
                   {project.name}
                 </Option>
@@ -882,8 +1061,12 @@ const ClientReportsAdmin: React.FC = () => {
             <Select 
               placeholder="Select document type (optional)" 
               allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+              }
             >
-              {documentTypesForCustomer?.map((type: any) => (
+              {(documentTypesForCustomer ?? allDocumentTypes)?.map((type: any) => (
                 <Option key={type.id} value={type.id}>
                   {type.name} {type.isGlobal && "(Global)"}
                 </Option>

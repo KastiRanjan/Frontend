@@ -14,7 +14,9 @@ import {
   updateReportFileDisplayName,
   fetchReportsByCustomerId,
   fetchCustomerReportStats,
-  fetchProjectsByCustomer
+  fetchProjectsByCustomer,
+  fetchAccessibleProjects,
+  fetchStaffReports
 } from "@/service/clientReport.service";
 import {
   ClientReportFilterPayload,
@@ -156,8 +158,9 @@ export const useAddFilesToReport = () => {
 
   return useMutation({
     mutationFn: ({ id, files }: { id: string; files: File[] }) => addFilesToReport(id, files),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["client-report", id] });
     }
   });
 };
@@ -169,8 +172,9 @@ export const useRemoveFileFromReport = () => {
   return useMutation({
     mutationFn: ({ reportId, fileId }: { reportId: string; fileId: string }) =>
       removeFileFromReport(reportId, fileId),
-    onSuccess: () => {
+    onSuccess: (_, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["client-report", reportId] });
     }
   });
 };
@@ -182,17 +186,35 @@ export const useUpdateReportFileDisplayName = () => {
   return useMutation({
     mutationFn: ({ reportId, fileId, displayFileName }: { reportId: string; fileId: string; displayFileName: string }) =>
       updateReportFileDisplayName(reportId, fileId, displayFileName),
-    onSuccess: () => {
+    onSuccess: (_, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["client-report", reportId] });
     }
   });
 };
 
-// Hook to fetch projects by customer (for report creation dropdown)
+// Hook to fetch projects by customer (for dropdown)
 export const useProjectsByCustomer = (customerId?: string) => {
   return useQuery({
     queryKey: ["projects-by-customer", customerId],
     queryFn: () => fetchProjectsByCustomer(customerId!),
     enabled: !!customerId
+  });
+};
+
+// Hook to fetch all projects accessible to the current staff user (all statuses),
+// with customer info — for populating client + project dropdowns respecting access.
+export const useAccessibleProjects = () => {
+  return useQuery({
+    queryKey: ["staff-accessible-projects"],
+    queryFn: fetchAccessibleProjects
+  });
+};
+
+// Hook to fetch reports scoped to the current staff user's accessible customers (server-side)
+export const useStaffReports = (filters?: ClientReportFilterPayload) => {
+  return useQuery({
+    queryKey: ["staff-reports", filters],
+    queryFn: () => fetchStaffReports(filters)
   });
 };
