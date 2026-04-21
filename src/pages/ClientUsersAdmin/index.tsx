@@ -255,6 +255,12 @@ const ClientUsersAdmin: React.FC = () => {
             style={{ width: 250 }}
             placeholder="Filter by Client"
             allowClear
+            showSearch
+            filterOption={(input, option) =>
+              (option?.children as unknown as string ?? "")
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
             onChange={setFilterCustomerId}
           >
             {clients?.map((client: any) => (

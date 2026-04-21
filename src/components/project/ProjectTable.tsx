@@ -234,7 +234,11 @@ const ProjectTable = ({ showModal, status }: any) => {
       filtered = filtered.filter((p: any) => p.status === advancedFilters.status);
     }
     
-    return filtered;
+    return filtered.sort((a: any, b: any) => {
+      const aCreatedAt = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bCreatedAt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bCreatedAt - aCreatedAt;
+    });
   }, [project, advancedFilters]);
 
   const columns = (): TableProps<ProjectType>["columns"] => [
