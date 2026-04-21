@@ -1,9 +1,26 @@
 import { Card, Avatar } from "antd"; // Import Avatar along with Card
+import { PlusOutlined } from '@ant-design/icons';
 import Meta from "antd/es/card/Meta";
 import PropTypes from 'prop-types';
 
+interface ProjectUser {
+  id: string;
+  avatar?: string;
+  name: string;
+  email: string;
+}
+
+interface UserCardProps {
+  user: ProjectUser;
+}
+
+interface ProjectUserCardProps {
+  data: ProjectUser[];
+  onAddMember?: () => void;
+}
+
 // Component to render a single user card
-const UserCard = ({ user }) => {
+const UserCard = ({ user }: UserCardProps) => {
   return (
     <Card
       hoverable
@@ -26,12 +43,37 @@ const UserCard = ({ user }) => {
 };
 
 // Main component to render all user cards
-const ProjectUserCard = ({ data }) => {
+const ProjectUserCard = ({ data, onAddMember }: ProjectUserCardProps) => {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-      {data.map((user) => (
+      {data.map((user: ProjectUser) => (
         <UserCard key={user.id} user={user} />
       ))}
+      <Card
+        hoverable
+        className="project-user-card"
+        onClick={onAddMember}
+        style={{ width: 240, margin: '16px', cursor: 'pointer' }}
+      >
+        <div
+          style={{
+            minHeight: 160,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#1677ff'
+          }}
+        >
+          <Avatar
+            size={64}
+            style={{ backgroundColor: '#e6f4ff', color: '#1677ff', marginBottom: 12 }}
+            icon={<PlusOutlined />}
+          />
+          <div style={{ fontWeight: 600 }}>Add Member</div>
+          <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>Assign a user to this project</div>
+        </div>
+      </Card>
     </div>
   );
 };
@@ -55,11 +97,13 @@ ProjectUserCard.propTypes = {
       email: PropTypes.string.isRequired,
     })
   ).isRequired,
+  onAddMember: PropTypes.func,
 };
 
 // Default props
 ProjectUserCard.defaultProps = {
   data: [],
+  onAddMember: undefined,
 };
 
 export default ProjectUserCard;

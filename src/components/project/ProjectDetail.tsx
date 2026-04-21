@@ -1,10 +1,10 @@
 // src/ProjectDetail.tsx
 import { ProjectType } from '@/types/project';
-import { Button, Card, Col, Modal, Row, Tabs } from 'antd';
+import { Button, Card, Col, Modal, Row, Select, Tabs, message } from 'antd';
 import { useSession } from '@/context/SessionContext';
 import TaskTable from '../Task/TaskTable';
 import TaskForm from '../Task/TaskForm';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import ProjectSummary from './ProjectSummary';
 import ProjectUserCard from './ProjectUserCard';
 import ProjectTimeline from './ProjectTimeline';
@@ -14,6 +14,9 @@ import ProjectBudget from './ProjectBudget';
 import ProjectCompletionWorkflow from './ProjectCompletionWorkflow';
 import { useQueryClient } from '@tanstack/react-query';
 import ProjectUserAssignment from './ProjectUserAssignment';
+// import DsaManager from './dsa/DsaManager';
+import { useUser } from '@/hooks/user/useUser';
+import { editProject } from '@/service/project.service';
 
 
 
@@ -26,8 +29,18 @@ interface ProjectDetailProps {
 const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [activeTabKey, setActiveTabKey] = useState('1');
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [isInviting, setIsInviting] = useState(false);
   const { profile, permissions } = useSession();
   const queryClient = useQueryClient();
+  const { data: allUsersData, isPending: isUsersLoading } = useUser({
+    status: 'active',
+    limit: 1000,
+    page: 1,
+    keywords: ''
+  });
   
   // Support both { name } and { permission } in role
   const userRole = (profile?.role && 'name' in profile.role && typeof profile.role.name === 'string')
@@ -66,6 +79,51 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   const handleCancel = () => {
     setIsModalOpen(false);
     setSelectedTask(null);
+  };
+
+  const normalizeId = (id: unknown): string => String(id ?? '').trim();
+
+  const memberOptions = (allUsersData?.results ?? [])
+    .map((user: any) => ({
+      value: normalizeId(user.id),
+      label: `${user.name} (${user.email})`
+    }))
+    .filter((option: { value: string }) => option.value.length > 0);
+
+  const selectedSet = new Set(selectedMemberIds);
+  const sortedMemberOptions = [
+    ...memberOptions.filter((option: { value: string }) => !selectedSet.has(option.value)),
+    ...memberOptions.filter((option: { value: string }) => selectedSet.has(option.value))
+  ];
+
+  const openInviteModal = () => {
+    const existingIds = (project?.users ?? [])
+      .map((user: any) => normalizeId(user?.id))
+      .filter((id) => id.length > 0);
+    setSelectedMemberIds(existingIds);
+    setIsInviteModalOpen(true);
+  };
+
+  const handleInviteSubmit = async () => {
+    if (!project?.id) return;
+    setIsInviting(true);
+    try {
+      const uniqueIds = Array.from(new Set(selectedMemberIds));
+      const payloadUserIds = uniqueIds.map((id) => (/^\d+$/.test(id) ? Number(id) : id));
+      await editProject({
+        id: String(project.id),
+        payload: { users: payloadUserIds }
+      });
+      message.success('Project members updated successfully');
+      setIsInviteModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['project', String(project.id)] });
+      queryClient.invalidateQueries({ queryKey: ['project'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || 'Failed to update project members');
+    } finally {
+      setIsInviting(false);
+    }
   };
 
   const showModal = (task?: any) => {
@@ -175,7 +233,7 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
         avatar: u.avatar ?? '',
         name: u.name ?? '',
         email: u.email ?? ''
-      }))} />
+      }))} onAddMember={openInviteModal} />
     },
     {
       label: 'User Assignments',
@@ -195,7 +253,16 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
       label: 'Budget',
       key: '6',
       children: <ProjectBudget project={project} loading={loading} />
-    }
+    },
+    // {
+    //   label: 'DSA',
+    //   key: 'dsa',
+    //   children: <DsaManager 
+    //     projectId={project?.id?.toString?.() ?? String(project?.id ?? '')} 
+    //     projectUsers={project?.users ?? []}
+    //     isSignedOff={project?.status === 'signed_off'}
+    //   />
+    // }
   ];
 
   // Add Completion/Evaluation/Signoff tab for completed or signed off projects
@@ -237,9 +304,28 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
           </div>
         </Modal>
       )}
+      <Modal
+        title="Invite Users to Project"
+        open={isInviteModalOpen}
+        onCancel={() => setIsInviteModalOpen(false)}
+        onOk={handleInviteSubmit}
+        confirmLoading={isInviting}
+        okText="Update Members"
+      >
+        <Select
+          mode="multiple"
+          style={{ width: '100%' }}
+          placeholder="Select users to include in this project"
+          value={selectedMemberIds}
+          onChange={(values) => setSelectedMemberIds((values as Array<string | number>).map((value) => normalizeId(value)))}
+          loading={isUsersLoading}
+          options={sortedMemberOptions}
+          optionFilterProp="label"
+        />
+      </Modal>
       <Col span={24}>
         <Card title={name ?? ''}>
-          <Tabs defaultActiveKey="1" items={tabItems} />
+          <Tabs activeKey={activeTabKey} onChange={setActiveTabKey} items={tabItems} />
         </Card>
       </Col>
     </Row>
