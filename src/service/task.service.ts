@@ -73,6 +73,12 @@ export const markTasksComplete = async (payload: any) => {
   return response.data;
 };
 
+export const completeAllProjectTasks = async (projectId: string, taskIds?: string[]) => {
+  const payload = taskIds && taskIds.length > 0 ? { taskIds } : {};
+  const response = await axios.patch(`${backendURI}/tasks/project/${projectId}/complete-all`, payload);
+  return response.data;
+};
+
 export const firstVerifyTasks = async (payload: any) => {
   console.log("Sending first verify request:", payload);
   const response = await axios.patch(`${backendURI}/tasks/first-verify`, payload);

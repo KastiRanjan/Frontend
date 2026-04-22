@@ -3,6 +3,7 @@ import { useDeleteTask } from "@/hooks/task/useDeleteTask";
 import { useBulkUpdateTasks } from "@/hooks/task/useBulkUpdateTasks";
 import { useMarkTasksComplete } from "@/hooks/task/useMarkTasksComplete";
 import { useFirstVerifyTasks, useSecondVerifyTasks } from "@/hooks/task/useVerifyTasks";
+import { useCompleteAllProjectTasks } from "@/hooks/task/useCompleteAllProjectTasks";
 import { useProjectTasksWithHierarchy } from "@/hooks/task/useProjectTasksWithHierarchy";
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
@@ -36,6 +37,16 @@ interface ExtendedTaskType extends TaskType {
   };
 }
 
+interface CompleteAllTaskCandidate {
+  key: string;
+  id: string;
+  name: string;
+  status: string;
+  assigneesLabel: string;
+  taskType: string;
+  parentTaskName?: string;
+}
+
 
 interface TaskTableProps {
   projectId: string;
@@ -56,6 +67,11 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
     status
   });
 
+  // Fetch complete project task list for Complete All modal (no status filtering)
+  const { data: allProjectTasks = [] } = useProjectTasksWithHierarchy({
+    projectId,
+  });
+
   // Filter/group tasks by status (if needed, but hook already filters by status)
   const data = allTasks;
 
@@ -68,9 +84,12 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
   const { mutate: markTasksComplete, isPending: isMarkingComplete } = useMarkTasksComplete();
   const { mutate: firstVerifyTasks, isPending: isFirstVerifying } = useFirstVerifyTasks();
   const { mutate: secondVerifyTasks, isPending: isSecondVerifying } = useSecondVerifyTasks();
+  const { mutate: completeAllTasksMutation, isPending: isCompletingAllTasks } = useCompleteAllProjectTasks();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [isDueDateModalVisible, setIsDueDateModalVisible] = useState(false);
   const [isAssigneeModalVisible, setIsAssigneeModalVisible] = useState(false);
+  const [isCompleteAllModalVisible, setIsCompleteAllModalVisible] = useState(false);
+  const [selectedCompleteTaskIds, setSelectedCompleteTaskIds] = useState<React.Key[]>([]);
   const { permissions, profile } = useSession(); // Get permissions and profile from session context
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
@@ -144,6 +163,70 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
     console.log("Is project lead:", isProjectLead);
     return hasMarkCompletePermission || isProjectLead;
   }, [profile, isProjectLead]);
+
+  const hasCompleteAllPermission = useMemo(() => {
+    const profilePermissions = (profile as any)?.role?.permission;
+    return Array.isArray(profilePermissions) &&
+      profilePermissions.some(
+        (perm: any) =>
+          perm.resource === "tasks" &&
+          perm.path === "/tasks/project/:projectId/complete-all" &&
+          perm.method?.toLowerCase() === "patch"
+      );
+  }, [profile]);
+
+  const completeAllTaskCandidates: CompleteAllTaskCandidate[] = useMemo(() => {
+    const statusOrder: Record<string, number> = {
+      open: 1,
+      in_progress: 2,
+      done: 3,
+      first_verified: 4,
+      second_verified: 5,
+    };
+
+    const candidates: CompleteAllTaskCandidate[] = [];
+    const seen = new Set<string>();
+
+    const pushCandidate = (task: any, parentTaskName?: string) => {
+      if (!task?.id || seen.has(String(task.id))) return;
+
+      seen.add(String(task.id));
+      const assignees = Array.isArray(task.assignees) ? task.assignees : [];
+      const assigneesLabel = assignees.length
+        ? assignees
+            .map((assignee: any) => assignee?.name || assignee?.username || assignee?.email || assignee?.id)
+            .join(', ')
+        : 'Unassigned';
+
+      candidates.push({
+        key: String(task.id),
+        id: String(task.id),
+        name: task.name || 'Unnamed Task',
+        status: task.status || 'open',
+        assigneesLabel,
+        taskType: task.taskType || 'task',
+        parentTaskName,
+      });
+    };
+
+    (allProjectTasks || []).forEach((task: any) => {
+      pushCandidate(task);
+
+      if (Array.isArray(task.subTasks)) {
+        task.subTasks.forEach((subTask: any) => {
+          pushCandidate(subTask, task.name);
+        });
+      }
+    });
+
+    return candidates.sort((a, b) => {
+      const statusDiff = (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+      if (statusDiff !== 0) {
+        return statusDiff;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [allProjectTasks]);
 
     // Memoized data processing for hierarchical structure
   const { processedData, filteredData } = useMemo(() => {
@@ -867,6 +950,60 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
     if (selectedRowKeys.length > 0) {
       setIsAssigneeModalVisible(true);
     }
+  };
+
+  const openCompleteAllTasksModal = () => {
+    if (!projectId) {
+      message.error("Project ID is required to complete all tasks");
+      return;
+    }
+
+    if (!hasCompleteAllPermission) {
+      message.error("You don't have permission to complete all tasks");
+      return;
+    }
+
+    if (!completeAllTaskCandidates.length) {
+      message.warning("No tasks found for this project");
+      return;
+    }
+
+    setSelectedCompleteTaskIds(completeAllTaskCandidates.map((task) => task.id));
+    setIsCompleteAllModalVisible(true);
+  };
+
+  const handleCompleteAllTasks = () => {
+    if (!projectId) {
+      message.error("Project ID is required to complete all tasks");
+      return;
+    }
+
+    if (!hasCompleteAllPermission) {
+      message.error("You don't have permission to complete all tasks");
+      return;
+    }
+
+    if (!selectedCompleteTaskIds.length) {
+      message.warning("Please select at least one task");
+      return;
+    }
+
+    const selectedIds = selectedCompleteTaskIds.map((id) => String(id));
+
+    completeAllTasksMutation({ projectId, taskIds: selectedIds }, {
+      onSuccess: (data: any) => {
+        const updated = data?.summary?.updated ?? 0;
+        message.success(data?.message || `${updated} task(s) updated by automated system`);
+        setIsCompleteAllModalVisible(false);
+        setSelectedCompleteTaskIds([]);
+        queryClient.invalidateQueries({ queryKey: ["project-tasks-hierarchy", projectId] });
+        if (onRefresh) onRefresh();
+      },
+      onError: (error: any) => {
+        const errorMessage = error?.response?.data?.message || "Failed to complete selected tasks";
+        message.error(errorMessage);
+      },
+    });
   };
 
   const handleDueDateOk = async () => {
@@ -1872,7 +2009,7 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
         },
       },
     ],
-  [editingKey, users, projectId, isUpdating, canDeleteTask, sortedInfo, searchText, searchedColumn, isFirstVerifying, isSecondVerifying, isMarkingComplete, globalSearchText, dataHasDoneTasks, hasFirstVerifyPermission, hasSecondVerifyPermission, canMarkComplete]
+  [editingKey, users, projectId, isUpdating, canDeleteTask, sortedInfo, searchText, searchedColumn, isFirstVerifying, isSecondVerifying, isMarkingComplete, isCompletingAllTasks, globalSearchText, dataHasDoneTasks, hasFirstVerifyPermission, hasSecondVerifyPermission, canMarkComplete, hasCompleteAllPermission]
   );
 
   const mergedColumns = columns.map(col => {
@@ -1947,6 +2084,30 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
     }),
   };
 
+  const statusLabelMap: Record<string, string> = {
+    open: 'Open',
+    in_progress: 'In Progress',
+    done: 'Done',
+    first_verified: 'First Verified',
+    second_verified: 'Second Verified',
+  };
+
+  const statusColorMap: Record<string, string> = {
+    open: 'default',
+    in_progress: 'processing',
+    done: 'success',
+    first_verified: 'blue',
+    second_verified: 'purple',
+  };
+
+  const completeAllRowSelection: TableProps<CompleteAllTaskCandidate>["rowSelection"] = {
+    selectedRowKeys: selectedCompleteTaskIds,
+    onChange: (keys: React.Key[]) => setSelectedCompleteTaskIds(keys),
+    getCheckboxProps: (record: CompleteAllTaskCandidate) => ({
+      name: record.name,
+    }),
+  };
+
   return (
     <>
       <Card>
@@ -1966,6 +2127,16 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
             >
               Assign
             </Button>
+            {hasCompleteAllPermission && (
+              <Button
+                type="primary"
+                onClick={openCompleteAllTasksModal}
+                loading={isCompletingAllTasks}
+                style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
+              >
+                Complete All Task
+              </Button>
+            )}
             
             {/* Show Mark Complete only for in_progress tasks and only when no open tasks are selected */}
             {hasInProgressTasks && !hasOpenTasks && canMarkComplete && (
@@ -2069,6 +2240,63 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
           />
         </Form>
       </Card>
+
+      <Modal
+        title="Select Tasks To Complete"
+        open={isCompleteAllModalVisible}
+        onOk={handleCompleteAllTasks}
+        onCancel={() => setIsCompleteAllModalVisible(false)}
+        okText="Complete Selected"
+        confirmLoading={isCompletingAllTasks}
+        width={920}
+      >
+        <div style={{ marginBottom: 12 }}>
+          Tasks are sorted by status. Check or uncheck tasks to control which tasks will be completed.
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <strong>Selected:</strong> {selectedCompleteTaskIds.length} / {completeAllTaskCandidates.length}
+        </div>
+        <Table
+          rowSelection={completeAllRowSelection}
+          dataSource={completeAllTaskCandidates}
+          rowKey="id"
+          size="small"
+          pagination={{ pageSize: 10, showSizeChanger: false }}
+          columns={[
+            {
+              title: 'Status',
+              dataIndex: 'status',
+              key: 'status',
+              width: 130,
+              render: (taskStatus: string) => (
+                <Tag color={statusColorMap[taskStatus] || 'default'}>
+                  {statusLabelMap[taskStatus] || taskStatus}
+                </Tag>
+              ),
+            },
+            {
+              title: 'Task Name',
+              dataIndex: 'name',
+              key: 'name',
+              render: (taskName: string, record: CompleteAllTaskCandidate) => (
+                <div>
+                  <div>{taskName}</div>
+                  {record.parentTaskName && (
+                    <div style={{ color: '#8c8c8c', fontSize: 12 }}>
+                      Parent: {record.parentTaskName}
+                    </div>
+                  )}
+                </div>
+              ),
+            },
+            {
+              title: 'Assigned To',
+              dataIndex: 'assigneesLabel',
+              key: 'assigneesLabel',
+            },
+          ]}
+        />
+      </Modal>
 
       <Modal
         title="Set Due Date for Selected Tasks"

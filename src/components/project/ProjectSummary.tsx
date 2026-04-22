@@ -34,7 +34,8 @@ const ProjectSummary = ({ project }: ProjectSummaryProps) => {
     const allTasksCompleted = total > 0 && completed === total;
     const isProjectLead = project?.projectLead?.id === profile?.id;
     const isProjectManager = project?.projectManager?.id === profile?.id;
-    const canCompleteProject = (isProjectLead || isProjectManager) && project?.status === 'active';
+    const isSuperUser = (profile as any)?.role?.name?.toLowerCase() === 'superuser';
+    const canCompleteProject = (isProjectLead || isProjectManager || isSuperUser) && project?.status === 'active';
 
     const completeMutation = useMutation({
         mutationFn: () => completeProject(project?.id?.toString()),

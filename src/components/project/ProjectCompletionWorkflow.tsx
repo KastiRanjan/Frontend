@@ -38,8 +38,10 @@ const ProjectCompletionWorkflow: React.FC<ProjectCompletionWorkflowProps> = ({
   const isProjectLead = project?.projectLead?.id === currentUser?.id;
   const isProjectManager = project?.projectManager?.id === currentUser?.id;
   const userRole = currentUser?.role?.name?.toLowerCase();
+  const isSuperUser = userRole === 'superuser';
   // Manager includes: projectmanager, manager, administrator, and superuser
   const isManager = ['projectmanager', 'manager', 'administrator', 'admin', 'superuser'].includes(userRole);
+  const canCompleteProject = isProjectLead || isProjectManager || isSuperUser;
 
   // Project lead can evaluate, but manager/admin can evaluate all
   const canEvaluate = isProjectLead || isManager;
@@ -146,7 +148,7 @@ const ProjectCompletionWorkflow: React.FC<ProjectCompletionWorkflowProps> = ({
     {
       title: 'Mark Complete',
       icon: <CheckCircleOutlined />,
-      description: 'Project lead/manager marks project as completed'
+      description: 'Project lead/manager/superuser marks project as completed'
     },
     {
       title: 'Evaluate Team',
@@ -167,10 +169,10 @@ const ProjectCompletionWorkflow: React.FC<ProjectCompletionWorkflowProps> = ({
         
         <div style={{ marginTop: 24 }}>
           {/* Step 1: Mark as Complete */}
-          {project?.status === 'active' && (isProjectLead || isProjectManager) && (
+          {project?.status === 'active' && canCompleteProject && (
             <Alert
               message="Ready to Complete?"
-              description="All tasks must be finished before you can mark this project as completed. Only project lead or manager can complete the project."
+              description="All tasks must be finished before you can mark this project as completed. Only project lead, manager, or superuser can complete the project."
               type="info"
               showIcon
               action={
