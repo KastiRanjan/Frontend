@@ -9,7 +9,7 @@ export interface MenuItem {
   icon?: React.ReactNode;
 }
 
-export const ProjectMenuItems = (id: string | undefined) => [
+export const ProjectMenuItems = (id: string | undefined, showWorklogs = true) => [
   {
     key: `/project/${id}`,
     label: "Details",
@@ -30,10 +30,10 @@ export const ProjectMenuItems = (id: string | undefined) => [
   //   label: "Cost Report",
   //   icon: React.createElement(DashboardOutlined),
   // },
-  {
+  ...(showWorklogs ? [{
     key: `/project/${id}/worklogs`,
     label: "Worklog",
     icon: React.createElement(DashboardOutlined),
-  },
+  }] : []),
 
 ];

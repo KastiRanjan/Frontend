@@ -14,6 +14,7 @@ import ProjectBudget from './ProjectBudget';
 import ProjectCompletionWorkflow from './ProjectCompletionWorkflow';
 import { useQueryClient } from '@tanstack/react-query';
 import ProjectUserAssignment from './ProjectUserAssignment';
+import ProjectWorklogs from './ProjectWorklogs';
 // import DsaManager from './dsa/DsaManager';
 import { useUser } from '@/hooks/user/useUser';
 import { editProject } from '@/service/project.service';
@@ -51,6 +52,10 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   // Check if user has permission to view task rankings
   const canViewRankings = permissions?.some(
     (permission: any) => permission.resource === "task-ranking" && permission.method === "get"
+  );
+
+  const canViewProjectWorklogs = permissions?.some(
+    (permission: any) => permission.path === '/projects/:id/worklogs' && permission.method?.toLowerCase() === 'get'
   );
 
   // Add null checks for project data
@@ -254,6 +259,11 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
       key: '6',
       children: <ProjectBudget project={project} loading={loading} />
     },
+    ...(canViewProjectWorklogs ? [{
+      label: 'Worklogs',
+      key: '6b',
+      children: <ProjectWorklogs projectId={project?.id?.toString?.() ?? String(project?.id ?? '')} wrapInCard={false} />
+    }] : []),
     // {
     //   label: 'DSA',
     //   key: 'dsa',

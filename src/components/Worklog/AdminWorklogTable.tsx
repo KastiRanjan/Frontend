@@ -1,10 +1,10 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
-import { Button, Card, Table, Popconfirm, Input, Space, DatePicker, Select, Modal, Form, Tooltip, Tag } from "antd";
+import { Button, Card, Table, Popconfirm, Input, Space, DatePicker, Select, Modal, Form, Tooltip, Tag, message } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, type Key } from "react";
 import { SearchOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined, PlusOutlined, FilterOutlined, ClearOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 import { useAllWorklog, WorklogFilters } from "@/hooks/worklog/useAllWorklog";
@@ -12,6 +12,8 @@ import { useUser } from "@/hooks/user/useUser";
 import { useProject } from "@/hooks/project/useProject";
 import { getProfile } from "@/service/auth.service";
 import { useActiveWorkhour } from "@/hooks/workhour/useActiveWorkhour";
+import { useBulkApproveWorklogs } from "@/hooks/worklog/useBulkApproveWorklogs";
+import { useBulkRejectWorklogs } from "@/hooks/worklog/useBulkRejectWorklogs";
 import { getWorklogType, getWorklogTypeColor, getWorklogTypeDescription, WorklogStatus } from "@/utils/worklogUtils";
 
 const { TextArea } = Input;
@@ -22,10 +24,15 @@ const AdminWorklogTable = () => {
   const { data: worklogs, isPending, refetch } = useAllWorklog(filters);
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
   const { mutate: deleteWorklog } = useDeleteWorklog();
+  const { mutateAsync: bulkApproveWorklogs, isPending: isBulkApprovePending } = useBulkApproveWorklogs();
+  const { mutateAsync: bulkRejectWorklogs, isPending: isBulkRejectPending } = useBulkRejectWorklogs();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [rejectedRemark, setRejectedRemark] = useState("");
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
+  const [isBulkRejectModalVisible, setIsBulkRejectModalVisible] = useState(false);
+  const [bulkRejectedRemark, setBulkRejectedRemark] = useState("");
   const [worklogTypeFilter, setWorklogTypeFilter] = useState<string | undefined>(undefined);
   
   // For search functionality
@@ -89,6 +96,21 @@ const AdminWorklogTable = () => {
       return worklogType === worklogTypeFilter;
     });
   }, [worklogs, worklogTypeFilter, activeWorkhour]);
+
+  const hasRequestedRows = useMemo(
+    () => (filteredWorklogs || []).some((record: any) => record?.status === "requested"),
+    [filteredWorklogs]
+  );
+
+  useEffect(() => {
+    setSelectedRowKeys((prev) =>
+      prev.filter((key) =>
+        (filteredWorklogs || []).some(
+          (record: any) => String(record?.id) === String(key) && record?.status === "requested"
+        )
+      )
+    );
+  }, [filteredWorklogs]);
   
   const toggleDescription = (id: string) => {
     setExpandedRows(prev =>
@@ -285,6 +307,55 @@ const AdminWorklogTable = () => {
     setCurrentRecordId(null);
     setRejectedRemark("");
   };
+
+  const handleBulkApprove = async () => {
+    const ids = selectedRowKeys.map((key) => String(key));
+    if (!ids.length) {
+      message.warning("Select at least one requested worklog to approve.");
+      return;
+    }
+
+    try {
+      await bulkApproveWorklogs({ worklogIds: ids });
+      message.success("Selected worklogs approved successfully.");
+      setSelectedRowKeys([]);
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || "Failed to approve selected worklogs.");
+    }
+  };
+
+  const showBulkRejectModal = () => {
+    if (!selectedRowKeys.length) {
+      message.warning("Select at least one requested worklog to reject.");
+      return;
+    }
+    setBulkRejectedRemark("");
+    setIsBulkRejectModalVisible(true);
+  };
+
+  const handleBulkReject = async () => {
+    const ids = selectedRowKeys.map((key) => String(key));
+    if (!ids.length) {
+      setIsBulkRejectModalVisible(false);
+      return;
+    }
+
+    try {
+      await bulkRejectWorklogs({ worklogIds: ids, rejectedRemark: bulkRejectedRemark });
+      message.success("Selected worklogs rejected successfully.");
+      setSelectedRowKeys([]);
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || "Failed to reject selected worklogs.");
+    }
+
+    setIsBulkRejectModalVisible(false);
+    setBulkRejectedRemark("");
+  };
+
+  const handleBulkRejectCancel = () => {
+    setIsBulkRejectModalVisible(false);
+    setBulkRejectedRemark("");
+  };
   
   // Handle filter changes
   const handleFilterChange = (newFilters: Partial<WorklogFilters>) => {
@@ -296,6 +367,16 @@ const AdminWorklogTable = () => {
     setFilters({});
     setWorklogTypeFilter(undefined);
   };
+
+  const rowSelection = hasRequestedRows
+    ? {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys: Key[]) => setSelectedRowKeys(newSelectedRowKeys),
+        getCheckboxProps: (record: any) => ({
+          disabled: record?.status !== "requested",
+        }),
+      }
+    : undefined;
 
   // Dynamically determine which columns to show based on worklog status
   // This function returns a different set of columns depending on the worklogs in the table:
@@ -789,12 +870,53 @@ const AdminWorklogTable = () => {
             </Tooltip>
           </div>
         </div>
-      </Form>      
+      </Form>
+
+      <TableToolbar>
+        <div className="flex items-center justify-between gap-2 flex-wrap admin-worklog-table">
+          <Space size="small">
+            <Popconfirm
+              title="Approve selected worklogs?"
+              okText="Approve"
+              cancelText="Cancel"
+              onConfirm={handleBulkApprove}
+              disabled={!selectedRowKeys.length}
+            >
+              <Button
+                type="primary"
+                size="small"
+                loading={isBulkApprovePending}
+                disabled={!selectedRowKeys.length}
+              >
+                Approve Selected ({selectedRowKeys.length})
+              </Button>
+            </Popconfirm>
+            <Popconfirm
+              title="Reject selected worklogs?"
+              okText="Continue"
+              cancelText="Cancel"
+              onConfirm={showBulkRejectModal}
+              disabled={!selectedRowKeys.length}
+            >
+              <Button
+                danger
+                size="small"
+                loading={isBulkRejectPending}
+                disabled={!selectedRowKeys.length}
+              >
+                Reject Selected ({selectedRowKeys.length})
+              </Button>
+            </Popconfirm>
+          </Space>
+        </div>
+      </TableToolbar>
+
       <div className="table-container admin-worklog-table" style={{ overflowX: 'auto', width: '100%' }}>
         <Table
           loading={isPending || isEditPending}
           dataSource={filteredWorklogs || []}
           columns={getColumns() as any}
+          rowSelection={rowSelection}
           size="small"
           className="text-xs compact-table admin-worklog-table"
           style={{ 
@@ -843,6 +965,27 @@ const AdminWorklogTable = () => {
           value={rejectedRemark}
           onChange={(e) => setRejectedRemark(e.target.value)}
           placeholder="Enter reason for rejection"
+          style={{ fontSize: '10px' }}
+        />
+      </Modal>
+
+      <Modal
+        title={<span style={{ fontSize: '12px' }}>Reject Selected Worklogs</span>}
+        visible={isBulkRejectModalVisible}
+        onOk={handleBulkReject}
+        onCancel={handleBulkRejectCancel}
+        okText="Reject Selected"
+        okButtonProps={{ danger: true }}
+        confirmLoading={isBulkRejectPending}
+        width={320}
+        bodyStyle={{ padding: '12px' }}
+        wrapClassName="admin-worklog-table"
+      >
+        <TextArea
+          rows={3}
+          value={bulkRejectedRemark}
+          onChange={(e) => setBulkRejectedRemark(e.target.value)}
+          placeholder="Enter reason for rejecting selected worklogs"
           style={{ fontSize: '10px' }}
         />
       </Modal>

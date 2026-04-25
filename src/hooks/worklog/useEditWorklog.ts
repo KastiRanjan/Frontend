@@ -12,6 +12,7 @@ export const useEditWorklog = () => {
             queryClient.invalidateQueries({ queryKey: ["worklog-all"] });
             queryClient.invalidateQueries({ queryKey: ["worklog-user"] });
             queryClient.invalidateQueries({ queryKey: ["worklogs"] });
+            queryClient.invalidateQueries({ queryKey: ["project-worklogs"] });
             // Also invalidate the specific status if available
             if (variables && variables.status) {
                 queryClient.invalidateQueries({ queryKey: ["worklog-all", variables.status] });

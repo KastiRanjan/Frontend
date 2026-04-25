@@ -28,6 +28,14 @@ export interface MenuItem {
 export const MenuItems = (): MenuProps[] => {
   const { permissions } = useSession()
   console.log(permissions)
+
+  const hasWorklogPagePermission = (permissions || []).some((perm: any) => {
+    if (typeof perm !== "object") return false;
+    const method = perm?.method?.toLowerCase?.();
+    const path = perm?.path;
+    return method === "get" && (path === "/worklogs/user" || path === "/worklogs/allworklog");
+  });
+
   const items = [
     {
       key: "/",
@@ -88,6 +96,7 @@ export const MenuItems = (): MenuProps[] => {
       label: "Worklogs",
       resource: "worklogs",
       icon: React.createElement(UserOutlined),
+      visible: hasWorklogPagePermission,
     },
     {
       key: "/attendance",
@@ -152,6 +161,10 @@ export const MenuItems = (): MenuProps[] => {
   ]
 
   const filteredItems = _.filter(items, item => {
+    if ((item as any).visible === false) {
+      return false;
+    }
+
     // Always show attendance for authenticated users
     if (item.resource === "default") {
       return true;

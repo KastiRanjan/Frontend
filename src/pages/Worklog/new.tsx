@@ -1,13 +1,11 @@
 import PageTitle from "@/components/PageTitle"
 import OWorklogForm from "@/components/Worklog/OWorklogForm";
-import WorklogForm from "@/components/Worklog/WorklogForm"
 import { Button } from "antd"
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 
 const NewWorklog = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
   return (
     <div>
       <PageTitle
@@ -18,7 +16,7 @@ const NewWorklog = () => {
           </Button>
         }
       />
-      {id ? <WorklogForm /> : <OWorklogForm />}
+      <OWorklogForm />
     </div>
   )
 }

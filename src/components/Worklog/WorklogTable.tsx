@@ -1,9 +1,9 @@
 
 
-import { Table, Space, Button, Input, Tooltip } from "antd";
+import { Table, Space, Button, Input, Tooltip, Empty } from "antd";
 import moment from "moment";
 import { useState, useRef, useEffect } from "react";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import Highlighter from 'react-highlight-words';
 import { fetchUsers } from "@/service/user.service";
 import { UserType } from "@/types/user";
@@ -114,14 +114,6 @@ const WorklogTable = ({ data }: { data: any }) => {
 
   const columns = [
     {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
-      ...getColumnSearchProps('description', 'Description'),
-      sorter: (a: any, b: any) => a.description.localeCompare(b.description),
-      sortOrder: sortedInfo.columnKey === 'description' && sortedInfo.order,
-    },
-    {
       title: "Request To",
       dataIndex: "requestTo",
       key: "requestTo",
@@ -229,6 +221,9 @@ const WorklogTable = ({ data }: { data: any }) => {
         showQuickJumper: true,
         pageSizeOptions: [5, 10, 20, 50],
         showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+      }}
+      locale={{
+        emptyText: <Empty description="No worklogs available" />
       }}
       expandable={{
         expandedRowRender: (record: any) => {

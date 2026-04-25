@@ -17,7 +17,7 @@ import {
 } from "antd";
 import { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { getFilteredApprovers } from '@/utils/approver';
 import dayjs from "dayjs";
@@ -39,35 +39,37 @@ const OWorklogForm = () => {
   const [users, setUsers] = useState<{ [fieldName: string]: UserType[] }>({});
   const [filteredTasks, setFilteredTasks] = useState<{ [fieldName: string]: TaskTemplateType[] }>({});
   const [loadingTasks, setLoadingTasks] = useState<{ [fieldName: string]: boolean }>({});
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   
   const { data: projects } = useProject({ status: "active" });
   const { mutate: createWorklog } = useCreateWorklog();
   const navigate = useNavigate();
   const location = useLocation();
+  const { id: projectIdFromRoute } = useParams() as { id?: string };
 
   // Get date from URL parameters if provided
   const urlParams = new URLSearchParams(location.search);
   const dateParam = urlParams.get('date');
   
-  // Functions to handle mouse hover
-  const handleMouseEnter = (fieldName: number) => {
-    setHoveredItem(fieldName);
-  };
-  
-  const handleMouseLeave = () => {
-    setHoveredItem(null);
-  };
-  
-  // Initialize form with date parameter if available
+  // Initialize form with project ID from route on mount
   useEffect(() => {
-    // Initialize with multiple empty entries all with today's date
-    const today = dateParam ? dayjs(dateParam) : dayjs();
-    form.setFieldsValue({
-      timeEntries: [{ date: today }],
-    });
-  }, [dateParam, form]);
+    if (projectIdFromRoute && projects && projects.length > 0 && user) {
+      const selectedProject = projects.find(
+        (project: any) => project.id?.toString() === projectIdFromRoute?.toString()
+      );
+      if (selectedProject) {
+        const currentUserId = (user as any)?.id?.toString();
+        const currentUserRole = user?.role && (user.role as any).name ? (user.role as any).name : undefined;
+        const filteredUsers: UserType[] = getFilteredApprovers(selectedProject?.users || [], currentUserRole, currentUserId);
+        setUsers((prevUsers) => ({
+          ...prevUsers,
+          0: filteredUsers,
+        }));
+        // Fetch tasks for pre-filled project
+        fetchProjectTasks(projectIdFromRoute, "0");
+      }
+    }
+  }, [projectIdFromRoute, projects, user]);
   
   // Check if user is manager or admin
   // (removed unused isManagerOrAdmin)
@@ -283,7 +285,7 @@ const OWorklogForm = () => {
         onFinish={handleFinish}
         layout="vertical"
         initialValues={{
-          timeEntries: [{ date: dateParam ? dayjs(dateParam) : dayjs() }],
+          timeEntries: [{ date: dateParam ? dayjs(dateParam) : dayjs(), projectId: projectIdFromRoute || undefined }],
         }}
       >
         <Form.List name="timeEntries">
@@ -308,13 +310,11 @@ const OWorklogForm = () => {
                     boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
                     borderRadius: "8px",
                     transition: "all 0.2s ease-in-out",
-                    border: hoveredItem === field.name ? "1px solid #1890ff" : "1px solid #f0f0f0",
+                    border: "1px solid #f0f0f0",
                     overflow: "hidden"
                   }}
                   className="hover:shadow-md"
                   bodyStyle={{ padding: "16px", overflow: "visible" }}
-                  onMouseEnter={() => handleMouseEnter(field.name)}
-                  onMouseLeave={handleMouseLeave}
                 >
                   <div>
                     <Row gutter={12} align="middle">
@@ -355,6 +355,7 @@ const OWorklogForm = () => {
                             showSearch
                             optionFilterProp="label"
                             style={{ width: '100%' }}
+                            disabled={!!projectIdFromRoute}
                           />
                         </Form.Item>
                       </Col>
@@ -553,53 +554,51 @@ const OWorklogForm = () => {
                       </Col>
                     </Row>
 
-                    {/* Description Field - Only shown when hovered */}
-                    {hoveredItem === field.name && (
-                      <Row style={{ marginTop: 12 }}>
-                        <Col span={24}>
-                          <Form.Item
-                            name={[field.name, "description"]}
-                            rules={[
-                              {
-                                required: true,
-                                message: "Description is required!",
-                              },
-                            ]}
-                            style={{ marginBottom: 0 }}
-                          >
-                            <div className="quill-container" style={{ overflow: 'hidden' }}>
-                              <ReactQuill
-                                theme="snow"
-                                style={{ 
-                                  height: 120, 
-                                  borderRadius: '6px',
-                                  maxWidth: '100%'
-                                }}
-                                modules={{
-                                  toolbar: [
-                                    ['bold', 'italic', 'underline'],
-                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                    ['clean']
-                                  ]
-                                }}
-                                placeholder="Enter your worklog description here..."
-                                onChange={(value) => {
-                                  form.setFieldValue(
-                                    ["timeEntries", field.name, "description"],
-                                    value
-                                  );
-                                }}
-                                value={form.getFieldValue([
-                                  "timeEntries",
-                                  field.name,
-                                  "description",
-                                ])}
-                              />
-                            </div>
-                          </Form.Item>
-                        </Col>
-                      </Row>
-                    )}
+                    {/* Description Field - Always shown on separate row */}
+                    <Row style={{ marginTop: 12 }}>
+                      <Col span={24}>
+                        <Form.Item
+                          name={[field.name, "description"]}
+                          rules={[
+                            {
+                              required: true,
+                              message: "Description is required!",
+                            },
+                          ]}
+                          style={{ marginBottom: 0 }}
+                        >
+                          <div className="quill-container" style={{ overflow: 'hidden' }}>
+                            <ReactQuill
+                              theme="snow"
+                              style={{ 
+                                height: 120, 
+                                borderRadius: '6px',
+                                maxWidth: '100%'
+                              }}
+                              modules={{
+                                toolbar: [
+                                  ['bold', 'italic', 'underline'],
+                                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                  ['clean']
+                                ]
+                              }}
+                              placeholder="Enter your worklog description here..."
+                              onChange={(value) => {
+                                form.setFieldValue(
+                                  ["timeEntries", field.name, "description"],
+                                  value
+                                );
+                              }}
+                              value={form.getFieldValue([
+                                "timeEntries",
+                                field.name,
+                                "description",
+                              ])}
+                            />
+                          </div>
+                        </Form.Item>
+                      </Col>
+                    </Row>
                   </div>
                 </Card>
               ))}

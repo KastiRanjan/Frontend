@@ -49,6 +49,11 @@ export const fetchAllWorklogs = async (filters: { status?: string, date?: string
   return response.data;
 };
 
+export const fetchProjectWorklogs = async ({ projectId }: { projectId: string }) => {
+  const response = await axios.get(`${backendURI}/projects/${projectId}/worklogs`);
+  return response.data;
+};
+
 export const fetchWorklog = async ({ id }: { id: string }) => {
   const response = await axios.get(`${backendURI}/worklogs/${id}`);
 
@@ -93,6 +98,16 @@ export const editWorklog = async ({
   if (rejectBy) payload.rejectBy = rejectBy;
   
   const response = await axios.patch(`${backendURI}/worklogs/${id}`, payload);
+  return response.data;
+};
+
+export const bulkApproveWorklogs = async ({ worklogIds }: { worklogIds: string[] }) => {
+  const response = await axios.patch(`${backendURI}/worklogs/bulk-approve`, { worklogIds });
+  return response.data;
+};
+
+export const bulkRejectWorklogs = async ({ worklogIds, rejectedRemark }: { worklogIds: string[]; rejectedRemark?: string }) => {
+  const response = await axios.patch(`${backendURI}/worklogs/bulk-reject`, { worklogIds, rejectedRemark });
   return response.data;
 };
 

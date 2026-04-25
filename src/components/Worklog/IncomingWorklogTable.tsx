@@ -1,15 +1,17 @@
 import { useEditWorklog } from "@/hooks/worklog/useEditWorklog";
 import { Tooltip } from "antd";
-import { Button, Card, Table, Modal, Input, Popconfirm, Space } from "antd";
+import { Button, Card, Table, Modal, Input, Popconfirm, Space, message } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
 import { useSession } from "@/context/SessionContext";
-import { useState, useRef } from "react";
+import { useState, useRef, type Key } from "react";
 import { useWorklogbyUser } from "@/hooks/worklog/useWorklogbyUser";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
+import { useBulkApproveWorklogs } from "@/hooks/worklog/useBulkApproveWorklogs";
+import { useBulkRejectWorklogs } from "@/hooks/worklog/useBulkRejectWorklogs";
 
 const { TextArea } = Input;
 
@@ -20,7 +22,9 @@ const columns = (
   navigate: any, 
   getColumnSearchProps: any, 
   sortedInfo: any, 
-  showRejectModal: (id: string) => void
+  showRejectModal: (ids: string[]) => void,
+  canApproveWorklogs: boolean,
+  canRejectWorklogs: boolean
 ) => {
   const getStatusTitle = (status: string) => {
     switch (status.toLowerCase()) {
@@ -166,43 +170,53 @@ const columns = (
     title: "Action",
     dataIndex: "action",
     key: "action",
+    width: 120,
     render: (_: any, record: any) => {
       return (
-        <div className="flex gap-2">
-          <Button
-            type="primary"
-            onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
-          >
-            Edit
-          </Button>
+        <Space size="small" wrap>
+          <Tooltip title="Edit">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
+            />
+          </Tooltip>
           <Popconfirm
             title="Are you sure you want to delete this worklog?"
             onConfirm={() => deleteWorklog({ id: record?.id })}
             okText="Yes"
             cancelText="No"
           >
-            <Button type="primary" danger>
-              Delete
-            </Button>
+            <Tooltip title="Delete">
+              <Button type="text" size="small" icon={<DeleteOutlined />} danger />
+            </Tooltip>
           </Popconfirm>
           {status === "requested" && (
             <>
-              <Button
-                type="primary"
-                onClick={() => editWorklog({ id: record?.id, status: "approved" })}
-              >
-                Approve
-              </Button>
-              <Button
-                type="primary"
-                danger
-                onClick={() => showRejectModal(record?.id)}
-              >
-                Reject
-              </Button>
+              {canApproveWorklogs && (
+                <Tooltip title="Approve">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                    onClick={() => editWorklog({ id: record?.id, status: "approved" })}
+                  />
+                </Tooltip>
+              )}
+              {canRejectWorklogs && (
+                <Tooltip title="Reject">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                    onClick={() => showRejectModal([record?.id])}
+                  />
+                </Tooltip>
+              )}
             </>
           )}
-        </div>
+        </Space>
       );
     }
   });
@@ -217,11 +231,14 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
   const { data: worklogs, isPending } = useWorklogbyUser(status);
   console.log(worklogs);
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
+  const { mutateAsync: bulkApproveWorklogs, isPending: isBulkApprovePending } = useBulkApproveWorklogs();
+  const { mutateAsync: bulkRejectWorklogs, isPending: isBulkRejectPending } = useBulkRejectWorklogs();
   const { mutate: deleteWorklog } = useDeleteWorklog();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
+  const [currentRecordIds, setCurrentRecordIds] = useState<string[]>([]);
   const [remark, setRemark] = useState("");
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
   
   // For search functionality
   const [searchText, setSearchText] = useState('');
@@ -230,6 +247,14 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
   
   // For sorting
   const [sortedInfo, setSortedInfo] = useState<any>({});
+
+  const profilePermissions = (profile as any)?.role?.permission;
+  const canApproveWorklogs = Array.isArray(profilePermissions) && profilePermissions.some(
+    (perm: any) => perm.path === '/worklogs/bulk-approve' && perm.method?.toLowerCase?.() === 'patch'
+  );
+  const canRejectWorklogs = Array.isArray(profilePermissions) && profilePermissions.some(
+    (perm: any) => perm.path === '/worklogs/bulk-reject' && perm.method?.toLowerCase?.() === 'patch'
+  );
 
   const toggleDescription = (id: string) => {
     setExpandedRows(prev =>
@@ -259,7 +284,7 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     setSearchedColumn(dataIndex);
   };
   
-  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+  const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
     setSortedInfo(sorter);
   };
   
@@ -403,28 +428,52 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     );
   };
 
-  const showRejectModal = (id: string) => {
-    setCurrentRecordId(id);
+  const showRejectModal = (ids: string[]) => {
+    setCurrentRecordIds(ids.filter(Boolean));
     setRemark("");
     setIsModalVisible(true);
   };
 
-  const handleReject = () => {
-    if (currentRecordId) {
-      editWorklog({ 
-        id: currentRecordId, 
-        status: "rejected",
-        rejectedRemark: remark
+  const handleBulkApprove = async () => {
+    const ids = selectedRowKeys.map((key) => String(key));
+    if (!ids.length) {
+      message.warning("Select at least one worklog to approve.");
+      return;
+    }
+
+    try {
+      await bulkApproveWorklogs({ worklogIds: ids });
+      message.success("Selected worklogs approved successfully.");
+      setSelectedRowKeys([]);
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || "Failed to approve selected worklogs.");
+    }
+  };
+
+  const handleReject = async () => {
+    if (!currentRecordIds.length) {
+      setIsModalVisible(false);
+      return;
+    }
+
+    try {
+      await bulkRejectWorklogs({
+        worklogIds: currentRecordIds,
+        rejectedRemark: remark,
       });
+      message.success("Selected worklogs rejected successfully.");
+      setSelectedRowKeys((prev) => prev.filter((key) => !currentRecordIds.includes(String(key))));
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || "Failed to reject selected worklogs.");
     }
     setIsModalVisible(false);
-    setCurrentRecordId(null);
+    setCurrentRecordIds([]);
     setRemark("");
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setCurrentRecordId(null);
+    setCurrentRecordIds([]);
     setRemark("");
   };
 
@@ -443,14 +492,63 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     return reqTo;
   });
 
+  const rowSelection = status.toLowerCase() === "requested" && (canApproveWorklogs || canRejectWorklogs) ? {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys: Key[]) => setSelectedRowKeys(newSelectedRowKeys),
+    getCheckboxProps: (record: any) => ({
+      disabled: record?.status !== 'requested' || record?.user?.id?.toString?.() === currentUserId?.toString()
+    })
+  } : undefined;
+
   return (
     <Card>
       <TableToolbar>
-        <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>
+          {status.toLowerCase() === "requested" && (canApproveWorklogs || canRejectWorklogs) && (
+            <Space>
+              {canApproveWorklogs && (
+                <Popconfirm
+                  title="Approve selected worklogs?"
+                  okText="Approve"
+                  cancelText="Cancel"
+                  onConfirm={handleBulkApprove}
+                  disabled={!selectedRowKeys.length}
+                >
+                  <Button
+                    type="primary"
+                    loading={isBulkApprovePending}
+                    disabled={!selectedRowKeys.length}
+                  >
+                    Approve Selected
+                  </Button>
+                </Popconfirm>
+              )}
+              {canRejectWorklogs && (
+                <Popconfirm
+                  title="Reject selected worklogs?"
+                  okText="Continue"
+                  cancelText="Cancel"
+                  onConfirm={() => showRejectModal(selectedRowKeys.map((key) => String(key)))}
+                  disabled={!selectedRowKeys.length}
+                >
+                  <Button
+                    danger
+                    loading={isBulkRejectPending}
+                    disabled={!selectedRowKeys.length}
+                  >
+                    Reject Selected
+                  </Button>
+                </Popconfirm>
+              )}
+            </Space>
+          )}
+        </div>
       </TableToolbar>
       <Table
         loading={isPending || isEditPending}
         dataSource={filteredWorklogs}
+        rowSelection={rowSelection}
         columns={columns(
           status, 
           deleteWorklog, 
@@ -458,45 +556,10 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
           navigate, 
           getColumnSearchProps, 
           sortedInfo, 
-          showRejectModal
-        ).map(col => ({
-          ...col,
-          render: col.key === "action" && status === "requested" ? (_: any, record: any) => {
-            return (
-              <div className="flex gap-2">
-                <Button
-                  type="primary"
-                  onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
-                >
-                  Edit
-                </Button>
-                <Popconfirm
-                  title="Are you sure you want to delete this worklog?"
-                  onConfirm={() => deleteWorklog({ id: record?.id })}
-                  okText="Yes"
-                  cancelText="No"
-                >
-                  <Button type="primary" danger>
-                    Delete
-                  </Button>
-                </Popconfirm>
-                <Button
-                  type="primary"
-                  onClick={() => editWorklog({ id: record?.id, status: "approved" })}
-                >
-                  Approve
-                </Button>
-                <Button
-                  type="primary"
-                  danger
-                  onClick={() => showRejectModal(record?.id)}
-                >
-                  Reject
-                </Button>
-              </div>
-            );
-          } : col.render
-        }))}
+          showRejectModal,
+          canApproveWorklogs,
+          canRejectWorklogs
+        )}
         expandable={{
           expandedRowRender,
           expandedRowKeys: expandedRows,
@@ -515,7 +578,7 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
 
       <Modal
         title="Reject Worklog"
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleReject}
         onCancel={handleCancel}
         okText="Reject"

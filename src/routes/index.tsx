@@ -1,4 +1,3 @@
-import ProjectTimelinePage from "@/pages/Project/timeline";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import Attendence from "@/pages/Attendence";
 import Billing from "@/pages/Billing";
@@ -11,6 +10,7 @@ import ProjectDetail from "@/pages/Project/detail";
 import EditProject from "@/pages/Project/edit";
 import CreateProject from "@/pages/Project/new";
 import ProjectUsers from "@/pages/Project/users";
+import ProjectWorklogs from "@/components/project/ProjectWorklogs";
 import Request from "@/pages/Request";
 import ResetPasswordForm from "@/pages/ResetPassword";
 import Setting from "@/pages/Setting";
@@ -22,7 +22,6 @@ import ClientReportDocumentTypeSetting from "@/pages/Setting/ClientReportDocumen
 import AllTask from "@/pages/Task/all";
 import NewTask from "@/pages/Task/new";
 import TaskDetails from "@/pages/Task/task-details";
-import TaskGroups from "@/pages/TaskGroup";
 import EditTaskGroup from "@/pages/TaskGroup/edit";
 import TaskSuper from "@/pages/TaskSuper";
 import EditTaskSuper from "@/pages/TaskSuper/edit";
@@ -344,7 +343,14 @@ const Router = [
       },
       {
         path: "worklogs-all",
-        element: <AllWorklogs />,
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="worklogs"
+            path="/worklogs/user"
+            component={<AllWorklogs />}
+          />
+        ),
       },
       {
         path: "worklog/allworklog",
@@ -387,7 +393,14 @@ const Router = [
       },
       {
         path: "/projects/:id/worklogs",
-        element: <Worklog />,
+        element: (
+          <ProtectedRoute
+            method="get"
+            resource="worklogs"
+            path="/projects/:id/worklogs"
+            component={<ProjectWorklogs showHeader />}
+          />
+        ),
       },
       {
         path: "/projects/:id/worklogs/new",

@@ -13,6 +13,7 @@ export const useDeleteWorklog = () => {
             queryClient.invalidateQueries({ queryKey: ["worklog-all"] });
             queryClient.invalidateQueries({ queryKey: ["worklogs"] });
             queryClient.invalidateQueries({ queryKey: ["worklog-user"] });
+            queryClient.invalidateQueries({ queryKey: ["project-worklogs"] });
         },
     });
 };

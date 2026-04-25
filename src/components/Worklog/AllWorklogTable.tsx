@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
 import { useState, useRef } from "react";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 
 const columns = (
@@ -185,29 +185,34 @@ const columns = (
     title: "Action",
     dataIndex: "o",
     key: "s",
+    width: 120,
     render: (_: any, record: any) => {
       return (
-        <div className="flex gap-2">
-          <Button 
-            type="primary"
-            onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
-          >
-            Edit
-          </Button>
+        <Space size="small" wrap>
+          <Tooltip title="Edit">
+            <Button 
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/worklogs/edit/${record?.id}`)}
+            />
+          </Tooltip>
           <Popconfirm
             title="Are you sure you want to delete this worklog?"
             onConfirm={() => deleteWorklog({id:record?.id})}
             okText="Yes"
             cancelText="No"
           >
-            <Button 
-              type="primary" 
-              danger
-            >
-              Delete
-            </Button>
+            <Tooltip title="Delete">
+              <Button 
+                type="text"
+                size="small"
+                icon={<DeleteOutlined />}
+                danger
+              />
+            </Tooltip>
           </Popconfirm>
-        </div>
+        </Space>
       );
     }
   });
@@ -422,7 +427,11 @@ const AllWorklogTable = ({ status }: { status: string }) => {
   return (
     <Card>
       <TableToolbar>
-        <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex gap-2">
+            <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>
+          </div>
+        </div>
       </TableToolbar>
       <Table
         loading={isPending || isEditPending}

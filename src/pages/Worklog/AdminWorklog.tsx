@@ -6,10 +6,11 @@ import { useNavigate } from "react-router-dom";
 const WorklogAdmin = () => {
   const { profile } = useSession();
   const navigate = useNavigate();
+  const profilePermissions = (profile as any)?.role?.permission;
   
   // Check if user has permission to access all worklog page
-  const hasAllWorklogPermission = profile?.role?.permission?.some(
-    (perm: any) => perm.path === '/worklogs/allworklog' && perm.method === 'get'
+  const hasAllWorklogPermission = Array.isArray(profilePermissions) && profilePermissions.some(
+    (perm: any) => perm.path === '/worklogs/allworklog' && perm.method?.toLowerCase() === 'get'
   );
   
   if (!hasAllWorklogPermission) {

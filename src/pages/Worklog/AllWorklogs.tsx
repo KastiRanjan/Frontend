@@ -8,16 +8,30 @@ import { useNavigate } from "react-router-dom";
 const AllWorklogs = () => {
     const { profile } = useSession();
     const navigate = useNavigate();
+    const profilePermissions = (profile as any)?.role?.permission;
     
     // Defensive: support both {name, permission} and {permission} role objects
     const userRole = (profile?.role && (profile.role as any).name)
         ? (profile.role as any).name.toLowerCase?.() || ""
         : "";
     
-    // Check if user has permission to access all worklog page
-    const hasAllWorklogPermission = profile?.role?.permission?.some(
-        (perm: any) => perm.path === '/worklogs/allworklog' && perm.method === 'get'
+    // Permission checks for worklog pages (case-insensitive method matching)
+    const hasMyWorklogPermission = Array.isArray(profilePermissions) && profilePermissions.some(
+        (perm: any) => perm.path === '/worklogs/user' && perm.method?.toLowerCase() === 'get'
     );
+
+    const hasAllWorklogPermission = Array.isArray(profilePermissions) && profilePermissions.some(
+        (perm: any) => perm.path === '/worklogs/allworklog' && perm.method?.toLowerCase() === 'get'
+    );
+
+    if (!hasMyWorklogPermission) {
+        return (
+            <div className="text-center py-8">
+                <h2 className="text-2xl font-bold mb-4">Permission Denied</h2>
+                <p className="mb-4">You don't have permission to access this page.</p>
+            </div>
+        );
+    }
     
     const tabItems = [
         {
