@@ -5,13 +5,14 @@ import { Link, useNavigate } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
 import { useState, useRef, useEffect, useMemo, type Key } from "react";
-import { SearchOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined, PlusOutlined, FilterOutlined, ClearOutlined, QuestionCircleOutlined } from "@ant-design/icons";
+import { SearchOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined, FilterOutlined, ClearOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 import { useAllWorklog, WorklogFilters } from "@/hooks/worklog/useAllWorklog";
 import { useUser } from "@/hooks/user/useUser";
 import { useProject } from "@/hooks/project/useProject";
 import { getProfile } from "@/service/auth.service";
 import { useActiveWorkhour } from "@/hooks/workhour/useActiveWorkhour";
+import { useSession } from "@/context/SessionContext";
 import { useBulkApproveWorklogs } from "@/hooks/worklog/useBulkApproveWorklogs";
 import { useBulkRejectWorklogs } from "@/hooks/worklog/useBulkRejectWorklogs";
 import { getWorklogType, getWorklogTypeColor, getWorklogTypeDescription, WorklogStatus } from "@/utils/worklogUtils";
@@ -20,6 +21,7 @@ const { TextArea } = Input;
 
 const AdminWorklogTable = () => {
   const navigate = useNavigate();
+  const { profile } = useSession();
   const [filters, setFilters] = useState<WorklogFilters>({});
   const { data: worklogs, isPending, refetch } = useAllWorklog(filters);
   const { mutate: editWorklog, isPending: isEditPending } = useEditWorklog();
@@ -42,6 +44,14 @@ const AdminWorklogTable = () => {
   
   // For sorting
   const [sortedInfo, setSortedInfo] = useState<any>({});
+
+  const profilePermissions = (profile as any)?.role?.permission;
+  const canBulkApproveWorklogs = Array.isArray(profilePermissions) && profilePermissions.some(
+    (perm: any) => perm.path === '/worklogs/bulk-approve' && perm.method?.toLowerCase?.() === 'patch'
+  );
+  const canBulkRejectWorklogs = Array.isArray(profilePermissions) && profilePermissions.some(
+    (perm: any) => perm.path === '/worklogs/bulk-reject' && perm.method?.toLowerCase?.() === 'patch'
+  );
   
   // For user and project filter dropdowns using proper hooks
   const { data: userData } = useUser({ status: "active", limit: 100, page: 1, keywords: "" });
@@ -368,7 +378,7 @@ const AdminWorklogTable = () => {
     setWorklogTypeFilter(undefined);
   };
 
-  const rowSelection = hasRequestedRows
+  const rowSelection = hasRequestedRows && (canBulkApproveWorklogs || canBulkRejectWorklogs)
     ? {
         selectedRowKeys,
         onChange: (newSelectedRowKeys: Key[]) => setSelectedRowKeys(newSelectedRowKeys),
@@ -875,38 +885,42 @@ const AdminWorklogTable = () => {
       <TableToolbar>
         <div className="flex items-center justify-between gap-2 flex-wrap admin-worklog-table">
           <Space size="small">
-            <Popconfirm
-              title="Approve selected worklogs?"
-              okText="Approve"
-              cancelText="Cancel"
-              onConfirm={handleBulkApprove}
-              disabled={!selectedRowKeys.length}
-            >
-              <Button
-                type="primary"
-                size="small"
-                loading={isBulkApprovePending}
+            {canBulkApproveWorklogs && (
+              <Popconfirm
+                title="Approve selected worklogs?"
+                okText="Approve"
+                cancelText="Cancel"
+                onConfirm={handleBulkApprove}
                 disabled={!selectedRowKeys.length}
               >
-                Approve Selected ({selectedRowKeys.length})
-              </Button>
-            </Popconfirm>
-            <Popconfirm
-              title="Reject selected worklogs?"
-              okText="Continue"
-              cancelText="Cancel"
-              onConfirm={showBulkRejectModal}
-              disabled={!selectedRowKeys.length}
-            >
-              <Button
-                danger
-                size="small"
-                loading={isBulkRejectPending}
+                <Button
+                  type="primary"
+                  size="small"
+                  loading={isBulkApprovePending}
+                  disabled={!selectedRowKeys.length}
+                >
+                  Approve Selected ({selectedRowKeys.length})
+                </Button>
+              </Popconfirm>
+            )}
+            {canBulkRejectWorklogs && (
+              <Popconfirm
+                title="Reject selected worklogs?"
+                okText="Continue"
+                cancelText="Cancel"
+                onConfirm={showBulkRejectModal}
                 disabled={!selectedRowKeys.length}
               >
-                Reject Selected ({selectedRowKeys.length})
-              </Button>
-            </Popconfirm>
+                <Button
+                  danger
+                  size="small"
+                  loading={isBulkRejectPending}
+                  disabled={!selectedRowKeys.length}
+                >
+                  Reject Selected ({selectedRowKeys.length})
+                </Button>
+              </Popconfirm>
+            )}
           </Space>
         </div>
       </TableToolbar>

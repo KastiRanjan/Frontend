@@ -22,9 +22,7 @@ const columns = (
   navigate: any, 
   getColumnSearchProps: any, 
   sortedInfo: any, 
-  showRejectModal: (ids: string[]) => void,
-  canApproveWorklogs: boolean,
-  canRejectWorklogs: boolean
+  showRejectModal: (id: string) => void
 ) => {
   const getStatusTitle = (status: string) => {
     switch (status.toLowerCase()) {
@@ -194,26 +192,22 @@ const columns = (
           </Popconfirm>
           {status === "requested" && (
             <>
-              {canApproveWorklogs && (
-                <Tooltip title="Approve">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                    onClick={() => editWorklog({ id: record?.id, status: "approved" })}
-                  />
-                </Tooltip>
-              )}
-              {canRejectWorklogs && (
-                <Tooltip title="Reject">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
-                    onClick={() => showRejectModal([record?.id])}
-                  />
-                </Tooltip>
-              )}
+              <Tooltip title="Approve">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                  onClick={() => editWorklog({ id: record?.id, status: "approved" })}
+                />
+              </Tooltip>
+              <Tooltip title="Reject">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                  onClick={() => showRejectModal(record?.id)}
+                />
+              </Tooltip>
             </>
           )}
         </Space>
@@ -236,8 +230,11 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
   const { mutate: deleteWorklog } = useDeleteWorklog();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isBulkModalVisible, setIsBulkModalVisible] = useState(false);
+  const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [currentRecordIds, setCurrentRecordIds] = useState<string[]>([]);
   const [remark, setRemark] = useState("");
+  const [bulkRemark, setBulkRemark] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
   
   // For search functionality
@@ -428,10 +425,16 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     );
   };
 
-  const showRejectModal = (ids: string[]) => {
-    setCurrentRecordIds(ids.filter(Boolean));
+  const showRejectModal = (id: string) => {
+    setCurrentRecordId(id || null);
     setRemark("");
     setIsModalVisible(true);
+  };
+
+  const showBulkRejectModal = (ids: string[]) => {
+    setCurrentRecordIds(ids.filter(Boolean));
+    setBulkRemark("");
+    setIsBulkModalVisible(true);
   };
 
   const handleBulkApprove = async () => {
@@ -450,31 +453,49 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
     }
   };
 
-  const handleReject = async () => {
-    if (!currentRecordIds.length) {
+  const handleReject = () => {
+    if (!currentRecordId) {
       setIsModalVisible(false);
+      return;
+    }
+
+    editWorklog({ id: currentRecordId, status: "rejected", rejectedRemark: remark });
+    setIsModalVisible(false);
+    setCurrentRecordId(null);
+    setRemark("");
+  };
+
+  const handleBulkReject = async () => {
+    if (!currentRecordIds.length) {
+      setIsBulkModalVisible(false);
       return;
     }
 
     try {
       await bulkRejectWorklogs({
         worklogIds: currentRecordIds,
-        rejectedRemark: remark,
+        rejectedRemark: bulkRemark,
       });
       message.success("Selected worklogs rejected successfully.");
       setSelectedRowKeys((prev) => prev.filter((key) => !currentRecordIds.includes(String(key))));
     } catch (error: any) {
       message.error(error?.response?.data?.message || "Failed to reject selected worklogs.");
     }
-    setIsModalVisible(false);
+    setIsBulkModalVisible(false);
     setCurrentRecordIds([]);
-    setRemark("");
+    setBulkRemark("");
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setCurrentRecordIds([]);
+    setCurrentRecordId(null);
     setRemark("");
+  };
+
+  const handleBulkCancel = () => {
+    setIsBulkModalVisible(false);
+    setCurrentRecordIds([]);
+    setBulkRemark("");
   };
 
   // Only show worklogs where the current user is the approver (approvedBy)
@@ -529,7 +550,7 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
                   title="Reject selected worklogs?"
                   okText="Continue"
                   cancelText="Cancel"
-                  onConfirm={() => showRejectModal(selectedRowKeys.map((key) => String(key)))}
+                  onConfirm={() => showBulkRejectModal(selectedRowKeys.map((key) => String(key)))}
                   disabled={!selectedRowKeys.length}
                 >
                   <Button
@@ -556,9 +577,7 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
           navigate, 
           getColumnSearchProps, 
           sortedInfo, 
-          showRejectModal,
-          canApproveWorklogs,
-          canRejectWorklogs
+          showRejectModal
         )}
         expandable={{
           expandedRowRender,
@@ -589,6 +608,23 @@ const IncomingWorklogTable = ({ status }: { status: string }) => {
           value={remark}
           onChange={(e) => setRemark(e.target.value)}
           placeholder="Enter reason for rejection"
+        />
+      </Modal>
+
+      <Modal
+        title="Reject Selected Worklogs"
+        open={isBulkModalVisible}
+        onOk={handleBulkReject}
+        onCancel={handleBulkCancel}
+        okText="Reject Selected"
+        okButtonProps={{ danger: true }}
+        confirmLoading={isBulkRejectPending}
+      >
+        <TextArea
+          rows={4}
+          value={bulkRemark}
+          onChange={(e) => setBulkRemark(e.target.value)}
+          placeholder="Enter reason for rejecting selected worklogs"
         />
       </Modal>
     </Card>
