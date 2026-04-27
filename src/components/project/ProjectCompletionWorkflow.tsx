@@ -158,7 +158,7 @@ const ProjectCompletionWorkflow: React.FC<ProjectCompletionWorkflowProps> = ({
     {
       title: 'Sign Off',
       icon: <FileProtectOutlined />,
-      description: 'Manager signs off the project'
+      description: 'Manager or superuser signs off the project'
     }
   ];
 
