@@ -4,9 +4,14 @@ import { UserType } from "@/hooks/user/type";
 import { useUser } from "@/hooks/user/useUser";
 import { Button, Col, Divider, Form, Row, Select, Switch } from "antd";
 import { message } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import FormInputWrapper from "../FormInputWrapper";
-import { fetchNatureOfWorks, NatureOfWork } from "@/service/natureOfWork.service";
+import {
+  fetchNatureOfWorkGroups,
+  fetchNatureOfWorks,
+  NatureOfWork,
+  NatureOfWorkGroup,
+} from "@/service/natureOfWork.service";
 import moment from "moment";
 import { ProjectType } from "@/types/project";
 import TextArea from "antd/es/input/TextArea";
@@ -62,8 +67,24 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
     page: 1,
     keywords: "",
   });
-  const [natureOfWorkOptions, setNatureOfWorkOptions] = useState<{ value: string; label: string; shortName: string }[]>([]);
+  const [natureOfWorkOptions, setNatureOfWorkOptions] = useState<{ value: string; label: string; shortName: string; groupId?: string }[]>([]);
+  const [natureOfWorkGroupOptions, setNatureOfWorkGroupOptions] = useState<{ value: string; label: string }[]>([]);
   const [suggestedProjectName, setSuggestedProjectName] = useState("");
+
+  // Sentinel value used in the Group select to represent "types with no group"
+  const UNCATEGORIZED_GROUP = "__uncategorized__";
+
+  // Watch the currently-selected group so we can filter the Nature of Work list
+  const selectedGroupId = Form.useWatch("natureOfWorkGroup", form);
+
+  // Filter natures based on the currently selected group
+  const filteredNatureOfWorkOptions = useMemo(() => {
+    if (!selectedGroupId) return natureOfWorkOptions;
+    if (selectedGroupId === UNCATEGORIZED_GROUP) {
+      return natureOfWorkOptions.filter((n) => !n.groupId);
+    }
+    return natureOfWorkOptions.filter((n) => n.groupId === selectedGroupId);
+  }, [selectedGroupId, natureOfWorkOptions]);
   
   // Add state for Nepali dates only
   const [nepaliStartDate, setNepaliStartDate] = useState<NepaliDate | undefined>(undefined);
@@ -102,6 +123,38 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         }
       }
     }, 100);
+  };
+
+  const handleNatureOfWorkChange = (natureOfWorkId: string) => {
+    handleFieldChange();
+    const selectedNature = natureOfWorkOptions.find((item) => item.value === natureOfWorkId);
+    if (!selectedNature) return;
+    // Keep the group in sync with the chosen nature so the filtered select stays coherent.
+    if (selectedNature.groupId) {
+      form.setFieldsValue({ natureOfWorkGroup: selectedNature.groupId });
+    } else {
+      form.setFieldsValue({ natureOfWorkGroup: UNCATEGORIZED_GROUP });
+    }
+  };
+
+  const handleGroupChange = (groupId: string | undefined) => {
+    // When the user changes the group, clear the nature-of-work selection if it
+    // no longer belongs to the newly-selected group.
+    const currentNatureId = form.getFieldValue("natureOfWork");
+    if (!currentNatureId) return;
+    const currentNature = natureOfWorkOptions.find((n) => n.value === currentNatureId);
+    if (!currentNature) return;
+    if (!groupId) {
+      // Cleared - keep selection so user can re-choose group freely
+      return;
+    }
+    const natureBelongs =
+      groupId === UNCATEGORIZED_GROUP
+        ? !currentNature.groupId
+        : currentNature.groupId === groupId;
+    if (!natureBelongs) {
+      form.setFieldsValue({ natureOfWork: undefined });
+    }
   };
 
   const onFinish = (values: any) => {
@@ -217,6 +270,11 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         ? [...new Set([...values.users, ...userIds])]
         : userIds,
     };
+
+    // "Uncategorized" is a UI-only sentinel meaning "no group" - don't send it to the backend
+    if (transformedValues.natureOfWorkGroup === UNCATEGORIZED_GROUP) {
+      transformedValues.natureOfWorkGroup = null;
+    }
     
     // Remove Nepali date fields before sending to backend
     delete transformedValues.startingDateNepali;
@@ -271,12 +329,27 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
 
 
   useEffect(() => {
-    // Fetch nature of work options from backend
-    fetchNatureOfWorks().then((data: NatureOfWork[]) => {
-      setNatureOfWorkOptions(
-        data.map((item) => ({ value: item.id, label: `${item.name} (${item.shortName})`, shortName: item.shortName }))
-      );
-    });
+    Promise.all([fetchNatureOfWorks(), fetchNatureOfWorkGroups()])
+      .then(([natureData, groupData]: [NatureOfWork[], NatureOfWorkGroup[]]) => {
+        setNatureOfWorkOptions(
+          natureData.map((item) => ({
+            value: item.id,
+            label: `${item.name} (${item.shortName})`,
+            shortName: item.shortName,
+            groupId: item.groupId || item.group?.id || undefined,
+          }))
+        );
+
+        setNatureOfWorkGroupOptions(
+          groupData.map((group) => ({
+            value: group.id,
+            label: group.name,
+          }))
+        );
+      })
+      .catch(() => {
+        message.error("Failed to load Nature of Work options");
+      });
   }, []);
 
   // Trigger name suggestion when dependencies change
@@ -363,6 +436,14 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           isPaymentDone: editProjectData.isPaymentDone || false,
           isPaymentTemporarilyEnabled: editProjectData.isPaymentTemporarilyEnabled || false,
           natureOfWork: typeof editProjectData.natureOfWork === "string" ? editProjectData.natureOfWork : (editProjectData.natureOfWork as any)?.id,
+          natureOfWorkGroup:
+            (editProjectData as any).natureOfWorkGroup?.id ||
+            (editProjectData as any).natureOfWorkGroupId ||
+            (editProjectData as any).natureOfWork?.groupId ||
+            // If the project's nature has no group, show it under "Uncategorized"
+            (editProjectData.natureOfWork && typeof editProjectData.natureOfWork !== "string"
+              ? UNCATEGORIZED_GROUP
+              : undefined),
           
           // Set all date fields together
           startingDate: startDateAD,
@@ -667,6 +748,32 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         {/* Rest of the form fields remain unchanged */}
         <Col span={12}>
           <Form.Item
+            label="Nature of Work Group"
+            name="natureOfWorkGroup"
+            tooltip="Pick a group first to narrow down the list of work types below."
+            rules={[{ required: true, message: "Please select a group!" }]}
+          >
+            <Select
+              className="h-[48px] w-full"
+              placeholder="Select group"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              onChange={handleGroupChange}
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === 'string'
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={[
+                ...natureOfWorkGroupOptions,
+                { value: UNCATEGORIZED_GROUP, label: "Uncategorized (no group)" },
+              ]}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
             label="Nature of Work"
             name="natureOfWork"
             rules={[
@@ -678,8 +785,13 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           >
             <Select
               className="h-[48px] w-full"
-              placeholder="Select nature of work"
-              onChange={handleFieldChange}
+              placeholder={
+                selectedGroupId
+                  ? "Select nature of work"
+                  : "Select a group first"
+              }
+              disabled={!selectedGroupId}
+              onChange={handleNatureOfWorkChange}
               showSearch
               optionFilterProp="label"
               filterOption={(input, option) =>
@@ -687,7 +799,12 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
                   ? option.label.toLowerCase().includes(input.toLowerCase())
                   : false
               }
-              options={natureOfWorkOptions}
+              notFoundContent={
+                selectedGroupId
+                  ? "No nature of work in this group"
+                  : "Please select a group first"
+              }
+              options={filteredNatureOfWorkOptions}
             />
           </Form.Item>
         </Col>

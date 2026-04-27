@@ -73,9 +73,11 @@ const ProjectPage: React.FC = () => {
           footer={null}
           open={open}
           onCancel={handleCancel}
-          width={700}
+          width="min(1100px, 95vw)"
+          style={{ top: 24 }}
+          bodyStyle={{ paddingTop: 12 }}
         >
-          <div className="max-h-[70vh] overflow-y-scroll">
+          <div className="max-h-[80vh] overflow-y-auto pr-2">
             <ProjectForm
               editProjectData={editTaskGroupData}
               handleCancel={handleCancel}
