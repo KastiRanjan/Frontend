@@ -124,30 +124,35 @@ const ClientReportsAdmin: React.FC = () => {
 
   // Re-apply projectId when projectsForCustomer changes (handles edit-modal open scenario)
   useEffect(() => {
-    if (isEditModalOpen && selectedReport?.projectId) {
-      editForm.setFieldValue("projectId", selectedReport.projectId);
+    const projectId = selectedReport?.projectId ?? selectedReport?.project?.id;
+    if (isEditModalOpen && projectId) {
+      editForm.setFieldValue("projectId", projectId);
     }
-  }, [projectsForCustomer, isEditModalOpen, selectedReport?.projectId]);
+  }, [projectsForCustomer, isEditModalOpen, selectedReport?.projectId, selectedReport?.project?.id]);
 
   // Re-apply documentTypeId when document types finish loading (fixes auto-select in edit modal)
   useEffect(() => {
-    if (isEditModalOpen && selectedReport?.documentTypeId && documentTypesForCustomer?.length) {
-      editForm.setFieldValue("documentTypeId", selectedReport.documentTypeId);
+    const documentTypeId = selectedReport?.documentTypeId ?? selectedReport?.documentType?.id;
+    if (isEditModalOpen && documentTypeId && documentTypesForCustomer?.length) {
+      editForm.setFieldValue("documentTypeId", documentTypeId);
     }
-  }, [documentTypesForCustomer, isEditModalOpen, selectedReport?.documentTypeId]);
+  }, [documentTypesForCustomer, isEditModalOpen, selectedReport?.documentTypeId, selectedReport?.documentType?.id]);
 
   // State for inline editing file display names
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [editingFileName, setEditingFileName] = useState("");
 
   const handleOpenEditModal = (report: ClientReportType) => {
+    const projectId = report.projectId ?? report.project?.id;
+    const documentTypeId = report.documentTypeId ?? report.documentType?.id;
+
     setSelectedReport(report);
     setSelectedCustomerForForm(report.customerId);
     editForm.setFieldsValue({
       title: report.title,
       description: report.description,
-      projectId: report.projectId,
-      documentTypeId: report.documentTypeId,
+      projectId,
+      documentTypeId,
       fiscalYear: report.fiscalYear,
       isVisible: report.isVisible
     });
@@ -560,107 +565,131 @@ const ClientReportsAdmin: React.FC = () => {
       <Modal
         title="Upload Client Report"
         open={isModalOpen}
+        centered
+        className="client-report-upload-modal"
         onCancel={() => {
           setIsModalOpen(false);
           form.resetFields();
+          setSelectedCustomerForForm(undefined);
         }}
         footer={null}
-        width={600}
+        width={1100}
+        bodyStyle={{ overflow: "hidden" }}
       >
         <Form
           form={form}
           layout="vertical"
+          className="client-report-upload-form"
           onFinish={handleCreateReport}
         >
-          <Form.Item
-            name="title"
-            label="Report Title"
-            rules={[{ required: true, message: "Please enter title" }]}
-          >
-            <Input placeholder="Enter report title" />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="title"
+                label="Report Title"
+                rules={[{ required: true, message: "Please enter title" }]}
+              >
+                <Input placeholder="Enter report title" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="customerId"
+                label="Client"
+                rules={[{ required: true, message: "Please select client" }]}
+              >
+                <Select
+                  placeholder="Select client"
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                  onChange={(value) => {
+                    setSelectedCustomerForForm(value);
+                    form.setFieldValue("projectId", undefined);
+                    form.setFieldValue("documentTypeId", undefined);
+                  }}
+                >
+                  {clientOptions.map((client) => (
+                    <Option key={client.id} value={client.id}>
+                      {client.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item name="description" label="Description">
-            <TextArea rows={3} placeholder="Enter description" />
+            <TextArea rows={2} placeholder="Enter description" />
           </Form.Item>
 
-          <Form.Item
-            name="customerId"
-            label="Client"
-            rules={[{ required: true, message: "Please select client" }]}
-          >
-            <Select 
-              placeholder="Select client"
-              showSearch
-              filterOption={(input, option) =>
-                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
-              }
-              onChange={(value) => {
-                setSelectedCustomerForForm(value);
-                form.setFieldValue("projectId", undefined);
-                form.setFieldValue("documentTypeId", undefined);
-              }}
-            >
-              {clientOptions.map((client) => (
-                <Option key={client.id} value={client.id}>
-                  {client.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="projectId" label="Project">
+                <Select
+                  placeholder={selectedCustomerForForm ? "Select project (optional)" : "Select client first"}
+                  disabled={!selectedCustomerForForm}
+                  allowClear
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {projectsForCustomer.map((project) => (
+                    <Option key={project.id} value={project.id}>
+                      {project.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="documentTypeId" label="Document Type">
+                <Select
+                  placeholder={selectedCustomerForForm ? "Select document type (optional)" : "Select client first"}
+                  allowClear
+                  disabled={!selectedCustomerForForm}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {documentTypesForCustomer?.map((type: any) => (
+                    <Option key={type.id} value={type.id}>
+                      {type.name} {type.isGlobal && "(Global)"}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="projectId"
-            label="Project"
-          >
-            <Select 
-              placeholder={selectedCustomerForForm ? "Select project (optional)" : "Select client first"} 
-              disabled={!selectedCustomerForForm}
-              allowClear
-              showSearch
-              filterOption={(input, option) =>
-                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
-              }
-            >
-              {projectsForCustomer.map((project) => (
-                <Option key={project.id} value={project.id}>
-                  {project.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="documentTypeId" label="Document Type">
-            <Select 
-              placeholder={selectedCustomerForForm ? "Select document type (optional)" : "Select client first"} 
-              allowClear
-              disabled={!selectedCustomerForForm}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
-              }
-            >
-              {documentTypesForCustomer?.map((type: any) => (
-                <Option key={type.id} value={type.id}>
-                  {type.name} {type.isGlobal && "(Global)"}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="fiscalYear" label="Fiscal Year">
-            <Select
-              placeholder="Select fiscal year"
-              showSearch
-              optionFilterProp="label"
-              filterOption={(input, option) =>
-                option?.label && typeof option.label === "string"
-                  ? option.label.toLowerCase().includes(input.toLowerCase())
-                  : false
-              }
-              options={fiscalYearOptions}
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="fiscalYear" label="Fiscal Year">
+                <Select
+                  placeholder="Select fiscal year"
+                  showSearch
+                  optionFilterProp="label"
+                  filterOption={(input, option) =>
+                    option?.label && typeof option.label === "string"
+                      ? option.label.toLowerCase().includes(input.toLowerCase())
+                      : false
+                  }
+                  options={fiscalYearOptions}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="isVisible" label="Visibility" initialValue={false}>
+                <Select>
+                  <Option value={true}>Visible to Client</Option>
+                  <Option value={false}>Hidden from Client</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
             name="file"
@@ -672,15 +701,16 @@ const ClientReportsAdmin: React.FC = () => {
             </Upload>
           </Form.Item>
 
-          <Form.Item name="isVisible" label="Visibility" initialValue={false}>
-            <Select>
-              <Option value={true}>Visible to Client</Option>
-              <Option value={false}>Hidden from Client</Option>
-            </Select>
-          </Form.Item>
-
           <div className="flex justify-end gap-2">
-            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setIsModalOpen(false);
+                form.resetFields();
+                setSelectedCustomerForForm(undefined);
+              }}
+            >
+              Cancel
+            </Button>
             <Button type="primary" htmlType="submit" loading={creating || creatingMultiple}>
               Upload
             </Button>
@@ -754,6 +784,8 @@ const ClientReportsAdmin: React.FC = () => {
       <Modal
         title="Edit Report"
         open={isEditModalOpen}
+        centered
+        className="client-report-upload-modal"
         onCancel={() => {
           setIsEditModalOpen(false);
           setSelectedReport(null);
@@ -761,7 +793,8 @@ const ClientReportsAdmin: React.FC = () => {
           setSelectedCustomerForForm(undefined);
         }}
         footer={null}
-        width={600}
+        width={1100}
+        bodyStyle={{ overflow: "hidden" }}
       >
         <Form
           form={editForm}
@@ -825,7 +858,7 @@ const ClientReportsAdmin: React.FC = () => {
                             size="small"
                             type="link"
                             icon={<EyeOutlined />}
-                            onClick={() => window.open(`${backendURI}${selectedReport.filePath}`, "_blank")}
+                            onClick={() => window.open(`${backendURI}/client-reports/${selectedReport.id}/download`, "_blank")}
                           >
                             View
                           </Button>
@@ -938,7 +971,7 @@ const ClientReportsAdmin: React.FC = () => {
                             size="small"
                             type="link"
                             icon={<EyeOutlined />}
-                            onClick={() => window.open(`${backendURI}${file.filePath}`, "_blank")}
+                            onClick={() => window.open(`${backendURI}/client-reports/${selectedReport.id}/files/${file.id}/download`, "_blank")}
                           >
                             View
                           </Button>
@@ -1052,42 +1085,47 @@ const ClientReportsAdmin: React.FC = () => {
             </div>
           )}
 
-          <Form.Item
-            name="projectId"
-            label="Project"
-          >
-            <Select 
-              placeholder="Select project (optional)" 
-              allowClear
-              showSearch
-              filterOption={(input, option) =>
-                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
-              }
-            >
-              {projectsForCustomer.map((project) => (
-                <Option key={project.id} value={project.id}>
-                  {project.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="documentTypeId" label="Document Type">
-            <Select 
-              placeholder="Select document type (optional)" 
-              allowClear
-              showSearch
-              filterOption={(input, option) =>
-                (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
-              }
-            >
-              {(documentTypesForCustomer ?? allDocumentTypes)?.map((type: any) => (
-                <Option key={type.id} value={type.id}>
-                  {type.name} {type.isGlobal && "(Global)"}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="projectId"
+                label="Project"
+              >
+                <Select 
+                  placeholder="Select project (optional)" 
+                  allowClear
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {projectsForCustomer.map((project) => (
+                    <Option key={project.id} value={project.id}>
+                      {project.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="documentTypeId" label="Document Type">
+                <Select 
+                  placeholder="Select document type (optional)" 
+                  allowClear
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {(documentTypesForCustomer ?? allDocumentTypes)?.map((type: any) => (
+                    <Option key={type.id} value={type.id}>
+                      {type.name} {type.isGlobal && "(Global)"}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item name="fiscalYear" label="Fiscal Year">
             <Select

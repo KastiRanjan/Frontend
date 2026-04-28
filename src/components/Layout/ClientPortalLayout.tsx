@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Layout, Menu, Button, Typography, Space, Avatar } from "antd";
 import {
   DashboardOutlined,
+  LockOutlined,
   ProjectOutlined,
   BankOutlined,
   FileOutlined,
@@ -22,6 +23,7 @@ const ClientPortalLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { clientUser, logout } = useClientAuth();
+  const isDownloadLocked = !!clientUser?.isDownloadDisabled;
 
   const sidebarMenuItems: MenuProps["items"] = [
     {
@@ -60,7 +62,7 @@ const ClientPortalLayout: React.FC = () => {
   };
 
   return (
-    <Layout className="min-h-screen">
+    <Layout className="min-h-screen relative">
       {/* Header */}
       <Header
         className="flex items-center justify-between px-4"
@@ -105,44 +107,63 @@ const ClientPortalLayout: React.FC = () => {
         </Space>
       </Header>
 
-      <Layout>
-        {/* Sidebar */}
-        <Sider
-          trigger={null}
-          collapsible
-          collapsed={collapsed}
-          width={240}
-          theme="light"
-          className="border-r border-gray-100"
-          style={{
-            height: "calc(100vh - 64px)",
-            position: "sticky",
-            top: 64,
-            left: 0
-          }}
-        >
-          <Menu
-            mode="inline"
-            selectedKeys={[getSelectedKey()]}
-            items={sidebarMenuItems}
-            onClick={handleMenuClick}
-            className="h-full border-r-0 pt-2"
-            style={{ borderRight: "none" }}
-          />
-        </Sider>
+      <div className="relative flex-1 min-h-0">
+        <Layout>
+          {/* Sidebar */}
+          <Sider
+            trigger={null}
+            collapsible
+            collapsed={collapsed}
+            width={240}
+            theme="light"
+            className="border-r border-gray-100"
+            style={{
+              height: "calc(100vh - 64px)",
+              position: "sticky",
+              top: 64,
+              left: 0
+            }}
+          >
+            <Menu
+              mode="inline"
+              selectedKeys={[getSelectedKey()]}
+              items={sidebarMenuItems}
+              onClick={handleMenuClick}
+              className="h-full border-r-0 pt-2"
+              style={{ borderRight: "none" }}
+            />
+          </Sider>
 
-        {/* Main Content */}
-        <Content
-          className="p-6"
-          style={{
-            height: "calc(100vh - 64px)",
-            overflow: "auto",
-            background: "linear-gradient(#ffffff, #f5f5f5 28%)"
-          }}
-        >
-          <Outlet />
-        </Content>
-      </Layout>
+          {/* Main Content */}
+          <Content
+            className="p-6 relative"
+            style={{
+              height: "calc(100vh - 64px)",
+              overflow: "auto",
+              background: "linear-gradient(#ffffff, #f5f5f5 28%)"
+            }}
+          >
+            <Outlet />
+          </Content>
+        </Layout>
+
+        {isDownloadLocked && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/75 backdrop-blur-sm px-4">
+            <div className="max-w-md rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-2xl">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                <LockOutlined className="text-3xl" />
+              </div>
+              <Typography.Title level={4} className="!mb-2">
+                Downloads are disabled on this account
+              </Typography.Title>
+              <Typography.Paragraph className="!mb-0 text-gray-600">
+                This client portal is locked for downloads. Please contact the account administrator
+                if you need download access restored.
+              </Typography.Paragraph>
+            </div>
+          </div>
+        )}
+      </div>
     </Layout>
   );
 };

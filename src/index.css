@@ -37,3 +37,16 @@
     margin-top: 2px;
     margin-bottom: 2px;
 }
+
+.client-report-upload-form .ant-form-item {
+    margin-bottom: 12px;
+}
+
+.client-report-upload-modal .ant-modal-body {
+    overflow: hidden;
+}
+
+.client-report-upload-modal .ant-upload-list-item-name {
+    white-space: normal;
+    word-break: break-word;
+}

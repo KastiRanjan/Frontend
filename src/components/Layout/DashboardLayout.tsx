@@ -10,13 +10,17 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <Layout >
+    <Layout className="h-screen overflow-hidden">
       <Navbar collapsed={collapsed} setCollapsed={setCollapsed} />
-      <Layout hasSider className="h-screen overflow-hidden " style={{ background: 'linear-gradient(#ffffff, #f5f5f5 28%)' }}>
+      <Layout
+        hasSider
+        className="flex-1 min-h-0 overflow-hidden"
+        style={{ background: "linear-gradient(#ffffff, #f5f5f5 28%)" }}
+      >
         <Sidebar collapsed={collapsed} menuItems={MenuItems()} />
         <Content
-          className="p-2 relative"
-          style={{ height: "calc(100vh - 64px)", overflow: "auto" }}
+          className="p-2 relative flex-1 min-h-0"
+          style={{ overflowY: "auto", overflowX: "hidden" }}
         >
           {children}
         </Content>
