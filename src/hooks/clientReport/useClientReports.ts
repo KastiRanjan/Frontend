@@ -69,6 +69,9 @@ export const useCreateClientReport = () => {
     mutationFn: (payload: CreateClientReportPayload) => createClientReport(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -82,6 +85,9 @@ export const useCreateMultipleClientReports = () => {
       createMultipleClientReports(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -96,6 +102,10 @@ export const useUpdateClientReport = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
       queryClient.invalidateQueries({ queryKey: ["client-report", id] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-report", id] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -110,6 +120,10 @@ export const useUpdateReportAccess = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
       queryClient.invalidateQueries({ queryKey: ["client-report", id] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-report", id] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -123,6 +137,9 @@ export const useBulkUpdateReportAccess = () => {
       bulkUpdateReportAccess(ids, accessStatus),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -136,6 +153,10 @@ export const useReplaceReportFile = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
       queryClient.invalidateQueries({ queryKey: ["client-report", id] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-report", id] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -148,6 +169,9 @@ export const useDeleteClientReport = () => {
     mutationFn: (id: string) => deleteClientReport(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -161,6 +185,10 @@ export const useAddFilesToReport = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
       queryClient.invalidateQueries({ queryKey: ["client-report", id] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-report", id] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -175,6 +203,10 @@ export const useRemoveFileFromReport = () => {
     onSuccess: (_, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
       queryClient.invalidateQueries({ queryKey: ["client-report", reportId] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-report", reportId] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };
@@ -189,6 +221,10 @@ export const useUpdateReportFileDisplayName = () => {
     onSuccess: (_, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: ["client-reports"] });
       queryClient.invalidateQueries({ queryKey: ["client-report", reportId] });
+      queryClient.invalidateQueries({ queryKey: ["staff-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-reports"] });
+      queryClient.refetchQueries({ queryKey: ["client-report", reportId] });
+      queryClient.refetchQueries({ queryKey: ["staff-reports"] });
     }
   });
 };

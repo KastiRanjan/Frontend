@@ -36,6 +36,7 @@ import {
 import { useDocumentTypesForCustomer } from "@/hooks/clientReport/useClientReportDocumentTypes";
 import { ClientReportType, ReportAccessStatus } from "@/types/clientReport";
 import { formatDistanceToNow } from "date-fns";
+import { formatNepaliFiscalYear } from "@/utils/fiscalYear";
 
 const { Title, Text } = Typography;
 
@@ -168,7 +169,7 @@ const ClientDashboard: React.FC = () => {
       title: "Fiscal Year",
       dataIndex: "fiscalYear",
       key: "fiscalYear",
-      render: (year: number) => year || "-"
+      render: (year: number) => formatNepaliFiscalYear(year)
     },
     {
       title: "Status",

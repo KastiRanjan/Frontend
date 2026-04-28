@@ -38,6 +38,7 @@ import { ClientReportType, ClientReportFileType, ReportAccessStatus } from "@/ty
 import { ClientPortalProject } from "@/types/project";
 import { formatDistanceToNow } from "date-fns";
 import { useSearchParams } from "react-router-dom";
+import { formatNepaliFiscalYear } from "@/utils/fiscalYear";
 
 const { Text } = Typography;
 
@@ -305,7 +306,7 @@ const ClientReports: React.FC = () => {
       dataIndex: "fiscalYear",
       key: "fiscalYear",
       width: "6%",
-      render: (fy: number) => fy ? `FY ${fy}` : "-"
+      render: (fy: number) => formatNepaliFiscalYear(fy)
     },
     {
       title: "Status",

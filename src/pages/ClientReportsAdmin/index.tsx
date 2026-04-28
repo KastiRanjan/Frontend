@@ -55,6 +55,10 @@ import {
   ReportAccessStatus,
   UpdateReportAccessPayload
 } from "@/types/clientReport";
+import {
+  formatNepaliFiscalYear,
+  getNepaliFiscalYearOptions
+} from "@/utils/fiscalYear";
 import { formatDistanceToNow, format } from "date-fns";
 
 const { Title, Text } = Typography;
@@ -113,6 +117,7 @@ const ClientReportsAdmin: React.FC = () => {
   const { mutate: addFiles, isPending: addingFiles } = useAddFilesToReport();
   const { mutate: removeFile } = useRemoveFileFromReport();
   const { mutate: updateFileDisplayName } = useUpdateReportFileDisplayName();
+  const fiscalYearOptions = useMemo(() => getNepaliFiscalYearOptions(), []);
 
   // Fetch fresh report detail when editing (ensures files are always up-to-date)
   const { data: reportDetail } = useClientReportById(selectedReport?.id || "");
@@ -122,14 +127,14 @@ const ClientReportsAdmin: React.FC = () => {
     if (isEditModalOpen && selectedReport?.projectId) {
       editForm.setFieldValue("projectId", selectedReport.projectId);
     }
-  }, [projectsForCustomer, isEditModalOpen]);
+  }, [projectsForCustomer, isEditModalOpen, selectedReport?.projectId]);
 
   // Re-apply documentTypeId when document types finish loading (fixes auto-select in edit modal)
   useEffect(() => {
     if (isEditModalOpen && selectedReport?.documentTypeId && documentTypesForCustomer?.length) {
       editForm.setFieldValue("documentTypeId", selectedReport.documentTypeId);
     }
-  }, [documentTypesForCustomer, isEditModalOpen, selectedReport]);
+  }, [documentTypesForCustomer, isEditModalOpen, selectedReport?.documentTypeId]);
 
   // State for inline editing file display names
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
@@ -330,7 +335,7 @@ const ClientReportsAdmin: React.FC = () => {
       title: "Fiscal Year",
       dataIndex: "fiscalYear",
       key: "fiscalYear",
-      render: (year: number) => year || "-"
+      render: (year: number) => formatNepaliFiscalYear(year)
     },
     {
       title: "Access Status",
@@ -644,7 +649,17 @@ const ClientReportsAdmin: React.FC = () => {
           </Form.Item>
 
           <Form.Item name="fiscalYear" label="Fiscal Year">
-            <Input type="number" placeholder="e.g., 2080" />
+            <Select
+              placeholder="Select fiscal year"
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === "string"
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={fiscalYearOptions}
+            />
           </Form.Item>
 
           <Form.Item
@@ -1075,7 +1090,17 @@ const ClientReportsAdmin: React.FC = () => {
           </Form.Item>
 
           <Form.Item name="fiscalYear" label="Fiscal Year">
-            <Input type="number" placeholder="e.g., 2080" />
+            <Select
+              placeholder="Select fiscal year"
+              showSearch
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option?.label && typeof option.label === "string"
+                  ? option.label.toLowerCase().includes(input.toLowerCase())
+                  : false
+              }
+              options={fiscalYearOptions}
+            />
           </Form.Item>
 
           <Form.Item name="isVisible" label="Visibility">

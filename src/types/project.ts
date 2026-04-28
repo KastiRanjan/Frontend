@@ -5,7 +5,19 @@ export interface NatureOfWorkType {
     id: string;
     name: string;
     shortName: string;
+    groupId?: string | null;
+    group?: NatureOfWorkGroupType | null;
+    isActive?: boolean;
     description?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface NatureOfWorkGroupType {
+    id: string;
+    name: string;
+    description?: string;
+    rank?: number;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -16,6 +28,8 @@ export interface ProjectType {
     description: string;
     status: "active" | "suspended" | "archived" | "completed" | "signed_off";
     natureOfWork: NatureOfWorkType | string;
+    natureOfWorkGroup?: NatureOfWorkGroupType | null;
+    natureOfWorkGroupId?: string | null;
     fiscalYear: number;
     startingDate: string;
     endingDate: string;
