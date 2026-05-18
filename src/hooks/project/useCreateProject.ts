@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createProject } from "../../service/project.service";
 import { useNavigate } from "react-router-dom";
+import { invalidateProjectQueries } from "./invalidateProjectQueries";
 
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
@@ -9,10 +10,8 @@ export const useCreateProject = () => {
     mutationFn: (payload) => {
       return createProject(payload);
     },
-    onSuccess: () => {
-      // Invalidate all project-related queries to ensure fresh data everywhere
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["project"] });
+    onSuccess: (project: any) => {
+      invalidateProjectQueries(queryClient, project?.id);
       navigate("/projects");
     },
   });
