@@ -36,6 +36,19 @@ export const editProject = async ({
   return response.data;
 };
 
+export const deleteProject = async ({
+  id,
+  deleteTasks = false,
+}: {
+  id: string | number;
+  deleteTasks?: boolean;
+}) => {
+  const response = await axios.delete(`${backendURI}/projects/${id}`, {
+    params: { deleteTasks },
+  });
+  return response.data;
+};
+
 export const completeProject = async (id: string) => {
   const response = await axios.post(`${backendURI}/projects/${id}/complete`);
   return response.data;

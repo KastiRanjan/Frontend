@@ -94,6 +94,11 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   const projectLead = Form.useWatch("projectLead", form);
   const projectManager = Form.useWatch("projectManager", form);
 
+  const formatUserOptionLabel = (user: UserType) => {
+    const roleName = user.role?.name;
+    return roleName ? `${user.name} (${roleName})` : user.name;
+  };
+
   // Suggest project name when client, nature of work, or fiscal year changes
   const handleFieldChange = () => {
     setTimeout(() => {
@@ -314,7 +319,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         ?.filter((user: UserType) => user.id !== projectLead && user.id !== projectManager)
         ?.map((user: UserType) => ({
           value: user.id,
-          label: user.name,
+          label: formatUserOptionLabel(user),
         })) || [];
 
   // Filter users with role 'manager' for Project Manager field
@@ -324,7 +329,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
         ?.filter((user: UserType) => user.role?.name?.toLowerCase() === "projectmanager")
         ?.map((user: UserType) => ({
           value: user.id,
-          label: user.name,
+          label: formatUserOptionLabel(user),
         })) || [];
 
 
@@ -692,7 +697,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
                   ? []
                   : users?.results?.map((user: UserType) => ({
                       value: user.id,
-                      label: user.name,
+                      label: formatUserOptionLabel(user),
                     }))
               }
             />
@@ -926,9 +931,9 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
                       form.validateFields(['endingDateNepali']);
                     }, 50);
                   }
-                } catch (error) {
+                } catch (error: any) {
                   console.error("Error converting end date to AD:", error);
-                  alert('Error converting date: ' + error.message);
+                  alert('Error converting date: ' + (error?.message || 'Unknown error'));
                 }
               }}
             />

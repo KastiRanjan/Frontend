@@ -15,6 +15,18 @@ export const fetchTaskGroup = async (params?: { taskSuperId?: string; limit?: nu
   return response.data;
 };
 
+/**
+ * Fetch project-scoped task groups
+ * These are the project instances that should be used when creating/updating tasks
+ */
+export const fetchProjectTaskGroups = async (projectId: string) => {
+  if (!projectId) {
+    throw new Error('projectId is required');
+  }
+  const response = await axios.get(`${backendURI}/task-group-project/project/${projectId}`);
+  return response.data;
+};
+
 export const fetchTaskGroupById = async ({ id }: { id: string | undefined }) => {
   const response = await axios.get(`${backendURI}/task-group/${id}?includeTemplates=true`);
   return response.data;

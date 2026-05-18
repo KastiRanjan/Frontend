@@ -1,9 +1,10 @@
 import { useSession } from "@/context/SessionContext";
+import { useDeleteProject } from "@/hooks/project/useDeleteProject";
 import { useProject } from "@/hooks/project/useProject";
 import { ProjectType } from "@/types/project";
 import { checkPermissionForComponent } from "@/utils/permission";
 import { DownloadOutlined, EditOutlined, SearchOutlined, FilterOutlined } from "@ant-design/icons";
-import { Avatar, Button, Card, Space, Table, TableProps, Tooltip, Input, Select, DatePicker, Form, Row, Col } from "antd";
+import { Avatar, Button, Card, Space, Table, TableProps, Tooltip, Input, Select, DatePicker, Form, Row, Col, Modal, message } from "antd";
 import { useState, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import TableToolbar from "../Table/TableToolbar";
@@ -16,17 +17,19 @@ const ProjectTable = ({ showModal, status }: any) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const { data: project, isPending } = useProject({ status });
+  const deleteProjectMutation = useDeleteProject();
   const { permissions, profile } = useSession();
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [advancedFilters, setAdvancedFilters] = useState<any>({});
   const [showFilters, setShowFilters] = useState(false);
   const [sortedInfo, setSortedInfo] = useState<any>({});
+  const [selectedProjects, setSelectedProjects] = useState<ProjectType[]>([]);
   const searchInput = useRef<any>(null);
   const [form] = Form.useForm();
 
   // Determine if user is auditsenior or junior
-  const userRole = profile?.role?.name?.toLowerCase();
+  const userRole = (profile as any)?.role?.name?.toLowerCase();
   const hideCreateDelete = userRole === "auditsenior" || userRole === "auditjunior";
 
   const handleTableChange = (pagination: any, _filters: any, sorter: any) => {
@@ -190,6 +193,73 @@ const ProjectTable = ({ showModal, status }: any) => {
   const resetFilters = () => {
     form.resetFields();
     setAdvancedFilters({});
+  };
+
+  const getAssignedTaskError = (error: any) => {
+    const data = error?.response?.data;
+    const payload = data?.code ? data : data?.message?.code ? data.message : null;
+    return payload?.code === "PROJECT_HAS_ASSIGNED_TASKS" ? payload : null;
+  };
+
+  const deleteProjects = async (projectsToDelete: ProjectType[], deleteTasks = false) => {
+    for (const selectedProject of projectsToDelete) {
+      await deleteProjectMutation.mutateAsync({
+        id: selectedProject.id,
+        deleteTasks,
+      });
+    }
+    setSelectedProjects([]);
+    message.success(projectsToDelete.length === 1 ? "Project deleted" : "Projects deleted");
+  };
+
+  const showAssignedTaskDeleteModal = (projectsToDelete: ProjectType[], assignedTasks: any[]) => {
+    Modal.confirm({
+      title: "Delete project tasks and worklogs?",
+      width: 640,
+      okText: "Delete tasks and project",
+      okButtonProps: { danger: true },
+      content: (
+        <div>
+          <p>
+            This project has tasks assigned to users. Deleting the project will also delete these tasks and their worklogs.
+          </p>
+          <div style={{ maxHeight: 260, overflowY: "auto" }}>
+            {assignedTasks.map((task: any) => (
+              <div key={task.id} style={{ marginBottom: 12 }}>
+                <strong>{task.name}</strong>
+                <div style={{ color: "#666" }}>
+                  Assigned to: {task.assignees?.map((user: any) => user.role ? `${user.name} (${user.role})` : user.name).join(", ")}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+      onOk: () => deleteProjects(projectsToDelete, true),
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedProjects.length === 0) return;
+
+    Modal.confirm({
+      title: selectedProjects.length === 1 ? "Delete this project?" : `Delete ${selectedProjects.length} projects?`,
+      okText: "Delete",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await deleteProjects(selectedProjects);
+        } catch (error: any) {
+          const assignedTaskError = getAssignedTaskError(error);
+          if (assignedTaskError) {
+            showAssignedTaskDeleteModal(selectedProjects, assignedTaskError.tasks || []);
+            return Promise.resolve();
+          }
+          message.error(error?.response?.data?.message || "Failed to delete project");
+          return Promise.reject(error);
+        }
+      },
+    });
   };
 
   // Filter data based on advanced filters
@@ -473,8 +543,10 @@ const ProjectTable = ({ showModal, status }: any) => {
   };
 
   const rowSelection: TableProps<ProjectType>["rowSelection"] = {
+    type: "radio",
     onChange: (selectedRowKeys: React.Key[], selectedRows: ProjectType[]) => {
       console.log(selectedRowKeys, selectedRows);
+      setSelectedProjects(selectedRows);
     },
     getCheckboxProps: (record: ProjectType) => ({
       name: record.name,
@@ -496,7 +568,13 @@ const ProjectTable = ({ showModal, status }: any) => {
           </div>
           <Space size={10}>
             {!hideCreateDelete && (
-              <Button size="large" color="danger">
+              <Button
+                size="large"
+                danger
+                loading={deleteProjectMutation.isPending}
+                disabled={selectedProjects.length === 0}
+                onClick={handleDeleteSelected}
+              >
                 Delete
               </Button>
             )}
@@ -580,13 +658,15 @@ const ProjectTable = ({ showModal, status }: any) => {
                   <Select 
                     placeholder="Select nature of work"
                     allowClear
-                    options={Array.from(
-                      new Set(project?.map((p: any) => {
+                    options={(project?.map((p: any) => {
                         const name = typeof p.natureOfWork === 'object' ? p.natureOfWork?.name : p.natureOfWork;
                         const id = typeof p.natureOfWork === 'object' ? p.natureOfWork?.id : p.natureOfWork;
                         return { label: name, value: id };
-                      }))
-                    ).filter((item: any) => item.label && item.value)}
+                      }) || [])
+                        .filter((item: any) => item.label && item.value)
+                        .filter((item: any, index: number, self: any[]) =>
+                          index === self.findIndex((t: any) => t.value === item.value)
+                        )}
                   />
                 </Form.Item>
               </Col>

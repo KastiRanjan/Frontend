@@ -1,6 +1,7 @@
 import { useCreateTask } from "@/hooks/task/useCreateTask";
 import { useEditTask } from "@/hooks/task/useEditTask";
 import { useTaskGroup } from "@/hooks/taskGroup/useTaskGroup";
+import { useProjectTaskGroups } from "@/hooks/taskGroup/useProjectTaskGroups";
 import { useProject } from "@/hooks/project/useProject";
 import { Button, Col, DatePicker, Divider, Form, Row, message, InputNumber } from "antd";
 import FormInputWrapper from "../FormInputWrapper";
@@ -29,10 +30,13 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
   const { id: paramId } = useParams();
   const { data: projects } = useProject({ status: "active" });
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(editTaskData?.groupId || null);
+  const projectIdToUse = projectId || paramId;
+  
+  // Fetch project-scoped task groups instead of template groups
+  const { data: projectTaskGroups = [] } = useProjectTaskGroups(projectIdToUse);
 
   const isEditing = !!editTaskData;
   const isPending = isCreating || isUpdating;
-  const projectIdToUse = projectId || paramId;
 
   useEffect(() => {
     if (isEditing && editTaskData) {
@@ -54,23 +58,25 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
       form.setFieldsValue(initialData);
       setSelectedGroupId(groupId || null);
       setTaskType(editTaskData.taskType || "story");
-      // Set group name in dropdown if not present in options
-      if (groupId && groupName && group && !group.some((g: any) => g.id === groupId)) {
-        group.push({ id: groupId, name: groupName });
+      
+      // Set group name in dropdown if not present in project groups options
+      if (groupId && groupName && projectTaskGroups && !projectTaskGroups.some((g: any) => g.id === groupId)) {
+        projectTaskGroups.push({ id: groupId, name: groupName });
       }
     } else {
       form.resetFields();
       setTaskType("story");
     }
-  }, [editTaskData, form, isEditing, group]);
+  }, [editTaskData, form, isEditing, projectTaskGroups]);
   console.log("Edit Task Data:", editTaskData);
+  console.log("Project Task Groups:", projectTaskGroups);
 
   // Reset parentTaskId when taskType changes to 'story'
   useEffect(() => {
     if (taskType === "story") {
       form.setFieldsValue({ parentTaskId: undefined });
     }
-  }, [taskType]);
+  }, [taskType, form]);
 
   const onFinish = (values: any) => {
     const taskData = {
@@ -124,7 +130,7 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
   let filteredParentTasks =
     tasks?.filter((task: any) => {
       const isStory = task.taskType === 'story';
-      const matchesGroup = !selectedGroupId || task.groupId === selectedGroupId;
+      const matchesGroup = !selectedGroupId || task.groupId === selectedGroupId || task.groupProject?.id === selectedGroupId;
       const notCompleted = task.status !== 'done';
       return isStory && matchesGroup && notCompleted;
     }) || [];
@@ -152,6 +158,11 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
       form.setFieldsValue({ parentTaskId: undefined });
     }
   };
+
+  // Use project-scoped task groups if available, fallback to template groups
+  const groupOptions = projectTaskGroups && projectTaskGroups.length > 0
+    ? projectTaskGroups.map((g: any) => ({ value: g.id, label: g.name }))
+    : group?.map((g: any) => ({ value: g.id, label: g.name })) || [];
 
   return (
     <Form form={form} layout="vertical" onFinish={onFinish}>
@@ -194,7 +205,7 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             id="group"
             name="group"
             label="Group"
-            options={group?.map((g: any) => ({ value: g.id, label: g.name })) || []}
+            options={groupOptions}
             changeHandler={handleGroupChange}
           />
         </Col>
