@@ -998,7 +998,13 @@ const ClientReportsAdmin: React.FC = () => {
                             {
                               onSuccess: (updatedReport) => {
                                 message.success("File removed");
-                                setSelectedReport(updatedReport);
+                                if (updatedReport) {
+                                  setSelectedReport(updatedReport);
+                                } else {
+                                  setIsEditModalOpen(false);
+                                  setSelectedReport(null);
+                                  editForm.resetFields();
+                                }
                               },
                               onError: () => message.error("Failed to remove file")
                             }
