@@ -18,13 +18,31 @@ interface NoticeBoardFormProps {
   onSuccess?: () => void;
 }
 
+const getEmailFailureMessage = (response: any) => {
+  if (response?.message) {
+    return response.message;
+  }
+
+  const failedRecipients = response?.emailDelivery?.failedRecipients || response?.emailFailedRecipients || [];
+  if (!failedRecipients.length) {
+    return null;
+  }
+
+  const failedUsers = failedRecipients
+    .map((user: any) => `${user.name || user.email} (${user.email})`)
+    .join(", ");
+
+  return `Notice was saved, but email failed for: ${failedUsers}`;
+};
+
 const NoticeBoardForm = ({ id, onSuccess }: NoticeBoardFormProps) => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [isEditMode, setIsEditMode] = useState<boolean>(!!id);
+  const [isEditMode] = useState<boolean>(!!id);
   const [sendToAll, setSendToAll] = useState<boolean>(false);
   const [roles, setRoles] = useState<any[]>([]);
+  const sendEmail = Form.useWatch("sendEmail", form);
   
   const { mutateAsync: createNoticeBoard, isPending: isCreating } = useCreateNoticeBoard();
   const { mutateAsync: updateNoticeBoard, isPending: isUpdating } = useUpdateNoticeBoard();
@@ -111,11 +129,21 @@ const NoticeBoardForm = ({ id, onSuccess }: NoticeBoardFormProps) => {
       console.log("Send email value after conversion:", sendEmail, typeof sendEmail);
       
       if (isEditMode && id) {
-        await updateNoticeBoard({ id, payload });
-        message.success("Notice updated successfully");
+        const response = await updateNoticeBoard({ id, payload });
+        const emailFailureMessage = getEmailFailureMessage(response);
+        if (emailFailureMessage) {
+          message.warning(emailFailureMessage, 8);
+        } else {
+          message.success("Notice updated successfully");
+        }
       } else {
-        await createNoticeBoard(payload);
-        message.success("Notice created successfully");
+        const response = await createNoticeBoard(payload);
+        const emailFailureMessage = getEmailFailureMessage(response);
+        if (emailFailureMessage) {
+          message.warning(emailFailureMessage, 8);
+        } else {
+          message.success("Notice created successfully");
+        }
       }
       
       if (onSuccess) {
@@ -191,12 +219,12 @@ const NoticeBoardForm = ({ id, onSuccess }: NoticeBoardFormProps) => {
 
         <Divider orientation="left">Notice Distribution</Divider>
 
-        <Form.Item name="sendToAll" valuePropName="checked">
-          <Space>
+        <Space>
+          <Form.Item name="sendToAll" valuePropName="checked" style={{ marginBottom: 0 }}>
             <Switch checked={sendToAll} onChange={handleSendToAllChange} />
-            <span>Send to all users</span>
-          </Space>
-        </Form.Item>
+          </Form.Item>
+          <span>Send to all users</span>
+        </Space>
 
         {!sendToAll && (
           <>
@@ -239,19 +267,20 @@ const NoticeBoardForm = ({ id, onSuccess }: NoticeBoardFormProps) => {
 
         <Divider orientation="left">Notification Options</Divider>
 
-        <Form.Item name="sendEmail" valuePropName="checked">
-          <Space>
+        <Space>
+          <Form.Item name="sendEmail" valuePropName="checked" style={{ marginBottom: 0 }}>
             <Switch 
-              checked={form.getFieldValue('sendEmail')}
+              checked={!!sendEmail}
               onChange={(checked) => {
                 form.setFieldsValue({ sendEmail: checked });
-                console.log("Email notification switch changed to:", checked);
               }}
             />
-            <span>Send email notification to selected users</span>
-            <MailOutlined />
-          </Space>
-        </Form.Item>
+          </Form.Item>
+          <span>
+            Send email notification to {sendToAll ? "all users" : "selected users"}
+          </span>
+          <MailOutlined />
+        </Space>
 
         <Form.Item>
           <Space>

@@ -996,13 +996,9 @@ const ClientReportsAdmin: React.FC = () => {
                           removeFile(
                             { reportId: selectedReport.id, fileId: file.id },
                             {
-                              onSuccess: () => {
+                              onSuccess: (updatedReport) => {
                                 message.success("File removed");
-                                // Update selectedReport locally
-                                setSelectedReport({
-                                  ...selectedReport,
-                                  files: selectedReport.files?.filter(f => f.id !== file.id)
-                                });
+                                setSelectedReport(updatedReport);
                               },
                               onError: () => message.error("Failed to remove file")
                             }

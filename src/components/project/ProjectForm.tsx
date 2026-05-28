@@ -95,9 +95,19 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   const projectManager = Form.useWatch("projectManager", form);
 
   const formatUserOptionLabel = (user: UserType) => {
-    const roleName = user.role?.name;
+    const roleName = (user.role as any)?.displayName || user.role?.name;
     return roleName ? `${user.name} (${roleName})` : user.name;
   };
+
+  const projectManagerRoleNames = new Set([
+    "projectmanager",
+    "administrator",
+    "superadmin",
+    "superuser",
+  ]);
+
+  const normalizeRoleName = (roleName?: string) =>
+    roleName?.toLowerCase().replace(/[\s_-]/g, "") || "";
 
   // Suggest project name when client, nature of work, or fiscal year changes
   const handleFieldChange = () => {
@@ -322,11 +332,11 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           label: formatUserOptionLabel(user),
         })) || [];
 
-  // Filter users with role 'manager' for Project Manager field
+  // Filter users eligible for the Project Manager field
   const managerOptions = isPendingUser
     ? []
     : users?.results
-        ?.filter((user: UserType) => user.role?.name?.toLowerCase() === "projectmanager")
+        ?.filter((user: UserType) => projectManagerRoleNames.has(normalizeRoleName(user.role?.name)))
         ?.map((user: UserType) => ({
           value: user.id,
           label: formatUserOptionLabel(user),

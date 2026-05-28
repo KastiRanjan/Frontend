@@ -189,9 +189,20 @@ const NoticeBoardAdmin = () => {
           />
         ) : text;
         
+        const failedRecipients = record.emailFailedRecipients || [];
+
         return (
           <Space>
             <Link to={`/notice-board/edit/${record.id}`}>{displayText}</Link>
+            {failedRecipients.length > 0 && (
+              <Tooltip
+                title={`Email failed for: ${failedRecipients
+                  .map((user: any) => `${user.name || user.email} (${user.email})`)
+                  .join(', ')}`}
+              >
+                <MailOutlined style={{ color: '#faad14' }} />
+              </Tooltip>
+            )}
             {record.emailSent && (
               <Tooltip title="Email sent">
                 <MailOutlined style={{ color: '#1890ff' }} />
