@@ -133,7 +133,7 @@ export const addFilesToReport = async (
 export const removeFileFromReport = async (
   reportId: string,
   fileId: string
-): Promise<ClientReportType | null> => {
+): Promise<ClientReportType> => {
   const response = await axios.delete(`${backendURI}/client-reports/${reportId}/files/${fileId}`);
   return response.data;
 };
