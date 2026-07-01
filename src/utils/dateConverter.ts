@@ -42,7 +42,14 @@ export class DualDateConverter {
    */
   static nepaliToGregorian(nepaliDate: NepaliDate): Dayjs {
     try {
-      return dayjs(nepaliDate.toJSDate());
+      if (typeof (nepaliDate as any).toJSDate === 'function') {
+        return dayjs((nepaliDate as any).toJSDate());
+      }
+      if (typeof (nepaliDate as any).getEnglishDate === 'function') {
+        return dayjs((nepaliDate as any).getEnglishDate());
+      }
+      // If neither exists, fallback
+      throw new Error("No method to convert to JS Date");
     } catch (error) {
       console.warn('Failed to convert Nepali to Gregorian date:', error);
       return dayjs(); // Return current date as fallback

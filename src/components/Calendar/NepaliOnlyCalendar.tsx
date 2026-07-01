@@ -17,6 +17,7 @@ import {
   FileTextOutlined
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
+import NepaliDate from 'nepali-date';
 import { DualDateConverter } from '../../utils/dateConverter';
 import { useHolidays } from '../../hooks/holiday/useHoliday';
 import { useCalendarEvents } from '../../hooks/calendar/useCalendar';
@@ -71,35 +72,89 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   // Get holidays for current month from real data
   const currentMonthHolidays = useMemo(() => {
     if (!holidayData) return [];
-    return holidayData.filter((holiday: HolidayType) => 
-      dayjs(holiday.date).isSame(currentViewDate, 'month')
-    );
-  }, [holidayData, currentViewDate]);
+    return holidayData.filter((holiday: HolidayType) => {
+      const holidayNepali = DualDateConverter.gregorianToNepali(dayjs(holiday.date));
+      return holidayNepali.getYear() === currentNepaliDate.getYear() && 
+             holidayNepali.getMonth() === currentNepaliDate.getMonth();
+    });
+  }, [holidayData, currentNepaliDate]);
 
   // Generate calendar days in Nepali format
   const calendarDays = useMemo(() => {
-    const startOfMonth = currentViewDate.startOf('month');
-    const endOfMonth = currentViewDate.endOf('month');
-    const startDate = startOfMonth.startOf('week');
-    const endDate = endOfMonth.endOf('week');
+    const nepaliYear = currentNepaliDate.getYear();
+    const nepaliMonth = currentNepaliDate.getMonth();
     
+    // 1st day of the Nepali month
+    const firstDayOfNepaliMonth = new NepaliDate(nepaliYear, nepaliMonth, 1);
+    
+    // Determine how many days are in this Nepali month dynamically
+    let daysInMonth = 29;
+    while(true) {
+      try {
+        const testDate = new NepaliDate(nepaliYear, nepaliMonth, daysInMonth + 1);
+        if (testDate.getMonth() !== nepaliMonth) break;
+        daysInMonth++;
+      } catch (e) {
+        break; // if invalid date is thrown
+      }
+    }
+    
+    const startDayOfWeek = firstDayOfNepaliMonth.getDay(); // 0 for Sunday
     const days: Dayjs[] = [];
-    let currentDate = startDate;
     
-    while (currentDate.isBefore(endDate) || currentDate.isSame(endDate)) {
-      days.push(currentDate);
-      currentDate = currentDate.add(1, 'day');
+    // We get the exact gregorian start date for the 1st of the nepali month
+    // Set to noon (12:00) to avoid any timezone shifts when adding/subtracting days
+    const gregorianFirstDay = DualDateConverter.nepaliToGregorian(firstDayOfNepaliMonth).hour(12).minute(0).second(0).millisecond(0);
+    
+    // Add padded days from the previous month
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      days.push(gregorianFirstDay.subtract(i + 1, 'day'));
+    }
+    
+    // Add all days of the current Nepali month
+    for (let i = 0; i < daysInMonth; i++) {
+      days.push(gregorianFirstDay.add(i, 'day'));
+    }
+    
+    // Add padded days for the next month to fill the grid up to a multiple of 7
+    const remainder = days.length % 7;
+    if (remainder !== 0) {
+      const daysToAdd = 7 - remainder;
+      const lastDayInGrid = days[days.length - 1];
+      for (let i = 1; i <= daysToAdd; i++) {
+        days.push(lastDayInGrid.add(i, 'day'));
+      }
     }
     
     return days;
-  }, [currentViewDate]);
+  }, [currentNepaliDate]);
 
   const goToPreviousMonth = () => {
-    setCurrentViewDate(prev => prev.subtract(1, 'month'));
+    setCurrentViewDate(prev => {
+       const nepali = DualDateConverter.gregorianToNepali(prev);
+       let y = nepali.getYear();
+       let m = nepali.getMonth() - 1;
+       if (m < 0) {
+          m = 11;
+          y -= 1;
+       }
+       const newNepali = new NepaliDate(y, m, 1);
+       return DualDateConverter.nepaliToGregorian(newNepali).hour(12).minute(0);
+    });
   };
 
   const goToNextMonth = () => {
-    setCurrentViewDate(prev => prev.add(1, 'month'));
+    setCurrentViewDate(prev => {
+       const nepali = DualDateConverter.gregorianToNepali(prev);
+       let y = nepali.getYear();
+       let m = nepali.getMonth() + 1;
+       if (m > 11) {
+          m = 0;
+          y += 1;
+       }
+       const newNepali = new NepaliDate(y, m, 1);
+       return DualDateConverter.nepaliToGregorian(newNepali).hour(12).minute(0);
+    });
   };
 
   const goToToday = () => {
@@ -139,7 +194,11 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   };
 
   const isToday = (date: Dayjs) => date.isSame(today, 'day');
-  const isCurrentMonth = (date: Dayjs) => date.isSame(currentViewDate, 'month');
+  const isCurrentMonth = (date: Dayjs) => {
+    const nepali = DualDateConverter.gregorianToNepali(date);
+    return nepali.getYear() === currentNepaliDate.getYear() && 
+           nepali.getMonth() === currentNepaliDate.getMonth();
+  };
   const isWeekend = (date: Dayjs) => date.day() === 6; // Saturday is weekend in Nepal
 
   const renderDateCell = (date: Dayjs) => {
