@@ -5,6 +5,7 @@ import { EditOutlined, ArrowLeftOutlined, PhoneOutlined, MailOutlined, GlobalOut
 import { useClientById } from '@/hooks/client/useClientById';
 import PageTitle from '@/components/PageTitle';
 import PortalCredentialsForm from '@/components/client/portalcredentialsform';
+import ClientProjects from '@/components/client/ClientProjects';
 import moment from 'moment';
 import { formatBusinessStatus } from '@/utils/formatUtils';
 
@@ -41,12 +42,20 @@ const ClientView: React.FC = () => {
     return <div>Client not found</div>;
   }
 
-  const formatLegalStatus = (status: string) => {
-    return status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const formatLegalStatus = (status?: any) => {
+    if (!status) return '-';
+    if (typeof status === 'object' && status.name) {
+      return status.name;
+    }
+    if (typeof status === 'string') {
+      return status.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+    return String(status);
   };
   
-  const getStatusColor = (status: string) => {
-    switch(status) {
+  const getStatusColor = (status?: any) => {
+    if (typeof status !== 'string') return 'default';
+    switch(status.toLowerCase()) {
       case 'active': return 'green';
       case 'suspended': return 'orange';
       case 'archive': return 'red';
@@ -82,14 +91,14 @@ const ClientView: React.FC = () => {
                 size={64} 
                 style={{ backgroundColor: '#1890ff', marginRight: 16 }}
               >
-                {client.name.charAt(0).toUpperCase()}
+                {typeof client.name === 'string' ? client.name.charAt(0).toUpperCase() : 'C'}
               </Avatar>
               <div>
                 <Title level={3} style={{ margin: 0 }}>{client.name}</Title>
                 {client.shortName && <Text type="secondary">{client.shortName}</Text>}
                 <div style={{ marginTop: 8 }}>
                   <Tag color={getStatusColor(client.status)}>
-                    {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+                    {typeof client.status === 'string' ? client.status.charAt(0).toUpperCase() + client.status.slice(1) : 'Unknown'}
                   </Tag>
                 </div>
               </div>
@@ -255,6 +264,10 @@ const ClientView: React.FC = () => {
 
           <TabPane tab="Portal Credentials" key="credentials">
             <PortalCredentialsForm clientId={id!} readOnly={true} />
+          </TabPane>
+
+          <TabPane tab="Projects" key="projects">
+            <ClientProjects clientId={id!} />
           </TabPane>
         </Tabs>
       </Card>

@@ -9,6 +9,7 @@ import { antTheme } from "./theme";
 import { useTrackUserActivity } from "./utils/userActivityTracker";
 import { isClientPortalDomain, isClientOnlyRoute } from "./utils/subdomainConfig";
 import "react-quill/dist/quill.snow.css";
+import { useDynamicTitle } from "./hooks/useDynamicTitle";
 
 const AppContent: React.FC = () => {
   const routes = useRoutes(Router);
@@ -17,6 +18,9 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Update document title based on route
+  useDynamicTitle();
+
   // Track user activity if authenticated
   useTrackUserActivity();
 

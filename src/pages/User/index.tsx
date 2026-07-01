@@ -20,9 +20,9 @@ const User: React.FC = () => {
   }, []);
   return (
     <>
-      <PageTitle
+      {/* <PageTitle
         title="Users"
-      />
+      /> */}
       <Tabs
         defaultActiveKey="1"
         items={[

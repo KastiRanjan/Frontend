@@ -38,9 +38,11 @@ const ProjectPage: React.FC = () => {
             children: <ProjectTable showModal={showModal} status="active" />,
           },
           {
-            label: `Suspended`,
+            label: `Completed`,
             key: "2",
-            children: <ProjectTable showModal={showModal} status="suspended" />,
+            children: (
+              <ProjectTable showModal={showModal} status="completed" />
+            ),
           },
           {
             label: `Signed Off`,
@@ -50,20 +52,15 @@ const ProjectPage: React.FC = () => {
             ),
           },
           {
-              label: `Completed`,
-              key: "4",
-              children: (
-                <ProjectTable showModal={showModal} status="completed" />
-              ),
+            label: `Suspended`,
+            key: "4",
+            children: <ProjectTable showModal={showModal} status="suspended" />,
           },
           {
             label: `Archived`,
             key: "5",
-            children: (
-              <ProjectTable showModal={showModal} status="archived" />
-            ),
-            },
-
+            children: <ProjectTable showModal={showModal} status="archive" />,
+          },
         ]}
       />
 

@@ -22,14 +22,14 @@ const ClientPage: React.FC = () => {
 
   return (
     <>
-      <PageTitle
+      {/* <PageTitle
         title="Clients"
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             Create
           </Button>
         }
-      />
+      /> */}
 
       <Tabs activeKey={activeKey} onChange={handleTabChange}>
         <TabPane tab="Active" key="active">
