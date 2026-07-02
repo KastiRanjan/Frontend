@@ -5,6 +5,7 @@ import { Button, Modal, Tabs, Select } from "antd";
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { useProject } from "@/hooks/project/useProject";
+import { useProjectTask } from "@/hooks/task/useProjectTask";
 import { useQueryClient } from "@tanstack/react-query";
 
 
@@ -21,7 +22,9 @@ const AllTask = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
   const [editTaskData, setEditTaskData] = useState<any>(undefined);
   const [modalUsers, setModalUsers] = useState<any[]>([]);
-  const [modalTasks, setModalTasks] = useState<any[]>([]);
+
+  // Fetch tasks dynamically for the selected project
+  const { data: projectTasks } = useProjectTask({ id: selectedProjectId });
 
   // Refetch projects when modal opens to ensure we have the latest data
   useEffect(() => {
@@ -36,7 +39,6 @@ const AllTask = () => {
     setSelectedProjectId(projectId);
     const project = projects?.find((p: any) => p.id?.toString() === projectId);
     setModalUsers(project?.users || []);
-    setModalTasks(project?.tasks || []);
   };
 
 
@@ -51,18 +53,16 @@ const AllTask = () => {
     setEditTaskData(undefined);
     setSelectedProjectId(undefined);
     setModalUsers([]);
-    setModalTasks([]);
     setOpen(true);
   };
 
   const handleEdit = (task: any) => {
     setEditTaskData(task);
-    const projectId = task?.project?.id?.toString();
+    const projectId = task?.project?.id?.toString() || task?.projectId?.toString();
     setSelectedProjectId(projectId);
     // Find the project and set users/tasks for the modal
     const project = projects?.find((p: any) => p.id?.toString() === projectId);
     setModalUsers(project?.users || []);
-    setModalTasks(project?.tasks || []);
     setOpen(true);
   };
 
@@ -118,7 +118,7 @@ const AllTask = () => {
         )}
         <TaskForm
           users={modalUsers}
-          tasks={modalTasks}
+          tasks={projectTasks || []}
           editTaskData={editTaskData}
           handleCancel={() => setOpen(false)}
           projectId={selectedProjectId}

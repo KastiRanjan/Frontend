@@ -14,7 +14,6 @@ const Clock = () => {
   const { mutate: updateAttendance, isPending: updatePending } = useUpdateAttendence();
 
   const roleName = (profile as any)?.role?.name?.toLowerCase() || '';
-  const isSuperAdmin = roleName === 'superuser' || roleName === 'admin' || roleName.includes('admin') || roleName.includes('super');
   const isClockedIn = data?.length > 0 ? true : false;
   const isClockedOut = isClockedIn && !!data?.[0]?.clockOut;
   const [clockInRemark, setClockInRemark] = useState<string>("");
@@ -79,9 +78,6 @@ const Clock = () => {
     // Remove timer functionality as it's not used
   }, []);
 
-  if (isSuperAdmin) {
-    return null;
-  }
 
   const handleClockIn = () => {
     if (isProcessingClockIn || createPending) return;
