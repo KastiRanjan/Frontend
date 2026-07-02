@@ -74,16 +74,6 @@ const WorkingTimeDashboard: React.FC = () => {
 
   const { data, isLoading, error, isError } = useDashboardWorkingTime(selectedDate, period);
 
-  // Debug logging
-  console.log('WorkingTimeDashboard state:', {
-    hasData: !!data,
-    isLoading,
-    isError,
-    error,
-    selectedDate,
-    period
-  });
-
   const handleDateChange = (date: Dayjs | null) => {
     if (date) {
       setSelectedDate(date.format('YYYY-MM-DD'));

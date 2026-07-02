@@ -52,7 +52,7 @@ export const updateUserLastActive = async (userId: string, timestamp: string = n
     
     // Only log success in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('Activity tracked successfully');
+      
     }
     return true;
   } catch (error) {
@@ -83,11 +83,11 @@ export const useTrackUserActivity = (updateInterval = 5 * 60 * 1000) => {
   
   useEffect(() => {
     if (!isAuthenticated || !profile?.id) {
-      console.log('User not authenticated or no profile ID, skipping activity tracking');
+      
       return;
     }
     
-    console.log('Starting activity tracking for user:', profile.id);
+    
     let lastSyncTime = 0;
     let activityTimeout: NodeJS.Timeout;
     
@@ -99,7 +99,7 @@ export const useTrackUserActivity = (updateInterval = 5 * 60 * 1000) => {
       
       // Only sync with the server if enough time has passed since the last sync and we have a valid user ID
       if (now - lastSyncTime > updateInterval && profile?.id) {
-        console.log('Syncing activity with server for user:', profile.id);
+        
         updateUserLastActive(profile.id)
           .then(success => {
             if (success) {
@@ -115,7 +115,7 @@ export const useTrackUserActivity = (updateInterval = 5 * 60 * 1000) => {
       activityTimeout = setTimeout(() => {
         // No activity for the threshold period, user is considered inactive
         // We could trigger additional actions here if needed
-        console.log('User inactive for', INACTIVITY_THRESHOLD, 'ms');
+        
       }, INACTIVITY_THRESHOLD);
     };
     

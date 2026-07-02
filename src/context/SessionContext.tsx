@@ -43,7 +43,7 @@ export const SessionProvider = ({
 
   // On initial load, extract token from cookies and store in localStorage
   useEffect(() => {
-    console.log('SessionProvider: Initializing, extracting auth token');
+    
     extractAndStoreAuthToken();
     
     // Check both cookies and localStorage for authentication
@@ -61,23 +61,16 @@ export const SessionProvider = ({
     // Only update if state actually changed to prevent unnecessary re-renders
     setIsAuthenticated(prevAuth => {
       if (prevAuth !== newAuthState) {
-        console.log('SessionProvider: Auth state changed from', prevAuth, 'to', newAuthState);
+        
       }
       return newAuthState;
     });
     setLoading(false);
-    
-    console.log('SessionProvider: Auth state -', { 
-      isAuthByExpiry, 
-      isAuthByToken, 
-      expiresIn: cookies?.ExpiresIn,
-      hasLocalStorageToken: !!localStorage.getItem('access_token')
-    });
   }, [cookies]);
 
   useEffect(() => {
     if (error) {
-      console.log('SessionProvider: Error in profile fetch, logging out', error);
+      
       setIsAuthenticated(false);
       setLoading(false);
     }
@@ -86,7 +79,7 @@ export const SessionProvider = ({
   // Check user status and automatically log out blocked/suspended/inactive users
   useEffect(() => {
     if (profile && profile.status && ['suspended', 'inactive', 'blocked'].includes(profile.status)) {
-      console.log('SessionProvider: User status requires logout:', profile.status);
+      
       setIsAuthenticated(false);
       setLoading(false);
       
@@ -116,13 +109,13 @@ export const SessionProvider = ({
   useEffect(() => {
     if (profile && profile.id) {
       localStorage.setItem('userId', profile.id);
-      console.log('SessionProvider: Stored userId in localStorage:', profile.id);
+      
     }
   }, [profile]);
 
   // Function to manually refresh authentication state
   const refreshAuth = () => {
-    console.log('SessionProvider: Manual auth refresh triggered');
+    
     const isAuthByToken = checkIsAuthenticated();
     const currentDateTime = new Date().getTime();
     const expiresInDateTime = cookies?.ExpiresIn && !isNaN(new Date(cookies.ExpiresIn).getTime())

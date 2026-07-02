@@ -179,27 +179,38 @@ const TaskTypeSettings = () => {
                     }
                 />
             ) : (
-                <Tabs defaultActiveKey="titles">
-                    <Tabs.TabPane tab="Titles" key="titles">
-                        <TodoTaskTitleList
-                            titles={titles}
-                            loading={isTitlesLoading}
-                            onAdd={canCreateTitles ? handleAddTitle : undefined}
-                            onEdit={canEditTitles ? handleEditTitle : undefined}
-                            onDelete={canDeleteTitles ? handleDeleteTitle : undefined}
-                        />
-                    </Tabs.TabPane>
-                    <Tabs.TabPane tab="Task Types" key="taskTypes">
-                        <TaskTypeList 
-                            taskTypes={taskTypes}
-                            titles={titles}
-                            loading={isLoading}
-                            onAdd={canCreateTaskTypes ? handleAddTaskType : undefined}
-                            onEdit={canEditTaskTypes ? handleEditTaskType : undefined}
-                            onDelete={canDeleteTaskTypes ? handleDeleteTaskType : undefined}
-                        />
-                    </Tabs.TabPane>
-                </Tabs>
+                <Tabs 
+                    defaultActiveKey="titles" 
+                    items={[
+                        {
+                            key: "titles",
+                            label: "Titles",
+                            children: (
+                                <TodoTaskTitleList
+                                    titles={titles}
+                                    loading={isTitlesLoading}
+                                    onAdd={canCreateTitles ? handleAddTitle : undefined}
+                                    onEdit={canEditTitles ? handleEditTitle : undefined}
+                                    onDelete={canDeleteTitles ? handleDeleteTitle : undefined}
+                                />
+                            )
+                        },
+                        {
+                            key: "taskTypes",
+                            label: "Task Types",
+                            children: (
+                                <TaskTypeList 
+                                    taskTypes={taskTypes}
+                                    titles={titles}
+                                    loading={isLoading}
+                                    onAdd={canCreateTaskTypes ? handleAddTaskType : undefined}
+                                    onEdit={canEditTaskTypes ? handleEditTaskType : undefined}
+                                    onDelete={canDeleteTaskTypes ? handleDeleteTaskType : undefined}
+                                />
+                            )
+                        }
+                    ]}
+                />
             )}
         </Card>
     );

@@ -15,10 +15,6 @@ const Clock = () => {
 
   const roleName = (profile as any)?.role?.name?.toLowerCase() || '';
   const isSuperAdmin = roleName === 'superuser' || roleName === 'admin' || roleName.includes('admin') || roleName.includes('super');
-
-  if (isSuperAdmin) {
-    return null;
-  }
   const isClockedIn = data?.length > 0 ? true : false;
   const isClockedOut = isClockedIn && !!data?.[0]?.clockOut;
   const [clockInRemark, setClockInRemark] = useState<string>("");
@@ -32,6 +28,8 @@ const Clock = () => {
   const [isProcessingClockIn, setIsProcessingClockIn] = useState(false);
   const [isProcessingClockOut, setIsProcessingClockOut] = useState(false);
   const [isProcessingFinalClockOut, setIsProcessingFinalClockOut] = useState(false);
+
+
 
   const getLocation = () => {
     return new Promise<{ latitude: number; longitude: number; accuracy: number }>(
@@ -80,6 +78,10 @@ const Clock = () => {
   useEffect(() => {
     // Remove timer functionality as it's not used
   }, []);
+
+  if (isSuperAdmin) {
+    return null;
+  }
 
   const handleClockIn = () => {
     if (isProcessingClockIn || createPending) return;

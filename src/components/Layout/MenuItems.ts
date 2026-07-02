@@ -27,7 +27,7 @@ export interface MenuItem {
 
 export const MenuItems = (): MenuProps[] => {
   const { permissions } = useSession()
-  console.log(permissions)
+// console.log(permissions)
 
   const hasWorklogPagePermission = (permissions || []).some((perm: any) => {
     if (typeof perm !== "object") return false;
@@ -171,7 +171,11 @@ export const MenuItems = (): MenuProps[] => {
     }
     // For other items, use the original logic
     return _.some(permissions, { resource: item.resource });
+  }).map(item => {
+    // Strip custom properties that shouldn't go to DOM
+    const { visible, resource, ...rest } = item;
+    return rest;
   });
 
-  return filteredItems
+  return filteredItems;
 };

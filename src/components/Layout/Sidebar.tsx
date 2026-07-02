@@ -61,7 +61,7 @@ const Sidebar = ({
           placement="left"
           closable={false}
           onClose={() => setIsMobile(false)}
-          visible={isMobile}
+          open={isMobile}
         >
           <Menu
             onClick={handleChangePage}

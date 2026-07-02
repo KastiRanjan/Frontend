@@ -14,19 +14,12 @@ export const useDashboardWorkingTime = (date?: string, period: 'day' | 'week' | 
         perm.method?.toLowerCase() === 'get'
     );
 
-  // Debug logging
-  console.log('useDashboardWorkingTime - Permission check:', {
-    hasPermissions: !!permissions,
-    permissionsCount: permissions?.length || 0,
-    hasPermission,
-    date,
-    period
-  });
+
 
   return useQuery({
     queryKey: ['dashboard-working-time', date, period],
     queryFn: () => {
-      console.log('Fetching working time data...', { date, period });
+
       return fetchDashboardWorkingTime(date, period);
     },
     enabled: hasPermission,
