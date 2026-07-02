@@ -32,11 +32,11 @@ const typeIcons: Record<NotificationType, React.ReactNode> = {
 
 // Color mapping for notification types
 const typeColors: Record<NotificationType, string> = {
-    [NotificationType.WORKLOG]: 'blue',
-    [NotificationType.TASK]: 'green',
-    [NotificationType.NOTICEBOARD]: 'orange',
-    [NotificationType.PROJECT]: 'purple',
-    [NotificationType.GENERAL]: 'default',
+    [NotificationType.WORKLOG]: '#1890ff',
+    [NotificationType.TASK]: '#52c41a',
+    [NotificationType.NOTICEBOARD]: '#fa8c16',
+    [NotificationType.PROJECT]: '#722ed1',
+    [NotificationType.GENERAL]: '#8c8c8c',
 };
 
 // Background colors for group cards
@@ -239,41 +239,43 @@ const Notification = () => {
                             hoverable
                             onClick={() => setSelectedType(notifType)}
                             style={{
-                                background: typeBgColors[notifType],
-                                border: `2px solid`,
-                                borderColor: typeColors[notifType],
+                                background: '#fff',
+                                border: '1px solid #f0f0f0',
+                                borderLeft: `4px solid ${typeColors[notifType]}`,
                                 borderRadius: '8px',
                                 cursor: 'pointer',
                                 transition: 'all 0.3s ease',
                                 width: '100%',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                             }}
-                            bodyStyle={{ padding: '16px' }}
+                            styles={{ body: { padding: '12px 16px' } }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                <div style={{ fontSize: '32px', flexShrink: 0 }}>
+                                <div style={{ 
+                                    fontSize: '24px', 
+                                    flexShrink: 0,
+                                    width: '42px',
+                                    height: '42px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: typeBgColors[notifType],
+                                    borderRadius: '50%'
+                                }}>
                                     {typeIcons[notifType]}
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ 
-                                        fontSize: '14px', 
-                                        fontWeight: 600,
-                                        color: '#000',
-                                        marginBottom: '4px'
-                                    }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#1f2937', marginBottom: '2px' }}>
                                         {typeLabels[notifType]}
+                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                                        <span style={{ fontSize: '20px', fontWeight: 700, color: typeColors[notifType] }}>
+                                            {count}
+                                        </span>
+                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                                            new {count === 1 ? 'notification' : 'notifications'}
+                                        </span>
                                     </div>
-                                    <div style={{ 
-                                        fontSize: '24px',
-                                        fontWeight: 'bold',
-                                        color: typeColors[notifType]
-                                    }}>
-                                        {count}
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: '#666' }}>
-                                        {count === 1 ? 'notification' : 'notifications'}
-                                    </div>
-                                </div>
-                                <div style={{ flexShrink: 0 }}>
                                 </div>
                             </div>
                         </Card>
@@ -298,41 +300,57 @@ const Notification = () => {
                 }}
                 style={{ 
                     cursor: item.notification.link ? 'pointer' : 'default',
-                    padding: '12px 0'
+                    padding: '10px 12px',
+                    marginBottom: '4px',
+                    borderRadius: '8px',
+                    background: showMarkAsRead ? '#f0f7ff' : 'transparent',
+                    border: showMarkAsRead ? '1px solid #e6f4ff' : '1px solid transparent',
+                    transition: 'background 0.3s'
+                }}
+                onMouseEnter={(e) => {
+                    if (item.notification.link) {
+                        e.currentTarget.style.background = showMarkAsRead ? '#e6f4ff' : '#f5f5f5';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.background = showMarkAsRead ? '#f0f7ff' : 'transparent';
                 }}
             >
                 <List.Item.Meta
-                    avatar={<div style={{ fontSize: '20px' }}>{typeIcon}</div>}
+                    avatar={
+                        <Badge dot={showMarkAsRead} offset={[-2, 4]} color="#1890ff">
+                            <div style={{ marginTop: '4px' }}>{typeIcon}</div>
+                        </Badge>
+                    }
                     title={
-                        <div>
-                            <div style={{ marginBottom: '4px' }}>
-                                {showMarkAsRead && <Badge dot style={{ marginRight: '4px' }} />}
-                                <Tag color={typeColor} style={{ fontSize: '11px', padding: '0 6px', textTransform: 'capitalize' }}>
-                                    {typeLabels[notifType]}
-                                </Tag>
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#262626', lineHeight: '1.5' }}>
-                                {item.notification.message}
-                            </div>
+                        <div style={{ fontSize: '13px', color: '#1f2937', fontWeight: showMarkAsRead ? 600 : 500, lineHeight: '1.4' }}>
+                            {item.notification.message}
                         </div>
                     }
                     description={
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
-                            <span style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                                {calculateDays(item.createdAt)}
-                            </span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ 
+                                    fontSize: '10px', 
+                                    color: typeColor, 
+                                    background: `${typeColor}15`, 
+                                    padding: '2px 6px', 
+                                    borderRadius: '4px', 
+                                    fontWeight: 600,
+                                }}>
+                                    {typeLabels[notifType]}
+                                </span>
+                                <span style={{ fontSize: '11px', color: '#8c8c8c' }}>
+                                    {calculateDays(item.createdAt)}
+                                </span>
+                            </div>
                             {showMarkAsRead && (
-                                <button
+                                <span
                                     style={{
-                                        border: 'none',
-                                        background: '#e6f7ff',
                                         color: '#1890ff',
-                                        borderRadius: '12px',
-                                        padding: '2px 10px',
                                         fontSize: '11px',
                                         cursor: 'pointer',
-                                        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
-                                        transition: 'background 0.2s',
+                                        fontWeight: 500,
                                     }}
                                     onClick={async (e) => {
                                         e.stopPropagation();
@@ -341,8 +359,8 @@ const Notification = () => {
                                         });
                                     }}
                                 >
-                                    ✓ Mark as Read
-                                </button>
+                                    Mark as read
+                                </span>
                             )}
                         </div>
                     }

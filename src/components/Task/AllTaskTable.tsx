@@ -26,7 +26,7 @@ import { Link } from "react-router-dom";
 import Highlighter from 'react-highlight-words';
 import _ from "lodash";
 
-const AllTaskTable = ({ status, userRole, onEdit }: { status: string, userRole?: string, onEdit?: (task: TaskType) => void }) => {
+const AllTaskTable = ({ status, userRole, onEdit, externalSearchText = '' }: { status: string, userRole?: string, onEdit?: (task: TaskType) => void, externalSearchText?: string }) => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [sortedInfo, setSortedInfo] = useState<any>({ 
@@ -1470,39 +1470,27 @@ const AllTaskTable = ({ status, userRole, onEdit }: { status: string, userRole?:
             </div>
           )}
           
-          {/* Search Section */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Input.Search
-                placeholder="🔍 Search all fields (name, ID, project, type)..."
-                allowClear
-                value={globalSearchText}
-                onChange={(e) => handleGlobalSearch(e.target.value)}
-                onSearch={(value) => handleGlobalSearch(value)}
-                style={{ width: 350 }}
-                size="middle"
-              />
+          {/* Active Search Indicator */}
+          {(searchText || globalSearchText) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 16 }}>
+              <span style={{ color: '#1890ff', fontSize: '14px' }}>
+                🔍 {globalSearchText ? 'Global search' : 'Column search'}: "{searchText || globalSearchText}"
+                {globalSearchText && <span style={{ fontSize: '12px', color: '#999' }}> (auto-expanded matching parents)</span>}
+              </span>
+              <Button 
+                size="small" 
+                onClick={() => {
+                  setSearchText('');
+                  setSearchedColumn('');
+                  setGlobalSearchText('');
+                  setExpandedRowKeys([]);
+                }}
+              >
+                Clear Search
+              </Button>
             </div>
-            {(searchText || globalSearchText) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#1890ff', fontSize: '14px' }}>
-                  🔍 {globalSearchText ? 'Global search' : 'Column search'}: "{searchText || globalSearchText}"
-                  {globalSearchText && <span style={{ fontSize: '12px', color: '#999' }}> (auto-expanded matching parents)</span>}
-                </span>
-                <Button 
-                  size="small" 
-                  onClick={() => {
-                    setSearchText('');
-                    setSearchedColumn('');
-                    setGlobalSearchText('');
-                    setExpandedRowKeys([]);
-                  }}
-                >
-                  Clear Search
-                </Button>
-              </div>
-            )}
-          </div>
+          )}
+          
           <Table
             loading={isPending}
             columns={columns}

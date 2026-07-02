@@ -1,7 +1,7 @@
 
 import AllTaskTable from "@/components/Task/AllTaskTable";
 import TaskForm from "@/components/Task/TaskForm";
-import { Button, Modal, Tabs, Select } from "antd";
+import { Button, Modal, Tabs, Select, Input, Space } from "antd";
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { useProject } from "@/hooks/project/useProject";
@@ -22,6 +22,7 @@ const AllTask = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
   const [editTaskData, setEditTaskData] = useState<any>(undefined);
   const [modalUsers, setModalUsers] = useState<any[]>([]);
+  const [globalSearchText, setGlobalSearchText] = useState('');
 
   // Fetch tasks dynamically for the selected project
   const { data: projectTasks } = useProjectTask({ id: selectedProjectId });
@@ -76,25 +77,56 @@ const AllTask = () => {
   };
 
   return (
-    <div>
-      {!hideAddTask && <Button onClick={handleAdd}>Add Task</Button>}
+    <div style={{ position: 'relative' }}>
+      {/* Centered Search Bar */}
+      <div style={{ 
+        position: 'absolute', 
+        left: '50%', 
+        transform: 'translateX(-50%)', 
+        zIndex: 10,
+        top: '6px'
+      }}>
+        <Input.Search
+          placeholder="Search all fields (name, ID, project, type)..."
+          allowClear
+          onChange={(e) => setGlobalSearchText(e.target.value)}
+          onSearch={(value) => setGlobalSearchText(value)}
+          style={{ width: 400 }}
+        />
+      </div>
+
       <Tabs
         defaultActiveKey="1"
+        tabBarExtraContent={
+          !hideAddTask ? (
+            <Button 
+              onClick={handleAdd}
+              style={{ 
+                background: '#e6f7ff', 
+                color: '#1890ff', 
+                borderColor: '#91d5ff', 
+                fontWeight: 500 
+              }}
+            >
+              Add Task
+            </Button>
+          ) : null
+        }
         items={[
           {
             label: `TODO`,
             key: "1",
-            children: <AllTaskTable status={"open"} userId={userId} userRole={userRole} onEdit={handleEdit} />,
+            children: <AllTaskTable status={"open"} userId={userId} userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
           },
           {
             label: `DOING`,
             key: "2",
-            children: <AllTaskTable status={"in_progress"} userId={userId} userRole={userRole} onEdit={handleEdit} />,
+            children: <AllTaskTable status={"in_progress"} userId={userId} userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
           },
           {
             label: `COMPLETED`,
             key: "3",
-            children: <AllTaskTable status={"done"} userId={userId} userRole={userRole} onEdit={handleEdit} />,
+            children: <AllTaskTable status={"done"} userId={userId} userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
           },
         ]}
       />

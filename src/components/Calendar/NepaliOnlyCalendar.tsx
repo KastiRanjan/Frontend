@@ -333,8 +333,10 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
           </div>
         </div>
       </div>
-      <Card className="border border-gray-200 shadow-sm">
-        {/* Weekday Headers */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="lg:w-4/5 w-full">
+          <Card className="border border-gray-200 shadow-sm h-full">
+            {/* Weekday Headers */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {shortNepaliWeekdays.map((day, idx) => (
             <div key={idx} className={`text-center py-3 text-sm font-semibold ${idx === 6 ? 'text-red-600' : 'text-gray-600'} bg-gray-50 rounded`}>
@@ -348,9 +350,11 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
           {calendarDays.map(renderDateCell)}
         </div>
       </Card>
-              {/* Monthly Holidays Summary */}
-        <Card className="mb-4 border border-gray-200 shadow-sm">
-          <Title level={5} className="text-gray-800 mb-3 flex items-center">
+        </div>
+        <div className="lg:w-1/5 w-full">
+          {/* Monthly Holidays Summary */}
+          <Card className="mb-4 border border-gray-200 shadow-sm h-full">
+            <Title level={5} className="text-gray-800 mb-3 flex items-center">
             <CalendarOutlined className="mr-2 text-orange-500" />
             Holidays & Events
           </Title>
@@ -360,7 +364,7 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
               <Text className="ml-2" type="secondary">Loading holidays...</Text>
             </div>
           ) : currentMonthHolidays.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-3">
               {currentMonthHolidays.map((holiday: HolidayType, idx: number) => (
                 <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
@@ -381,10 +385,12 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
             </div>
           ) : (
             <div className="text-center py-4">
-              <Text type="secondary">यस महिना कुनै छुट्टी छैन</Text>
+              <Text type="secondary">कुनै बिदा छैन</Text>
             </div>
           )}
         </Card>
+      </div>
+      </div>
 
       {/* Leave Request Modal */}
       <LeaveRequestModal

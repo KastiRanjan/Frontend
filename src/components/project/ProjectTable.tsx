@@ -13,20 +13,19 @@ import moment from 'moment';
 import { DualDateConverter } from "@/utils/dateConverter";
 import dayjs from "dayjs";
 
-const ProjectTable = ({ showModal, status }: any) => {
+const ProjectTable = ({ showModal, status, advancedFilters, selectedProjects, setSelectedProjects, showFilters }: any) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: project, isPending } = useProject({ status });
-  const deleteProjectMutation = useDeleteProject();
+  
+  // If filter panel is shown, fetch all projects to allow global filtering
+  const queryStatus = showFilters ? 'all' : status;
+  
+  const { data: project, isPending } = useProject({ status: queryStatus });
   const { permissions, profile } = useSession();
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
-  const [advancedFilters, setAdvancedFilters] = useState<any>({});
-  const [showFilters, setShowFilters] = useState(false);
   const [sortedInfo, setSortedInfo] = useState<any>({});
-  const [selectedProjects, setSelectedProjects] = useState<ProjectType[]>([]);
   const searchInput = useRef<any>(null);
-  const [form] = Form.useForm();
 
   // Determine if user is auditsenior or junior
   const userRole = (profile as any)?.role?.name?.toLowerCase();
@@ -185,15 +184,9 @@ const ProjectTable = ({ showModal, status }: any) => {
     };
   };
 
-  const applyFilters = (values: any) => {
-    console.log("Applied filters:", values);
-    setAdvancedFilters(values);
-  };
+  
 
-  const resetFilters = () => {
-    form.resetFields();
-    setAdvancedFilters({});
-  };
+  
 
   const getAssignedTaskError = (error: any) => {
     const data = error?.response?.data;
@@ -239,28 +232,7 @@ const ProjectTable = ({ showModal, status }: any) => {
     });
   };
 
-  const handleDeleteSelected = () => {
-    if (selectedProjects.length === 0) return;
-
-    Modal.confirm({
-      title: selectedProjects.length === 1 ? "Delete this project?" : `Delete ${selectedProjects.length} projects?`,
-      okText: "Delete",
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          await deleteProjects(selectedProjects);
-        } catch (error: any) {
-          const assignedTaskError = getAssignedTaskError(error);
-          if (assignedTaskError) {
-            showAssignedTaskDeleteModal(selectedProjects, assignedTaskError.tasks || []);
-            return Promise.resolve();
-          }
-          message.error(error?.response?.data?.message || "Failed to delete project");
-          return Promise.reject(error);
-        }
-      },
-    });
-  };
+  
 
   // Filter data based on advanced filters
   const filteredProject = useMemo(() => {
@@ -537,6 +509,7 @@ const ProjectTable = ({ showModal, status }: any) => {
     total: filteredProject?.length,
     showSizeChanger: true,
     showQuickJumper: true,
+    hideOnSinglePage: true,
     pageSizeOptions: [5, 10, 20, 30, 50, 100],
     showTotal: (total: number, range: number[]) =>
       `${range[0]}-${range[1]} of ${total}`,
@@ -555,149 +528,9 @@ const ProjectTable = ({ showModal, status }: any) => {
 
   return (
     <Card>
-      <TableToolbar>
-        <div className="flex w-full justify-between">
-          <div className="flex items-center space-x-2">
-            <Button 
-              icon={<FilterOutlined />} 
-              onClick={() => setShowFilters(!showFilters)}
-              type={showFilters ? "primary" : "default"}
-            >
-              Advanced Filters
-            </Button>
-          </div>
-          <Space size={10}>
-            {!hideCreateDelete && (
-              <Button
-                size="large"
-                danger
-                loading={deleteProjectMutation.isPending}
-                disabled={selectedProjects.length === 0}
-                onClick={handleDeleteSelected}
-              >
-                Delete
-              </Button>
-            )}
-            <Tooltip title="Download">
-              <Button size="large">
-                <DownloadOutlined />
-              </Button>
-            </Tooltip>
-            {!hideCreateDelete && (
-              <Button size="large" type="primary" onClick={() => showModal()}>
-                Create Project
-              </Button>
-            )}
-          </Space>
-        </div>
-      </TableToolbar>
       
-      {showFilters && (
-        <Card className="mb-4">
-          <Form 
-            form={form} 
-            layout="vertical" 
-            onFinish={applyFilters}
-            initialValues={{}}
-          >
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item name="dateRange" label="Date Range">
-                  <DatePicker.RangePicker style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-      <Col span={8}>
-                <Form.Item name="clientId" label="Client">
-                  <Select 
-                    placeholder="Select client"
-                    allowClear
-                    options={project?.map((p: any) => ({
-                      label: p.customer?.name,
-                      value: p.customer?.id
-                    })).filter((item: any) => item.label && item.value)
-                      .filter((item: any, index: number, self: any[]) => 
-                        index === self.findIndex((t: any) => t.value === item.value)
-                      )}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item name="projectLeadId" label="Project Lead">
-                  <Select 
-                    placeholder="Select project lead"
-                    allowClear
-                    options={project?.map((p: any) => ({
-                      label: p.projectLead?.name,
-                      value: p.projectLead?.id
-                    })).filter((item: any) => item.label && item.value)
-                      .filter((item: any, index: number, self: any[]) => 
-                        index === self.findIndex((t: any) => t.value === item.value)
-                      )}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item name="projectManagerId" label="Project Manager">
-                  <Select 
-                    placeholder="Select project manager"
-                    allowClear
-                    options={project?.map((p: any) => ({
-                      label: p.projectManager?.name,
-                      value: p.projectManager?.id
-                    })).filter((item: any) => item.label && item.value)
-                      .filter((item: any, index: number, self: any[]) => 
-                        index === self.findIndex((t: any) => t.value === item.value)
-                      )}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item name="natureOfWork" label="Nature of Work">
-                  <Select 
-                    placeholder="Select nature of work"
-                    allowClear
-                    options={(project?.map((p: any) => {
-                        const name = typeof p.natureOfWork === 'object' ? p.natureOfWork?.name : p.natureOfWork;
-                        const id = typeof p.natureOfWork === 'object' ? p.natureOfWork?.id : p.natureOfWork;
-                        return { label: name, value: id };
-                      }) || [])
-                        .filter((item: any) => item.label && item.value)
-                        .filter((item: any, index: number, self: any[]) =>
-                          index === self.findIndex((t: any) => t.value === item.value)
-                        )}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item name="status" label="Status">
-                  <Select 
-                    placeholder="Select status"
-                    allowClear
-                    options={[
-                      { label: "Active", value: "active" },
-                      { label: "Suspended", value: "suspended" },
-                      { label: "Archived", value: "archived" },
-                      { label: "Signed Off", value: "signed_off" },
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row>
-              <Col span={24} style={{ textAlign: 'right' }}>
-                <Button style={{ marginRight: 8 }} onClick={resetFilters}>
-                  Reset
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  Apply Filters
-                </Button>
-              </Col>
-            </Row>
-          </Form>
-        </Card>
-      )}
+      
+      
       
       <Table
         loading={isPending}
