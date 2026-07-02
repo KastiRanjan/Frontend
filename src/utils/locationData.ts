@@ -22,7 +22,7 @@ export const countries = [
 // States/Provinces by country
 export const statesByCountry: Record<string, Array<{ value: string, label: string }>> = {
   nepal: [
-    { value: "province_1", label: "Province 1" },
+    { value: "koshi", label: "Koshi Province" },
     { value: "madhesh", label: "Madhesh Province" },
     { value: "bagmati", label: "Bagmati Province" },
     { value: "gandaki", label: "Gandaki Province" },

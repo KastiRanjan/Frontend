@@ -4,7 +4,6 @@ import { EditOutlined, SearchOutlined } from "@ant-design/icons";
 import { Avatar, Button, Card, Table, TableProps, Input, Space } from "antd";
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import TableToolbar from "../Table/TableToolbar";
 import { UserType } from "@/types/user";
 import Highlighter from 'react-highlight-words';
 
@@ -247,11 +246,7 @@ const UserTable = ({ status, showModal }: { status: string, showModal: any }) =>
 
   return (
     <Card>
-      <TableToolbar>
-        <Button type="primary" onClick={() => showModal()}>
-          Create User
-        </Button>
-      </TableToolbar>
+
       <Table
         loading={isPending}
         dataSource={user?.results}

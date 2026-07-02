@@ -4,7 +4,6 @@ import { Button, Card, Table, Popconfirm, Input, Space } from "antd";
 import { Tooltip } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
-import TableToolbar from "../Table/TableToolbar";
 import { useDeleteWorklog } from "@/hooks/worklog/useDeleteWorklog";
 import { useState, useRef } from "react";
 import { SearchOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -426,13 +425,7 @@ const AllWorklogTable = ({ status }: { status: string }) => {
 
   return (
     <Card>
-      <TableToolbar>
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex gap-2">
-            <Button type="primary" onClick={() => navigate("/worklogs/new")}>Create</Button>
-          </div>
-        </div>
-      </TableToolbar>
+
       <Table
         loading={isPending || isEditPending}
         dataSource={worklogs || []}

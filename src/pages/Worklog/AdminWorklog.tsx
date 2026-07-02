@@ -1,5 +1,7 @@
 import AdminWorklogTable from "@/components/Worklog/AdminWorklogTable";
-import { Card, Button } from "antd";
+import { Card, Button, Radio } from "antd";
+import { useState } from "react";
+import WorklogCalendar from "@/components/Worklog/WorklogCalendar";
 import { useSession } from "@/context/SessionContext";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +11,10 @@ const WorklogAdmin = () => {
   const profilePermissions = (profile as any)?.role?.permission;
   
   // Check if user has permission to access all worklog page
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  
+
+
   const hasAllWorklogPermission = Array.isArray(profilePermissions) && profilePermissions.some(
     (perm: any) => perm.path === '/worklogs/allworklog' && perm.method?.toLowerCase() === 'get'
   );
@@ -31,11 +37,26 @@ const WorklogAdmin = () => {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Worklog Management</h1>
-        <Button type="primary" onClick={() => navigate("/worklogs-all")}>
-          Back to My Worklogs
-        </Button>
+        <div className="flex gap-4">
+          <Radio.Group 
+            value={viewMode} 
+            onChange={(e) => setViewMode(e.target.value)}
+            optionType="button"
+            buttonStyle="solid"
+          >
+            <Radio.Button value="list">List View</Radio.Button>
+            <Radio.Button value="calendar">Calendar View</Radio.Button>
+          </Radio.Group>
+          <Button type="primary" onClick={() => navigate("/worklogs-all")}>
+            Back to My Worklogs
+          </Button>
+        </div>
       </div>
-      <AdminWorklogTable />
+      {viewMode === 'calendar' ? (
+        <WorklogCalendar />
+      ) : (
+        <AdminWorklogTable />
+      )}
     </div>
   );
 };

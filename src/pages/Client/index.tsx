@@ -31,7 +31,15 @@ const ClientPage: React.FC = () => {
         }
       /> */}
 
-      <Tabs activeKey={activeKey} onChange={handleTabChange}>
+      <Tabs 
+        activeKey={activeKey} 
+        onChange={handleTabChange}
+        tabBarExtraContent={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            Create Client
+          </Button>
+        }
+      >
         <TabPane tab="Active" key="active">
           <ClientTable status="active" />
         </TabPane>

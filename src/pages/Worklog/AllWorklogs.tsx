@@ -1,4 +1,4 @@
-import PageTitle from "@/components/PageTitle";
+
 import AllWorklogTable from "@/components/Worklog/AllWorklogTable";
 import IncomingWorklogTable from "@/components/Worklog/IncomingWorklogTable";
 import { Tabs, Button } from "antd";
@@ -84,7 +84,15 @@ const AllWorklogs = () => {
                     </Button>
                 )}
             </div>
-            <Tabs defaultActiveKey="1" items={tabItems} />
+            <Tabs 
+                defaultActiveKey="1" 
+                items={tabItems} 
+                tabBarExtraContent={
+                    <Button type="primary" onClick={() => navigate("/worklogs/new")}>
+                        Create
+                    </Button>
+                }
+            />
         </>
     );
 };

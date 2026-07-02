@@ -2,7 +2,7 @@ import PageTitle from "@/components/PageTitle";
 import UserForm from "@/components/user/UserForm";
 import UserTable from "@/components/user/UserTable";
 import { UserStatus } from "@/types/userStatus";
-import { Modal, Tabs } from "antd";
+import { Modal, Tabs, Button } from "antd";
 import React, { useCallback } from "react";
 
 const User: React.FC = () => {
@@ -25,6 +25,11 @@ const User: React.FC = () => {
       /> */}
       <Tabs
         defaultActiveKey="1"
+        tabBarExtraContent={
+            <Button type="primary" onClick={() => showModal()}>
+                Create User
+            </Button>
+        }
         items={[
           {
             label: "Active",

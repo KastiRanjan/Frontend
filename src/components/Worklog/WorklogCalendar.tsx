@@ -24,9 +24,10 @@ import { useCalendarEvents } from '../../hooks/calendar/useCalendar';
 import { getItem } from '../../hooks/useCookies';
 import type { HolidayType } from '../../types/holiday';
 import LeaveRequestModal from '../Leave/LeaveRequestModal';
-import EventHolidayModal from './EventHolidayModal';
+import WorklogModal from "./WorklogModal";
 import LeaveTypeManager from '../LeaveTypeManager';
 import { useNavigate } from 'react-router-dom';
+import { useAllWorklog } from '../../hooks/worklog/useAllWorklog';
 
 const { Title, Text } = Typography;
 
@@ -43,13 +44,14 @@ interface NepaliOnlyCalendarProps {
   // Optional props - component now fetches its own data
 }
 
-const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
+const WorklogCalendar: React.FC<any> = () => {
   const today = dayjs();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(today);
   const [currentViewDate, setCurrentViewDate] = useState(today);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const [isEventModalVisible, setIsEventModalVisible] = useState(false);
+  const { data: worklogData } = useAllWorklog();
   const [isLeaveTypeManagerVisible, setIsLeaveTypeManagerVisible] = useState(false);
   
   // Get user data from cookies
@@ -59,7 +61,7 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   
   // Fetch real data from backend
   const { data: holidayData, isLoading: holidaysLoading } = useHolidays();
-  const { data: calendarData } = useCalendarEvents();
+  
   
   // Get Nepali date for current view
   const currentNepaliDate = useMemo(() => {
@@ -167,8 +169,8 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   };
 
   const getEventsForDate = (date: Dayjs) => {
-    if (!calendarData) return [];
-    return calendarData.filter((event: any) => dayjs(event.date).isSame(date, 'day'));
+    if (!worklogData) return [];
+    return worklogData.filter((event: any) => dayjs(event.date).isSame(date, 'day'));
   };
 
   const getHolidaysForDate = (date: Dayjs) => {
@@ -299,7 +301,7 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
         </div>
       </div>
       <div className="flex flex-col lg:flex-row gap-4">
-        <div className="lg:w-4/5 w-full">
+        <div className="w-full">
           <Card className="border border-gray-200 shadow-sm h-full">
             {/* Weekday Headers */}
         <div className="grid grid-cols-7 gap-1 mb-1">
@@ -316,45 +318,6 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
         </div>
       </Card>
         </div>
-        <div className="lg:w-1/5 w-full">
-          {/* Monthly Holidays Summary */}
-          <Card className="mb-4 border border-gray-200 shadow-sm h-full">
-            <Title level={5} className="text-gray-800 mb-3 flex items-center">
-            <CalendarOutlined className="mr-2 text-orange-500" />
-            Holidays & Events
-          </Title>
-          {holidaysLoading ? (
-            <div className="text-center py-4">
-              <Spin size="small" />
-              <Text className="ml-2" type="secondary">Loading holidays...</Text>
-            </div>
-          ) : currentMonthHolidays.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3">
-              {currentMonthHolidays.map((holiday: HolidayType, idx: number) => (
-                <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 rounded-full bg-red-500 mr-3"></div>
-                    <div>
-                      <Text strong className="text-sm text-gray-800">{holiday.title}</Text>
-                      <br />
-                      <Text type="secondary" className="text-xs">
-                        {dayjs(holiday.date).format('MMM DD')}
-                      </Text>
-                    </div>
-                  </div>
-                  <Tag color={holiday.type === 'religious' ? 'orange' : holiday.type === 'festival' ? 'purple' : 'blue'}>
-                    {holiday.type}
-                  </Tag>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <Text type="secondary">कुनै बिदा छैन</Text>
-            </div>
-          )}
-        </Card>
-      </div>
       </div>
 
       {/* Leave Request Modal */}
@@ -364,12 +327,12 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
       />
 
       {/* Event/Holiday Detail Modal */}
-      <EventHolidayModal
+      <WorklogModal
         open={isEventModalVisible}
         onCancel={() => setIsEventModalVisible(false)}
         selectedDate={selectedDate.format('YYYY-MM-DD')}
-        events={calendarData}
-        holidays={holidayData}
+        worklogs={worklogData}
+        
       />
 
       {/* Leave Type Manager Modal (Admin Only) */}
@@ -389,4 +352,4 @@ const NepaliOnlyCalendar: React.FC<NepaliOnlyCalendarProps> = () => {
   );
 };
 
-export default NepaliOnlyCalendar;
+export default WorklogCalendar;

@@ -616,7 +616,6 @@ const ProjectRanking = () => {
     }
     
     return (
-      // @ts-ignore
       <DragDropContext onDragEnd={(result) => onDragEnd(result, 'taskSuper')}>
         <Droppable droppableId="droppable-taskSuper">
           {(provided: any) => (

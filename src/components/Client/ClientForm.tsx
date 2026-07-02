@@ -21,7 +21,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
   const [form] = Form.useForm();
   const { mutate } = useCreateClient();
   const { mutate: mutateEdit } = useEditClient();
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>("nepal");
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const { 
@@ -63,7 +63,8 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
       setSelectedDistrict(editClientData.district);
     } else {
       form.resetFields();
-      setSelectedCountry(null);
+      form.setFieldsValue({ status: "active", country: "nepal" });
+      setSelectedCountry("nepal");
       setSelectedState(null);
       setSelectedDistrict(null);
     }
@@ -93,9 +94,9 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
 
   return (
     <Card>
-      <Form form={form} onFinish={handleFinish} layout="vertical">
+      <Form form={form} onFinish={handleFinish} layout="vertical" initialValues={{ status: "active", country: "nepal" }}>
         <Row gutter={24}>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Name Field */}
             <FormInputWrapper
               id="name"
@@ -107,7 +108,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Short Name Field */}
             <FormInputWrapper
               id="shortName"
@@ -119,7 +120,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* PAN No Field */}
             <FormInputWrapper
               id="panNo"
@@ -131,13 +132,13 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Registered Date Field */}
             <Form.Item name="registeredDate" label="Registered Date">
-              <DatePicker style={{ width: "100%" }} />
+              <DatePicker className="h-[46px] bg-[#eee] w-full border-none" style={{ width: "100%" }} />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Status Field */}
             <FormSelectWrapper
               id="status"
@@ -151,80 +152,72 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Country Field */}
-            <Form.Item
+            <FormSelectWrapper
+              id="country"
               name="country"
               label="Country"
               rules={[{ required: true, message: "Please select the country" }]}
-            >
-              <Select
-                placeholder="Select country"
-                options={countries}
-                onChange={(value) => {
-                  setSelectedCountry(value);
-                  // Reset dependent fields when country changes
-                  form.setFieldsValue({ state: undefined, district: undefined, localJurisdiction: undefined });
-                  setSelectedState(null);
-                  setSelectedDistrict(null);
-                }}
-              />
-            </Form.Item>
+              placeholder="Select country"
+              options={countries}
+              changeHandler={(value: string) => {
+                setSelectedCountry(value);
+                // Reset dependent fields when country changes
+                form.setFieldsValue({ state: undefined, district: undefined, localJurisdiction: undefined });
+                setSelectedState(null);
+                setSelectedDistrict(null);
+              }}
+            />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* State Field */}
-            <Form.Item
+            <FormSelectWrapper
+              id="state"
               name="state"
               label="State/Province"
               rules={[{ required: true, message: "Please select the state/province" }]}
-            >
-              <Select
-                placeholder="Select state/province"
-                options={selectedCountry ? getStateOptions(selectedCountry) : []}
-                disabled={!selectedCountry}
-                onChange={(value) => {
-                  setSelectedState(value);
-                  // Reset dependent fields when state changes
-                  form.setFieldsValue({ district: undefined, localJurisdiction: undefined });
-                  setSelectedDistrict(null);
-                }}
-              />
-            </Form.Item>
+              placeholder="Select state/province"
+              options={selectedCountry ? getStateOptions(selectedCountry) : []}
+              disabled={!selectedCountry}
+              changeHandler={(value: string) => {
+                setSelectedState(value);
+                // Reset dependent fields when state changes
+                form.setFieldsValue({ district: undefined, localJurisdiction: undefined });
+                setSelectedDistrict(null);
+              }}
+            />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* District Field */}
-            <Form.Item
+            <FormSelectWrapper
+              id="district"
               name="district"
               label="District"
               rules={[{ required: true, message: "Please select the district" }]}
-            >
-              <Select
-                placeholder="Select district"
-                options={selectedState ? getDistrictOptions(selectedState) : []}
-                disabled={!selectedState}
-                onChange={(value) => {
-                  setSelectedDistrict(value);
-                  // Reset dependent field when district changes
-                  form.setFieldsValue({ localJurisdiction: undefined });
-                }}
-              />
-            </Form.Item>
+              placeholder="Select district"
+              options={selectedState ? getDistrictOptions(selectedState) : []}
+              disabled={!selectedState}
+              changeHandler={(value: string) => {
+                setSelectedDistrict(value);
+                // Reset dependent field when district changes
+                form.setFieldsValue({ localJurisdiction: undefined });
+              }}
+            />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Local Jurisdiction Field */}
-            <Form.Item
+            <FormSelectWrapper
+              id="localJurisdiction"
               name="localJurisdiction"
               label="Local Jurisdiction"
               rules={[{ required: true, message: "Please select the local jurisdiction" }]}
-            >
-              <Select
-                placeholder="Select local jurisdiction"
-                options={selectedDistrict ? getLocalJurisdictionOptions(selectedDistrict) : []}
-                disabled={!selectedDistrict}
-              />
-            </Form.Item>
+              placeholder="Select local jurisdiction"
+              options={selectedDistrict ? getLocalJurisdictionOptions(selectedDistrict) : []}
+              disabled={!selectedDistrict}
+            />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Ward No Field (Optional) */}
             <FormInputWrapper
               id="wardNo"
@@ -235,7 +228,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Locality Field */}
             <FormInputWrapper
               id="locality"
@@ -247,21 +240,19 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Legal Status Field */}
-            <Form.Item
+            <FormSelectWrapper
+              id="legalStatusId"
               name="legalStatusId"
               label="Legal Status"
               rules={[{ required: true, message: "Please select the legal status" }]}
-            >
-              <Select
-                placeholder="Select legal status"
-                loading={businessOptionsLoading.legalStatuses}
-                options={legalStatusOptions.length > 0 ? legalStatusOptions : legalStatusEnumOptions}
-                optionFilterProp="label"
-                showSearch
-              />
-            </Form.Item>
+              placeholder="Select legal status"
+              loading={businessOptionsLoading.legalStatuses}
+              options={legalStatusOptions.length > 0 ? legalStatusOptions : legalStatusEnumOptions}
+              optionFilterProp="label"
+              showSearch
+            />
             
             {/* Fallback for enum-based legal status */}
             <Form.Item
@@ -273,21 +264,19 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Business Size Field */}
-            <Form.Item
+            <FormSelectWrapper
+              id="businessSizeId"
               name="businessSizeId"
               label="Business Size"
               rules={[{ required: true, message: "Please select the business size" }]}
-            >
-              <Select
-                placeholder="Select business size"
-                loading={businessOptionsLoading.businessSizes}
-                options={businessSizeOptions.length > 0 ? businessSizeOptions : businessSizeEnumOptions}
-                optionFilterProp="label"
-                showSearch
-              />
-            </Form.Item>
+              placeholder="Select business size"
+              loading={businessOptionsLoading.businessSizes}
+              options={businessSizeOptions.length > 0 ? businessSizeOptions : businessSizeEnumOptions}
+              optionFilterProp="label"
+              showSearch
+            />
             
             {/* Fallback for enum-based business size */}
             <Form.Item
@@ -299,21 +288,19 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Industry Nature Field */}
-            <Form.Item
+            <FormSelectWrapper
+              id="industryNatureId"
               name="industryNatureId"
               label="Industry Nature"
               rules={[{ required: true, message: "Please select the industry nature" }]}
-            >
-              <Select
-                placeholder="Select industry nature"
-                loading={businessOptionsLoading.businessNatures}
-                options={businessNatureOptions.length > 0 ? businessNatureOptions : businessNatureEnumOptions}
-                optionFilterProp="label"
-                showSearch
-              />
-            </Form.Item>
+              placeholder="Select industry nature"
+              loading={businessOptionsLoading.businessNatures}
+              options={businessNatureOptions.length > 0 ? businessNatureOptions : businessNatureEnumOptions}
+              optionFilterProp="label"
+              showSearch
+            />
             
             {/* Fallback for enum-based industry nature */}
             <Form.Item
@@ -325,7 +312,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Telephone No Field (Optional) */}
             <FormInputWrapper
               id="telephoneNo"
@@ -339,7 +326,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Mobile No Field (Optional) */}
             <FormInputWrapper
               id="mobileNo"
@@ -350,7 +337,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               ]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Email Field (Optional) */}
             <FormInputWrapper
               id="email"
@@ -359,11 +346,11 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               rules={[{ type: "email", message: "Please input a valid email" }]}
             />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Website Field (Optional) */}
             <FormInputWrapper id="website" name="website" label="Website" />
           </Col>
-          <Col span={8}>
+          <Col span={8} style={{ height: "90px" }}>
             {/* Submit Button */}
             <Form.Item>
               <Button type="primary" htmlType="submit">
