@@ -26,6 +26,7 @@ const Attendence = () => {
     const { profile } = useSession();
     const [personalViewUserId, setPersonalViewUserId] = useState<string>(""); // For the personal section
     const [selectedDate, setSelectedDate] = useState<string>(""); // For date-wise view
+    const [hasInitializedDefaultView, setHasInitializedDefaultView] = useState(false);
     
     // Fetch users for the dropdown (only if super user)
     const { data: usersData } = useUser({
@@ -53,8 +54,10 @@ const Attendence = () => {
     // For now, let's use role name as primary check since user is "superuser"
     const isRoleSuperUser = roleName === 'superuser' || 
                            roleName === 'admin' || 
+                           roleName === 'projectmanager' ||
                            roleName?.toLowerCase().includes('admin') ||
-                           roleName?.toLowerCase().includes('super');
+                           roleName?.toLowerCase().includes('super') ||
+                           roleName?.toLowerCase().includes('projectmanager');
     
     // Try to extract permission names from objects
     const permStrings = permissions.map((p: any) => {
@@ -77,6 +80,14 @@ const Attendence = () => {
             setPersonalViewUserId("");
         }
     }, [isSuperUser, personalViewUserId]);
+
+    // Set default view to 'all-today' for superusers upon first load
+    useEffect(() => {
+        if (profile && isSuperUser && !hasInitializedDefaultView) {
+            setPersonalViewUserId("all-today");
+            setHasInitializedDefaultView(true);
+        }
+    }, [profile, isSuperUser, hasInitializedDefaultView]);
 
     const handleClearPersonalSelection = () => {
         setPersonalViewUserId("");

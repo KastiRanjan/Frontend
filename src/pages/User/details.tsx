@@ -85,7 +85,7 @@ const UserDetails = () => {
                                             Edit Profile
                                         </Button>
                                     </Link>
-                                    <Link to={`/user/${id}/history`}>
+                                    <Link to={`/profile/${id}/history`}>
                                         <Button icon={<HistoryOutlined />}>
                                             View History
                                         </Button>

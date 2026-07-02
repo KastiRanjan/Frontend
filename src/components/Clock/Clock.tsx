@@ -5,10 +5,20 @@ import { Button, Modal, Input } from "antd";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
+import { useSession } from "@/context/SessionContext";
+
 const Clock = () => {
+  const { profile } = useSession();
   const { data, refetch } = useGetMyAttendence();
   const { mutate: createAttendance, isPending: createPending } = useCreateAttendence();
   const { mutate: updateAttendance, isPending: updatePending } = useUpdateAttendence();
+
+  const roleName = (profile as any)?.role?.name?.toLowerCase() || '';
+  const isSuperAdmin = roleName === 'superuser' || roleName === 'admin' || roleName.includes('admin') || roleName.includes('super');
+
+  if (isSuperAdmin) {
+    return null;
+  }
   const isClockedIn = data?.length > 0 ? true : false;
   const isClockedOut = isClockedIn && !!data?.[0]?.clockOut;
   const [clockInRemark, setClockInRemark] = useState<string>("");
