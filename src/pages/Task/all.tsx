@@ -116,17 +116,17 @@ const AllTask = () => {
           {
             label: `TODO`,
             key: "1",
-            children: <AllTaskTable status={"open"} userId={userId} userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
+            children: <AllTaskTable status={"open"}  userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
           },
           {
             label: `DOING`,
             key: "2",
-            children: <AllTaskTable status={"in_progress"} userId={userId} userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
+            children: <AllTaskTable status={"in_progress"}  userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
           },
           {
             label: `COMPLETED`,
             key: "3",
-            children: <AllTaskTable status={"done"} userId={userId} userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
+            children: <AllTaskTable status={"done"}  userRole={userRole} onEdit={handleEdit} externalSearchText={globalSearchText} />,
           },
         ]}
       />

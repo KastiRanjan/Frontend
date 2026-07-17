@@ -433,19 +433,6 @@ const ClientReportsAdmin: React.FC = () => {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
-        <Title level={3} className="!mb-0">
-          Client Reports Management
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}
-        >
-          Upload Report
-        </Button>
-      </div>
-
       {/* Stats */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={12} sm={6}>
@@ -529,20 +516,29 @@ const ClientReportsAdmin: React.FC = () => {
               <Option value={ReportAccessStatus.REVOKED}>Revoked</Option>
             </Select>
           </Space>
-          {selectedRowKeys.length > 0 && (
-            <Space>
-              <Text type="secondary">{selectedRowKeys.length} selected</Text>
-              <Button
-                type="primary"
-                onClick={() => handleBulkAccess(ReportAccessStatus.ACCESSIBLE)}
-              >
-                Grant Access
-              </Button>
-              <Button onClick={() => handleBulkAccess(ReportAccessStatus.REVOKED)}>
-                Revoke Access
-              </Button>
-            </Space>
-          )}
+          <Space>
+            {selectedRowKeys.length > 0 && (
+              <Space>
+                <Text type="secondary">{selectedRowKeys.length} selected</Text>
+                <Button
+                  type="primary"
+                  onClick={() => handleBulkAccess(ReportAccessStatus.ACCESSIBLE)}
+                >
+                  Grant Access
+                </Button>
+                <Button onClick={() => handleBulkAccess(ReportAccessStatus.REVOKED)}>
+                  Revoke Access
+                </Button>
+              </Space>
+            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setIsModalOpen(true)}
+            >
+              Upload Report
+            </Button>
+          </Space>
         </div>
       </Card>
 

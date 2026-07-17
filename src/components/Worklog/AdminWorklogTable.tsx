@@ -19,7 +19,7 @@ import { getWorklogType, getWorklogTypeColor, getWorklogTypeDescription, Worklog
 
 const { TextArea } = Input;
 
-const AdminWorklogTable = () => {
+const AdminWorklogTable = ({ headerControls }: { headerControls?: React.ReactNode }) => {
   const navigate = useNavigate();
   const { profile } = useSession();
   const [filters, setFilters] = useState<WorklogFilters>({});
@@ -61,38 +61,9 @@ const AdminWorklogTable = () => {
   const users = userData?.results || [];
   const projects = projectData || [];
   
-  // Create a mapping of user IDs to user names for approved/rejected worklogs
-  const [userMap, setUserMap] = useState<{[key: string]: string}>({}); 
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  
-  // Effect to create a map of user IDs to names
-  useEffect(() => {
-    if (users && users.length > 0) {
-      const map = users.reduce((acc: {[key: string]: string}, user: any) => {
-        acc[user.id] = user.name;
-        return acc;
-      }, {});
-      setUserMap(map);
-    }
-  }, [users]);
-  
-  // Effect to fetch current user
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const profile = await getProfile();
-        setCurrentUser(profile);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    
-    fetchCurrentUser();
-  }, []);  
-  
   // Fetch active workhour for the current user's role
   const { data: activeWorkhour } = useActiveWorkhour(
-    currentUser?.roleId
+    (profile as any)?.roleId || (profile as any)?.role?.id
   );
   
   // Filter worklogs by worklog type
@@ -299,12 +270,12 @@ const AdminWorklogTable = () => {
   };
 
   const handleReject = () => {
-    if (currentRecordId && currentUser) {
+    if (currentRecordId && profile) {
       editWorklog({ 
         id: currentRecordId, 
         status: "rejected",
         rejectedRemark: rejectedRemark,
-        rejectBy: currentUser.id
+        rejectBy: (profile as any).id
       }, { onSuccess: refetch });
     }
     setIsModalVisible(false);
@@ -440,7 +411,20 @@ const AdminWorklogTable = () => {
         sorter: (a: any, b: any) => (a.task?.name || '').localeCompare(b.task?.name || ''),
         sortOrder: sortedInfo.columnKey === 'task' && sortedInfo.order,
         render: (_: any, record: any) => {
-          return <Link to={`/projects/${record?.task?.project?.id}/tasks/${record?.task?.id}`} className="text-blue-600">{record?.task?.name}</Link>
+          const tooltipContent = (
+            <div
+              className="p-2 text-xs"
+              style={{ fontSize: '12px', maxWidth: '400px', maxHeight: '300px', overflowY: 'auto' }}
+              dangerouslySetInnerHTML={{ __html: record?.description || "No description available" }}
+            />
+          );
+          return (
+            <Tooltip title={tooltipContent} overlayInnerStyle={{ padding: 0 }} mouseEnterDelay={0.5}>
+              <Link to={`/projects/${record?.task?.project?.id}/tasks/${record?.task?.id}`} className="text-blue-600">
+                {record?.task?.name || 'View Task'}
+              </Link>
+            </Tooltip>
+          );
         }
       },
       {
@@ -498,7 +482,7 @@ const AdminWorklogTable = () => {
         width: 80,
         render: (_: any, record: any) => {
           if (record.requestTo) {
-            const requestToName = userMap[record.requestTo] || record.requestTo;
+            const requestToName = record.requestToUser?.name || record.requestTo;
             return (
               <Tooltip 
                 title={
@@ -553,11 +537,11 @@ const AdminWorklogTable = () => {
                       size="small"
                       icon={<CheckOutlined />}
                       onClick={() => {
-                        if (currentUser) {
+                        if (profile) {
                           editWorklog({ 
                             id: record?.id, 
                             status: "approved",
-                            approvedBy: currentUser.id 
+                            approvedBy: (profile as any).id 
                           }, { onSuccess: refetch });
                         }
                       }}
@@ -593,7 +577,7 @@ const AdminWorklogTable = () => {
         width: 80,
         render: (_: any, record: any) => {
           if (record.status === "approved" && record.approvedBy) {
-            const approverName = userMap[record.approvedBy] || record.approvedBy;
+            const approverName = record.approvedByUser?.name || record.approvedBy;
             return (
               <Tooltip 
                 title={
@@ -620,7 +604,7 @@ const AdminWorklogTable = () => {
         width: 80,
         render: (_: any, record: any) => {
           if (record.status === "rejected" && record.rejectBy) {
-            const rejectorName = userMap[record.rejectBy] || record.rejectBy;
+            const rejectorName = record.rejectByUser?.name || record.rejectBy;
             return (
               <Tooltip 
                 title={
@@ -716,7 +700,6 @@ const AdminWorklogTable = () => {
           }
           /* Style for legend tags */
           .admin-worklog-table .legend-tag {
-            font-size: 9px !important;
             padding: 0 4px !important;
             margin-right: 4px !important;
           }
@@ -753,177 +736,184 @@ const AdminWorklogTable = () => {
         `}
       </style>
       
-      {/* Worklog type legend */}
-      <div className="admin-worklog-table" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '8px', fontSize: '10px' }}>
-        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.NORMAL)}>NORMAL</Tag>
-        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.EARLY)}>EARLY</Tag>
-        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE)}>LATE</Tag>
-        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE_APPROVED)}>LATE APPROVED</Tag>
-        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE_UNAPPROVED)}>LATE UNAPPROVED</Tag>
-        <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.REJECTED_THEN_APPROVED)}>REJECTED THEN APPROVED</Tag>
-        <Tooltip title={
-          <div>
-            <p><strong>Normal:</strong> Regular worklog within work hours</p>
-            <p><strong>Early:</strong> Worklog that starts before set work hours</p>
-            <p><strong>Late:</strong> Worklog that starts after set work hours</p>
-            <p><strong>Late Approved:</strong> Worklog approved more than 12 hours after request</p>
-            <p><strong>Late Unapproved:</strong> Worklog requested but waiting for approval for more than 12 hours</p>
-            <p><strong>Rejected Then Approved:</strong> Worklog that was rejected and then approved</p>
-          </div>
-        }>
-          <QuestionCircleOutlined style={{ cursor: 'pointer', marginLeft: '4px' }} />
-        </Tooltip>
+      {/* Worklog type legend and header controls */}
+      <div className="admin-worklog-table" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px' }}>
+          <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.NORMAL)}>NORMAL</Tag>
+          <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.EARLY)}>EARLY</Tag>
+          <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE)}>LATE</Tag>
+          <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE_APPROVED)}>LATE APPROVED</Tag>
+          <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.LATE_UNAPPROVED)}>LATE UNAPPROVED</Tag>
+          <Tag className="legend-tag" color={getWorklogTypeColor(WorklogStatus.REJECTED_THEN_APPROVED)}>REJECTED THEN APPROVED</Tag>
+          <Tooltip title={
+            <div>
+              <p><strong>Normal:</strong> Regular worklog within work hours</p>
+              <p><strong>Early:</strong> Worklog that starts before set work hours</p>
+              <p><strong>Late:</strong> Worklog that starts after set work hours</p>
+              <p><strong>Late Approved:</strong> Worklog approved more than 12 hours after request</p>
+              <p><strong>Late Unapproved:</strong> Worklog requested but waiting for approval for more than 12 hours</p>
+              <p><strong>Rejected Then Approved:</strong> Worklog that was rejected and then approved</p>
+            </div>
+          }>
+            <QuestionCircleOutlined style={{ cursor: 'pointer', marginLeft: '4px' }} />
+          </Tooltip>
+        </div>
+        
+        <div className="flex items-center">
+          {headerControls}
+        </div>
       </div>
       
-      <Form layout="vertical" className="mb-1 text-xs admin-worklog-table" style={{ fontSize: '10px' }}>
-        <div className="flex flex-wrap items-end gap-1">
-          <div style={{ width: '120px' }}>
-            <Form.Item label="Status" style={{ marginBottom: '2px' }}>
-              <Select
-                placeholder="Status"
-                allowClear
-                size="small"
-                style={{ width: '100%' }}
-                value={filters.status}
-                onChange={(value) => handleFilterChange({ status: value })}
-                dropdownStyle={{ minWidth: '110px' }}
-              >
-                <Select.Option value="requested">Requested</Select.Option>
-                <Select.Option value="approved">Approved</Select.Option>
-                <Select.Option value="rejected">Rejected</Select.Option>
-              </Select>
-            </Form.Item>
-          </div>
-          
-          <div style={{ width: '120px' }}>
-            <Form.Item label="Date" style={{ marginBottom: '2px' }}>
-              <DatePicker 
-                style={{ width: '100%' }}
-                size="small"
-                value={filters.date ? moment(filters.date) : null}
-                onChange={(date) => handleFilterChange({ date: date ? date.format('YYYY-MM-DD') : undefined })}
-                allowClear
-                inputReadOnly
-              />
-            </Form.Item>
-          </div>
-          
-          <div style={{ width: '120px' }}>
-            <Form.Item label="User" style={{ marginBottom: '2px' }}>
-              <Select
-                placeholder="User"
-                allowClear
-                size="small"
-                style={{ width: '100%' }}
-                value={filters.userId}
-                onChange={(value) => handleFilterChange({ userId: value })}
-                showSearch
-                optionFilterProp="children"
-                loading={!userData}
-                dropdownStyle={{ minWidth: '110px' }}
-              >
-                {users.map((user: any) => (
-                  <Select.Option key={user.id} value={user.id}>{user.name}</Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-          
-          <div style={{ width: '120px' }}>
-            <Form.Item label="Project" style={{ marginBottom: '2px' }}>
-              <Select
-                placeholder="Project"
-                allowClear
-                size="small"
-                style={{ width: '100%' }}
-                value={filters.projectId}
-                onChange={(value) => handleFilterChange({ projectId: value })}
-                showSearch
-                optionFilterProp="children"
-                loading={!projectData}
-                dropdownStyle={{ minWidth: '110px' }}
-              >
-                {projects.map((project: any) => (
-                  <Select.Option key={project.id} value={project.id}>{project.name}</Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-          
-          <div style={{ width: '150px' }}>
-            <Form.Item label="Worklog Type" style={{ marginBottom: '2px' }}>
-              <Select
-                placeholder="Worklog Type"
-                allowClear
-                size="small"
-                style={{ width: '100%' }}
-                value={worklogTypeFilter}
-                onChange={(value) => setWorklogTypeFilter(value)}
-                dropdownStyle={{ minWidth: '110px' }}
-              >
-                <Select.Option value={WorklogStatus.NORMAL}>Normal</Select.Option>
-                <Select.Option value={WorklogStatus.EARLY}>Early</Select.Option>
-                <Select.Option value={WorklogStatus.LATE}>Late</Select.Option>
-                <Select.Option value={WorklogStatus.LATE_APPROVED}>Late Approved</Select.Option>
-                <Select.Option value={WorklogStatus.LATE_UNAPPROVED}>Late Unapproved</Select.Option>
-                <Select.Option value={WorklogStatus.REJECTED_THEN_APPROVED}>Rejected Then Approved</Select.Option>
-              </Select>
-            </Form.Item>
-          </div>
-          
-          <div className="flex gap-1">
-            <Tooltip title="Clear Filters">
-              <Button type="default" size="small" icon={<ClearOutlined />} onClick={clearFilters} style={{ padding: '0 4px', height: '20px' }} className="action-btn" />
-            </Tooltip>
-            <Tooltip title="Apply Filters">
-              <Button type="primary" size="small" icon={<FilterOutlined />} onClick={() => refetch()} style={{ padding: '0 4px', height: '20px' }} className="action-btn" />
-            </Tooltip>
+      <Form layout="vertical" className="mb-1 text-xs admin-worklog-table">
+        <div className="flex flex-wrap items-center justify-between gap-1 w-full">
+          <div className="flex flex-wrap items-center gap-1">
+            <div style={{ width: '120px' }}>
+              <Form.Item style={{ marginBottom: '2px' }}>
+                <Select
+                  placeholder="Status"
+                  allowClear
+                  size="small"
+                  style={{ width: '100%' }}
+                  value={filters.status}
+                  onChange={(value) => handleFilterChange({ status: value })}
+                  dropdownStyle={{ minWidth: '110px' }}
+                >
+                  <Select.Option value="requested">Requested</Select.Option>
+                  <Select.Option value="approved">Approved</Select.Option>
+                  <Select.Option value="rejected">Rejected</Select.Option>
+                </Select>
+              </Form.Item>
+            </div>
+            
+            <div style={{ width: '120px' }}>
+              <Form.Item style={{ marginBottom: '2px' }}>
+                <DatePicker 
+                  placeholder="Select Date"
+                  style={{ width: '100%' }}
+                  size="small"
+                  value={filters.date ? moment(filters.date) : null}
+                  onChange={(date) => handleFilterChange({ date: date ? date.format('YYYY-MM-DD') : undefined })}
+                  allowClear
+                  inputReadOnly
+                />
+              </Form.Item>
+            </div>
+            
+            <div style={{ width: '120px' }}>
+              <Form.Item style={{ marginBottom: '2px' }}>
+                <Select
+                  placeholder="User"
+                  allowClear
+                  size="small"
+                  style={{ width: '100%' }}
+                  value={filters.userId}
+                  onChange={(value) => handleFilterChange({ userId: value })}
+                  showSearch
+                  optionFilterProp="children"
+                  loading={!userData}
+                  dropdownStyle={{ minWidth: '110px' }}
+                >
+                  {users.map((user: any) => (
+                    <Select.Option key={user.id} value={user.id}>{user.name}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </div>
+            
+            <div style={{ width: '120px' }}>
+              <Form.Item style={{ marginBottom: '2px' }}>
+                <Select
+                  placeholder="Project"
+                  allowClear
+                  size="small"
+                  style={{ width: '100%' }}
+                  value={filters.projectId}
+                  onChange={(value) => handleFilterChange({ projectId: value })}
+                  showSearch
+                  optionFilterProp="children"
+                  loading={!projectData}
+                  dropdownStyle={{ minWidth: '110px' }}
+                >
+                  {projects.map((project: any) => (
+                    <Select.Option key={project.id} value={project.id}>{project.name}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </div>
+            
+            <div style={{ width: '150px' }}>
+              <Form.Item style={{ marginBottom: '2px' }}>
+                <Select
+                  placeholder="Worklog Type"
+                  allowClear
+                  size="small"
+                  style={{ width: '100%' }}
+                  value={worklogTypeFilter}
+                  onChange={(value) => setWorklogTypeFilter(value)}
+                  dropdownStyle={{ minWidth: '110px' }}
+                >
+                  <Select.Option value={WorklogStatus.NORMAL}>Normal</Select.Option>
+                  <Select.Option value={WorklogStatus.EARLY}>Early</Select.Option>
+                  <Select.Option value={WorklogStatus.LATE}>Late</Select.Option>
+                  <Select.Option value={WorklogStatus.LATE_APPROVED}>Late Approved</Select.Option>
+                  <Select.Option value={WorklogStatus.LATE_UNAPPROVED}>Late Unapproved</Select.Option>
+                  <Select.Option value={WorklogStatus.REJECTED_THEN_APPROVED}>Rejected Then Approved</Select.Option>
+                </Select>
+              </Form.Item>
+            </div>
+            
+            <div className="flex gap-1 items-center" style={{ marginBottom: '2px' }}>
+              <Tooltip title="Clear Filters">
+                <Button type="default" size="small" icon={<ClearOutlined />} onClick={clearFilters} style={{ padding: '0 4px', height: '24px' }} className="action-btn" />
+              </Tooltip>
+              <Tooltip title="Apply Filters">
+                <Button type="primary" size="small" icon={<FilterOutlined />} onClick={() => refetch()} style={{ padding: '0 4px', height: '24px' }} className="action-btn" />
+              </Tooltip>
+            </div>
+
+            <Space size="small" style={{ marginLeft: '8px', marginBottom: '2px' }}>
+              {canBulkApproveWorklogs && (
+                <Popconfirm
+                  title="Approve selected worklogs?"
+                  okText="Approve"
+                  cancelText="Cancel"
+                  onConfirm={handleBulkApprove}
+                  disabled={!selectedRowKeys.length}
+                >
+                  <Button
+                    type="primary"
+                    size="small"
+                    loading={isBulkApprovePending}
+                    disabled={!selectedRowKeys.length}
+                    style={{ height: '24px' }}
+                  >
+                    Approve Selected ({selectedRowKeys.length})
+                  </Button>
+                </Popconfirm>
+              )}
+              {canBulkRejectWorklogs && (
+                <Popconfirm
+                  title="Reject selected worklogs?"
+                  okText="Continue"
+                  cancelText="Cancel"
+                  onConfirm={showBulkRejectModal}
+                  disabled={!selectedRowKeys.length}
+                >
+                  <Button
+                    danger
+                    size="small"
+                    loading={isBulkRejectPending}
+                    disabled={!selectedRowKeys.length}
+                    style={{ height: '24px' }}
+                  >
+                    Reject Selected ({selectedRowKeys.length})
+                  </Button>
+                </Popconfirm>
+              )}
+            </Space>
           </div>
         </div>
       </Form>
-
-      <TableToolbar>
-        <div className="flex items-center justify-between gap-2 flex-wrap admin-worklog-table">
-          <Space size="small">
-            {canBulkApproveWorklogs && (
-              <Popconfirm
-                title="Approve selected worklogs?"
-                okText="Approve"
-                cancelText="Cancel"
-                onConfirm={handleBulkApprove}
-                disabled={!selectedRowKeys.length}
-              >
-                <Button
-                  type="primary"
-                  size="small"
-                  loading={isBulkApprovePending}
-                  disabled={!selectedRowKeys.length}
-                >
-                  Approve Selected ({selectedRowKeys.length})
-                </Button>
-              </Popconfirm>
-            )}
-            {canBulkRejectWorklogs && (
-              <Popconfirm
-                title="Reject selected worklogs?"
-                okText="Continue"
-                cancelText="Cancel"
-                onConfirm={showBulkRejectModal}
-                disabled={!selectedRowKeys.length}
-              >
-                <Button
-                  danger
-                  size="small"
-                  loading={isBulkRejectPending}
-                  disabled={!selectedRowKeys.length}
-                >
-                  Reject Selected ({selectedRowKeys.length})
-                </Button>
-              </Popconfirm>
-            )}
-          </Space>
-        </div>
-      </TableToolbar>
 
       <div className="table-container admin-worklog-table" style={{ overflowX: 'auto', width: '100%' }}>
         <Table
@@ -939,13 +929,6 @@ const AdminWorklogTable = () => {
           rowClassName={(record) => {
             const worklogType = getWorklogType(record, activeWorkhour);
             return `compact-row row-${worklogType}`;
-          }}
-          expandable={{
-            expandedRowRender,
-            expandedRowKeys: expandedRows,
-            expandIcon: customExpandIcon,
-            expandRowByClick: true,
-            columnWidth: 20
           }}
           onChange={handleTableChange}
           rowKey="id"

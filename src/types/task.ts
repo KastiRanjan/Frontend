@@ -23,4 +23,5 @@ export interface TaskType {
     secondVerifiedBy?: string;
     secondVerifiedAt?: string;
     budgetedHours?: number;
+  group?: any;
   }

@@ -188,12 +188,6 @@ const ClientTable = ({ status }: ClientTableProps) => {
       ...getColumnSearchProps('name', 'Name'),
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
       sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
-      render: (text: string, record: any) => (
-        <div>
-          <div>{text}</div>
-          <small style={{ color: 'rgba(0, 0, 0, 0.45)' }}>{record.shortName || ''}</small>
-        </div>
-      ),
     },
     {
       title: "Legal Status",

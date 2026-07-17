@@ -73,24 +73,23 @@ const AllWorklogs = () => {
     
     return (
         <>
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold">My Worklogs</h1>
-                {hasAllWorklogPermission && (
-                    <Button 
-                        type="primary" 
-                        onClick={() => navigate("/worklog/allworklog")}
-                    >
-                        View All Worklogs
-                    </Button>
-                )}
-            </div>
             <Tabs 
                 defaultActiveKey="1" 
                 items={tabItems} 
                 tabBarExtraContent={
-                    <Button type="primary" onClick={() => navigate("/worklogs/new")}>
-                        Create
-                    </Button>
+                    <div className="flex gap-2">
+                        {hasAllWorklogPermission && (
+                            <Button 
+                                type="primary" 
+                                onClick={() => navigate("/worklog/allworklog")}
+                            >
+                                View All Worklogs
+                            </Button>
+                        )}
+                        <Button type="primary" onClick={() => navigate("/worklogs/new")}>
+                            Create
+                        </Button>
+                    </div>
                 }
             />
         </>

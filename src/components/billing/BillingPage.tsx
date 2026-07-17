@@ -80,14 +80,16 @@ const BillingPage = () => {
 
   return (
     <div>
-      <div className="mb-4">
-        <Button type="primary" onClick={() => showModal()}>
-          Add Billing Entity
-        </Button>
-      </div>
-
       <Card>
-        <Tabs defaultActiveKey="1" items={items} />
+        <Tabs 
+          defaultActiveKey="1" 
+          items={items} 
+          tabBarExtraContent={
+            <Button type="primary" onClick={() => showModal()}>
+              Add Billing Entity
+            </Button>
+          }
+        />
       </Card>
 
       {isModalOpen && (

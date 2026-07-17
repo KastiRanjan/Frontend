@@ -35,32 +35,34 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
   } = useBusinessOptions();
 
   useEffect(() => {
-    if (id && editClientData) {
-      const registeredDate = editClientData.registeredDate
-        ? moment(editClientData.registeredDate) // Convert registeredDate to moment
-        : null;
+    if (id) {
+      if (editClientData) {
+        const registeredDate = editClientData.registeredDate
+          ? moment(editClientData.registeredDate) // Convert registeredDate to moment
+          : null;
 
-        // Prepare data for form with either entity ID or enum fallback values
-      const formData = {
-        ...editClientData,
-        registeredDate,
-        // If we have business size entity data, use businessSizeId, otherwise use enum
-        businessSizeId: editClientData.businessSize?.id || null,
-        businessSizeEnum: !editClientData.businessSize?.id ? editClientData.businessSizeEnum : null,
-        // If we have industry nature entity data, use industryNatureId, otherwise use enum
-        industryNatureId: editClientData.industryNature?.id || null,
-        industryNatureEnum: !editClientData.industryNature?.id ? editClientData.industryNatureEnum : null,
-        // If we have legal status entity data, use legalStatusId, otherwise use enum
-        legalStatusId: editClientData.legalStatus?.id || null,
-        legalStatusEnum: !editClientData.legalStatus?.id ? editClientData.legalStatusEnum : null,
-      };
-      
-      form.setFieldsValue(formData);
-      
-      // Set selected values for cascading dropdowns
-      setSelectedCountry(editClientData.country);
-      setSelectedState(editClientData.state);
-      setSelectedDistrict(editClientData.district);
+          // Prepare data for form with either entity ID or enum fallback values
+        const formData = {
+          ...editClientData,
+          registeredDate,
+          // If we have business size entity data, use businessSizeId, otherwise use enum
+          businessSizeId: editClientData.businessSize?.id || null,
+          businessSizeEnum: !editClientData.businessSize?.id ? editClientData.businessSizeEnum : null,
+          // If we have industry nature entity data, use industryNatureId, otherwise use enum
+          industryNatureId: editClientData.industryNature?.id || null,
+          industryNatureEnum: !editClientData.industryNature?.id ? editClientData.industryNatureEnum : null,
+          // If we have legal status entity data, use legalStatusId, otherwise use enum
+          legalStatusId: editClientData.legalStatus?.id || null,
+          legalStatusEnum: !editClientData.legalStatus?.id ? editClientData.legalStatusEnum : null,
+        };
+        
+        form.setFieldsValue(formData);
+        
+        // Set selected values for cascading dropdowns
+        setSelectedCountry(editClientData.country);
+        setSelectedState(editClientData.state);
+        setSelectedDistrict(editClientData.district);
+      }
     } else {
       form.resetFields();
       form.setFieldsValue({ status: "active", country: "nepal" });
@@ -96,7 +98,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
     <Card>
       <Form form={form} onFinish={handleFinish} layout="vertical" initialValues={{ status: "active", country: "nepal" }}>
         <Row gutter={24}>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Name Field */}
             <FormInputWrapper
               id="name"
@@ -106,9 +108,10 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
                 { required: true, message: "Please input the name" },
                 { max: 100, message: "Name cannot exceed 100 characters" },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Short Name Field */}
             <FormInputWrapper
               id="shortName"
@@ -118,9 +121,10 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
                 { required: true, message: "Please input the short name" },
                 { max: 20, message: "Short name cannot exceed 20 characters" },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* PAN No Field */}
             <FormInputWrapper
               id="panNo"
@@ -130,15 +134,16 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
                 { required: true, message: "Please input the PAN No" },
                 { max: 15, message: "PAN No cannot exceed 15 characters" },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Registered Date Field */}
             <Form.Item name="registeredDate" label="Registered Date">
               <DatePicker className="h-[46px] bg-[#eee] w-full border-none" style={{ width: "100%" }} />
             </Form.Item>
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Status Field */}
             <FormSelectWrapper
               id="status"
@@ -150,9 +155,10 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
                 { value: "suspended", label: "Suspended" },
                 { value: "archive", label: "Archive" },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Country Field */}
             <FormSelectWrapper
               id="country"
@@ -170,7 +176,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               }}
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* State Field */}
             <FormSelectWrapper
               id="state"
@@ -188,7 +194,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               }}
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* District Field */}
             <FormSelectWrapper
               id="district"
@@ -205,7 +211,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               }}
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Local Jurisdiction Field */}
             <FormSelectWrapper
               id="localJurisdiction"
@@ -217,7 +223,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               disabled={!selectedDistrict}
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Ward No Field (Optional) */}
             <FormInputWrapper
               id="wardNo"
@@ -226,9 +232,10 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               rules={[
                 { max: 10, message: "Ward No cannot exceed 10 characters" },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Locality Field */}
             <FormInputWrapper
               id="locality"
@@ -238,9 +245,10 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
                 { required: true, message: "Please input the locality" },
                 { max: 100, message: "Locality cannot exceed 100 characters" },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Legal Status Field */}
             <FormSelectWrapper
               id="legalStatusId"
@@ -264,7 +272,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Business Size Field */}
             <FormSelectWrapper
               id="businessSizeId"
@@ -288,7 +296,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Industry Nature Field */}
             <FormSelectWrapper
               id="industryNatureId"
@@ -312,7 +320,7 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Telephone No Field (Optional) */}
             <FormInputWrapper
               id="telephoneNo"
@@ -324,9 +332,10 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
                   message: "Telephone No cannot exceed 15 characters",
                 },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Mobile No Field (Optional) */}
             <FormInputWrapper
               id="mobileNo"
@@ -335,22 +344,24 @@ const ClientForm = ({ editClientData, id }: ClientFormProps) => {
               rules={[
                 { max: 15, message: "Mobile No cannot exceed 15 characters" },
               ]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Email Field (Optional) */}
             <FormInputWrapper
               id="email"
               name="email"
               label="Email"
               rules={[{ type: "email", message: "Please input a valid email" }]}
+              classname="h-[46px] bg-[#eee] w-full"
             />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Website Field (Optional) */}
-            <FormInputWrapper id="website" name="website" label="Website" />
+            <FormInputWrapper id="website" name="website" label="Website" classname="h-[46px] bg-[#eee] w-full" />
           </Col>
-          <Col span={8} style={{ height: "90px" }}>
+          <Col span={8}>
             {/* Submit Button */}
             <Form.Item>
               <Button type="primary" htmlType="submit">

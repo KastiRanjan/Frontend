@@ -1,5 +1,5 @@
 export interface UserType {
-    id: number;
+    id?: number;
     createdAt: string;
     updatedAt: string;
     username: string;
@@ -9,7 +9,7 @@ export interface UserType {
     status: "active" | "inactive";
     isTwoFAEnabled: boolean;
     role: {
-        id: number;
+        id?: number;
         name: string;
     };
 }

@@ -20,6 +20,8 @@ interface FormSelectWrapperProps {
   mode?: "multiple" | "tags";
   showSearch?: boolean;
   filterOption?: boolean | ((input: string, option: any) => boolean);
+  loading?: boolean;
+  optionFilterProp?: string;
 }
 
 const FormSelectWrapper = (props: FormSelectWrapperProps) => {

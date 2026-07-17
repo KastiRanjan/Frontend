@@ -437,7 +437,7 @@ const RequestTaskTable = () => {
         sortOrder: sortedInfo.columnKey === 'group' && sortedInfo.order,
         ...getColumnSearchProps('group.name', 'Group'),
         render: (_: any, record: TaskType) => {
-          return record.group?.name;
+          return (record as any).group?.name;
         },
       },
       {

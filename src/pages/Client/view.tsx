@@ -4,8 +4,8 @@ import { Card, Button, Tabs, Spin, Divider, Typography, Space, Row, Col, Tag, Av
 import { EditOutlined, ArrowLeftOutlined, PhoneOutlined, MailOutlined, GlobalOutlined, HomeOutlined, BankOutlined, IdcardOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons';
 import { useClientById } from '@/hooks/client/useClientById';
 import PageTitle from '@/components/PageTitle';
-import PortalCredentialsForm from '@/components/client/portalcredentialsform';
-import ClientProjects from '@/components/client/ClientProjects';
+import PortalCredentialsForm from '@/components/Client/portalcredentialsform';
+import ClientProjects from '@/components/Client/ClientProjects';
 import moment from 'moment';
 import { formatBusinessStatus } from '@/utils/formatUtils';
 

@@ -41,6 +41,7 @@ import WorkHourDetails from "@/pages/User/WorkHourDetails";
 import PersonalDocumentsDetails from "@/pages/User/PersonalDocumentsDetails";
 import UserHistoryDetails from "@/pages/User/UserHistoryDetails";
 import LeaveManagement from "@/pages/Leave/LeaveManagement";
+import TimeOff from "@/pages/Leave/TimeOff";
 import Worklog from "@/pages/Worklog";
 import AllWorklogs from "@/pages/Worklog/AllWorklogs";
 import NewWorklog from "@/pages/Worklog/new";
@@ -557,6 +558,17 @@ const Router = [
       method="get"
       resource="leave"
       component={<LeaveManagement />}
+    />
+  ),
+},
+{
+  // Redesigned Time Off module (BS/AD, Odoo-inspired UX)
+  path: "/time-off",
+  element: (
+    <ProtectedRoute
+      method="get"
+      resource="leave"
+      component={<TimeOff />}
     />
   ),
 },

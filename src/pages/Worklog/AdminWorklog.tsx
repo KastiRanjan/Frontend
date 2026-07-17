@@ -33,29 +33,34 @@ const WorklogAdmin = () => {
     );
   }
   
+  const viewControls = (
+    <div className="flex gap-4">
+      <Radio.Group 
+        value={viewMode} 
+        onChange={(e) => setViewMode(e.target.value)}
+        optionType="button"
+        buttonStyle="solid"
+      >
+        <Radio.Button value="list">List View</Radio.Button>
+        <Radio.Button value="calendar">Calendar View</Radio.Button>
+      </Radio.Group>
+      <Button type="primary" onClick={() => navigate("/worklogs-all")}>
+        Back to My Worklogs
+      </Button>
+    </div>
+  );
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Worklog Management</h1>
-        <div className="flex gap-4">
-          <Radio.Group 
-            value={viewMode} 
-            onChange={(e) => setViewMode(e.target.value)}
-            optionType="button"
-            buttonStyle="solid"
-          >
-            <Radio.Button value="list">List View</Radio.Button>
-            <Radio.Button value="calendar">Calendar View</Radio.Button>
-          </Radio.Group>
-          <Button type="primary" onClick={() => navigate("/worklogs-all")}>
-            Back to My Worklogs
-          </Button>
-        </div>
-      </div>
       {viewMode === 'calendar' ? (
-        <WorklogCalendar />
+        <div className="mb-4">
+          <div className="flex justify-end mb-4">
+            {viewControls}
+          </div>
+          <WorklogCalendar />
+        </div>
       ) : (
-        <AdminWorklogTable />
+        <AdminWorklogTable headerControls={viewControls} />
       )}
     </div>
   );

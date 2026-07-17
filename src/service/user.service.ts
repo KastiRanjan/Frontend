@@ -21,9 +21,7 @@ const handleApiError = (error: any) => {
 
 export const fetchUsers = async ({ status, limit, page, keywords }: { status: string, limit: number, page: number, keywords: string }) => {
   try {
-    console.log(`Fetching users with params: status=${status}, limit=${limit}, page=${page}, keywords=${keywords}`);
     const response = await axios.get(`${backendURI}/users?status=${status}&limit=${limit}&page=${page}&keywords=${keywords}`, {});
-    console.log("Users API response:", response);
     
     // Return the paginated response data
     // The structure is: { results: User[], currentPage, pageSize, totalItems, etc. }

@@ -4,6 +4,8 @@ export interface RoleType {
 	id: string;
 	name: string;
 	displayName: string;
+  user?: any;
+  validTo?: any;
 }
 
 export interface WorkhourType {
@@ -17,6 +19,8 @@ export interface WorkhourType {
 	isActive: boolean;
 	createdAt?: string;
 	updatedAt?: string;
+  user?: any;
+  validTo?: any;
 }
 
 export interface WorkhourHistoryType {
@@ -30,6 +34,8 @@ export interface WorkhourHistoryType {
 	validUntil?: string;
 	createdAt: string;
 	updatedAt: string;
+  user?: any;
+  validTo?: any;
 }
 
 export interface CreateWorkhourDto {
@@ -38,6 +44,8 @@ export interface CreateWorkhourDto {
 	startTime?: string;
 	endTime?: string;
 	validFrom: string;
+  user?: any;
+  validTo?: any;
 }
 
 export interface UpdateWorkhourDto {
@@ -45,4 +53,6 @@ export interface UpdateWorkhourDto {
 	startTime?: string;
 	endTime?: string;
 	validFrom?: string;
+  user?: any;
+  validTo?: any;
 }

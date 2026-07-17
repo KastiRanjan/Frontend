@@ -1,10 +1,7 @@
 import { useSession } from "@/context/SessionContext";
 import {
   DashboardOutlined,
-  FileOutlined,
   ProjectOutlined,
-  UsergroupAddOutlined,
-  UserOutlined,
   CalendarOutlined,
   SettingOutlined,
   SafetyOutlined,
@@ -12,10 +9,16 @@ import {
   ClockCircleOutlined,
   CheckSquareOutlined,
   NotificationOutlined,
-  FolderOpenOutlined,
-  SolutionOutlined
+  CopyOutlined,
+  ProfileOutlined,
+  BankOutlined,
+  AccountBookOutlined,
+  FieldTimeOutlined,
+  CoffeeOutlined,
+  BarChartOutlined,
+  UserSwitchOutlined
 } from "@ant-design/icons";
-import { MenuProps } from "antd";
+import type { MenuProps } from "antd";
 import _ from "lodash";
 import React from "react";
 
@@ -47,7 +50,7 @@ export const MenuItems = (): MenuProps[] => {
       key: "/users",
       label: "Users",
       resource: "user",
-      icon: React.createElement(UsergroupAddOutlined),
+      icon: React.createElement(TeamOutlined),
     },
     {
       key: "/projects",
@@ -61,41 +64,35 @@ export const MenuItems = (): MenuProps[] => {
       resource: "calendar",
       icon: React.createElement(CalendarOutlined),
     },
-    // {
-    //   key: "/tasks",
-    //   label: "Quick Tasks",
-    //   resource: "tasks",
-    //   icon: React.createElement(UsergroupAddOutlined),
-    // },
     {
       key: "/task-template",
       label: "Task Template",
       resource: "task-template",
-      icon: React.createElement(FileOutlined),
+      icon: React.createElement(CopyOutlined),
     },
     {
       key: "/tasks",
       label: "Tasks",
       resource: "tasks",
-      icon: React.createElement(FileOutlined),
+      icon: React.createElement(ProfileOutlined),
     },
     {
       key: "/client",
       label: "Client",
       resource: "client",
-      icon: React.createElement(UserOutlined),
+      icon: React.createElement(BankOutlined),
     },
     {
       key: "/billing",
       label: "Billing",
       resource: "billing",
-      icon: React.createElement(FileOutlined),
+      icon: React.createElement(AccountBookOutlined),
     },
     {
       key: "/worklogs-all",
       label: "Worklogs",
       resource: "worklogs",
-      icon: React.createElement(UserOutlined),
+      icon: React.createElement(FieldTimeOutlined),
       visible: hasWorklogPagePermission,
     },
     {
@@ -108,7 +105,7 @@ export const MenuItems = (): MenuProps[] => {
       key: "/leave-management",
       label: "Leave",
       resource: "leave",
-      icon: React.createElement(CalendarOutlined),
+      icon: React.createElement(CoffeeOutlined),
     },
     {
       key: "/notice-board",
@@ -144,13 +141,13 @@ export const MenuItems = (): MenuProps[] => {
       key: "/client-reports",
       label: "Client Reports",
       resource: "client-reports",
-      icon: React.createElement(FolderOpenOutlined),
+      icon: React.createElement(BarChartOutlined),
     },
     {
       key: "/client-users",
       label: "Client Users",
       resource: "client-users",
-      icon: React.createElement(SolutionOutlined),
+      icon: React.createElement(UserSwitchOutlined),
     },
     // {
     //   key: "/reports",

@@ -50,8 +50,9 @@ function formatNepaliDateForForm(nepaliDate: NepaliDate | undefined): string | n
 }
 
 interface ProjectFormProps {
+  id?: string;
   editProjectData?: ProjectType;
-  handleCancel: () => void;
+  handleCancel?: () => void;
 }
 
 const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
@@ -303,11 +304,11 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
     if (editProjectData?.id) {
       mutateEdit(
         { id: editProjectData.id, payload: transformedValues },
-        { onSuccess: () => handleCancel() }
+        { onSuccess: () => handleCancel?.() }
       );
     } else {
       mutate(transformedValues, {
-        onSuccess: () => handleCancel(),
+        onSuccess: () => { if (handleCancel) handleCancel(); },
         onError: (error: any) => {
           const msg = error?.response?.data?.message || error?.message || "Failed to create project.";
           setErrorMessage(msg);

@@ -73,7 +73,7 @@ const UserForm = ({ initialValues, handleCancel }: { initialValues?: UserType, h
             message.error(errorMessage);
           }
         },
-      }
+      } as any
     );
   };
   

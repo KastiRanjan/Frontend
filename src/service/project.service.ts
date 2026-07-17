@@ -53,3 +53,10 @@ export const completeProject = async (id: string) => {
   const response = await axios.post(`${backendURI}/projects/${id}/complete`);
   return response.data;
 };
+
+export const exportProjectExcel = async (id: string) => {
+  const response = await axios.get(`${backendURI}/projects/${id}/export`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};

@@ -7,9 +7,9 @@ import { TaskGroupType } from "@/types/taskSuper";
 import { useEffect } from "react";
 
 interface TaskGroupFormProps {
+  id?: string;
+  handleCancel?: () => void;
   editTaskGroupData?: TaskGroupType;
-  id?: string | undefined;
-  handleCancel: () => void;
   fixedTaskSuperId?: string; // New prop for fixed taskSuperId
 }
 
@@ -40,8 +40,8 @@ const TaskGroupForm = ({
     };
     
     editTaskGroupData?.id 
-      ? mutateEdit({ id: editTaskGroupData?.id, payload: formattedValues }, { onSuccess: () => handleCancel() }) 
-      : mutate(formattedValues, { onSuccess: () => handleCancel() });
+      ? mutateEdit({ id: editTaskGroupData?.id, payload: formattedValues }, { onSuccess: () => handleCancel?.() }) 
+      : mutate(formattedValues, { onSuccess: () => handleCancel?.() });
   };
   
   return (

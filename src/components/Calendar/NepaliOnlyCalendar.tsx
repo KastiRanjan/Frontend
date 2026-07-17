@@ -40,6 +40,7 @@ const nepaliMonths = [
 const shortNepaliWeekdays = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिहि', 'शुक्र', 'शनि'];
 
 interface NepaliOnlyCalendarProps {
+  onEventClick?: (event: any) => void;
   // Optional props - component now fetches its own data
 }
 

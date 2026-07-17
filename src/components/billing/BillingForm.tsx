@@ -71,9 +71,9 @@ const BillingForm = ({ editBillingData, handleCancel }: BillingFormProps) => {
       });
       
       // Set selected values for cascading dropdowns
-      setSelectedCountry(editBillingData.country);
-      setSelectedState(editBillingData.state);
-      setSelectedDistrict(editBillingData.district);
+      setSelectedCountry(editBillingData.country || null);
+      setSelectedState(editBillingData.state || null);
+      setSelectedDistrict(editBillingData.district || null);
       
       // Set VAT registration status based on whether VAT number exists
       setIsVatRegistered(!!editBillingData.vat_number);

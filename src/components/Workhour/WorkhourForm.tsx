@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import { WorkhourType } from "../../types/workhour";
 
 interface WorkhourFormProps {
+  users?: any[];
 	initialValues?: Partial<WorkhourType>;
 	onSubmit: (values: any) => void;
 	onCancel?: () => void;

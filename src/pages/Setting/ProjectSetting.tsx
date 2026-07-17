@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, Typography } from "antd";
-import NatureOfWorkManager from "../../components/Project/NatureOfWorkManager";
+import NatureOfWorkManager from "../../components/project/NatureOfWorkManager";
 
 const { Title } = Typography;
 

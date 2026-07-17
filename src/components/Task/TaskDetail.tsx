@@ -2,7 +2,7 @@ import { Card, Descriptions, Tag, List, Typography} from 'antd';
 
 const { Title, Text } = Typography;
 
-const TaskDetail = ({ data }) => {
+const TaskDetail = ({ data }: { data: any }) => {
     console.log('Task Detail:', data);
 
     if (!data) {
@@ -10,7 +10,7 @@ const TaskDetail = ({ data }) => {
     }
 
     // Status color mapping
-    const getStatusColor = (status) => {
+    const getStatusColor = (status: any) => {
         switch (status) {
             case 'open': return 'blue';
             case 'in_progress': return 'green';
@@ -20,7 +20,7 @@ const TaskDetail = ({ data }) => {
     };
 
     // Priority color mapping
-    const getPriorityColor = (priority) => {
+    const getPriorityColor = (priority: any) => {
         switch (priority) {
             case 'low': return 'green';
             case 'medium': return 'orange';

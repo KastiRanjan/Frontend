@@ -27,7 +27,7 @@ const WorkhourProfile: React.FC<WorkhourProfileProps> = ({
       // Convert string userId to number if it's a valid number
       const numericUserId = userId && !isNaN(Number(userId)) ? Number(userId) : null;
       if (numericUserId) {
-        return resolveWorkhour(numericUserId);
+        return resolveWorkhour(String(numericUserId));
       }
       // If userId is not a valid number (i.e., it's a UUID), skip the call
       return Promise.resolve(null);

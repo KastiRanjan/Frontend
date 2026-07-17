@@ -47,7 +47,7 @@ export const useTodoTasks = () => {
 export const useTodoTaskById = (id: string) => {
   const [todoTask, setTodoTask] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
 
   const fetchData = async () => {
     if (!id) return;
@@ -76,7 +76,7 @@ export const useTodoTaskById = (id: string) => {
 export const useTodoTasksByStatus = (status: TodoTaskStatus) => {
   const [todoTasks, setTodoTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
 
   const fetchData = async () => {
     if (!status) return;
@@ -105,7 +105,7 @@ export const useTodoTasksByStatus = (status: TodoTaskStatus) => {
 export const useTodoTasksByAssignedUser = (userId: string) => {
   const [todoTasks, setTodoTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
 
   const fetchData = async () => {
     if (!userId) return;
@@ -134,7 +134,7 @@ export const useTodoTasksByAssignedUser = (userId: string) => {
 export const useTodoTasksByCreatedUser = (userId: string) => {
   const [todoTasks, setTodoTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
 
   const fetchData = async () => {
     if (!userId) return;
@@ -162,7 +162,7 @@ export const useTodoTasksByCreatedUser = (userId: string) => {
 // Hook to create a todo task
 export const useCreateTodoTask = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
 
   const create = async (payload: any) => {
     setLoading(true);
@@ -186,7 +186,7 @@ export const useCreateTodoTask = () => {
 // Hook to update a todo task
 export const useUpdateTodoTask = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
 
   const update = async (id: string, payload: any) => {
     setLoading(true);
@@ -210,7 +210,7 @@ export const useUpdateTodoTask = () => {
 // Hook to delete a todo task
 export const useDeleteTodoTask = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<any>(null);
 
   const remove = async (id: string) => {
     setLoading(true);

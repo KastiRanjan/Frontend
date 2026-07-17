@@ -8,7 +8,7 @@ import { useProjectTasksWithHierarchy } from "@/hooks/task/useProjectTasksWithHi
 import { UserType } from "@/hooks/user/type";
 import { TaskType } from "@/types/task";
 import { EditOutlined, DeleteOutlined, SearchOutlined, CheckOutlined, CheckCircleOutlined } from "@ant-design/icons";
-import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Modal, message, Popconfirm, Space, Input, Card, notification, Tag, Typography } from "antd";
+import { Avatar, Badge, Button, Form, Table, TableProps, Tooltip, DatePicker, Select, Modal, message, Popconfirm, Space, Input, Card, notification, Tag, Typography, Radio } from "antd";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
@@ -49,27 +49,32 @@ interface CompleteAllTaskCandidate {
 
 
 interface TaskTableProps {
-  projectId: string;
-  status: string;
-  showModal: (task?: ExtendedTaskType) => void;
-  users: UserType[];
-  projectLead?: UserType;
-  onRefresh?: () => void;
+  projectId?: string;
+  status?: string;
+  users?: any[];
+  data?: any[];
+  project?: any;
+  projectLead?: any;
+  showModal: (task?: any) => void;
+  onRefresh: (options?: any) => Promise<any>;
   loading?: boolean;
+  hideAddTask?: boolean;
 }
 
-const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh, loading: externalLoading }: TaskTableProps) => {
+const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh, loading: externalLoading, hideAddTask }: TaskTableProps) => {
   console.log('TaskTable rendering - Project ID:', projectId);
+
+  const [activeTab, setActiveTab] = useState(status || 'open');
 
   // Use the custom hook to fetch project tasks with hierarchy and status filtering
   const { data: allTasks = [], isLoading } = useProjectTasksWithHierarchy({
-    projectId,
-    status
+    projectId: projectId as string,
+    status: activeTab
   });
 
   // Fetch complete project task list for Complete All modal (no status filtering)
   const { data: allProjectTasks = [] } = useProjectTasksWithHierarchy({
-    projectId,
+    projectId: projectId as string,
   });
 
   // Filter/group tasks by status (if needed, but hook already filters by status)
@@ -1507,14 +1512,7 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
 
   const columns = useMemo(
     () => [
-      { 
-        title: "ID", 
-        dataIndex: "tcode", 
-        key: "id",
-        sorter: (a: ExtendedTaskType, b: ExtendedTaskType) => (a.tcode?.localeCompare(b.tcode || '') || 0),
-        sortOrder: sortedInfo.columnKey === 'id' && sortedInfo.order,
-        ...getColumnSearchProps('tcode', 'ID'),
-      },
+
       {
         title: "Name",
         dataIndex: "name",
@@ -1588,18 +1586,6 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
                   {content}
                 </Link>
               </span>
-              {hasChildren && (
-                <span>
-                  <svg fill="none" width={16} height={16} viewBox="0 0 16 16" role="presentation">
-                    <path
-                      stroke="currentcolor"
-                      strokeLinejoin="round"
-                      strokeWidth="1.5"
-                      d="M3 8h10c.69 0 1.25.56 1.25 1.25V13c0 .69-.56 1.25-1.25 1.25H9.25C8.56 14.25 8 13.69 8 13V3c0-.69-.56-1.25-1.25-1.25H3c-.69 0-1.25.56-1.25 1.25v3.75C1.75 7.44 2.31 8 3 8Z"
-                    />
-                  </svg>
-                </span>
-              )}
             </div>
           );
         },
@@ -1764,7 +1750,7 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
                 mode="multiple"
                 style={{ width: "100%" }}
                 placeholder="Select assignees"
-                options={users.map((user: any) => ({
+                options={(users || []).map((user: any) => ({
                   label: user.username,
                   value: user.id,
                 }))}
@@ -2111,8 +2097,21 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
   return (
     <>
       <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px', marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
+            <Radio.Group 
+              value={activeTab} 
+              onChange={(e) => {
+                setActiveTab(e.target.value);
+                setSelectedRowKeys([]);
+              }}
+              buttonStyle="solid"
+            >
+              <Radio.Button value="open">To Do</Radio.Button>
+              <Radio.Button value="in_progress">Doing</Radio.Button>
+              <Radio.Button value="done">Completed</Radio.Button>
+            </Radio.Group>
+            
             <Button
               type="primary"
               onClick={handleSetDueDate}
@@ -2182,30 +2181,37 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
               value={globalSearchText}
               onChange={(e) => handleGlobalSearch(e.target.value)}
               onSearch={(value) => handleGlobalSearch(value)}
-              style={{ width: 400 }}
-              size="middle"
+              style={{ width: 300 }}
             />
           </div>
-          {(searchText || globalSearchText) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ color: '#1890ff', fontSize: '14px' }}>
-                🔍 {globalSearchText ? 'Global search' : 'Column search'}: "{searchText || globalSearchText}"
-                {globalSearchText && <span style={{ fontSize: '12px', color: '#999' }}> (auto-expanded matching parents)</span>}
-              </span>
-              <Button 
-                size="small" 
-                onClick={() => {
-                  setSearchText('');
-                  setSearchedColumn('');
-                  setGlobalSearchText('');
-                  setExpandedRowKeys([]);
-                }}
-              >
-                Clear Search
+          <div>
+            {!hideAddTask && (
+              <Button type="primary" onClick={() => showModal()}>
+                Add Task
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+        
+        {(searchText || globalSearchText) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 16 }}>
+            <span style={{ color: '#1890ff', fontSize: '14px' }}>
+              🔍 {globalSearchText ? 'Global search' : 'Column search'}: "{searchText || globalSearchText}"
+              {globalSearchText && <span style={{ fontSize: '12px', color: '#999' }}> (auto-expanded matching parents)</span>}
+            </span>
+            <Button 
+              size="small" 
+              onClick={() => {
+                setSearchText('');
+                setSearchedColumn('');
+                setGlobalSearchText('');
+                setExpandedRowKeys([]);
+              }}
+            >
+              Clear Search
+            </Button>
+          </div>
+        )}
         
         <Form form={form} component={false}>
           <Table
@@ -2228,6 +2234,7 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
               rowExpandable: (record: any) => Array.isArray(record.children) && record.children.length > 0
             }}
             pagination={{
+              hideOnSinglePage: true,
               showSizeChanger: true,
               showQuickJumper: true,
               defaultPageSize: 30,
@@ -2322,7 +2329,7 @@ const TaskTable = ({ projectId, status, showModal, users, projectLead, onRefresh
             <Select
               mode="multiple"
               placeholder="Select assignees"
-              options={users.map((user: any) => ({
+              options={(users || []).map((user: any) => ({
                 label: user.username,
                 value: user.id,
               }))}

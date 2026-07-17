@@ -1,6 +1,6 @@
 import ClientForm from "@/components/Client/ClientForm";
 import PageTitle from "@/components/PageTitle";
-import PortalCredentialsForm from "@/components/client/portalcredentialsform";
+import PortalCredentialsForm from "@/components/Client/portalcredentialsform";
 import { useClientById } from "@/hooks/client/useClientById";
 import { Button, Card, Tabs } from "antd";
 import { useState } from "react";

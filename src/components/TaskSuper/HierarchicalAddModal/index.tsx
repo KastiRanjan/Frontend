@@ -63,7 +63,7 @@ const HierarchicalAddModal: React.FC<HierarchicalAddModalProps> = ({
   
   // Load task templates when a task group is selected
   useEffect(() => {
-    if (selectedGroupId && selectedGroup?.tasktemplate) {
+    if (selectedGroup && selectedGroup?.tasktemplate) {
       // Filter for main templates (taskType === 'story')
       const templates = selectedGroup.tasktemplate.filter(
         (template: any) => template.taskType === 'story' || !template.taskType

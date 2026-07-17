@@ -17,7 +17,8 @@ import ProjectUserAssignment from './ProjectUserAssignment';
 import ProjectWorklogs from './ProjectWorklogs';
 // import DsaManager from './dsa/DsaManager';
 import { useUser } from '@/hooks/user/useUser';
-import { editProject } from '@/service/project.service';
+import { editProject, exportProjectExcel } from '@/service/project.service';
+import { DownloadOutlined } from '@ant-design/icons';
 
 
 
@@ -34,6 +35,7 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [isInviting, setIsInviting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const { profile, permissions } = useSession();
   const queryClient = useQueryClient();
   const { data: allUsersData, isPending: isUsersLoading } = useUser({
@@ -169,65 +171,15 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
       label: 'Tasks',
       key: '3',
       children: (
-        <>
-          {!hideAddTask && (
-            <Button type="primary" style={{ marginBottom: 16 }} onClick={() => showModal()}>
-              Add Task
-            </Button>
-          )}
-          <Tabs 
-            type="card" 
-            size="small"
-            defaultActiveKey="todo"
-            items={[
-              {
-                label: `To Do`,
-                key: 'todo',
-                children: (
-                  <TaskTable 
-                    projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
-                    status="open"
-                    showModal={showModal}
-                    users={project?.users ?? []}
-                    projectLead={project?.projectLead}
-                    onRefresh={handleRefresh}
-                    loading={loading}
-                  />
-                )
-              },
-              {
-                label: `Doing`,
-                key: 'doing',
-                children: (
-                  <TaskTable 
-                    projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
-                    status="in_progress"
-                    showModal={showModal}
-                    users={project?.users ?? []}
-                    projectLead={project?.projectLead}
-                    onRefresh={handleRefresh}
-                    loading={loading}
-                  />
-                )
-              },
-              {
-                label: `Completed`,
-                key: 'completed',
-                children: (
-                  <TaskTable 
-                    projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
-                    status="done"
-                    showModal={showModal}
-                    users={project?.users ?? []}
-                    projectLead={project?.projectLead}
-                    onRefresh={handleRefresh}
-                    loading={loading}
-                  />
-                )
-              }
-            ]}
-          />
-        </>
+        <TaskTable 
+          projectId={project?.id?.toString?.() ?? String(project?.id ?? '')}
+          showModal={showModal}
+          users={project?.users ?? []}
+          projectLead={project?.projectLead}
+          onRefresh={handleRefresh}
+          loading={loading}
+          hideAddTask={hideAddTask}
+        />
       )
     },
     {
@@ -292,6 +244,26 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
       children: <ProjectRanking />
     });
   }
+  const handleExport = async () => {
+    if (!project?.id) return;
+    setIsExporting(true);
+    try {
+      const blob = await exportProjectExcel(project.id.toString());
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${project.name ? project.name.replace(/[^a-zA-Z0-9_\-]/g, '_') : 'Project'}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      message.success('Export downloaded successfully');
+    } catch (error) {
+      console.error(error);
+      message.error('Failed to export project data');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <Row gutter={8}>
@@ -334,7 +306,21 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
         />
       </Modal>
       <Col span={24}>
-        <Card title={name ?? ''}>
+        <Card 
+          title={name ?? ''}
+          extra={
+            userRole === 'superuser' ? (
+              <Button 
+                type="primary" 
+                icon={<DownloadOutlined />} 
+                onClick={handleExport}
+                loading={isExporting}
+              >
+                Export to Excel
+              </Button>
+            ) : null
+          }
+        >
           <Tabs activeKey={activeTabKey} onChange={setActiveTabKey} items={tabItems} />
         </Card>
       </Col>

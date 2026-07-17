@@ -12,6 +12,7 @@ import moment from "moment";
 import { useParams } from "react-router-dom";
 
 interface TaskFormProps {
+  handleCancel?: () => void;
   users: any[];
   tasks: any[];
   editTaskData?: any;
@@ -103,7 +104,7 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
         onSuccess: (response) => {
           console.log("Mutation response:", response);
           message.success(successMessage);
-          handleCancel();
+          if (handleCancel) handleCancel?.();
           form.resetFields();
           if (onSuccess) {
             onSuccess();
@@ -123,7 +124,7 @@ const TaskForm = ({ users, tasks, editTaskData, handleCancel, projectId, onSucce
             form.setFields(fieldErrors);
           }
         },
-      }
+      } as any
     );
   };
 

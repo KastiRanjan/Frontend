@@ -1043,14 +1043,6 @@ const AllTaskTable = ({ status, userRole, onEdit, externalSearchText = '' }: { s
   const columns = useMemo(  
     () => [
       {
-        title: "ID",
-        dataIndex: "tcode",
-        key: "tcode",
-        sorter: (a: TaskType, b: TaskType) => (a.tcode?.localeCompare(b.tcode || '') || 0),
-        sortOrder: sortedInfo.columnKey === 'tcode' && sortedInfo.order,
-        ...getColumnSearchProps('tcode', 'ID'),
-      },
-      {
         title: "Name",
         dataIndex: "name",
         key: "name",
@@ -1499,7 +1491,6 @@ const AllTaskTable = ({ status, userRole, onEdit, externalSearchText = '' }: { s
             rowKey={"id"}
             bordered
             onChange={handleTableChange}
-            rowSelection={rowSelection}
             expandable={{
               defaultExpandAllRows: false,
               expandRowByClick: false,
@@ -1510,6 +1501,7 @@ const AllTaskTable = ({ status, userRole, onEdit, externalSearchText = '' }: { s
               rowExpandable: (record: any) => Array.isArray(record.children) && record.children.length > 0
             }}
             pagination={{
+              hideOnSinglePage: true,
               showSizeChanger: true,
               showQuickJumper: true,
               defaultPageSize: 30,
