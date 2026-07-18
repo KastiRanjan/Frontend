@@ -28,12 +28,12 @@ const TaskSuperPage = () => {
     setIsModalOpen(false);
     setSelectedTaskSuper(undefined);
   };
-  
+
   const handleAddMultipleToProject = (selectedIds: string[]) => {
     setSelectedTaskSupers(selectedIds);
     setIsMultiAssignModalOpen(true);
   };
-  
+
   const handleMultiAssignSuccess = () => {
     setIsMultiAssignModalOpen(false);
     setSelectedTaskSupers([]);
@@ -41,13 +41,13 @@ const TaskSuperPage = () => {
 
   return (
     <div>
-      <TaskSuperList 
-        showModal={showModal} 
+      <TaskSuperList
+        showModal={showModal}
         onAddMultipleToProject={handleAddMultipleToProject}
       />
 
       <Modal
-        title={selectedTaskSuper ? "Edit Category" : "Add Category"}
+        title={selectedTaskSuper ? "Edit Task Super" : "Add Task Super"}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
@@ -57,7 +57,7 @@ const TaskSuperPage = () => {
           handleCancel={handleCancel}
         />
       </Modal>
-      
+
       <MultiTaskSuperProjectAssignmentModal
         visible={isMultiAssignModalOpen}
         onCancel={() => setIsMultiAssignModalOpen(false)}

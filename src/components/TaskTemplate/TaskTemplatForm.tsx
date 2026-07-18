@@ -219,26 +219,28 @@ const TaskTemplateForm = ({
       </Form.Item>
       
       {/* Task Group Info Display - Using the current form value for groupId to look up the group name */}
-      <Form.Item
-        label="Task Group"
-      >
-        <div style={{ marginBottom: '5px' }}>
-          <Input 
-            value={taskgroup?.name || 'Loading group...'}
-            disabled
-            style={{ backgroundColor: '#f5f5f5', color: '#666', marginBottom: '5px' }}
-            suffix={
-              <Tooltip title="This task template belongs to this task group. The group ID is saved in a hidden field.">
-                <InfoCircleOutlined />
-              </Tooltip>
-            }
-          />
-          <div style={{ fontSize: '11px', color: '#666' }}>
-            Group ID: {form.getFieldValue('groupId') || 'Not set'}
-            {taskgroup && ` (${taskgroup.name})`}
+      {taskType !== 'task' && (
+        <Form.Item
+          label="Task Group"
+        >
+          <div style={{ marginBottom: '5px' }}>
+            <Input 
+              value={taskgroup?.name || 'Loading group...'}
+              disabled
+              style={{ backgroundColor: '#f5f5f5', color: '#666', marginBottom: '5px' }}
+              suffix={
+                <Tooltip title="This task template belongs to this task group. The group ID is saved in a hidden field.">
+                  <InfoCircleOutlined />
+                </Tooltip>
+              }
+            />
+            <div style={{ fontSize: '11px', color: '#666' }}>
+              Group ID: {form.getFieldValue('groupId') || 'Not set'}
+              {taskgroup && ` (${taskgroup.name})`}
+            </div>
           </div>
-        </div>
-      </Form.Item>
+        </Form.Item>
+      )}
       
       <Row gutter={16}>
         <Col span={24}>

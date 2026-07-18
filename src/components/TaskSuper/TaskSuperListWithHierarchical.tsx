@@ -33,13 +33,13 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
   const [selectedGroups, setSelectedGroups] = useState<React.Key[]>([]);
   const [selectedTemplateRows, setSelectedTemplateRows] = useState<Record<string, React.Key[]>>({});
   const [selectedSubtaskRows, setSelectedSubtaskRows] = useState<Record<string, React.Key[]>>({});
-  
+
   const navigate = useNavigate();
-  
+
   const { data: taskSupers, isPending } = useFetchTaskSupers();
   const { data: taskGroups, isPending: isLoadingTaskGroups } = useFetchTaskGroups();
   const { mutate: deleteTaskSuper } = useDeleteTaskSuper();
-  
+
   const handleCheckboxChange = (id: string) => {
     if (checkedRows.includes(id)) {
       setCheckedRows(checkedRows.filter((rowId) => rowId !== id));
@@ -47,20 +47,20 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
       setCheckedRows([...checkedRows, id]);
     }
   };
-  
+
   const handleAddMultipleToProject = () => {
     if (checkedRows.length === 0) {
       message.warning('Please select at least one category to add to a project');
       return;
     }
-    
+
     if (onAddMultipleToProject) {
       onAddMultipleToProject(checkedRows);
     } else {
       message.error('Add to Project functionality is not available');
     }
   };
-  
+
   // New function for hierarchical add
   const handleAddToProjectHierarchical = (taskSuperId?: string) => {
     if (onAddToProjectHierarchical) {
@@ -69,14 +69,14 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
       message.error('Hierarchical Add to Project functionality is not available');
     }
   };
-  
+
   // Handle multiple selection hierarchical add
   const handleAddMultipleToProjectHierarchical = () => {
     if (checkedRows.length === 0) {
       message.warning('Please select at least one category to add to a project');
       return;
     }
-    
+
     // For simplicity, we'll just use the first selected item to initialize the hierarchical modal
     const firstSelectedTaskSuperId = checkedRows[0];
     handleAddToProjectHierarchical(firstSelectedTaskSuperId);
@@ -99,30 +99,30 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
     // Navigate to the TaskSuperDetails page using /task-template to match the route
     navigate(`/task-template/category/${taskSuper.id}`);
   };
-  
+
   const handleAddToProject = (taskSuper: TaskSuperType) => {
     // Get all groups for this taskSuper
     const groupsForTaskSuper = taskGroups?.filter((group: TaskGroupType) => group.taskSuperId === taskSuper.id) || [];
-    
+
     if (groupsForTaskSuper.length === 0) {
       message.warning('This category has no task groups. Add some task groups first.');
       return;
     }
-    
+
     // Set the taskSuperId
     setSelectedTaskSuperId(taskSuper.id);
-    
+
     // Pre-select all groups for this taskSuper
     setSelectedGroups(groupsForTaskSuper.map((group: TaskGroupType) => group.id));
-    
+
     // Initialize empty selections for templates and subtasks
     setSelectedTemplateRows({});
     setSelectedSubtaskRows({});
-    
+
     // Show the project assignment modal
     setIsProjectAssignmentModalVisible(true);
   };
-  
+
   const handleProjectAssignmentModalCancel = () => {
     setIsProjectAssignmentModalVisible(false);
     setSelectedTaskSuperId(null);
@@ -130,7 +130,7 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
     setSelectedTemplateRows({});
     setSelectedSubtaskRows({});
   };
-  
+
   const handleProjectAssignmentSuccess = () => {
     message.success('Tasks added to project successfully');
     setIsProjectAssignmentModalVisible(false);
@@ -150,8 +150,8 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
 
   if (!taskSupers || taskSupers.length === 0) {
     return (
-      <Empty 
-        description="No task categories found" 
+      <Empty
+        description="No task categories found"
         className="my-8"
       >
         <Button type="primary" onClick={() => showModal()}>
@@ -164,12 +164,12 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
   return (
     <>
       {contextHolder}
-      
+
       {/* Action buttons for selected items */}
       {checkedRows.length > 0 && (
         <div className="mb-4 p-2 bg-gray-50 rounded flex items-center justify-between">
           <div>
-            <Button 
+            <Button
               type="primary"
               icon={<ProjectOutlined />}
               onClick={handleAddMultipleToProject}
@@ -177,9 +177,9 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
             >
               Add Selected to Project
             </Button>
-            
+
             {onAddToProjectHierarchical && (
-              <Button 
+              <Button
                 type="primary"
                 icon={<AppstoreAddOutlined />}
                 onClick={handleAddMultipleToProjectHierarchical}
@@ -190,7 +190,7 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
           </div>
         </div>
       )}
-      
+
       <Row gutter={[16, 16]}>
         <Col span={6}>
           <Card
@@ -201,7 +201,7 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
           >
             <div className="text-center">
               <PlusCircleOutlined key='plus' style={{ fontSize: '24px', marginBottom: '8px' }} />
-              <div>Add Category</div>
+              <div>Add Task Super</div>
             </div>
           </Card>
         </Col>
@@ -223,9 +223,9 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
                 </Tooltip>,
                 onAddToProjectHierarchical && (
                   <Tooltip title="Add to project (Hierarchical)" key="hierarchical-tooltip">
-                    <AppstoreAddOutlined key="hierarchical" onClick={(e) => { 
-                      e.stopPropagation(); 
-                      handleAddToProjectHierarchical(taskSuper.id); 
+                    <AppstoreAddOutlined key="hierarchical" onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToProjectHierarchical(taskSuper.id);
                     }} />
                   </Tooltip>
                 )
@@ -246,7 +246,7 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject, onAddToProjectHierar
           </Col>
         ))}
       </Row>
-      
+
       <ProjectAssignmentModal
         visible={isProjectAssignmentModalVisible}
         onCancel={handleProjectAssignmentModalCancel}

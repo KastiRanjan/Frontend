@@ -50,6 +50,7 @@ export interface TemplateExpandedViewProps {
   selectedSubtaskRows: Record<string, React.Key[]>;
   setSelectedSubtaskRows: (value: Record<string, React.Key[]>) => void;
   handleAddTemplate: (record: TaskGroupType) => void;
+  handleAddSubtask?: (templateId: string, groupId: string) => void;
   handleEditTemplate: (template: any) => void;
   handleDeleteTemplate: (templateId: string) => void;
 }

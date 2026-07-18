@@ -1,5 +1,6 @@
 import { useFetchTaskGroups } from "@/hooks/taskGroup/useFetchTaskGroups";
 import { useFetchTaskSuper } from "@/hooks/taskSuper/useFetchTaskSuper";
+import { useTaskSuperExcel } from "@/hooks/taskSuper/useTaskSuperExcel";
 import { Button, Empty, Modal, Spin, Typography } from "antd";
 import { useState, useEffect } from "react";
 import { ArrowLeftOutlined } from "@ant-design/icons";
@@ -20,6 +21,7 @@ const TaskSuperDetails = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const queryClient = useQueryClient();
+  const { exportToExcel } = useTaskSuperExcel();
 
   const { data: taskSuper, isPending: isTaskSuperLoading } = useFetchTaskSuper(id as string);
   const { data: taskGroups, isPending: isTaskGroupsLoading } = useFetchTaskGroups({
@@ -81,23 +83,30 @@ const TaskSuperDetails = () => {
 
   return (
     <div className="p-4">
-      <div className="flex items-center mb-4">
-        <Button 
-          type="text" 
-          icon={<ArrowLeftOutlined />} 
-          onClick={handleGoBack} 
-          className="mr-2"
-        />
-        <Title level={3} className="m-0">
-          {taskSuper.name}
-        </Title>
-      </div>
       <div className="flex justify-between items-center mb-4">
-        {hasPermission(permissionConfig.CREATE_TASK_GROUP) && (
-          <Button type="primary" onClick={openTaskGroupModal}>
-            Add Task Group
+        <div className="flex items-center">
+          <Button 
+            type="text" 
+            icon={<ArrowLeftOutlined />} 
+            onClick={handleGoBack} 
+            className="mr-2"
+          />
+          <Title level={3} className="m-0">
+            {taskSuper.name}
+          </Title>
+        </div>
+        <div className="flex space-x-2">
+          {hasPermission(permissionConfig.CREATE_TASK_GROUP) && (
+            <Button type="primary" onClick={openTaskGroupModal}>
+              Add Task Group
+            </Button>
+          )}
+          <Button onClick={() => {
+            exportToExcel({ ...taskSuper, taskGroup: taskGroups });
+          }}>
+            Export to Excel
           </Button>
-        )}
+        </div>
       </div>
 
       {isTaskGroupsLoading ? (

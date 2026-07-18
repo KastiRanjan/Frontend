@@ -49,31 +49,33 @@ const ProjectUserCard = ({ data, onAddMember }: ProjectUserCardProps) => {
       {data.map((user: ProjectUser) => (
         <UserCard key={user.id} user={user} />
       ))}
-      <Card
-        hoverable
-        className="project-user-card"
-        onClick={onAddMember}
-        style={{ width: 240, margin: '16px', cursor: 'pointer' }}
-      >
-        <div
-          style={{
-            minHeight: 160,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#1677ff'
-          }}
+      {onAddMember && (
+        <Card
+          hoverable
+          className="project-user-card"
+          onClick={onAddMember}
+          style={{ width: 240, margin: '16px', cursor: 'pointer' }}
         >
-          <Avatar
-            size={64}
-            style={{ backgroundColor: '#e6f4ff', color: '#1677ff', marginBottom: 12 }}
-            icon={<PlusOutlined />}
-          />
-          <div style={{ fontWeight: 600 }}>Add Member</div>
-          <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>Assign a user to this project</div>
-        </div>
-      </Card>
+          <div
+            style={{
+              minHeight: 160,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#1677ff'
+            }}
+          >
+            <Avatar
+              size={64}
+              style={{ backgroundColor: '#e6f4ff', color: '#1677ff', marginBottom: 12 }}
+              icon={<PlusOutlined />}
+            />
+            <div style={{ fontWeight: 600 }}>Add Member</div>
+            <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>Assign a user to this project</div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

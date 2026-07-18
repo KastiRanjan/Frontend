@@ -12,6 +12,7 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
   selectedSubtaskRows,
   setSelectedSubtaskRows,
   handleAddTemplate,
+  handleAddSubtask,
   handleEditTemplate,
   handleDeleteTemplate,
 }) => {
@@ -52,7 +53,7 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
   // Define template columns
   const templateColumns = [
     {
-      title: 'Template Name',
+      title: 'Task Name',
       dataIndex: 'name',
       key: 'name',
       render: (text: string) => <Text strong>{text || 'Unnamed Template'}</Text>
@@ -74,15 +75,6 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
         return hours % 1 === 0 ? `${Math.floor(hours)}h` : `${hours.toFixed(1)}h`;
       },
       sorter: (a: any, b: any) => (a.budgetedHours || 0) - (b.budgetedHours || 0),
-    },
-    {
-      title: 'Rank',
-      dataIndex: 'rank',
-      key: 'rank',
-      width: 80,
-      sorter: (a: any, b: any) => (a.rank || 0) - (b.rank || 0),
-      defaultSortOrder: 'ascend' as 'ascend',
-      render: (rank: number) => rank !== undefined ? rank : '-',
     },
     {
       title: 'Type',
@@ -139,25 +131,41 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
   };
   
   return (
-    <div className="p-2">
-      <div className="flex justify-between items-center mb-4">
-        <Button 
-          type="primary" 
-          size="small" 
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddTemplate(record);
-          }}
-        >
-          Add Template
-        </Button>
-      </div>
-      
+    <div className="m-0 p-0">
       {!templates || templates.length === 0 ? (
-        <Empty description="No task templates found in this group" />
+        <div className="m-2">
+          <div className="flex justify-end items-center mb-2">
+            <Button 
+              type="primary" 
+              size="small" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddTemplate(record);
+              }}
+            >
+              Add Task
+            </Button>
+          </div>
+          <Empty description="No tasks found in this group" />
+        </div>
       ) : (
-        <div className="mb-4">
+        <div className="m-0 p-0">
           <Table 
+            size="small"
+            title={() => (
+              <div className="flex justify-end items-center">
+                <Button 
+                  type="primary" 
+                  size="small" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddTemplate(record);
+                  }}
+                >
+                  Add Task
+                </Button>
+              </div>
+            )}
             rowSelection={{
               selectedRowKeys: selectedRowKeys.filter(id => 
                 storyTemplates.some(t => t.id === id)
@@ -197,22 +205,58 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
             })} 
             columns={templateColumns}
             rowKey="id"
-            size="small"
+            rowClassName={() => 'bg-blue-50/30'}
             pagination={false}
             expandable={{
               expandedRowRender: (template) => {
-                // Only show subtasks table if there are subtasks
-                if (!template.subTasks || template.subTasks.length === 0) {
-                  return <Empty description="No subtasks found" />;
-                }
-                
                 // Use centralized state for subtask selection
                 // Use a special separator that won't appear in UUIDs
                 const subtaskKey = `${record.id}:${template.id}`;
                 const subtaskSelectedKeys = selectedSubtaskRows[subtaskKey] || [];
                 
+                const addButton = handleAddSubtask && (
+                  <div className="flex justify-end items-center mb-2">
+                    <Button 
+                      type="primary" 
+                      size="small" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddSubtask(template.id, record.id);
+                      }}
+                    >
+                      Add Sub Task
+                    </Button>
+                  </div>
+                );
+
+                if (!template.subTasks || template.subTasks.length === 0) {
+                  return (
+                    <div>
+                      {addButton}
+                      <Empty description="No subtasks found" />
+                    </div>
+                  );
+                }
+                
                 return (
-                  <Table 
+                  <div className="m-0 p-0">
+                    <Table 
+                      size="small"
+                      rowClassName={() => 'bg-purple-50/30'}
+                      title={() => handleAddSubtask ? (
+                        <div className="flex justify-end items-center">
+                          <Button 
+                            type="primary" 
+                            size="small" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddSubtask(template.id, record.id);
+                            }}
+                          >
+                            Add Sub Task
+                          </Button>
+                        </div>
+                      ) : undefined}
                     dataSource={template.subTasks.map((subtask: any) => ({
                       ...subtask,
                       taskType: 'task', // Ensure all subtasks have taskType 'task'
@@ -228,7 +272,6 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
                       return (a.budgetedHours || 0) - (b.budgetedHours || 0);
                     })}
                     pagination={false}
-                    size="small"
                     rowKey="id"
                     showHeader={true} // Show the table header/title so rank column is visible
                     rowSelection={{
@@ -260,6 +303,13 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
                       }
                     }}
                     columns={templateColumns.map(col => {
+                      // Customize column title for name
+                      if (col.key === 'name') {
+                        return {
+                          ...col,
+                          title: 'Subtask Name'
+                        };
+                      }
                       // Use the same columns as the parent table but customize the type renderer
                       if (col.dataIndex === 'taskType') {
                         return {
@@ -301,6 +351,7 @@ const TemplateExpandedView: React.FC<TemplateExpandedViewProps> = ({
                       return col;
                     })}
                   />
+                  </div>
                 );
               },
               rowExpandable: hasExpandableData,

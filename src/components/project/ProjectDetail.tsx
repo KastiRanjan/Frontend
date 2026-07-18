@@ -39,7 +39,6 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
   const { profile, permissions } = useSession();
   const queryClient = useQueryClient();
   const { data: allUsersData, isPending: isUsersLoading } = useUser({
-    status: 'active',
     limit: 1000,
     page: 1,
     keywords: ''
@@ -190,7 +189,7 @@ const ProjectDetailComponent = ({ project, loading }: ProjectDetailProps) => {
         avatar: u.avatar ?? '',
         name: u.name ?? '',
         email: u.email ?? ''
-      }))} onAddMember={openInviteModal} />
+      }))} onAddMember={project?.status === 'active' ? openInviteModal : undefined} />
     },
     {
       label: 'User Assignments',

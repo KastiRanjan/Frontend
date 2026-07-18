@@ -1,6 +1,9 @@
 import { useFetchTaskSupers } from "@/hooks/taskSuper/useFetchTaskSupers";
 import { useDeleteTaskSuper } from "@/hooks/taskSuper/useDeleteTaskSuper";
-import { DeleteOutlined, EditOutlined, PlusCircleOutlined, ProjectOutlined } from '@ant-design/icons';
+import { fetchTaskSuperById } from "@/service/taskSuper.service";
+import { fetchTaskGroup } from "@/service/taskgroup.service";
+import { useTaskSuperExcel } from "@/hooks/taskSuper/useTaskSuperExcel";
+import { DeleteOutlined, EditOutlined, PlusCircleOutlined, ProjectOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Card, Checkbox, Col, Modal, Row, Button, Spin, Empty, Tooltip, message } from "antd";
 import React, { useState } from "react";
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -38,6 +41,8 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
   const [selectedTemplateRows, setSelectedTemplateRows] = useState<Record<string, React.Key[]>>({});
   const [selectedSubtaskRows, setSelectedSubtaskRows] = useState<Record<string, React.Key[]>>({});
   const [isEditOrder, setIsEditOrder] = useState(false);
+  
+  const { downloadSampleExcel, importExcel, exportToExcel } = useTaskSuperExcel();
   // Removed selectedProjectId for global reordering
 
   const navigate = useNavigate();
@@ -47,7 +52,7 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
   const { mutate: updateTaskSuperGlobalRankings } = useUpdateTaskSuperGlobalRankings();
   const { data: taskGroups, isPending: isLoadingTaskGroups } = useFetchTaskGroups();
   const { mutate: deleteTaskSuper } = useDeleteTaskSuper();
-  
+
   const handleCheckboxChange = (id: string) => {
     if (checkedRows.includes(id)) {
       setCheckedRows(checkedRows.filter((rowId) => rowId !== id));
@@ -55,13 +60,13 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
       setCheckedRows([...checkedRows, id]);
     }
   };
-  
+
   const handleAddMultipleToProject = () => {
     if (checkedRows.length === 0) {
       message.warning('Please select at least one category to add to a project');
       return;
     }
-    
+
     if (onAddMultipleToProject) {
       onAddMultipleToProject(checkedRows);
     } else {
@@ -86,30 +91,30 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
     // Navigate to the TaskSuperDetails page using /task-template to match the route
     navigate(`/task-template/category/${taskSuper.id}`);
   };
-  
+
   const handleAddToProject = (taskSuper: TaskSuperType) => {
     // Get all groups for this taskSuper
     const groupsForTaskSuper = taskGroups?.filter((group: TaskGroupType) => group.taskSuperId === taskSuper.id) || [];
-    
+
     if (groupsForTaskSuper.length === 0) {
       message.warning('This category has no task groups. Add some task groups first.');
       return;
     }
-    
+
     // Set the taskSuperId
     setSelectedTaskSuperId(taskSuper.id);
-    
+
     // Pre-select all groups for this taskSuper
     setSelectedGroups(groupsForTaskSuper.map((group: TaskGroupType) => group.id));
-    
+
     // Initialize empty selections for templates and subtasks
     setSelectedTemplateRows({});
     setSelectedSubtaskRows({});
-    
+
     // Show the project assignment modal
     setIsProjectAssignmentModalVisible(true);
   };
-  
+
   const handleProjectAssignmentModalCancel = () => {
     setIsProjectAssignmentModalVisible(false);
     setSelectedTaskSuperId(null);
@@ -117,7 +122,7 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
     setSelectedTemplateRows({});
     setSelectedSubtaskRows({});
   };
-  
+
   const handleProjectAssignmentSuccess = () => {
     message.success('Tasks added to project successfully');
     setIsProjectAssignmentModalVisible(false);
@@ -182,8 +187,8 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
 
   if (!taskSupers || taskSupers.length === 0) {
     return (
-      <Empty 
-        description="No task categories found" 
+      <Empty
+        description="No task categories found"
         className="my-8"
       >
         <Button type="primary" onClick={() => showModal()}>
@@ -197,52 +202,53 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
     <>
       {contextHolder}
 
-      <div className="mb-4 flex items-center gap-2">
-        {checkedRows.length > 0 && (
-          <Button
-            type="primary"
-            icon={<ProjectOutlined />}
-            onClick={handleAddMultipleToProject}
-          >
-            Add Selected to Project
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          {checkedRows.length > 0 && (
+            <Button type="primary" onClick={handleAddMultipleToProject}>
+              Add Selected to Project ({checkedRows.length})
+            </Button>
+          )}
+        </div>
+        
+        <div className="flex space-x-2 items-center">
+          <Button type="primary" onClick={() => showModal()}>
+            Add Task Super
           </Button>
-        )}
+          <Button onClick={() => setIsEditOrder(!isEditOrder)} type={isEditOrder ? "primary" : "default"}>
+            {isEditOrder ? 'Done Editing Order' : 'Edit Order'}
+          </Button>
+          <div>
+            <input 
+              type="file" 
+              accept=".xlsx, .xls" 
+              style={{ display: 'none' }} 
+              id="excel-upload" 
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  importExcel(file).then(() => {
+                    e.target.value = '';
+                  }).catch(() => {
+                    e.target.value = '';
+                  });
+                }
+              }} 
+            />
+            <Button onClick={() => document.getElementById('excel-upload')?.click()}>
+              Upload Excel
+            </Button>
+          </div>
+          <Button onClick={downloadSampleExcel}>
+            Download Sample Excel
+          </Button>
+        </div>
       </div>
 
       {isEditOrder ? (
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={taskSuperOrder} strategy={verticalListSortingStrategy}>
             <Row gutter={[16, 16]}>
-              <Col span={6}>
-                <Tooltip title="Add new Task Super">
-                  <Card
-                    className="h-full flex justify-center items-center cursor-pointer"
-                    bordered={false}
-                    style={{ border: "2px dotted #ccc", minHeight: "200px" }}
-                    onClick={() => showModal()}
-                  >
-                    <div className="text-center">
-                      <PlusCircleOutlined key='plus' style={{ fontSize: '24px', marginBottom: '8px' }} />
-                      <div>Add Category</div>
-                    </div>
-                  </Card>
-                </Tooltip>
-              </Col>
-              <Col span={6}>
-                <Tooltip title="Manage the order of the TaskSuper">
-                  <Card
-                    className="h-full flex justify-center items-center cursor-pointer"
-                    bordered={false}
-                    style={{ border: "2px dotted #1890ff", minHeight: "200px", background: isEditOrder ? '#e6f7ff' : undefined }}
-                    onClick={() => setIsEditOrder(false)}
-                  >
-                    <div className="text-center">
-                      <EditOutlined key='edit-order' style={{ fontSize: '24px', marginBottom: '8px', color: '#1890ff' }} />
-                      <div>{isEditOrder ? 'Done' : 'Edit Order'}</div>
-                    </div>
-                  </Card>
-                </Tooltip>
-              </Col>
               {orderedTaskSupers.map((taskSuper: TaskSuperType) => (
                 <Col span={6} key={taskSuper.id}>
                   <SortableTaskSuperCard taskSuper={taskSuper}>
@@ -259,6 +265,18 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
                         </Tooltip>,
                         <Tooltip title="Add to project" key="project-tooltip">
                           <ProjectOutlined key="project" onClick={(e) => { e.stopPropagation(); handleAddToProject(taskSuper); }} />
+                        </Tooltip>,
+                        <Tooltip title="Export to Excel" key="export-tooltip">
+                          <DownloadOutlined key="export" onClick={async (e) => { 
+                            e.stopPropagation(); 
+                            try {
+                              const fullTaskSuper = await fetchTaskSuperById({ id: taskSuper.id });
+                              const groups = await fetchTaskGroup({ taskSuperId: taskSuper.id });
+                              exportToExcel({ ...fullTaskSuper, taskGroup: groups });
+                            } catch (error) {
+                              message.error('Failed to load full category data for export');
+                            }
+                          }} />
                         </Tooltip>
                       ]}
                       onClick={() => handleCardClick(taskSuper)}
@@ -282,36 +300,6 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
         </DndContext>
       ) : (
         <Row gutter={[16, 16]}>
-          <Col span={6}>
-            <Tooltip title="Add new Task Super">
-              <Card
-                className="h-full flex justify-center items-center cursor-pointer"
-                bordered={false}
-                style={{ border: "2px dotted #ccc", minHeight: "200px" }}
-                onClick={() => showModal()}
-              >
-                <div className="text-center">
-                  <PlusCircleOutlined key='plus' style={{ fontSize: '24px', marginBottom: '8px' }} />
-                  <div>Add Category</div>
-                </div>
-              </Card>
-            </Tooltip>
-          </Col>
-          <Col span={6}>
-            <Tooltip title="Manage the order of the TaskSuper">
-              <Card
-                className="h-full flex justify-center items-center cursor-pointer"
-                bordered={false}
-                style={{ border: "2px dotted #1890ff", minHeight: "200px", background: '#e6f7ff' }}
-                onClick={() => setIsEditOrder(true)}
-              >
-                <div className="text-center">
-                  <EditOutlined key='edit-order' style={{ fontSize: '24px', marginBottom: '8px', color: '#1890ff' }} />
-                  <div>Edit Order</div>
-                </div>
-              </Card>
-            </Tooltip>
-          </Col>
           {orderedTaskSupers.map((taskSuper: TaskSuperType) => (
             <Col span={6} key={taskSuper.id}>
               <Card
@@ -327,6 +315,18 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
                   </Tooltip>,
                   <Tooltip title="Add to project" key="project-tooltip">
                     <ProjectOutlined key="project" onClick={(e) => { e.stopPropagation(); handleAddToProject(taskSuper); }} />
+                  </Tooltip>,
+                  <Tooltip title="Export to Excel" key="export-tooltip">
+                    <DownloadOutlined key="export" onClick={async (e) => { 
+                      e.stopPropagation(); 
+                      try {
+                        const fullTaskSuper = await fetchTaskSuperById({ id: taskSuper.id });
+                        const groups = await fetchTaskGroup({ taskSuperId: taskSuper.id });
+                        exportToExcel({ ...fullTaskSuper, taskGroup: groups });
+                      } catch (error) {
+                        message.error('Failed to load full category data for export');
+                      }
+                    }} />
                   </Tooltip>
                 ]}
                 onClick={() => handleCardClick(taskSuper)}

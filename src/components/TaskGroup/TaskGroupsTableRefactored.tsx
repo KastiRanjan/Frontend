@@ -136,6 +136,27 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
     queryClient.invalidateQueries({ queryKey: ["taskGroups", taskSuperId] });
   };
   
+  const handleAddSubtask = (templateId: string, groupId: string) => {
+    // Find the task group and the template to get necessary data
+    const taskGroup = taskGroups.find((g: any) => g.id === groupId);
+    if (!taskGroup) return;
+    
+    const template = (taskGroup.tasktemplate || taskGroup.taskTemplates || []).find((t: any) => t.id === templateId);
+    if (!template) return;
+    
+    setCurrentTaskGroupForTemplate(taskGroup);
+    
+    // Set up the subtask template object to be passed to the edit/create form
+    setCurrentTemplate({
+      groupId,
+      parentTaskId: templateId,
+      taskType: 'task',
+    });
+    
+    setTemplateFormKey(Date.now()); // Generate new key to force form reset
+    setEditTemplateModalVisible(true); // Open edit modal which can act as subtask create modal
+  };
+  
   const handleEditTemplate = (template: any) => {
     // Create a copy of the template with guaranteed groupId field
     // This ensures groupId is always available when the template is edited
@@ -225,15 +246,6 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
       dataIndex: "description",
       key: "description",
       ellipsis: true,
-    },
-    {
-      title: "Rank",
-      dataIndex: "rank",
-      key: "rank",
-      sorter: (a: TaskGroupType, b: TaskGroupType) => (a.rank || 0) - (b.rank || 0),
-      defaultSortOrder: 'ascend' as 'ascend',
-      width: 80,
-      render: (rank: number) => rank !== undefined ? rank : '-',
     },
     {
       title: "Actions",
@@ -375,7 +387,7 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
       </Modal>
 
       <Modal
-        title="Add Task Template"
+        title="Add Task"
         open={templateModalVisible}
         onCancel={handleTemplateModalCancel}
         footer={null}
@@ -390,7 +402,7 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
       </Modal>
 
       <Modal
-        title="Edit Task Template"
+        title={currentTemplate?.id ? "Edit Task Template" : "Add Sub Task"}
         open={editTemplateModalVisible}
         onCancel={handleEditTemplateModalCancel}
         footer={null}
@@ -398,7 +410,7 @@ const TaskGroupsTable: React.FC<TaskGroupsTableProps> = ({
         destroyOnClose={true}
       >
         <TaskTemplatForm 
-          key={`edit-template-${currentTemplate?.id || 'unknown'}`}
+          key={`edit-template-${currentTemplate?.id || 'new-subtask'}`}
           handleCancel={handleEditTemplateModalCancel}
           groupId={currentTemplate?.groupId}
           editTaskTemplateData={currentTemplate}

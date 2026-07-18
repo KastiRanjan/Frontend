@@ -62,8 +62,8 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
   const { data: clients } = useClient();
   const { data: billings } = useBilling("active");
   const { mutate: mutateEdit, isPending: isPendingEdit } = useEditProject();
+  const isProjectInactive = editProjectData && editProjectData.status !== 'active';
   const { data: users, isPending: isPendingUser } = useUser({
-    status: "active",
     limit: 1000,
     page: 1,
     keywords: "",
@@ -552,6 +552,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               className="h-[48px] w-full"
               placeholder="Select client"
               onChange={handleFieldChange}
+              disabled={!!isProjectInactive}
               showSearch
               optionFilterProp="label"
               filterOption={(input, option) =>
@@ -576,6 +577,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               className="h-[48px] w-full"
               placeholder="Select billing entity"
               onChange={handleFieldChange}
+              disabled={!!isProjectInactive}
               showSearch
               optionFilterProp="label"
               filterOption={(input, option) =>
@@ -601,6 +603,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               checkedChildren="Yes" 
               unCheckedChildren="No" 
               defaultChecked={true}
+              disabled={!!isProjectInactive}
             />
           </Form.Item>
         </Col>
@@ -616,6 +619,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               checkedChildren="Yes" 
               unCheckedChildren="No" 
               defaultChecked={true}
+              disabled={!!isProjectInactive}
             />
           </Form.Item>
         </Col>
@@ -659,6 +663,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               className="h-[48px] w-full"
               placeholder="Select fiscal year"
               onChange={handleFieldChange}
+              disabled={!!isProjectInactive}
               showSearch
               optionFilterProp="label"
               filterOption={(input, option) =>
@@ -697,6 +702,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               className="h-[48px] w-full"
               placeholder="Select project lead"
               showSearch
+              disabled={!!isProjectInactive}
               optionFilterProp="label"
               filterOption={(input, option) =>
                 option?.label && typeof option.label === 'string' 
@@ -726,6 +732,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               className="h-[48px] w-full"
               placeholder="Select project manager"
               showSearch
+              disabled={!!isProjectInactive}
               optionFilterProp="label"
               filterOption={(input, option) =>
                 option?.label && typeof option.label === 'string' 
@@ -747,6 +754,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               options={filteredUsers}
               mode="multiple"
               style={{ width: '100%' }}
+              disabled={!!isProjectInactive}
               optionFilterProp="label"
               showSearch
               allowClear
@@ -774,6 +782,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               placeholder="Select group"
               allowClear
               showSearch
+              disabled={!!isProjectInactive}
               optionFilterProp="label"
               onChange={handleGroupChange}
               filterOption={(input, option) =>
@@ -806,7 +815,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
                   ? "Select nature of work"
                   : "Select a group first"
               }
-              disabled={!selectedGroupId}
+              disabled={!selectedGroupId || !!isProjectInactive}
               onChange={handleNatureOfWorkChange}
               showSearch
               optionFilterProp="label"
@@ -845,6 +854,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           >
             <NepaliDatePicker
               value={nepaliStartDate}
+              disabled={!!isProjectInactive}
               onChange={bs => {
                 console.log('Starting date changed to:', bs);
                 setNepaliStartDate(bs);
@@ -906,6 +916,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
           >
             <NepaliDatePicker
               value={nepaliEndDate}
+              disabled={!!isProjectInactive}
               onChange={bs => {
                 console.log('Ending date changed to:', bs);
                 setNepaliEndDate(bs);
@@ -997,7 +1008,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
               { required: true, message: "Please input the description!" },
             ]}
           >
-            <TextArea rows={4} />
+            <TextArea rows={4} disabled={!!isProjectInactive} />
           </Form.Item>
         </Col>
       {/* Move Project Name to the bottom */}
@@ -1010,6 +1021,7 @@ const ProjectForm = ({ editProjectData, handleCancel }: ProjectFormProps) => {
             { required: true, message: "Please input the project name!" },
           ]}
           placeholder="Project name will be auto-generated or you can enter manually"
+          disabled={!!isProjectInactive}
         />
       </Col>
       </Row>

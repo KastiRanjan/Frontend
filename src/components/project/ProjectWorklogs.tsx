@@ -1,6 +1,7 @@
 import WorklogTable from "@/components/Worklog/WorklogTable";
 import { useSession } from "@/context/SessionContext";
 import { useProjectWorklogs } from "@/hooks/worklog/useProjectWorklogs";
+import { useProjectById } from "@/hooks/project/useProjectById";
 import { Card, Empty, Spin, Typography, Row, Col, Statistic, Button } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import moment from "moment";
@@ -25,6 +26,7 @@ const ProjectWorklogs = ({ projectId, showHeader = false, wrapInCard = true }: P
   );
 
   const { data: worklogs, isPending } = useProjectWorklogs(resolvedProjectId);
+  const { data: project } = useProjectById(resolvedProjectId || "");
   const [stats, setStats] = useState<any>({
     totalHours: 0,
     monthlyHours: 0,
@@ -124,12 +126,14 @@ const ProjectWorklogs = ({ projectId, showHeader = false, wrapInCard = true }: P
     <>
       <div className="flex items-center justify-between mb-4">
         {showHeader && <Title level={4} style={{ margin: 0 }}>Project Worklogs</Title>}
-        <Button 
-          type="primary" 
-          onClick={() => navigate(`/projects/${resolvedProjectId}/worklogs/new`)}
-        >
-          Create Worklog
-        </Button>
+        {project?.status === 'active' && (
+          <Button 
+            type="primary" 
+            onClick={() => navigate(`/projects/${resolvedProjectId}/worklogs/new`)}
+          >
+            Create Worklog
+          </Button>
+        )}
       </div>
       
       {!isPending && Array.isArray(worklogs) && worklogs.length > 0 && (

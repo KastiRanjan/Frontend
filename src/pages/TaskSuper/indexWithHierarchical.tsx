@@ -19,7 +19,7 @@ const TaskSuperPage = () => {
   const [selectedTaskSuper, setSelectedTaskSuper] = useState<TaskSuperType | undefined>(undefined);
   const [selectedTaskSupers, setSelectedTaskSupers] = useState<string[]>([]);
   const [isMultiAssignModalOpen, setIsMultiAssignModalOpen] = useState(false);
-  
+
   // New state for hierarchical modal
   const [isHierarchicalModalOpen, setIsHierarchicalModalOpen] = useState(false);
   const [hierarchicalInitialTaskSuperId, setHierarchicalInitialTaskSuperId] = useState<string | undefined>(undefined);
@@ -33,35 +33,35 @@ const TaskSuperPage = () => {
     setIsModalOpen(false);
     setSelectedTaskSuper(undefined);
   };
-  
+
   const handleAddMultipleToProject = (selectedIds: string[]) => {
     setSelectedTaskSupers(selectedIds);
     setIsMultiAssignModalOpen(true);
   };
-  
+
   const handleMultiAssignSuccess = () => {
     setIsMultiAssignModalOpen(false);
     setSelectedTaskSupers([]);
   };
-  
+
   // New handler for opening hierarchical modal
   const handleOpenHierarchicalModal = (taskSuperId?: string) => {
     setHierarchicalInitialTaskSuperId(taskSuperId);
     setIsHierarchicalModalOpen(true);
   };
-  
+
   // Handle add to project from hierarchical modal
   const handleAddToProjectFromHierarchical = async (entities: any) => {
     try {
       console.log('Adding to project from hierarchical modal:', entities);
-      
+
       // Process the selected entities and create a payload for the backend
       // This is a simplified version - you'll need to adapt this to your API
       const projectId = prompt('Enter Project ID:'); // Replace with proper project selection
       if (!projectId) {
         throw new Error('Project ID is required');
       }
-      
+
       // Example payload structure - adapt to your backend API
       const payload = {
         projectId,
@@ -102,10 +102,10 @@ const TaskSuperPage = () => {
             }))
         }))
       };
-      
+
       // Call the backend API
       await addTaskSuperToProject(payload);
-      
+
       message.success('Successfully added to project');
     } catch (error) {
       console.error('Error adding to project:', error);
@@ -117,24 +117,24 @@ const TaskSuperPage = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
           onClick={() => handleOpenHierarchicalModal()}
           style={{ marginRight: '8px' }}
         >
           Add to Project
         </Button>
       </div>
-      
-      <TaskSuperListWithHierarchical 
-        showModal={showModal} 
+
+      <TaskSuperListWithHierarchical
+        showModal={showModal}
         onAddMultipleToProject={handleAddMultipleToProject}
         onAddToProjectHierarchical={handleOpenHierarchicalModal}
       />
 
       <Modal
-        title={selectedTaskSuper ? "Edit Category" : "Add Category"}
+        title={selectedTaskSuper ? "Edit Task Super" : "Add Task Super"}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
@@ -144,14 +144,14 @@ const TaskSuperPage = () => {
           handleCancel={handleCancel}
         />
       </Modal>
-      
+
       <MultiTaskSuperProjectAssignmentModal
         visible={isMultiAssignModalOpen}
         onCancel={() => setIsMultiAssignModalOpen(false)}
         selectedTaskSuperIds={selectedTaskSupers}
         onSuccess={handleMultiAssignSuccess}
       />
-      
+
       {/* Hierarchical Add Modal */}
       <HierarchicalAddModal
         visible={isHierarchicalModalOpen}
