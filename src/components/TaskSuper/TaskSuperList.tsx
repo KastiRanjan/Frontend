@@ -14,6 +14,8 @@ import { TaskSuperType } from "@/types/taskSuper";
 import { useNavigate } from "react-router-dom";
 import { useFetchTaskGroups } from "@/hooks/taskGroup/useFetchTaskGroups";
 import ProjectAssignmentModal from "../TaskGroup/components/ProjectAssignmentModal";
+import { hasPermission } from "@/utils/utils";
+import { permissionConfig } from "@/utils/permission-config";
 
 interface TaskSuperListProps {
   showModal: (taskSuper?: TaskSuperType) => void;
@@ -211,38 +213,40 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
           )}
         </div>
         
-        <div className="flex space-x-2 items-center">
-          <Button type="primary" onClick={() => showModal()}>
-            Add Task Super
-          </Button>
-          <Button onClick={() => setIsEditOrder(!isEditOrder)} type={isEditOrder ? "primary" : "default"}>
-            {isEditOrder ? 'Done Editing Order' : 'Edit Order'}
-          </Button>
-          <div>
-            <input 
-              type="file" 
-              accept=".xlsx, .xls" 
-              style={{ display: 'none' }} 
-              id="excel-upload" 
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  importExcel(file).then(() => {
-                    e.target.value = '';
-                  }).catch(() => {
-                    e.target.value = '';
-                  });
-                }
-              }} 
-            />
-            <Button onClick={() => document.getElementById('excel-upload')?.click()}>
-              Upload Excel
+        {hasPermission(permissionConfig.CREATE_TASK_SUPER) && (
+          <div className="flex space-x-2 items-center">
+            <Button type="primary" onClick={() => showModal()}>
+              Add Task Super
+            </Button>
+            <Button onClick={() => setIsEditOrder(!isEditOrder)} type={isEditOrder ? "primary" : "default"}>
+              {isEditOrder ? 'Done Editing Order' : 'Edit Order'}
+            </Button>
+            <div>
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                style={{ display: 'none' }} 
+                id="excel-upload" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    importExcel(file).then(() => {
+                      e.target.value = '';
+                    }).catch(() => {
+                      e.target.value = '';
+                    });
+                  }
+                }} 
+              />
+              <Button onClick={() => document.getElementById('excel-upload')?.click()}>
+                Upload Excel
+              </Button>
+            </div>
+            <Button onClick={downloadSampleExcel}>
+              Download Sample Excel
             </Button>
           </div>
-          <Button onClick={downloadSampleExcel}>
-            Download Sample Excel
-          </Button>
-        </div>
+        )}
       </div>
 
       {isEditOrder ? (
