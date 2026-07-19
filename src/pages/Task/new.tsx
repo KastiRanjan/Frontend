@@ -21,7 +21,7 @@ const NewTask: React.FC = () => {
           </Button>
         }
       />
-      <TaskForm users={data?.users} tasks={data?.tasks} />
+      <TaskForm users={data?.users} tasks={data?.tasks} onSuccess={() => navigate(-1)} />
     </>
   );
 };

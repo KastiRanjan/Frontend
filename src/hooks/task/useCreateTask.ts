@@ -1,10 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createTask } from "../../service/task.service";
-import { useNavigate } from "react-router-dom";
 
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   return useMutation({
     mutationFn: (payload) => {
       return createTask(payload);
@@ -20,7 +18,6 @@ export const useCreateTask = () => {
       if (data?.task?.project?.id) {
         queryClient.invalidateQueries({ queryKey: ["project", data.task.project.id] });
       }
-      navigate(-1);
     },
   });
 };
