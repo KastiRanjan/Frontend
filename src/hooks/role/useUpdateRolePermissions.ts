@@ -8,6 +8,9 @@ export const useUpdateRolePermissions = () => {
       updateRolePermissions({ id, permissions }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["role"] });
+      queryClient.invalidateQueries({ queryKey: ["permissions"] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };

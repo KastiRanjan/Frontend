@@ -9,6 +9,9 @@ export const useEditPermission = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["permissions"] });
+      queryClient.invalidateQueries({ queryKey: ["role"] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };

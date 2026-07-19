@@ -16,6 +16,7 @@ import { useFetchTaskGroups } from "@/hooks/taskGroup/useFetchTaskGroups";
 import ProjectAssignmentModal from "../TaskGroup/components/ProjectAssignmentModal";
 import { hasPermission } from "@/utils/utils";
 import { permissionConfig } from "@/utils/permission-config";
+import { useSession } from "@/context/SessionContext";
 
 interface TaskSuperListProps {
   showModal: (taskSuper?: TaskSuperType) => void;
@@ -48,6 +49,19 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
   // Removed selectedProjectId for global reordering
 
   const navigate = useNavigate();
+  const { permissions } = useSession();
+
+  const hasAddPermission = Array.isArray(permissions) && permissions.some(
+    (perm: any) => perm.path === "/task-super" && perm.method?.toLowerCase() === "post"
+  );
+
+  const hasEditPermission = Array.isArray(permissions) && permissions.some(
+    (perm: any) => (perm.path === "/task-super" || perm.path === "/task-super/:id") && perm.method?.toLowerCase() === "patch"
+  );
+
+  const hasDeletePermission = Array.isArray(permissions) && permissions.some(
+    (perm: any) => (perm.path === "/task-super" || perm.path === "/task-super/:id") && perm.method?.toLowerCase() === "delete"
+  );
 
   const { data: taskSupers, isPending } = useFetchTaskSupers();
   const [taskSuperOrder, setTaskSuperOrder] = useState<string[]>([]);
@@ -213,7 +227,7 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
           )}
         </div>
         
-        {hasPermission(permissionConfig.CREATE_TASK_SUPER) && (
+        {hasAddPermission && (
           <div className="flex space-x-2 items-center">
             <Button type="primary" onClick={() => showModal()}>
               Add Task Super
@@ -261,11 +275,25 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
                       title={taskSuper.name}
                       extra={<Checkbox checked={checkedRows.includes(taskSuper.id)} onClick={(e) => e.stopPropagation()} onChange={() => handleCheckboxChange(taskSuper.id)} />}
                       actions={[
-                        <Tooltip title="Edit category" key="edit-tooltip">
-                          <EditOutlined key="edit" onClick={(e) => { e.stopPropagation(); showModal(taskSuper); }} />
+                        <Tooltip title={hasEditPermission ? "Edit category" : "Edit category (No permission)"} key="edit-tooltip">
+                          <EditOutlined 
+                            key="edit" 
+                            style={!hasEditPermission ? { color: '#ccc', cursor: 'not-allowed' } : undefined}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              if (hasEditPermission) showModal(taskSuper); 
+                            }} 
+                          />
                         </Tooltip>,
-                        <Tooltip title="Delete category" key="delete-tooltip">
-                          <DeleteOutlined key="delete" onClick={(e) => { e.stopPropagation(); handleDelete(taskSuper.id); }} />
+                        <Tooltip title={hasDeletePermission ? "Delete category" : "Delete category (No permission)"} key="delete-tooltip">
+                          <DeleteOutlined 
+                            key="delete" 
+                            style={!hasDeletePermission ? { color: '#ccc', cursor: 'not-allowed' } : undefined}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              if (hasDeletePermission) handleDelete(taskSuper.id); 
+                            }} 
+                          />
                         </Tooltip>,
                         <Tooltip title="Add to project" key="project-tooltip">
                           <ProjectOutlined key="project" onClick={(e) => { e.stopPropagation(); handleAddToProject(taskSuper); }} />
@@ -311,11 +339,25 @@ const TaskSuperList = ({ showModal, onAddMultipleToProject }: TaskSuperListProps
                 title={taskSuper.name}
                 extra={<Checkbox checked={checkedRows.includes(taskSuper.id)} onClick={(e) => e.stopPropagation()} onChange={() => handleCheckboxChange(taskSuper.id)} />}
                 actions={[
-                  <Tooltip title="Edit category" key="edit-tooltip">
-                    <EditOutlined key="edit" onClick={(e) => { e.stopPropagation(); showModal(taskSuper); }} />
+                  <Tooltip title={hasEditPermission ? "Edit category" : "Edit category (No permission)"} key="edit-tooltip">
+                    <EditOutlined 
+                      key="edit" 
+                      style={!hasEditPermission ? { color: '#ccc', cursor: 'not-allowed' } : undefined}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (hasEditPermission) showModal(taskSuper); 
+                      }} 
+                    />
                   </Tooltip>,
-                  <Tooltip title="Delete category" key="delete-tooltip">
-                    <DeleteOutlined key="delete" onClick={(e) => { e.stopPropagation(); handleDelete(taskSuper.id); }} />
+                  <Tooltip title={hasDeletePermission ? "Delete category" : "Delete category (No permission)"} key="delete-tooltip">
+                    <DeleteOutlined 
+                      key="delete" 
+                      style={!hasDeletePermission ? { color: '#ccc', cursor: 'not-allowed' } : undefined}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (hasDeletePermission) handleDelete(taskSuper.id); 
+                      }} 
+                    />
                   </Tooltip>,
                   <Tooltip title="Add to project" key="project-tooltip">
                     <ProjectOutlined key="project" onClick={(e) => { e.stopPropagation(); handleAddToProject(taskSuper); }} />
