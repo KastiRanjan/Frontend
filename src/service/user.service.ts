@@ -19,7 +19,7 @@ const handleApiError = (error: any) => {
   }
 };
 
-export const fetchUsers = async ({ status, limit, page, keywords }: { status: string, limit: number, page: number, keywords: string }) => {
+export const fetchUsers = async ({ status = "active", limit = 1000, page = 1, keywords = "" }: { status?: string, limit?: number, page?: number, keywords?: string } = {}) => {
   try {
     const response = await axios.get(`${backendURI}/users?status=${status}&limit=${limit}&page=${page}&keywords=${keywords}`, {});
     
